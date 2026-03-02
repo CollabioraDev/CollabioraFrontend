@@ -1,0 +1,2234 @@
+[
+  {
+    "id": "AA00_1",
+    "type": "disease",
+    "display_name": "Eye disorders",
+    "icd11_code": "AA00",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["eye problems", "vision issues", "ocular disorders", "eye disease", "icd11 code aa00", "icd aa00"]
+  },
+  {
+    "id": "AA10_1",
+    "type": "disease",
+    "display_name": "Infectious eye diseases",
+    "icd11_code": "AA10",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology", "Infectious Diseases"],
+    "patient_terms": ["eye infection", "ocular infection", "pink eye", "conjunctivitis", "icd11 code aa10", "icd aa10"]
+  },
+  {
+    "id": "AA40_1",
+    "type": "disease",
+    "display_name": "Cataracts",
+    "icd11_code": "AA40",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["cataract", "cloudy lens", "vision clouding", "lens opacity", "icd11 code aa40", "icd aa40"]
+  },
+  {
+    "id": "AA80_1",
+    "type": "disease",
+    "display_name": "Glaucoma",
+    "icd11_code": "AA80",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["glaucoma", "eye pressure", "optic nerve damage", "vision loss", "icd11 code aa80", "icd aa80"]
+  },
+  {
+    "id": "AA90_1",
+    "type": "disease",
+    "display_name": "Retinal disorders",
+    "icd11_code": "AA90",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["retinal disease", "retina problems", "macular degeneration", "retinal detachment", "icd11 code aa90", "icd aa90"]
+  },
+  {
+    "id": "AB30_1",
+    "type": "disease",
+    "display_name": "Corneal diseases",
+    "icd11_code": "AB30",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["corneal disease", "cornea problems", "corneal ulcer", "keratitis", "icd11 code ab30", "icd ab30"]
+  },
+  {
+    "id": "AB50_1",
+    "type": "disease",
+    "display_name": "Refractive errors",
+    "icd11_code": "AB50",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["refractive error", "nearsightedness", "farsightedness", "astigmatism", "presbyopia", "icd11 code ab50", "icd ab50"]
+  },
+  {
+    "id": "AB70_1",
+    "type": "disease",
+    "display_name": "Optic nerve disorders",
+    "icd11_code": "AB70",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology", "Neurology"],
+    "patient_terms": ["optic nerve disorder", "optic neuropathy", "optic neuritis", "ab7y", "icd ab70"]
+  },
+  {
+    "id": "AB90_1",
+    "type": "disease",
+    "display_name": "Orbital disorders",
+    "icd11_code": "AB90",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["orbital disorder", "eye socket problems", "proptosis", "exophthalmos", "code", "icd ab90"]
+  },
+  {
+    "id": "AB93_1",
+    "type": "disease",
+    "display_name": "Lacrimal system disorders",
+    "icd11_code": "AB93",
+    "chapter": "Chapter 10",
+    "research_interests": ["Ophthalmology"],
+    "patient_terms": ["dry eyes", "tear duct problems", "lacrimal disorder", "epiphora", "chapter", "icd ab93"]
+  },
+  {
+    "id": "BA00_1",
+    "type": "disease",
+    "display_name": "Hypertensive diseases",
+    "icd11_code": "BA00",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["high blood pressure", "hypertension", "blood pressure problems", "code", "icd ba00"]
+  },
+  {
+    "id": "BA04_1",
+    "type": "disease",
+    "display_name": "Secondary hypertension",
+    "icd11_code": "BA04",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Endocrinology"],
+    "patient_terms": ["secondary hypertension", "renal hypertension", "endocrine hypertension", "code", "icd ba04"]
+  },
+  {
+    "id": "BA20_1",
+    "type": "disease",
+    "display_name": "Ischemic heart diseases",
+    "icd11_code": "BA20",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["heart attack", "coronary artery disease", "angina", "myocardial infarction", "icd11 code ba20", "icd ba20"]
+  },
+  {
+    "id": "BA40_1",
+    "type": "disease",
+    "display_name": "Heart failure",
+    "icd11_code": "BA40",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["heart failure", "congestive heart failure", "cardiac failure", "weak heart", "icd11 code ba40", "icd ba40"]
+  },
+  {
+    "id": "BA50_1",
+    "type": "disease",
+    "display_name": "Cardiomyopathies",
+    "icd11_code": "BA50",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["cardiomyopathy", "heart muscle disease", "enlarged heart", "icd11 code ba50", "icd ba50"]
+  },
+  {
+    "id": "BA81_1",
+    "type": "disease",
+    "display_name": "Cardiac arrhythmias",
+    "icd11_code": "BA81",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["arrhythmia", "irregular heartbeat", "palpitations", "atrial fibrillation", "icd11 code ba81", "icd ba81"]
+  },
+  {
+    "id": "BB00_1",
+    "type": "disease",
+    "display_name": "Valvular heart diseases",
+    "icd11_code": "BB00",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["heart valve disease", "valvular disorder", "mitral valve", "aortic valve", "icd11 code bb00", "icd bb00"]
+  },
+  {
+    "id": "BB20_1",
+    "type": "disease",
+    "display_name": "Pericardial diseases",
+    "icd11_code": "BB20",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["pericarditis", "pericardial disease", "heart sac inflammation", "icd11 code bb20", "icd bb20"]
+  },
+  {
+    "id": "BB40_1",
+    "type": "disease",
+    "display_name": "Endocarditis",
+    "icd11_code": "BB40",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Infectious Diseases"],
+    "patient_terms": ["endocarditis", "heart valve infection", "infective endocarditis", "icd11 code bb40", "icd bb40"]
+  },
+  {
+    "id": "BB60_1",
+    "type": "disease",
+    "display_name": "Myocarditis",
+    "icd11_code": "BB60",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Infectious Diseases"],
+    "patient_terms": ["myocarditis", "heart muscle inflammation", "viral myocarditis", "icd11 code bb60", "icd bb60"]
+  },
+  {
+    "id": "BB70_1",
+    "type": "disease",
+    "display_name": "Congenital heart diseases",
+    "icd11_code": "BB70",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Pediatrics"],
+    "patient_terms": ["congenital heart disease", "heart defect", "born with heart problem", "icd11 code bb70", "icd bb70"]
+  },
+  {
+    "id": "BB80_1",
+    "type": "disease",
+    "display_name": "Heart transplantation complications",
+    "icd11_code": "BB80",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Transplant Medicine"],
+    "patient_terms": ["heart transplant problems", "transplant rejection", "cardiac transplant complications", "icd11 code bb80", "icd bb80"]
+  },
+  {
+    "id": "BB90_1",
+    "type": "disease",
+    "display_name": "Other specified heart diseases",
+    "icd11_code": "BB90",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology"],
+    "patient_terms": ["other heart diseases", "miscellaneous cardiac disorders", "icd11 code bb90", "icd bb90"]
+  },
+  {
+    "id": "BC40_1",
+    "type": "disease",
+    "display_name": "Aortic diseases",
+    "icd11_code": "BC40",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Vascular Surgery"],
+    "patient_terms": ["aortic disease", "aortic aneurysm", "aortic dissection", "icd11 code bc40", "icd bc40"]
+  },
+  {
+    "id": "BC60_1",
+    "type": "disease",
+    "display_name": "Peripheral arterial diseases",
+    "icd11_code": "BC60",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Vascular Surgery"],
+    "patient_terms": ["peripheral artery disease", "PAD", "leg artery disease", "claudication", "icd11 code bc60", "icd bc60"]
+  },
+  {
+    "id": "BC70_1",
+    "type": "disease",
+    "display_name": "Venous diseases",
+    "icd11_code": "BC70",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Vascular Surgery"],
+    "patient_terms": ["venous disease", "deep vein thrombosis", "DVT", "varicose veins", "icd11 code bc70", "icd bc70"]
+  },
+  {
+    "id": "BC80_1",
+    "type": "disease",
+    "display_name": "Pulmonary embolism",
+    "icd11_code": "BC80",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Pulmonology"],
+    "patient_terms": ["pulmonary embolism", "PE", "lung clot", "blood clot in lung", "icd11 code bc80", "icd bc80"]
+  },
+  {
+    "id": "BD10_1",
+    "type": "disease",
+    "display_name": "Cerebrovascular diseases",
+    "icd11_code": "BD10",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Neurology"],
+    "patient_terms": ["stroke", "cerebrovascular disease", "brain attack", "ischemic stroke", "icd11 code bd10", "icd bd10"]
+  },
+  {
+    "id": "BD30_1",
+    "type": "disease",
+    "display_name": "Transient ischemic attack",
+    "icd11_code": "BD30",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Neurology"],
+    "patient_terms": ["mini-stroke", "TIA", "transient ischemic attack", "warning stroke", "icd11 code bd30", "icd bd30"]
+  },
+  {
+    "id": "BD40_1",
+    "type": "disease",
+    "display_name": "Cerebral aneurysm",
+    "icd11_code": "BD40",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Neurology", "Neurosurgery"],
+    "patient_terms": ["brain aneurysm", "cerebral aneurysm", "berry aneurysm", "icd11 code bd40", "icd bd40"]
+  },
+  {
+    "id": "BD70_1",
+    "type": "disease",
+    "display_name": "Vascular dementia",
+    "icd11_code": "BD70",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Neurology", "Geriatrics"],
+    "patient_terms": ["vascular dementia", "multi-infarct dementia", "stroke-related dementia", "icd11 code bd70", "icd bd70"]
+  },
+  {
+    "id": "BD90_1",
+    "type": "disease",
+    "display_name": "Other cerebrovascular diseases",
+    "icd11_code": "BD90",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Neurology"],
+    "patient_terms": ["other stroke disorders", "cerebrovascular conditions", "icd11 code bd90", "icd bd90"]
+  },
+  {
+    "id": "BE10_1",
+    "type": "disease",
+    "display_name": "Pulmonary hypertension",
+    "icd11_code": "BE10",
+    "chapter": "Chapter 11",
+    "research_interests": ["Cardiology", "Pulmonology"],
+    "patient_terms": ["pulmonary hypertension", "lung artery high pressure", "be1f1", "icd be10"]
+  },
+  {
+    "id": "CA00_1",
+    "type": "disease",
+    "display_name": "Upper respiratory infections",
+    "icd11_code": "CA00",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Infectious Diseases"],
+    "patient_terms": ["cold", "upper respiratory infection", "URI", "common cold", "icd11 code ca00", "icd ca00"]
+  },
+  {
+    "id": "CA20_1",
+    "type": "disease",
+    "display_name": "Influenza",
+    "icd11_code": "CA20",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Infectious Diseases"],
+    "patient_terms": ["flu", "influenza", "seasonal flu", "viral flu", "icd11 code ca20", "icd ca20"]
+  },
+  {
+    "id": "CA40_1",
+    "type": "disease",
+    "display_name": "Pneumonia",
+    "icd11_code": "CA40",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Infectious Diseases"],
+    "patient_terms": ["pneumonia", "lung infection", "pulmonary infection", "walking pneumonia", "icd11 code ca40", "icd ca40"]
+  },
+  {
+    "id": "CA60_1",
+    "type": "disease",
+    "display_name": "Tuberculosis",
+    "icd11_code": "CA60",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Infectious Diseases"],
+    "patient_terms": ["TB", "tuberculosis", "consumption", "pulmonary TB", "icd11 code ca60", "icd ca60"]
+  },
+  {
+    "id": "CA70_1",
+    "type": "disease",
+    "display_name": "COVID-19",
+    "icd11_code": "CA70",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Infectious Diseases", "Public Health"],
+    "patient_terms": ["COVID-19", "coronavirus", "SARS-CoV-2", "covid", "icd11 code ca70", "icd ca70"]
+  },
+  {
+    "id": "CB00_1",
+    "type": "disease",
+    "display_name": "Asthma",
+    "icd11_code": "CB00",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Allergy and Immunology"],
+    "patient_terms": ["asthma", "bronchial asthma", "reactive airway disease", "wheezing", "icd11 code cb00", "icd cb00"]
+  },
+  {
+    "id": "CB20_1",
+    "type": "disease",
+    "display_name": "Chronic obstructive pulmonary disease",
+    "icd11_code": "CB20",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine"],
+    "patient_terms": ["COPD", "chronic bronchitis", "emphysema", "lung disease", "icd11 code cb20", "icd cb20"]
+  },
+  {
+    "id": "CB60_1",
+    "type": "disease",
+    "display_name": "Interstitial lung diseases",
+    "icd11_code": "CB60",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine", "Rheumatology"],
+    "patient_terms": ["interstitial lung disease", "ILD", "pulmonary fibrosis", "scarring lungs", "code", "icd cb60"]
+  },
+  {
+    "id": "CB64_1",
+    "type": "disease",
+    "display_name": "Pulmonary fibrosis",
+    "icd11_code": "CB64",
+    "chapter": "Chapter 12",
+    "research_interests": ["Respiratory Medicine"],
+    "patient_terms": ["pulmonary fibrosis", "lung scarring", "idiopathic pulmonary fibrosis", "IPF", "chapter", "icd cb64"]
+  },
+  {
+    "id": "DA00_1",
+    "type": "disease",
+    "display_name": "Gastroesophageal reflux disease",
+    "icd11_code": "DA00",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["GERD", "acid reflux", "heartburn", "reflux disease", "icd11 code da00", "icd da00"]
+  },
+  {
+    "id": "DA20_1",
+    "type": "disease",
+    "display_name": "Peptic ulcer disease",
+    "icd11_code": "DA20",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["stomach ulcer", "peptic ulcer", "gastric ulcer", "duodenal ulcer", "icd11 code da20", "icd da20"]
+  },
+  {
+    "id": "DA40_1",
+    "type": "disease",
+    "display_name": "Gastritis",
+    "icd11_code": "DA40",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["gastritis", "stomach inflammation", "stomach lining irritation", "icd11 code da40", "icd da40"]
+  },
+  {
+    "id": "DA50_1",
+    "type": "disease",
+    "display_name": "Functional dyspepsia",
+    "icd11_code": "DA50",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["indigestion", "dyspepsia", "upset stomach", "functional dyspepsia", "icd11 code da50", "icd da50"]
+  },
+  {
+    "id": "DA60_1",
+    "type": "disease",
+    "display_name": "Irritable bowel syndrome",
+    "icd11_code": "DA60",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["IBS", "irritable bowel", "spastic colon", "functional bowel disorder", "code", "icd da60"]
+  },
+  {
+    "id": "DA63_1",
+    "type": "disease",
+    "display_name": "Other functional intestinal disorders",
+    "icd11_code": "DA63",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["functional bowel problems", "intestinal motility disorders", "code", "icd da63"]
+  },
+  {
+    "id": "DA90_1",
+    "type": "disease",
+    "display_name": "Inflammatory bowel disease",
+    "icd11_code": "DA90",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Immunology"],
+    "patient_terms": ["Crohn's disease", "ulcerative colitis", "IBD", "inflammatory bowel disease", "icd11 code da90", "icd da90"]
+  },
+  {
+    "id": "DB10_1",
+    "type": "disease",
+    "display_name": "Celiac disease",
+    "icd11_code": "DB10",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Immunology"],
+    "patient_terms": ["celiac disease", "gluten intolerance", "gluten sensitivity", "celiac sprue", "icd11 code db10", "icd db10"]
+  },
+  {
+    "id": "DB30_1",
+    "type": "disease",
+    "display_name": "Malabsorption syndromes",
+    "icd11_code": "DB30",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Nutrition"],
+    "patient_terms": ["malabsorption", "nutrient absorption problems", "malabsorption syndrome", "icd11 code db30", "icd db30"]
+  },
+  {
+    "id": "DB50_1",
+    "type": "disease",
+    "display_name": "Appendicitis",
+    "icd11_code": "DB50",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery"],
+    "patient_terms": ["appendicitis", "inflamed appendix", "appendix infection", "icd11 code db50", "icd db50"]
+  },
+  {
+    "id": "DB60_1",
+    "type": "disease",
+    "display_name": "Diverticular disease",
+    "icd11_code": "DB60",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["diverticulosis", "diverticulitis", "diverticular disease", "colon pockets", "icd11 code db60", "icd db60"]
+  },
+  {
+    "id": "DB90_1",
+    "type": "disease",
+    "display_name": "Hemorrhoids",
+    "icd11_code": "DB90",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Colorectal Surgery"],
+    "patient_terms": ["hemorrhoids", "piles", "rectal bleeding", "anal swelling", "icd11 code db90", "icd db90"]
+  },
+  {
+    "id": "DC10_1",
+    "type": "disease",
+    "display_name": "Viral hepatitis",
+    "icd11_code": "DC10",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Infectious Diseases", "Hepatology"],
+    "patient_terms": ["hepatitis", "viral hepatitis", "liver inflammation", "hepatitis virus", "icd11 code dc10", "icd dc10"]
+  },
+  {
+    "id": "DC30_1",
+    "type": "disease",
+    "display_name": "Alcoholic liver disease",
+    "icd11_code": "DC30",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Hepatology"],
+    "patient_terms": ["alcoholic liver disease", "alcoholic hepatitis", "alcohol-related liver damage", "icd11 code dc30", "icd dc30"]
+  },
+  {
+    "id": "DC50_1",
+    "type": "disease",
+    "display_name": "Non-alcoholic fatty liver disease",
+    "icd11_code": "DC50",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Hepatology", "Endocrinology"],
+    "patient_terms": ["fatty liver", "NAFLD", "non-alcoholic fatty liver", "liver steatosis", "icd11 code dc50", "icd dc50"]
+  },
+  {
+    "id": "DC70_1",
+    "type": "disease",
+    "display_name": "Cirrhosis",
+    "icd11_code": "DC70",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Hepatology"],
+    "patient_terms": ["cirrhosis", "liver scarring", "end-stage liver disease", "liver cirrhosis", "icd11 code dc70", "icd dc70"]
+  },
+  {
+    "id": "DC72_1",
+    "type": "disease",
+    "display_name": "Liver fibrosis",
+    "icd11_code": "DC72",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Hepatology"],
+    "patient_terms": ["liver fibrosis", "liver scarring", "hepatic fibrosis", "code", "icd dc72"]
+  },
+  {
+    "id": "DC80_1",
+    "type": "disease",
+    "display_name": "Gallbladder diseases",
+    "icd11_code": "DC80",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery"],
+    "patient_terms": ["gallbladder disease", "gallstones", "cholelithiasis", "gallbladder inflammation", "code", "icd dc80"]
+  },
+  {
+    "id": "DC82_1",
+    "type": "disease",
+    "display_name": "Cholecystitis",
+    "icd11_code": "DC82",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery"],
+    "patient_terms": ["cholecystitis", "inflamed gallbladder", "gallbladder infection", "code", "icd dc82"]
+  },
+  {
+    "id": "DC90_1",
+    "type": "disease",
+    "display_name": "Pancreatitis",
+    "icd11_code": "DC90",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["pancreatitis", "inflamed pancreas", "pancreatic inflammation", "code", "icd dc90"]
+  },
+  {
+    "id": "DC90_2",
+    "type": "disease",
+    "display_name": "Diverticular disease of intestine",
+    "icd11_code": "DC90",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["intestinal diverticulosis", "colon diverticula", "diverticular disease", "diverticular disease of unspecified part of intestine z", "icd dc90"]
+  },
+  {
+    "id": "DD00_1",
+    "type": "disease",
+    "display_name": "Intestinal obstruction",
+    "icd11_code": "DD00",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery"],
+    "patient_terms": ["bowel obstruction", "intestinal blockage", "blocked intestine", "ileus", "code", "icd dd00"]
+  },
+  {
+    "id": "DD02_1",
+    "type": "disease",
+    "display_name": "Intestinal perforation",
+    "icd11_code": "DD02",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery"],
+    "patient_terms": ["perforated bowel", "intestinal rupture", "bowel perforation", "code", "icd dd02"]
+  },
+  {
+    "id": "DD30_1",
+    "type": "disease",
+    "display_name": "Peritonitis",
+    "icd11_code": "DD30",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "General Surgery", "Infectious Diseases"],
+    "patient_terms": ["peritonitis", "abdominal lining infection", "peritoneal inflammation", "icd11 code dd30", "icd dd30"]
+  },
+  {
+    "id": "DD50_1",
+    "type": "disease",
+    "display_name": "Gastrointestinal bleeding",
+    "icd11_code": "DD50",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology"],
+    "patient_terms": ["GI bleed", "gastrointestinal bleeding", "stomach bleeding", "intestinal bleeding", "icd11 code dd50", "icd dd50"]
+  },
+  {
+    "id": "DD70_1",
+    "type": "disease",
+    "display_name": "Gastrointestinal infections",
+    "icd11_code": "DD70",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Infectious Diseases"],
+    "patient_terms": ["stomach flu", "gastroenteritis", "intestinal infection", "food poisoning", "icd11 code dd70", "icd dd70"]
+  },
+  {
+    "id": "DD90_1",
+    "type": "disease",
+    "display_name": "Colorectal polyps",
+    "icd11_code": "DD90",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Oncology"],
+    "patient_terms": ["colon polyps", "rectal polyps", "colorectal polyps", "intestinal growths", "icd11 code dd90", "icd dd90"]
+  },
+  {
+    "id": "DE10_1",
+    "type": "disease",
+    "display_name": "Gastrointestinal cancers",
+    "icd11_code": "DE10",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Oncology"],
+    "patient_terms": ["stomach cancer", "colon cancer", "GI cancer", "gastrointestinal malignancy", "code", "icd de10"]
+  },
+  {
+    "id": "DE13_1",
+    "type": "disease",
+    "display_name": "Gastrointestinal stromal tumors",
+    "icd11_code": "DE13",
+    "chapter": "Chapter 13",
+    "research_interests": ["Gastroenterology", "Oncology"],
+    "patient_terms": ["GIST", "gastrointestinal stromal tumor", "digestive tract tumor", "chapter", "icd de13"]
+  },
+  {
+    "id": "EA00_1",
+    "type": "disease",
+    "display_name": "Skin infections",
+    "icd11_code": "EA00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["skin infection", "cutaneous infection", "bacterial skin infection", "ea6y", "icd ea00"]
+  },
+  {
+    "id": "EA00_3",
+    "type": "disease",
+    "display_name": "Viral skin infections",
+    "icd11_code": "EA00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["viral skin infection", "herpes", "shingles", "wart", "ea0y", "icd ea00"]
+  },
+  {
+    "id": "EA10_1",
+    "type": "disease",
+    "display_name": "Fungal skin infections",
+    "icd11_code": "EA10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["fungal infection", "ringworm", "athlete's foot", "yeast infection", "code", "icd ea10"]
+  },
+  {
+    "id": "EA12_1",
+    "type": "disease",
+    "display_name": "Dermatoses from systemic viral infection",
+    "icd11_code": "EA12",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["viral rash", "systemic viral skin manifestations", "bacterial infection", "viral infection"]
+  },
+  {
+    "id": "EA20_1",
+    "type": "disease",
+    "display_name": "Bacterial skin disorders",
+    "icd11_code": "EA20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["bacterial skin disease", "staph infection", "cellulitis", "impetigo", "code", "icd ea20"]
+  },
+  {
+    "id": "EA20_2",
+    "type": "disease",
+    "display_name": "Skin disorders from bacterial infection",
+    "icd11_code": "EA20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Infectious Diseases"],
+    "patient_terms": ["bacterial skin condition", "skin bacterial infection", "bacterial infection", "viral infection"]
+  },
+  {
+    "id": "EA40_1",
+    "type": "disease",
+    "display_name": "Eczema",
+    "icd11_code": "EA40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["eczema", "atopic dermatitis", "dermatitis", "skin inflammation", "icd11 code ea40", "icd ea40"]
+  },
+  {
+    "id": "EA40_3",
+    "type": "disease",
+    "display_name": "Inflammatory dermatoses",
+    "icd11_code": "EA40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["inflammatory skin conditions", "dermatitis", "skin inflammation", "inflammatory dermatoses eb7y", "icd ea40"]
+  },
+  {
+    "id": "EA80_1",
+    "type": "disease",
+    "display_name": "Psoriasis",
+    "icd11_code": "EA80",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology", "Rheumatology"],
+    "patient_terms": ["psoriasis", "scaly skin", "plaques", "skin scaling", "eb7y", "icd ea80"]
+  },
+  {
+    "id": "EA90_1",
+    "type": "disease",
+    "display_name": "Acne",
+    "icd11_code": "EA90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["acne", "pimples", "zits", "breakouts", "code", "icd ea90"]
+  },
+  {
+    "id": "EA95_1",
+    "type": "disease",
+    "display_name": "Urticaria and angioedema",
+    "icd11_code": "EA95",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["hives", "urticaria", "angioedema", "allergic skin reaction", "urticaria angioedema or other urticarial disorders eb0y", "icd ea95"]
+  },
+  {
+    "id": "EB00_1",
+    "type": "disease",
+    "display_name": "Other urticarial disorders",
+    "icd11_code": "EB00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["hives variants", "chronic urticaria", "physical urticaria", "eb0y", "icd eb00"]
+  },
+  {
+    "id": "EB10_1",
+    "type": "disease",
+    "display_name": "Contact dermatitis",
+    "icd11_code": "EB10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["contact dermatitis", "allergic contact dermatitis", "irritant dermatitis", "skin allergy", "code", "icd eb10"]
+  },
+  {
+    "id": "EB31_1",
+    "type": "disease",
+    "display_name": "Neutrophilic dermatoses",
+    "icd11_code": "EB31",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology"],
+    "patient_terms": ["neutrophilic skin disorders", "sweet syndrome", "pyoderma gangrenosum", "neutrophilic dermatoses eb2y", "icd eb31"]
+  },
+  {
+    "id": "EB20_1",
+    "type": "disease",
+    "display_name": "Other inflammatory dermatoses",
+    "icd11_code": "EB20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["inflammatory skin diseases", "dermatitis variants", "eb2y", "icd eb20"]
+  },
+  {
+    "id": "EB40_1",
+    "type": "disease",
+    "display_name": "Autoimmune blistering diseases",
+    "icd11_code": "EB40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology", "Rheumatology"],
+    "patient_terms": ["pemphigus", "bullous pemphigoid", "blistering skin disease", "eb4y", "icd eb40"]
+  },
+  {
+    "id": "EB50_1",
+    "type": "disease",
+    "display_name": "Lichen planus",
+    "icd11_code": "EB50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology"],
+    "patient_terms": ["lichen planus", "purple skin bumps", "lichenoid eruption", "icd11 code eb50", "icd eb50"]
+  },
+  {
+    "id": "EB60_1",
+    "type": "disease",
+    "display_name": "Vitiligo",
+    "icd11_code": "EB60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology"],
+    "patient_terms": ["vitiligo", "white patches", "skin depigmentation", "loss of skin color", "code", "icd eb60"]
+  },
+  {
+    "id": "EB61_1",
+    "type": "disease",
+    "display_name": "Alopecia",
+    "icd11_code": "EB61",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology"],
+    "patient_terms": ["hair loss", "alopecia", "baldness", "hair thinning", "code", "icd eb61"]
+  },
+  {
+    "id": "EB90_1",
+    "type": "disease",
+    "display_name": "Other specified dermatoses",
+    "icd11_code": "EB90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other skin conditions", "miscellaneous dermatoses", "eb9y", "icd eb90"]
+  },
+  {
+    "id": "EC10_1",
+    "type": "disease",
+    "display_name": "Melanoma",
+    "icd11_code": "EC10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["melanoma", "skin cancer", "malignant melanoma", "ec7y", "icd ec10"]
+  },
+  {
+    "id": "EC10_2",
+    "type": "disease",
+    "display_name": "Other skin cancers",
+    "icd11_code": "EC10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["basal cell carcinoma", "squamous cell carcinoma", "non-melanoma skin cancer", "ec1y", "icd ec10"]
+  },
+  {
+    "id": "EC30_1",
+    "type": "disease",
+    "display_name": "Benign skin tumors",
+    "icd11_code": "EC30",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["skin moles", "benign skin growths", "skin tags", "seborrheic keratosis", "icd11 code ec30", "icd ec30"]
+  },
+  {
+    "id": "EC40_1",
+    "type": "disease",
+    "display_name": "Premalignant skin lesions",
+    "icd11_code": "EC40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["actinic keratosis", "precancerous skin lesions", "solar keratosis", "ec4y", "icd ec40"]
+  },
+  {
+    "id": "EC50_1",
+    "type": "disease",
+    "display_name": "Kaposi sarcoma",
+    "icd11_code": "EC50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology", "Infectious Diseases"],
+    "patient_terms": ["kaposi sarcoma", "HIV-related skin cancer", "vascular skin tumor", "ec5y", "icd ec50"]
+  },
+  {
+    "id": "EC90_1",
+    "type": "disease",
+    "display_name": "Other skin neoplasms",
+    "icd11_code": "EC90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["other skin tumors", "miscellaneous skin neoplasms", "ec9y", "icd ec90"]
+  },
+  {
+    "id": "EC90_2",
+    "type": "disease",
+    "display_name": "Dermal neoplasms",
+    "icd11_code": "EC90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["dermal tumors", "skin connective tissue tumors", "ed3y", "icd ec90"]
+  },
+  {
+    "id": "ED00_1",
+    "type": "disease",
+    "display_name": "Lymphomas of skin",
+    "icd11_code": "ED00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology", "Hematology"],
+    "patient_terms": ["cutaneous lymphoma", "skin lymphoma", "mycosis fungoides", "ed2y", "icd ed00"]
+  },
+  {
+    "id": "ED00_2",
+    "type": "disease",
+    "display_name": "Other hematologic skin disorders",
+    "icd11_code": "ED00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Hematology"],
+    "patient_terms": ["blood-related skin conditions", "hematologic dermatoses", "ed0y", "icd ed00"]
+  },
+  {
+    "id": "ED30_1",
+    "type": "disease",
+    "display_name": "Dermal infiltrative disorders",
+    "icd11_code": "ED30",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["dermal infiltration", "skin infiltration disorders", "ed3y", "icd ed30"]
+  },
+  {
+    "id": "ED50_1",
+    "type": "disease",
+    "display_name": "Ichthyosis",
+    "icd11_code": "ED50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Genetics"],
+    "patient_terms": ["ichthyosis", "fish scale disease", "scaly skin disorder", "code", "icd ed50"]
+  },
+  {
+    "id": "EG02_1",
+    "type": "disease",
+    "display_name": "Disorders of epidermis and appendages",
+    "icd11_code": "EG02",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["epidermal disorders", "skin appendage problems", "nail disorders", "hair disorders", "disorders of the epidermis and epidermal appendages", "icd eg02"]
+  },
+  {
+    "id": "EE21_1",
+    "type": "disease",
+    "display_name": "Disorders of epidermal keratinisation",
+    "icd11_code": "EE21",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["keratinisation disorders", "skin scaling conditions", "disorders of epidermal keratinisation ed5y", "icd ee21"]
+  },
+  {
+    "id": "ED50_3",
+    "type": "disease",
+    "display_name": "Other keratinisation disorders",
+    "icd11_code": "ED50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["keratinisation abnormalities", "skin cornification disorders", "ed5y", "icd ed50"]
+  },
+  {
+    "id": "ED60_1",
+    "type": "disease",
+    "display_name": "Palmoplantar keratoderma",
+    "icd11_code": "ED60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Genetics"],
+    "patient_terms": ["palmoplantar keratoderma", "thickened palms and soles", "ed6y", "icd ed60"]
+  },
+  {
+    "id": "ED70_1",
+    "type": "disease",
+    "display_name": "Other specified epidermal disorders",
+    "icd11_code": "ED70",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other epidermal conditions", "miscellaneous skin surface disorders", "ed7y", "icd ed70"]
+  },
+  {
+    "id": "ED80_1",
+    "type": "disease",
+    "display_name": "Disorders of dermis",
+    "icd11_code": "ED80",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["dermal disorders", "skin connective tissue diseases", "ed9y", "icd ed80"]
+  },
+  {
+    "id": "ED81_1",
+    "type": "disease",
+    "display_name": "Other dermal conditions",
+    "icd11_code": "ED81",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other dermal problems", "miscellaneous skin tissue disorders", "code", "icd ed81"]
+  },
+  {
+    "id": "EE00_1",
+    "type": "disease",
+    "display_name": "Connective tissue disorders of skin",
+    "icd11_code": "EE00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Rheumatology"],
+    "patient_terms": ["skin connective tissue diseases", "dermal collagen disorders", "ee0y", "icd ee00"]
+  },
+  {
+    "id": "EE10_1",
+    "type": "disease",
+    "display_name": "Scleroderma",
+    "icd11_code": "EE10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Rheumatology"],
+    "patient_terms": ["scleroderma", "systemic sclerosis", "hardened skin", "icd11 code ee10", "icd ee10"]
+  },
+  {
+    "id": "EE20_1",
+    "type": "disease",
+    "display_name": "Lupus erythematosus",
+    "icd11_code": "EE20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Rheumatology", "Immunology"],
+    "patient_terms": ["lupus", "cutaneous lupus", "discoid lupus", "code", "icd ee20"]
+  },
+  {
+    "id": "EE21_2",
+    "type": "disease",
+    "display_name": "Disorders of dermis or subcutis",
+    "icd11_code": "EE21",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["dermal and subcutaneous disorders", "skin tissue diseases", "disorders of the dermis or subcutis ef0y", "icd ee21"]
+  },
+  {
+    "id": "EE40_1",
+    "type": "disease",
+    "display_name": "Other connective tissue skin disorders",
+    "icd11_code": "EE40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Rheumatology"],
+    "patient_terms": ["other skin connective tissue conditions", "ee7y", "icd ee40"]
+  },
+  {
+    "id": "EE40_2",
+    "type": "disease",
+    "display_name": "Vasculitis of skin",
+    "icd11_code": "EE40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Rheumatology", "Immunology"],
+    "patient_terms": ["cutaneous vasculitis", "skin blood vessel inflammation", "ef0y", "icd ee40"]
+  },
+  {
+    "id": "EE50_1",
+    "type": "disease",
+    "display_name": "Fibromatoses and keloids",
+    "icd11_code": "EE50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["keloids", "scar tissue overgrowth", "fibromatoses", "excessive scarring", "code", "icd ee50"]
+  },
+  {
+    "id": "EE50_2",
+    "type": "disease",
+    "display_name": "Specific fibromatoses",
+    "icd11_code": "EE50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["fibromatoses or keloids", "scarring disorders", "icd ee50"]
+  },
+  {
+    "id": "EE60_1",
+    "type": "disease",
+    "display_name": "Granulomatous skin diseases",
+    "icd11_code": "EE60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Immunology"],
+    "patient_terms": ["granulomatous skin conditions", "sarcoidosis of skin", "skin granulomas", "icd11 code ee60", "icd ee60"]
+  },
+  {
+    "id": "EE80_1",
+    "type": "disease",
+    "display_name": "Other specified dermal disorders",
+    "icd11_code": "EE80",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other skin tissue disorders", "miscellaneous dermal conditions", "icd11 code ee80", "icd ee80"]
+  },
+  {
+    "id": "EE90_1",
+    "type": "disease",
+    "display_name": "Disorders of subcutaneous tissue",
+    "icd11_code": "EE90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["subcutaneous disorders", "fat tissue skin conditions", "panniculitis", "code", "icd ee90"]
+  },
+  {
+    "id": "EE91_1",
+    "type": "disease",
+    "display_name": "Other subcutaneous conditions",
+    "icd11_code": "EE91",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other fat tissue disorders", "miscellaneous subcutaneous problems", "code", "icd ee91"]
+  },
+  {
+    "id": "EF00_1",
+    "type": "disease",
+    "display_name": "Other specified skin disorders",
+    "icd11_code": "EF00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other skin conditions", "miscellaneous dermatologic disorders", "ef0y", "icd ef00"]
+  },
+  {
+    "id": "EF20_1",
+    "type": "disease",
+    "display_name": "Disorders of skin pigmentation",
+    "icd11_code": "EF20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["skin pigmentation disorders", "melanin abnormalities", "hyperpigmentation", "hypopigmentation", "code", "icd ef20"]
+  },
+  {
+    "id": "EG02_2",
+    "type": "disease",
+    "display_name": "Cutaneous vascular malformations",
+    "icd11_code": "EG02",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Vascular Medicine"],
+    "patient_terms": ["skin blood vessel malformations", "vascular birthmarks", "hemangiomas", "port-wine stains", "malformations involving cutaneous blood vessels", "icd eg02"]
+  },
+  {
+    "id": "EF20_2",
+    "type": "disease",
+    "display_name": "Specific pigmentation disorders",
+    "icd11_code": "EF20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["pigmentary skin conditions", "melasma", "post-inflammatory hyperpigmentation", "icd11 code ef20", "icd ef20"]
+  },
+  {
+    "id": "EF30_1",
+    "type": "disease",
+    "display_name": "Melasma",
+    "icd11_code": "EF30",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Endocrinology"],
+    "patient_terms": ["melasma", "chloasma", "pregnancy mask", "facial hyperpigmentation", "icd11 code ef30", "icd ef30"]
+  },
+  {
+    "id": "EF50_1",
+    "type": "disease",
+    "display_name": "Other pigmentary disorders",
+    "icd11_code": "EF50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other pigmentation conditions", "miscellaneous color changes", "ef5y", "icd ef50"]
+  },
+  {
+    "id": "EF60_1",
+    "type": "disease",
+    "display_name": "Disorders of hair and hair follicles",
+    "icd11_code": "EF60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["hair follicle disorders", "folliculitis", "hair growth problems", "ef9y", "icd ef60"]
+  },
+  {
+    "id": "EF70_1",
+    "type": "disease",
+    "display_name": "Disorders of nails",
+    "icd11_code": "EF70",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["nail disorders", "nail diseases", "onychomycosis", "nail psoriasis", "icd11 code ef70", "icd ef70"]
+  },
+  {
+    "id": "EG00_1",
+    "type": "disease",
+    "display_name": "Disorders of sebaceous glands",
+    "icd11_code": "EG00",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["sebaceous gland disorders", "seborrhea", "oily skin conditions", "code", "icd eg00"]
+  },
+  {
+    "id": "EG02_3",
+    "type": "disease",
+    "display_name": "Skin disorders of specific body regions",
+    "icd11_code": "EG02",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["regional skin disorders", "localized skin conditions", "hand eczema", "foot dermatitis", "skin disorders involving certain specific body regions", "icd eg02"]
+  },
+  {
+    "id": "EG30_1",
+    "type": "disease",
+    "display_name": "Disorders of sweat glands",
+    "icd11_code": "EG30",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["sweat gland disorders", "hyperhidrosis", "excessive sweating", "anhidrosis", "icd11 code eg30", "icd eg30"]
+  },
+  {
+    "id": "EG40_1",
+    "type": "disease",
+    "display_name": "Aging skin conditions",
+    "icd11_code": "EG40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Geriatrics"],
+    "patient_terms": ["aging skin", "photoaging", "wrinkles", "skin aging disorders", "icd11 code eg40", "icd eg40"]
+  },
+  {
+    "id": "EG60_1",
+    "type": "disease",
+    "display_name": "Genetic skin disorders",
+    "icd11_code": "EG60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Genetics"],
+    "patient_terms": ["inherited skin conditions", "genetic dermatoses", "epidermolysis bullosa", "eg7y", "icd eg60"]
+  },
+  {
+    "id": "EG63_1",
+    "type": "disease",
+    "display_name": "Other genetic skin diseases",
+    "icd11_code": "EG63",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Genetics"],
+    "patient_terms": ["other hereditary skin disorders", "miscellaneous genetic dermatoses", "code", "icd eg63"]
+  },
+  {
+    "id": "EH10_1",
+    "type": "disease",
+    "display_name": "Skin manifestations of systemic diseases",
+    "icd11_code": "EH10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Internal Medicine"],
+    "patient_terms": ["skin signs of internal disease", "systemic disease skin manifestations", "code", "icd eh10"]
+  },
+  {
+    "id": "EH40_1",
+    "type": "disease",
+    "display_name": "Other systemic skin manifestations",
+    "icd11_code": "EH40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Internal Medicine"],
+    "patient_terms": ["other internal disease skin signs", "miscellaneous systemic dermatoses", "code", "icd eh40"]
+  },
+  {
+    "id": "EH10_3",
+    "type": "disease",
+    "display_name": "Endocrine-related skin disorders",
+    "icd11_code": "EH10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Endocrinology"],
+    "patient_terms": ["endocrine skin manifestations", "hormone-related skin conditions", "icd11 code eh10", "icd eh10"]
+  },
+  {
+    "id": "EH60_1",
+    "type": "disease",
+    "display_name": "Nutritional skin disorders",
+    "icd11_code": "EH60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Nutrition"],
+    "patient_terms": ["nutritional deficiency skin signs", "vitamin deficiency skin changes", "icd11 code eh60", "icd eh60"]
+  },
+  {
+    "id": "EH90_1",
+    "type": "disease",
+    "display_name": "Other metabolic skin disorders",
+    "icd11_code": "EH90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Metabolism"],
+    "patient_terms": ["metabolic skin conditions", "biochemical skin disorders", "ek5y", "icd eh90"]
+  },
+  {
+    "id": "EJ10_1",
+    "type": "disease",
+    "display_name": "Drug eruptions",
+    "icd11_code": "EJ10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["drug rash", "medication skin reaction", "drug allergy skin", "ej1y", "icd ej10"]
+  },
+  {
+    "id": "EJ20_1",
+    "type": "disease",
+    "display_name": "Other adverse skin reactions",
+    "icd11_code": "EJ20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["adverse skin reactions", "skin side effects", "ej6y", "icd ej20"]
+  },
+  {
+    "id": "EJ20_2",
+    "type": "disease",
+    "display_name": "Specific drug reactions",
+    "icd11_code": "EJ20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Allergy and Immunology"],
+    "patient_terms": ["specific medication skin reactions", "ej2y", "icd ej20"]
+  },
+  {
+    "id": "EJ40_1",
+    "type": "disease",
+    "display_name": "Radiation skin reactions",
+    "icd11_code": "EJ40",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology", "Radiation Oncology"],
+    "patient_terms": ["radiation dermatitis", "skin radiation damage", "radiotherapy skin reaction", "icd11 code ej40", "icd ej40"]
+  },
+  {
+    "id": "EJ71_1",
+    "type": "disease",
+    "display_name": "Other physical agent skin damage",
+    "icd11_code": "EJ71",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["physical agent skin injury", "environmental skin damage", "icd11 code ej71", "icd ej71"]
+  },
+  {
+    "id": "EK20_1",
+    "type": "disease",
+    "display_name": "Skin disorders in pregnancy",
+    "icd11_code": "EK20",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Obstetrics"],
+    "patient_terms": ["pregnancy skin conditions", "gestational dermatoses", "pruritic urticarial papules", "icd11 code ek20", "icd ek20"]
+  },
+  {
+    "id": "EK70_1",
+    "type": "disease",
+    "display_name": "Infant skin disorders",
+    "icd11_code": "EK70",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Pediatrics"],
+    "patient_terms": ["newborn skin conditions", "infant dermatoses", "neonatal skin disorders", "code", "icd ek70"]
+  },
+  {
+    "id": "EK71_1",
+    "type": "disease",
+    "display_name": "Other pediatric skin conditions",
+    "icd11_code": "EK71",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Pediatrics"],
+    "patient_terms": ["other childhood skin disorders", "pediatric dermatology", "code", "icd ek71"]
+  },
+  {
+    "id": "EK90_1",
+    "type": "disease",
+    "display_name": "Geriatric skin disorders",
+    "icd11_code": "EK90",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Geriatrics"],
+    "patient_terms": ["elderly skin conditions", "aging skin problems", "geriatric dermatology", "code", "icd ek90"]
+  },
+  {
+    "id": "EK92_1",
+    "type": "disease",
+    "display_name": "Cutaneous markers of internal disorders",
+    "icd11_code": "EK92",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Internal Medicine"],
+    "patient_terms": ["skin signs of internal disease", "dermatologic clues to systemic illness", "cutaneous markers of internal disorders el3y", "icd ek92"]
+  },
+  {
+    "id": "EL10_1",
+    "type": "disease",
+    "display_name": "Specific internal disease skin signs",
+    "icd11_code": "EL10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Internal Medicine"],
+    "patient_terms": ["specific systemic disease skin manifestations", "el3y", "icd el10"]
+  },
+  {
+    "id": "EL10_2",
+    "type": "disease",
+    "display_name": "Other internal markers",
+    "icd11_code": "EL10",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Internal Medicine"],
+    "patient_terms": ["other systemic disease skin clues", "el1y", "icd el10"]
+  },
+  {
+    "id": "EL50_1",
+    "type": "disease",
+    "display_name": "Skin changes in malignancy",
+    "icd11_code": "EL50",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Oncology"],
+    "patient_terms": ["cancer-related skin changes", "paraneoplastic dermatoses", "malignancy skin signs", "code", "icd el50"]
+  },
+  {
+    "id": "EL80_1",
+    "type": "disease",
+    "display_name": "Adverse cutaneous effects of radiation",
+    "icd11_code": "EL80",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Radiation Oncology"],
+    "patient_terms": ["radiation skin damage", "therapeutic radiation skin effects", "adverse cutaneous effects of therapeutic ionizing irradiation", "icd el80"]
+  },
+  {
+    "id": "EL60_1",
+    "type": "disease",
+    "display_name": "Cosmetic procedure complications",
+    "icd11_code": "EL60",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Cosmetic Surgery"],
+    "patient_terms": ["cosmetic treatment complications", "aesthetic procedure side effects", "code", "icd el60"]
+  },
+  {
+    "id": "EL63_1",
+    "type": "disease",
+    "display_name": "Specific cosmetic complications",
+    "icd11_code": "EL63",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology", "Cosmetic Surgery"],
+    "patient_terms": ["cosmetic procedure problems", "aesthetic treatment complications", "complications of cutaneous cosmetic procedures", "icd el63"]
+  },
+  {
+    "id": "EL73_1",
+    "type": "disease",
+    "display_name": "Other treatment complications",
+    "icd11_code": "EL73",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["other treatment side effects", "miscellaneous procedure complications", "code", "icd el73"]
+  },
+  {
+    "id": "EL73.6_1",
+    "type": "disease",
+    "display_name": "Complications summary",
+    "icd11_code": "EL73.6",
+    "chapter": "Chapter 14",
+    "research_interests": ["Dermatology"],
+    "patient_terms": ["treatment complication overview", "procedure side effects summary", "chapter", "icd el73.6"]
+  },
+  {
+    "id": "FA00_1",
+    "type": "disease",
+    "display_name": "Arthritis",
+    "icd11_code": "FA00",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["arthritis", "joint inflammation", "arthritic pain", "joint swelling", "icd11 code fa00", "icd fa00"]
+  },
+  {
+    "id": "FA10_1",
+    "type": "disease",
+    "display_name": "Rheumatoid arthritis",
+    "icd11_code": "FA10",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology", "Immunology"],
+    "patient_terms": ["rheumatoid arthritis", "RA", "autoimmune arthritis", "inflammatory arthritis", "icd11 code fa10", "icd fa10"]
+  },
+  {
+    "id": "FA20_1",
+    "type": "disease",
+    "display_name": "Osteoarthritis",
+    "icd11_code": "FA20",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Orthopedics", "Rheumatology"],
+    "patient_terms": ["osteoarthritis", "degenerative arthritis", "wear-and-tear arthritis", "joint degeneration", "icd11 code fa20", "icd fa20"]
+  },
+  {
+    "id": "FA30_1",
+    "type": "disease",
+    "display_name": "Spondyloarthritis",
+    "icd11_code": "FA30",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["spondyloarthritis", "ankylosing spondylitis", "spinal arthritis", "back arthritis", "icd11 code fa30", "icd fa30"]
+  },
+  {
+    "id": "FA70_1",
+    "type": "disease",
+    "display_name": "Gout",
+    "icd11_code": "FA70",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology", "Metabolism"],
+    "patient_terms": ["gout", "gouty arthritis", "uric acid arthritis", "crystal arthritis", "icd11 code fa70", "icd fa70"]
+  },
+  {
+    "id": "FA80_1",
+    "type": "disease",
+    "display_name": "Other crystal arthropathies",
+    "icd11_code": "FA80",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["other crystal arthritis", "pseudogout", "calcium pyrophosphate disease", "icd11 code fa80", "icd fa80"]
+  },
+  {
+    "id": "FA90_1",
+    "type": "disease",
+    "display_name": "Systemic connective tissue disorders",
+    "icd11_code": "FA90",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology", "Immunology"],
+    "patient_terms": ["connective tissue diseases", "systemic autoimmune disorders", "lupus", "scleroderma", "icd11 code fa90", "icd fa90"]
+  },
+  {
+    "id": "FB00_1",
+    "type": "disease",
+    "display_name": "Systemic lupus erythematosus",
+    "icd11_code": "FB00",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology", "Immunology"],
+    "patient_terms": ["lupus", "SLE", "systemic lupus", "autoimmune lupus", "icd11 code fb00", "icd fb00"]
+  },
+  {
+    "id": "FB30_1",
+    "type": "disease",
+    "display_name": "Systemic sclerosis",
+    "icd11_code": "FB30",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["scleroderma", "systemic sclerosis", "hardened skin disease", "connective tissue hardening", "icd11 code fb30", "icd fb30"]
+  },
+  {
+    "id": "FB40_1",
+    "type": "disease",
+    "display_name": "Sjögren's syndrome",
+    "icd11_code": "FB40",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology", "Immunology"],
+    "patient_terms": ["sjögren's syndrome", "sicca syndrome", "dry mouth and eyes", "autoimmune exocrinopathy", "icd11 code fb40", "icd fb40"]
+  },
+  {
+    "id": "FB50_1",
+    "type": "disease",
+    "display_name": "Other systemic disorders",
+    "icd11_code": "FB50",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["other systemic conditions", "miscellaneous connective tissue diseases", "code", "icd fb50"]
+  },
+  {
+    "id": "FB56.6_1",
+    "type": "disease",
+    "display_name": "Osteopathies and chondropathies",
+    "icd11_code": "FB56.6",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Orthopedics"],
+    "patient_terms": ["bone diseases", "cartilage disorders", "osteopathies or chondropathies", "icd fb56.6"]
+  },
+  {
+    "id": "FB80_1",
+    "type": "disease",
+    "display_name": "Other specified arthropathies",
+    "icd11_code": "FB80",
+    "chapter": "Chapter 15",
+    "research_interests": ["Musculoskeletal Medicine", "Rheumatology"],
+    "patient_terms": ["other arthritis types", "miscellaneous joint disorders", "icd11 code fb80", "icd fb80"]
+  },
+  {
+    "id": "GA00_1",
+    "type": "disease",
+    "display_name": "Kidney diseases",
+    "icd11_code": "GA00",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["kidney disease", "renal disorders", "kidney problems", "renal disease", "icd11 code ga00", "icd ga00"]
+  },
+  {
+    "id": "GA12_1",
+    "type": "disease",
+    "display_name": "Glomerular diseases",
+    "icd11_code": "GA12",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["glomerular disease", "glomerulonephritis", "kidney filter problems", "icd11 code ga12", "icd ga12"]
+  },
+  {
+    "id": "GA20_1",
+    "type": "disease",
+    "display_name": "Tubulointerstitial diseases",
+    "icd11_code": "GA20",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["tubulointerstitial disease", "kidney tubule disorders", "interstitial nephritis", "icd11 code ga20", "icd ga20"]
+  },
+  {
+    "id": "GA40_1",
+    "type": "disease",
+    "display_name": "Other kidney disorders",
+    "icd11_code": "GA40",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["other kidney conditions", "miscellaneous renal disorders", "ga4y", "icd ga40"]
+  },
+  {
+    "id": "GA80_1",
+    "type": "disease",
+    "display_name": "Kidney failure",
+    "icd11_code": "GA80",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["kidney failure", "renal failure", "end-stage renal disease", "kidney shutdown", "icd11 code ga80", "icd ga80"]
+  },
+  {
+    "id": "GA81_1",
+    "type": "disease",
+    "display_name": "Other kidney failure types",
+    "icd11_code": "GA81",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Nephrology"],
+    "patient_terms": ["other renal failure", "miscellaneous kidney failure", "code", "icd ga81"]
+  },
+  {
+    "id": "GA90_1",
+    "type": "disease",
+    "display_name": "Urinary tract infections",
+    "icd11_code": "GA90",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Infectious Diseases"],
+    "patient_terms": ["UTI", "urinary tract infection", "bladder infection", "kidney infection", "code", "icd ga90"]
+  },
+  {
+    "id": "GA91_1",
+    "type": "disease",
+    "display_name": "Other urinary infections",
+    "icd11_code": "GA91",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Infectious Diseases"],
+    "patient_terms": ["other urinary infections", "miscellaneous UTI", "code", "icd ga91"]
+  },
+  {
+    "id": "GB20_1",
+    "type": "disease",
+    "display_name": "Other urinary disorders",
+    "icd11_code": "GB20",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["other urinary conditions", "miscellaneous urologic disorders", "gb2y", "icd gb20"]
+  },
+  {
+    "id": "GB40_1",
+    "type": "disease",
+    "display_name": "Urinary stones",
+    "icd11_code": "GB40",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["kidney stones", "urinary calculi", "nephrolithiasis", "bladder stones", "icd11 code gb40", "icd gb40"]
+  },
+  {
+    "id": "GB50_1",
+    "type": "disease",
+    "display_name": "Urinary incontinence",
+    "icd11_code": "GB50",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Geriatrics"],
+    "patient_terms": ["urinary incontinence", "bladder control problems", "leakage", "involuntary urination", "icd11 code gb50", "icd gb50"]
+  },
+  {
+    "id": "GB60_1",
+    "type": "disease",
+    "display_name": "Overactive bladder",
+    "icd11_code": "GB60",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["overactive bladder", "OAB", "urgency frequency syndrome", "bladder spasms", "icd11 code gb60", "icd gb60"]
+  },
+  {
+    "id": "GB70_1",
+    "type": "disease",
+    "display_name": "Neurogenic bladder",
+    "icd11_code": "GB70",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Neurology"],
+    "patient_terms": ["neurogenic bladder", "nerve-related bladder problems", "neurologic bladder", "icd11 code gb70", "icd gb70"]
+  },
+  {
+    "id": "GB80_1",
+    "type": "disease",
+    "display_name": "Other bladder disorders",
+    "icd11_code": "GB80",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["other bladder conditions", "miscellaneous bladder disorders", "icd11 code gb80", "icd gb80"]
+  },
+  {
+    "id": "GC00_1",
+    "type": "disease",
+    "display_name": "Other specified urologic disorders",
+    "icd11_code": "GC00",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["other urologic conditions", "miscellaneous urinary disorders", "gc0y", "icd gc00"]
+  },
+  {
+    "id": "GC40_1",
+    "type": "disease",
+    "display_name": "Prostate diseases",
+    "icd11_code": "GC40",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["prostate disease", "prostate problems", "prostatic disorders", "icd11 code gc40", "icd gc40"]
+  },
+  {
+    "id": "GC51_1",
+    "type": "disease",
+    "display_name": "Other prostate conditions",
+    "icd11_code": "GC51",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology"],
+    "patient_terms": ["other prostate disorders", "miscellaneous prostatic diseases", "code", "icd gc51"]
+  },
+  {
+    "id": "GC70_1",
+    "type": "disease",
+    "display_name": "Prostate cancer",
+    "icd11_code": "GC70",
+    "chapter": "Chapter 16",
+    "research_interests": ["Urology", "Oncology"],
+    "patient_terms": ["prostate cancer", "prostatic carcinoma", "prostate malignancy", "gc7c", "icd gc70"]
+  },
+  {
+    "id": "HA00_1",
+    "type": "disease",
+    "display_name": "Menstrual disorders",
+    "icd11_code": "HA00",
+    "chapter": "Chapter 17",
+    "research_interests": ["Gynecology", "Endocrinology"],
+    "patient_terms": ["menstrual problems", "period disorders", "abnormal menstruation", "menstrual irregularities", "icd11 code ha00", "icd ha00"]
+  },
+  {
+    "id": "HA20_1",
+    "type": "disease",
+    "display_name": "Polycystic ovary syndrome",
+    "icd11_code": "HA20",
+    "chapter": "Chapter 17",
+    "research_interests": ["Gynecology", "Endocrinology"],
+    "patient_terms": ["PCOS", "polycystic ovary syndrome", "hormonal imbalance", "ovarian cysts", "icd11 code ha20", "icd ha20"]
+  },
+  {
+    "id": "HA60_1",
+    "type": "disease",
+    "display_name": "Menopause disorders",
+    "icd11_code": "HA60",
+    "chapter": "Chapter 17",
+    "research_interests": ["Gynecology", "Geriatrics"],
+    "patient_terms": ["menopause", "menopausal symptoms", "hot flashes", "postmenopausal disorders", "icd11 code ha60", "icd ha60"]
+  },
+  {
+    "id": "JA00_1",
+    "type": "disease",
+    "display_name": "Pregnancy complications",
+    "icd11_code": "JA00",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics"],
+    "patient_terms": ["pregnancy problems", "gestational complications", "maternal complications", "icd11 code ja00", "icd ja00"]
+  },
+  {
+    "id": "JA20_1",
+    "type": "disease",
+    "display_name": "Hypertensive disorders in pregnancy",
+    "icd11_code": "JA20",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics", "Cardiology"],
+    "patient_terms": ["pregnancy hypertension", "preeclampsia", "gestational hypertension", "toxemia", "icd11 code ja20", "icd ja20"]
+  },
+  {
+    "id": "JA40_1",
+    "type": "disease",
+    "display_name": "Diabetes in pregnancy",
+    "icd11_code": "JA40",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics", "Endocrinology"],
+    "patient_terms": ["gestational diabetes", "pregnancy diabetes", "maternal diabetes", "icd11 code ja40", "icd ja40"]
+  },
+  {
+    "id": "JA60_1",
+    "type": "disease",
+    "display_name": "Infections in pregnancy",
+    "icd11_code": "JA60",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics", "Infectious Diseases"],
+    "patient_terms": ["pregnancy infections", "maternal infections", "gestational infections", "icd11 code ja60", "icd ja60"]
+  },
+  {
+    "id": "JA80_1",
+    "type": "disease",
+    "display_name": "Other maternal disorders",
+    "icd11_code": "JA80",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics"],
+    "patient_terms": ["other pregnancy conditions", "miscellaneous maternal disorders", "icd11 code ja80", "icd ja80"]
+  },
+  {
+    "id": "JB00_1",
+    "type": "disease",
+    "display_name": "Labor complications",
+    "icd11_code": "JB00",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics"],
+    "patient_terms": ["labor problems", "delivery complications", "birth difficulties", "icd11 code jb00", "icd jb00"]
+  },
+  {
+    "id": "JB20_1",
+    "type": "disease",
+    "display_name": "Preterm labor",
+    "icd11_code": "JB20",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics", "Neonatology"],
+    "patient_terms": ["premature labor", "preterm birth", "early delivery", "icd11 code jb20", "icd jb20"]
+  },
+  {
+    "id": "JB40_1",
+    "type": "disease",
+    "display_name": "Prolonged pregnancy",
+    "icd11_code": "JB40",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics"],
+    "patient_terms": ["post-term pregnancy", "prolonged gestation", "overdue pregnancy", "icd11 code jb40", "icd jb40"]
+  },
+  {
+    "id": "JB60_1",
+    "type": "disease",
+    "display_name": "Other labor disorders",
+    "icd11_code": "JB60",
+    "chapter": "Chapter 18",
+    "research_interests": ["Obstetrics"],
+    "patient_terms": ["other delivery problems", "miscellaneous labor complications", "icd11 code jb60", "icd jb60"]
+  },
+  {
+    "id": "KA00_1",
+    "type": "disease",
+    "display_name": "Neonatal disorders",
+    "icd11_code": "KA00",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neonatology"],
+    "patient_terms": ["newborn disorders", "neonatal conditions", "infant health problems", "icd11 code ka00", "icd ka00"]
+  },
+  {
+    "id": "KA20_1",
+    "type": "disease",
+    "display_name": "Perinatal infections",
+    "icd11_code": "KA20",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neonatology", "Infectious Diseases"],
+    "patient_terms": ["newborn infections", "perinatal infections", "congenital infections", "icd11 code ka20", "icd ka20"]
+  },
+  {
+    "id": "KA40_1",
+    "type": "disease",
+    "display_name": "Neonatal respiratory disorders",
+    "icd11_code": "KA40",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neonatology", "Pulmonology"],
+    "patient_terms": ["newborn breathing problems", "neonatal respiratory distress", "infant lung disorders", "icd11 code ka40", "icd ka40"]
+  },
+  {
+    "id": "KA60_1",
+    "type": "disease",
+    "display_name": "Neonatal jaundice",
+    "icd11_code": "KA60",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neonatology"],
+    "patient_terms": ["newborn jaundice", "neonatal hyperbilirubinemia", "infant yellowing", "icd11 code ka60", "icd ka60"]
+  },
+  {
+    "id": "KA80_1",
+    "type": "disease",
+    "display_name": "Other neonatal disorders",
+    "icd11_code": "KA80",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neonatology"],
+    "patient_terms": ["other newborn conditions", "miscellaneous neonatal disorders", "icd11 code ka80", "icd ka80"]
+  },
+  {
+    "id": "KB00_1",
+    "type": "disease",
+    "display_name": "Congenital malformations",
+    "icd11_code": "KB00",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Genetics"],
+    "patient_terms": ["birth defects", "congenital anomalies", "structural birth abnormalities", "icd11 code kb00", "icd kb00"]
+  },
+  {
+    "id": "KB20_1",
+    "type": "disease",
+    "display_name": "Chromosomal abnormalities",
+    "icd11_code": "KB20",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Genetics"],
+    "patient_terms": ["chromosomal disorders", "genetic syndromes", "Down syndrome", "icd11 code kb20", "icd kb20"]
+  },
+  {
+    "id": "KB40_1",
+    "type": "disease",
+    "display_name": "Congenital heart defects",
+    "icd11_code": "KB40",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Cardiology"],
+    "patient_terms": ["congenital heart disease", "heart birth defects", "cardiac anomalies", "icd11 code kb40", "icd kb40"]
+  },
+  {
+    "id": "KB60_1",
+    "type": "disease",
+    "display_name": "Congenital nervous system defects",
+    "icd11_code": "KB60",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Neurology"],
+    "patient_terms": ["neural tube defects", "spina bifida", "congenital brain abnormalities", "icd11 code kb60", "icd kb60"]
+  },
+  {
+    "id": "KB80_1",
+    "type": "disease",
+    "display_name": "Other congenital malformations",
+    "icd11_code": "KB80",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Genetics"],
+    "patient_terms": ["other birth defects", "miscellaneous congenital anomalies", "icd11 code kb80", "icd kb80"]
+  },
+  {
+    "id": "KC00_1",
+    "type": "disease",
+    "display_name": "Childhood infectious diseases",
+    "icd11_code": "KC00",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Infectious Diseases"],
+    "patient_terms": ["childhood infections", "pediatric infectious diseases", "kids' infections", "icd11 code kc00", "icd kc00"]
+  },
+  {
+    "id": "KC20_1",
+    "type": "disease",
+    "display_name": "Vaccine-preventable diseases",
+    "icd11_code": "KC20",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Infectious Diseases", "Public Health"],
+    "patient_terms": ["vaccine-preventable illnesses", "childhood vaccine diseases", "measles", "mumps", "icd11 code kc20", "icd kc20"]
+  },
+  {
+    "id": "KC30_1",
+    "type": "disease",
+    "display_name": "Other childhood infections",
+    "icd11_code": "KC30",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Infectious Diseases"],
+    "patient_terms": ["other pediatric infections", "miscellaneous childhood illnesses", "kc3y", "icd kc30"]
+  },
+  {
+    "id": "KC50_1",
+    "type": "disease",
+    "display_name": "Childhood respiratory diseases",
+    "icd11_code": "KC50",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Pulmonology"],
+    "patient_terms": ["pediatric respiratory disorders", "childhood lung diseases", "asthma in children", "kc7y", "icd kc50"]
+  },
+  {
+    "id": "KC50_2",
+    "type": "disease",
+    "display_name": "Specific pediatric respiratory conditions",
+    "icd11_code": "KC50",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Pulmonology"],
+    "patient_terms": ["specific childhood breathing problems", "pediatric lung disorders", "icd11 code kc50", "icd kc50"]
+  },
+  {
+    "id": "KD10_1",
+    "type": "disease",
+    "display_name": "Childhood gastrointestinal disorders",
+    "icd11_code": "KD10",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics", "Gastroenterology"],
+    "patient_terms": ["pediatric GI disorders", "childhood digestive problems", "kids' stomach issues", "icd11 code kd10", "icd kd10"]
+  },
+  {
+    "id": "KD30_1",
+    "type": "disease",
+    "display_name": "Other pediatric disorders",
+    "icd11_code": "KD30",
+    "chapter": "Chapter 19",
+    "research_interests": ["Pediatrics"],
+    "patient_terms": ["other childhood conditions", "miscellaneous pediatric disorders", "kd3y", "icd kd30"]
+  },
+  {
+    "id": "LA00_1",
+    "type": "disease",
+    "display_name": "Geriatric syndromes",
+    "icd11_code": "LA00",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["geriatric syndromes", "elderly health problems", "aging-related conditions", "icd11 code la00", "icd la00"]
+  },
+  {
+    "id": "LA10_1",
+    "type": "disease",
+    "display_name": "Frailty",
+    "icd11_code": "LA10",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["frailty", "elderly frailty", "aging weakness", "geriatric decline", "icd11 code la10", "icd la10"]
+  },
+  {
+    "id": "LA20_1",
+    "type": "disease",
+    "display_name": "Sarcopenia",
+    "icd11_code": "LA20",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Nutrition"],
+    "patient_terms": ["sarcopenia", "muscle loss with aging", "elderly muscle wasting", "age-related muscle loss", "icd11 code la20", "icd la20"]
+  },
+  {
+    "id": "LA30_1",
+    "type": "disease",
+    "display_name": "Geriatric falls",
+    "icd11_code": "LA30",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["elderly falls", "geriatric fall risk", "aging balance problems", "icd11 code la30", "icd la30"]
+  },
+  {
+    "id": "LA40_1",
+    "type": "disease",
+    "display_name": "Cognitive decline",
+    "icd11_code": "LA40",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Neurology"],
+    "patient_terms": ["cognitive decline", "age-related memory loss", "elderly cognitive impairment", "icd11 code la40", "icd la40"]
+  },
+  {
+    "id": "LA60_1",
+    "type": "disease",
+    "display_name": "Geriatric nutrition disorders",
+    "icd11_code": "LA60",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Nutrition"],
+    "patient_terms": ["elderly nutrition problems", "geriatric malnutrition", "aging nutritional disorders", "icd11 code la60", "icd la60"]
+  },
+  {
+    "id": "LA70_1",
+    "type": "disease",
+    "display_name": "Geriatric infections",
+    "icd11_code": "LA70",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Infectious Diseases"],
+    "patient_terms": ["elderly infections", "geriatric infectious diseases", "aging immune decline", "icd11 code la70", "icd la70"]
+  },
+  {
+    "id": "LA80_1",
+    "type": "disease",
+    "display_name": "Other geriatric disorders",
+    "icd11_code": "LA80",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other aging-related conditions", "miscellaneous geriatric problems", "icd11 code la80", "icd la80"]
+  },
+  {
+    "id": "LB00_1",
+    "type": "disease",
+    "display_name": "Age-related vision disorders",
+    "icd11_code": "LB00",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Ophthalmology"],
+    "patient_terms": ["age-related eye problems", "elderly vision disorders", "aging eye conditions", "icd11 code lb00", "icd lb00"]
+  },
+  {
+    "id": "LB10_1",
+    "type": "disease",
+    "display_name": "Age-related hearing loss",
+    "icd11_code": "LB10",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Otolaryngology"],
+    "patient_terms": ["presbycusis", "age-related hearing loss", "elderly hearing impairment", "icd11 code lb10", "icd lb10"]
+  },
+  {
+    "id": "LB20_1",
+    "type": "disease",
+    "display_name": "Geriatric cardiovascular disorders",
+    "icd11_code": "LB20",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Cardiology"],
+    "patient_terms": ["elderly heart problems", "aging cardiovascular diseases", "geriatric cardiac conditions", "icd11 code lb20", "icd lb20"]
+  },
+  {
+    "id": "LB30_1",
+    "type": "disease",
+    "display_name": "Geriatric respiratory disorders",
+    "icd11_code": "LB30",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Pulmonology"],
+    "patient_terms": ["elderly lung problems", "aging respiratory diseases", "geriatric breathing disorders", "icd11 code lb30", "icd lb30"]
+  },
+  {
+    "id": "LB40_1",
+    "type": "disease",
+    "display_name": "Geriatric musculoskeletal disorders",
+    "icd11_code": "LB40",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Orthopedics"],
+    "patient_terms": ["elderly bone and joint problems", "aging musculoskeletal diseases", "geriatric arthritis", "icd11 code lb40", "icd lb40"]
+  },
+  {
+    "id": "LB50_1",
+    "type": "disease",
+    "display_name": "Geriatric neurological disorders",
+    "icd11_code": "LB50",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Neurology"],
+    "patient_terms": ["elderly nervous system problems", "aging neurological diseases", "geriatric nerve disorders", "icd11 code lb50", "icd lb50"]
+  },
+  {
+    "id": "LB60_1",
+    "type": "disease",
+    "display_name": "Geriatric endocrine disorders",
+    "icd11_code": "LB60",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Endocrinology"],
+    "patient_terms": ["elderly hormone problems", "aging endocrine diseases", "geriatric metabolic disorders", "icd11 code lb60", "icd lb60"]
+  },
+  {
+    "id": "LB70_1",
+    "type": "disease",
+    "display_name": "Other age-related disorders",
+    "icd11_code": "LB70",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other aging conditions", "miscellaneous age-related problems", "icd11 code lb70", "icd lb70"]
+  },
+  {
+    "id": "LB80_1",
+    "type": "disease",
+    "display_name": "Developmental disorders",
+    "icd11_code": "LB80",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Developmental Medicine"],
+    "patient_terms": ["developmental disorders", "developmental disabilities", "code", "icd lb80"]
+  },
+  {
+    "id": "LB81_1",
+    "type": "disease",
+    "display_name": "Other developmental conditions",
+    "icd11_code": "LB81",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Developmental Medicine"],
+    "patient_terms": ["other developmental problems", "miscellaneous developmental disorders", "code", "icd lb81"]
+  },
+  {
+    "id": "LC00_1",
+    "type": "disease",
+    "display_name": "Other specified conditions",
+    "icd11_code": "LC00",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other specified disorders", "miscellaneous conditions", "icd11 code lc00", "icd lc00"]
+  },
+  {
+    "id": "LC00_2",
+    "type": "disease",
+    "display_name": "General other conditions",
+    "icd11_code": "LC00",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["general other disorders", "lc0y", "icd lc00"]
+  },
+  {
+    "id": "LC10_1",
+    "type": "disease",
+    "display_name": "Other general disorders",
+    "icd11_code": "LC10",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other general conditions", "lc1y", "icd lc10"]
+  },
+  {
+    "id": "LC20_1",
+    "type": "disease",
+    "display_name": "Additional other disorders",
+    "icd11_code": "LC20",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["additional other conditions", "lc2y", "icd lc20"]
+  },
+  {
+    "id": "LC30_1",
+    "type": "disease",
+    "display_name": "Vascular anomalies",
+    "icd11_code": "LC30",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Vascular Medicine"],
+    "patient_terms": ["vascular anomalies", "blood vessel abnormalities", "code", "icd lc30"]
+  },
+  {
+    "id": "LC31_1",
+    "type": "disease",
+    "display_name": "Cutaneous vascular developmental anomalies",
+    "icd11_code": "LC31",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Mental Health"],
+    "patient_terms": ["skin blood vessel birth defects", "cutaneous vascular malformations", "developmental anomalies of cutaneous vasculature", "icd lc31"]
+  },
+  {
+    "id": "LC50_1",
+    "type": "disease",
+    "display_name": "Endocrine developmental disorders",
+    "icd11_code": "LC50",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Endocrinology"],
+    "patient_terms": ["endocrine birth defects", "hormone gland developmental disorders", "icd11 code lc50", "icd lc50"]
+  },
+  {
+    "id": "LC60_1",
+    "type": "disease",
+    "display_name": "Adrenal gland anomalies",
+    "icd11_code": "LC60",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics", "Mental Health"],
+    "patient_terms": ["adrenal gland birth defects", "adrenal developmental disorders", "structural developmental anomalies of the adrenal glands", "icd lc60"]
+  },
+  {
+    "id": "LC80_1",
+    "type": "disease",
+    "display_name": "Other developmental anomalies",
+    "icd11_code": "LC80",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other birth defects", "miscellaneous developmental anomalies", "icd11 code lc80", "icd lc80"]
+  },
+  {
+    "id": "LD20_1",
+    "type": "disease",
+    "display_name": "Symptoms and signs",
+    "icd11_code": "LD20",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["symptoms", "clinical signs", "presenting complaints", "icd11 code ld20", "icd ld20"]
+  },
+  {
+    "id": "LD40_1",
+    "type": "disease",
+    "display_name": "Abnormal clinical findings",
+    "icd11_code": "LD40",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["abnormal test results", "clinical abnormalities", "laboratory abnormalities", "icd11 code ld40", "icd ld40"]
+  },
+  {
+    "id": "LD50_1",
+    "type": "disease",
+    "display_name": "Other symptoms and signs",
+    "icd11_code": "LD50",
+    "chapter": "Chapter 20",
+    "research_interests": ["Geriatrics"],
+    "patient_terms": ["other clinical findings", "miscellaneous symptoms", "icd11 code ld50", "icd ld50"]
+  }
+]

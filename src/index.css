@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+
+/* Apply Inter font globally */
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+html, body {
+  font-family: 'Inter', sans-serif;
+}
+
+
+
+.lobster-two-regular {
+  font-family: "Lobster Two", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+@theme inline {
+  --animate-first: moveVertical 30s ease infinite;
+  --animate-second: moveInCircle 20s reverse infinite;
+  --animate-third: moveInCircle 40s linear infinite;
+  --animate-fourth: moveHorizontal 40s ease infinite;
+  --animate-fifth: moveInCircle 20s ease infinite;
+}
+ 
+@keyframes moveHorizontal {
+  0% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+  50% {
+    transform: translateX(50%) translateY(10%);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-10%);
+  }
+}
+ 
+@keyframes moveInCircle {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+ 
+@keyframes moveVertical {
+  0% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(50%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+@theme inline {
+  --animate-aurora: aurora 60s linear infinite;
+  @keyframes aurora {
+    from {
+      background-position:
+        50% 50%,
+        50% 50%;
+    }
+    to {
+      background-position:
+        350% 50%,
+        350% 50%;
+    }
+  }
+}
+
+/* Brand Color Utilities */
+.bg-brand-purple { background-color: #D0C4E2; }
+.bg-brand-royal-blue { background-color: #2F3C96; }
+.bg-brand-gray { background-color: #787878; }
+.bg-brand-light-gray { background-color: #F5F5F5; }
+
+.text-brand-purple { color: #D0C4E2; }
+.text-brand-royal-blue { color: #2F3C96; }
+.text-brand-gray { color: #787878; }
+.text-brand-light-gray { color: #F5F5F5; }
+
+.border-brand-purple { border-color: #D0C4E2; }
+.border-brand-royal-blue { border-color: #2F3C96; }
+.border-brand-gray { border-color: #787878; }
+.border-brand-light-gray { border-color: #F5F5F5; }
+
+/* Hide scrollbar but keep scroll behaviour */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Performance optimizations - specific transitions instead of transition-all */
+.transition-width {
+  transition-property: width;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-height {
+  transition-property: height;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* GPU acceleration for animations */
+@supports (transform: translateZ(0)) {
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
+
+.hover\:bg-brand-purple:hover { background-color: #D0C4E2; }
+.hover\:bg-brand-royal-blue:hover { background-color: #2F3C96; }
+.hover\:text-brand-purple:hover { color: #D0C4E2; }
+.hover\:text-brand-royal-blue:hover { color: #2F3C96; }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDownFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+}
+
+.animate-chat-open {
+  animation: slideUpFadeIn 0.3s ease-out forwards;
+}
+
+.animate-chat-close {
+  animation: slideDownFadeOut 0.25s ease-in forwards;
+}
+
+/* Speech bubble text switch animation */
+@keyframes speechBubbleTextIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-speech-text {
+  animation: speechBubbleTextIn 0.4s ease-out forwards;
+}

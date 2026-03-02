@@ -1,0 +1,2309 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  X,
+  Send,
+  Loader2,
+  Minimize2,
+  ExternalLink,
+  BookOpen,
+  Microscope,
+  Users,
+  MapPin,
+  MessageSquare,
+  Mail,
+  Phone,
+  Trash2,
+  User,
+  Heart,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+
+import ReactMarkdown from "react-markdown";
+
+// Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
+const IORA_STORAGE_KEY = "collabiora_iora_chat";
+
+const DEFAULT_GREETING = {
+  role: "assistant",
+  content:
+    "Hi! I'm **Yori**, your personal AI assistant from Collabiora. I can help you find publications, clinical trials, and experts. What would you like to know?",
+  searchResults: null,
+};
+
+const CONTEXT_GREETING = {
+  role: "assistant",
+  content: "I'm here to help explain this. Ask me anything about it!",
+  searchResults: null,
+};
+
+const ASK_ABOUT_OPTIONS = {
+  trial: [
+    {
+      label: "Tell me more about this trial",
+      question:
+        "Tell me more about this trial. Summarize the key details and what it's testing.",
+    },
+    {
+      label: "What are the inclusion criteria?",
+      question:
+        "What are the inclusion and exclusion criteria for this trial? Explain who can participate.",
+    },
+    {
+      label: "How can I participate?",
+      question:
+        "How can I participate in this trial? What are the steps and who do I contact?",
+    },
+    {
+      label: "Get contact details",
+      question:
+        "What are the contact details for this trial? Give me phone numbers, emails, or links to sign up.",
+    },
+    {
+      label: "Where are the trial locations?",
+      question:
+        "Where is this trial being conducted? List the locations and sites.",
+    },
+  ],
+  publication: [
+    {
+      label: "Summarize this publication",
+      question:
+        "Summarize this publication. What are the main findings and conclusions?",
+    },
+    {
+      label: "What methods were used?",
+      question: "What methodology and methods were used in this study?",
+    },
+    {
+      label: "Key takeaways",
+      question: "What are the key takeaways and implications of this research?",
+    },
+  ],
+  expert: [
+    {
+      label: "Tell me more about this expert",
+      question:
+        "Tell me more about this researcher. What are their main contributions and expertise?",
+    },
+    {
+      label: "Research focus",
+      question: "What is this expert's research focus and recent work?",
+    },
+  ],
+};
+
+// Publication Card Component - site theme (royal blue #2F3C96)
+const PublicationCard = React.memo(
+  ({ publication, onAskAbout, onSaveToFavourites, userId }) => (
+    <div className="bg-gradient-to-br from-white to-[#E8E9F2]/50 border border-[#D1D3E5] rounded-xl p-4 mb-3 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-[shadow,colors] duration-200">
+      <div className="flex items-start gap-2 mb-3">
+        <div className="w-8 h-8 bg-[#E8E9F2] rounded-lg flex items-center justify-center flex-shrink-0">
+          <BookOpen className="w-4 h-4 text-[#2F3C96]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-1">
+            {publication.title}
+          </h4>
+          <div className="text-xs text-slate-600 space-y-0.5">
+            <p>
+              <span className="font-medium text-slate-700">Authors:</span>{" "}
+              <span className="text-slate-600">{publication.authors}</span>
+            </p>
+            <p>
+              <span className="font-medium text-slate-700">Journal:</span>{" "}
+              <span className="text-slate-600">{publication.journal}</span>{" "}
+              <span className="text-slate-500">({publication.year})</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <p className="text-xs text-slate-600 mb-3 line-clamp-3 leading-relaxed">
+        {publication.abstract}
+      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <a
+          href={publication.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+        >
+          View on PubMed <ExternalLink className="w-3 h-3" />
+        </a>
+        {onAskAbout && (
+          <button
+            onClick={() => onAskAbout(publication)}
+            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+          >
+            <MessageSquare className="w-3 h-3" />
+            Ask about this
+          </button>
+        )}
+        {userId && onSaveToFavourites && (
+          <button
+            onClick={() =>
+              onSaveToFavourites("publication", {
+                id: publication.pmid,
+                pmid: publication.pmid,
+                title: publication.title,
+                authors: publication.authors,
+                journal: publication.journal,
+                year: publication.year,
+                abstract: publication.abstract,
+                url: publication.url,
+              })
+            }
+            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+          >
+            <Heart className="w-3 h-3" />
+            Save to favourites
+          </button>
+        )}
+      </div>
+    </div>
+  ),
+);
+
+// Trial Card Component - site theme
+const TrialCard = React.memo(
+  ({ trial, onAskAbout, onSaveToFavourites, userId }) => (
+    <div className="bg-gradient-to-br from-white to-[#E8E9F2]/50 border border-[#D1D3E5] rounded-xl p-4 mb-3 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-[shadow,colors] duration-200">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+          <Microscope className="w-5 h-5 text-[#2F3C96]" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-2 leading-snug">
+            {trial.title}
+          </h4>
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            {trial.status && (
+              <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-medium border border-[#D1D3E5]">
+                {trial.status}
+              </span>
+            )}
+            {trial.phase && trial.phase !== "Not specified" && (
+              <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs border border-slate-200">
+                {trial.phase}
+              </span>
+            )}
+            {trial.nctId && (
+              <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-mono border border-[#D1D3E5]">
+                {trial.nctId}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-slate-600 space-y-1.5 mb-2">
+            {trial.conditions && trial.conditions !== "Not specified" && (
+              <p>
+                <span className="font-medium text-slate-700">Conditions:</span>{" "}
+                <span className="text-slate-600">{trial.conditions}</span>
+              </p>
+            )}
+            {trial.locations && trial.locations !== "Multiple locations" && (
+              <p className="flex items-start gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0" />
+                <span>
+                  <span className="font-medium text-slate-700">Locations:</span>{" "}
+                  <span className="text-slate-600">{trial.locations}</span>
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+      {trial.summary && trial.summary !== "No summary available" && (
+        <p className="text-xs text-slate-600 mb-3 line-clamp-3 leading-relaxed pl-13">
+          {trial.summary}
+        </p>
+      )}
+      <div className="flex items-center gap-2 flex-wrap pl-13">
+        {userId && onSaveToFavourites && (
+          <button
+            onClick={() =>
+              onSaveToFavourites("trial", {
+                id: trial.nctId || trial.id,
+                nctId: trial.nctId || trial.id,
+                title: trial.title,
+                url: trial.url,
+              })
+            }
+            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+          >
+            <Heart className="w-3 h-3" />
+            Save to favourites
+          </button>
+        )}
+        {onAskAbout && (
+          <button
+            onClick={() => onAskAbout(trial)}
+            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+          >
+            <MessageSquare className="w-3 h-3" />
+            Ask about this
+          </button>
+        )}
+      </div>
+    </div>
+  ),
+);
+
+// Expert Card Component - formatted like TrialDetailsCard/PublicationDetailsCard
+const ExpertCard = React.memo(({ expert, onAskAbout }) => {
+  const profileUrl =
+    expert.userId || expert.id || expert._id
+      ? `/collabiora-expert/profile/${expert.userId || expert.id || expert._id}`
+      : `/expert/profile?name=${encodeURIComponent(expert.name || "")}`;
+  return (
+    <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden mb-3">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] px-4 py-3 border-b border-[#D1D3E5]">
+        <div className="flex items-start gap-2">
+          <Users className="w-5 h-5 text-[#2F3C96] shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <h4 className="font-semibold text-sm text-slate-800 leading-snug">
+              {expert.name}
+            </h4>
+            {expert.affiliation && (
+              <p className="text-xs text-slate-600 mt-1">
+                {expert.affiliation}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Location */}
+        {expert.location && (
+          <section>
+            <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
+              Location
+            </h5>
+            <p className="text-sm text-slate-700 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[#2F3C96] shrink-0" />
+              {expert.location}
+            </p>
+          </section>
+        )}
+
+        {/* Research Interests */}
+        {expert.researchInterests &&
+          expert.researchInterests !== "Not specified" && (
+            <section>
+              <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
+                Research Interests
+              </h5>
+              <p className="text-sm text-slate-700">
+                {expert.researchInterests}
+              </p>
+            </section>
+          )}
+
+        {/* Metrics (from OpenAlex) */}
+        {expert.metrics &&
+          (expert.metrics.totalPublications ||
+            expert.metrics.totalCitations) && (
+            <section>
+              <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
+                Metrics
+              </h5>
+              <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+                {expert.metrics.totalPublications > 0 && (
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="w-3.5 h-3.5 text-[#2F3C96]" />
+                    {expert.metrics.totalPublications.toLocaleString()}{" "}
+                    publications
+                  </span>
+                )}
+                {expert.metrics.totalCitations > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Microscope className="w-3.5 h-3.5 text-[#2F3C96]" />
+                    {expert.metrics.totalCitations.toLocaleString()} citations
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
+
+        {/* Bio */}
+        {expert.bio && (
+          <section>
+            <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
+              About
+            </h5>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              {expert.bio}
+            </p>
+          </section>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 flex-wrap pt-1">
+          <Link
+            to={profileUrl}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
+          >
+            <User className="w-3.5 h-3.5" />
+            View profile
+          </Link>
+          {expert.orcidUrl && (
+            <a
+              href={expert.orcidUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              ORCID
+            </a>
+          )}
+          {onAskAbout && (
+            <button
+              onClick={() => onAskAbout(expert)}
+              className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Ask about this expert
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Custom components for styled markdown in assistant messages (publication analysis, etc.)
+const markdownComponents = {
+  h2: ({ children }) => (
+    <h2 className="text-sm font-semibold text-[#2F3C96] uppercase tracking-wide mt-4 mb-2 first:mt-0 border-b border-[#D1D3E5] pb-1.5">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-sm font-semibold text-slate-800 mt-3 mb-1.5">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p className="text-sm text-slate-700 leading-relaxed my-2">{children}</p>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-slate-800">{children}</strong>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc pl-5 my-2 space-y-1 text-slate-700">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal pl-5 my-2 space-y-1 text-slate-700">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+  a: ({ href, children }) => {
+    const isInternal = href && href.startsWith("/") && !href.startsWith("//");
+    const isPubMed = href && /pubmed\.ncbi\.nlm\.nih\.gov/i.test(href);
+    const isClinicalTrials = href && /clinicaltrials\.gov/i.test(href);
+    const isExpertProfile =
+      href &&
+      (/^\/expert\/profile/i.test(href) ||
+        /^\/collabiora-expert\/profile/i.test(href));
+    const isSpecialLink =
+      isPubMed || isClinicalTrials || isExpertProfile || isInternal;
+    const label = isPubMed
+      ? "View on PubMed"
+      : isClinicalTrials
+        ? "View full trial on ClinicalTrials.gov"
+        : isExpertProfile
+          ? "View profile"
+          : children || href;
+    const linkClass = isSpecialLink
+      ? "inline-flex items-center gap-2 mt-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors shrink-0"
+      : "text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1";
+    if (isInternal) {
+      return (
+        <Link to={href} className={linkClass}>
+          {label}
+          <ExternalLink className="w-3 h-3 shrink-0" />
+        </Link>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target={isSpecialLink ? undefined : "_blank"}
+        rel={isSpecialLink ? undefined : "noopener noreferrer"}
+        className={linkClass}
+      >
+        {label}
+        <ExternalLink className="w-3 h-3 shrink-0" />
+      </a>
+    );
+  },
+};
+
+const MessageBubble = React.memo(({ message, isUser }) => {
+  return (
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+          isUser
+            ? "text-white shadow-md"
+            : "bg-white border border-[#D1D3E5] text-slate-700 shadow-sm"
+        }`}
+        style={
+          isUser
+            ? { background: "linear-gradient(135deg, #2F3C96, #474F97)" }
+            : undefined
+        }
+      >
+        {isUser ? (
+          <p className="leading-relaxed">{message.content}</p>
+        ) : (
+          <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
+            <ReactMarkdown components={markdownComponents}>
+              {message.content}
+            </ReactMarkdown>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+// Formatted trial details card - shows only the section(s) the user asked for
+const TrialDetailsCard = ({
+  trialDetails,
+  onAskMore,
+  onSaveToFavourites,
+  userId,
+}) => {
+  if (!trialDetails) return null;
+  const {
+    requestedSections = ["overview"],
+    title,
+    shortTitle,
+    nctId,
+    url,
+    status,
+    phase,
+    conditions,
+    eligibilityCriteria,
+    eligibility,
+    contacts,
+    locations,
+    summary,
+  } = trialDetails;
+  const displayTitle =
+    shortTitle ||
+    (title?.length > 80 ? title.slice(0, 77) + "..." : title) ||
+    "Clinical Trial";
+  const show = (s) => requestedSections.includes(s);
+  const hasEligibility =
+    eligibilityCriteria ||
+    (eligibility &&
+      (eligibility.minimumAge ||
+        eligibility.maximumAge ||
+        eligibility.gender ||
+        eligibility.healthyVolunteers));
+  const hasContacts = contacts && contacts.length > 0;
+  const hasLocations = locations && locations.length > 0;
+
+  return (
+    <div className="flex justify-start mb-3">
+      <div className="max-w-[85%] w-full">
+        <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden">
+          {/* Compact header - always show for context */}
+          <div className="bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] px-4 py-3 border-b border-[#D1D3E5]">
+            <div className="flex items-start gap-2">
+              <Microscope className="w-5 h-5 text-[#2F3C96] shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-sm text-slate-800 leading-snug">
+                  {displayTitle}
+                </h4>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {nctId && (
+                    <span className="px-2 py-0.5 bg-white/80 text-[#2F3C96] rounded text-xs font-mono border border-[#D1D3E5]">
+                      {nctId}
+                    </span>
+                  )}
+                  {status && (
+                    <span className="px-2 py-0.5 bg-[#2F3C96]/10 text-[#2F3C96] rounded text-xs font-medium">
+                      {status}
+                    </span>
+                  )}
+                  {phase && phase !== "Not specified" && (
+                    <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">
+                      {phase}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Conditions - for overview */}
+            {show("overview") &&
+              conditions &&
+              conditions !== "Not specified" && (
+                <section>
+                  <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                    Conditions
+                  </h5>
+                  <p className="text-sm text-slate-700">{conditions}</p>
+                </section>
+              )}
+
+            {/* Inclusion/Exclusion Criteria - only when asked */}
+            {show("eligibility") && hasEligibility && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                  Eligibility / Inclusion & Exclusion Criteria
+                </h5>
+                <div className="text-sm text-slate-700 space-y-2">
+                  {eligibilityCriteria && (
+                    <div className="bg-slate-50 rounded-lg p-3 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap border border-slate-100">
+                      {eligibilityCriteria}
+                    </div>
+                  )}
+                  {eligibility &&
+                    (eligibility.minimumAge ||
+                      eligibility.maximumAge ||
+                      eligibility.gender ||
+                      eligibility.healthyVolunteers) && (
+                      <div className="flex flex-wrap gap-2">
+                        {(eligibility.minimumAge || eligibility.maximumAge) && (
+                          <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
+                            Age: {eligibility.minimumAge || "?"} -{" "}
+                            {eligibility.maximumAge || "?"}
+                          </span>
+                        )}
+                        {eligibility.gender && (
+                          <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
+                            Gender: {eligibility.gender}
+                          </span>
+                        )}
+                        {eligibility.healthyVolunteers && (
+                          <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
+                            Healthy Volunteers: {eligibility.healthyVolunteers}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                </div>
+              </section>
+            )}
+
+            {/* Contact Details - only when asked */}
+            {show("contacts") && hasContacts && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2">
+                  Contact Details
+                </h5>
+                <div className="space-y-3">
+                  {contacts.map((c, i) => (
+                    <div
+                      key={i}
+                      className="bg-slate-50 rounded-lg p-3 border border-slate-100"
+                    >
+                      {(c.name || c.role) && (
+                        <p className="font-medium text-slate-800 text-sm mb-2">
+                          {[c.name, c.role].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                      <div className="space-y-2 text-sm">
+                        {c.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-[#2F3C96] shrink-0" />
+                            <a
+                              href={`tel:${String(c.phone).replace(/\D/g, "")}`}
+                              className="text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+                            >
+                              {c.phone}
+                            </a>
+                          </div>
+                        )}
+                        {c.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-[#2F3C96] shrink-0" />
+                            <a
+                              href={`mailto:${c.email}`}
+                              className="text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline break-all"
+                            >
+                              {c.email}
+                            </a>
+                          </div>
+                        )}
+                        {c.url && (
+                          <div className="flex items-center gap-2">
+                            <ExternalLink className="w-4 h-4 text-[#2F3C96] shrink-0" />
+                            <a
+                              href={c.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline break-all"
+                            >
+                              {c.url}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Trial Locations - only when asked */}
+            {show("locations") && hasLocations && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2">
+                  Trial Locations
+                </h5>
+                <div className="space-y-2">
+                  {locations.map((loc, i) => (
+                    <div
+                      key={i}
+                      className="flex gap-2 bg-slate-50 rounded-lg p-3 border border-slate-100"
+                    >
+                      <MapPin className="w-4 h-4 text-[#2F3C96] shrink-0 mt-0.5" />
+                      <div>
+                        {loc.facility && (
+                          <p className="font-medium text-slate-800 text-sm">
+                            {loc.facility}
+                          </p>
+                        )}
+                        <p className="text-sm text-slate-700">
+                          {loc.fullAddress ||
+                            [loc.city, loc.state, loc.country]
+                              .filter(Boolean)
+                              .join(", ")}
+                        </p>
+                        {(loc.contactPhone || loc.contactEmail) && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            {loc.contactName && `${loc.contactName} · `}
+                            {loc.contactPhone && (
+                              <a
+                                href={`tel:${loc.contactPhone}`}
+                                className="text-[#2F3C96] hover:underline"
+                              >
+                                {loc.contactPhone}
+                              </a>
+                            )}
+                            {loc.contactPhone && loc.contactEmail && " · "}
+                            {loc.contactEmail && (
+                              <a
+                                href={`mailto:${loc.contactEmail}`}
+                                className="text-[#2F3C96] hover:underline break-all"
+                              >
+                                {loc.contactEmail}
+                              </a>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Summary - for overview (tell me more, etc) */}
+            {show("overview") && summary && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                  Summary
+                </h5>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {summary}
+                </p>
+              </section>
+            )}
+
+            {/* Save to favourites */}
+            {userId && onSaveToFavourites && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSaveToFavourites("trial", {
+                      id: nctId,
+                      nctId,
+                      title: title || shortTitle,
+                      url,
+                    })
+                  }
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
+                >
+                  <Heart className="w-3.5 h-3.5" />
+                  Save to favourites
+                </button>
+              </div>
+            )}
+
+            {/* Ask more about this trial - follow-up options */}
+            {onAskMore && (
+              <div className="pt-3 mt-3 border-t border-[#D1D3E5]">
+                <p className="text-xs font-semibold text-slate-700 mb-2">
+                  Ask more about this trial
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ASK_ABOUT_OPTIONS.trial.map((opt, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onAskMore(opt.question)}
+                      className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Compact "Ask more about this trial" bar - shown below AI response (trial questions get AI answer, not raw card)
+const TrialAskMoreBar = ({
+  trialDetails,
+  onAskMore,
+  onSaveToFavourites,
+  userId,
+}) => {
+  if (!trialDetails || !onAskMore) return null;
+  const item = {
+    id: trialDetails.nctId,
+    nctId: trialDetails.nctId,
+    title: trialDetails.title,
+    url: trialDetails.url,
+  };
+  return (
+    <div className="flex justify-start mb-3">
+      <div className="max-w-[85%] w-full">
+        <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
+          <p className="text-xs font-semibold text-slate-700 mb-2">
+            Ask more about this trial
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {ASK_ABOUT_OPTIONS.trial.map((opt, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onAskMore(opt.question)}
+                className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+              >
+                {opt.label}
+              </button>
+            ))}
+            {userId && onSaveToFavourites && (
+              <button
+                type="button"
+                onClick={() => onSaveToFavourites("trial", item)}
+                className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+              >
+                <Heart className="w-3.5 h-3.5 inline mr-1" />
+                Save to favourites
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Compact "Ask more about this publication" bar - shown below AI response for methods/takeaways
+const PublicationAskMoreBar = ({
+  publicationDetails,
+  onAskMore,
+  onSaveToFavourites,
+  userId,
+}) => {
+  if (!publicationDetails || !onAskMore) return null;
+  const item = {
+    id: publicationDetails.pmid,
+    pmid: publicationDetails.pmid,
+    title: publicationDetails.title,
+    authors: publicationDetails.authors,
+    journal: publicationDetails.journal,
+    year: publicationDetails.year,
+    abstract: publicationDetails.abstract,
+    url: publicationDetails.url,
+  };
+  return (
+    <div className="flex justify-start mb-3">
+      <div className="max-w-[85%] w-full">
+        <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
+          <p className="text-xs font-semibold text-slate-700 mb-2">
+            Ask more about this publication
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {ASK_ABOUT_OPTIONS.publication.map((opt, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onAskMore(opt.question)}
+                className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+              >
+                {opt.label}
+              </button>
+            ))}
+            {userId && onSaveToFavourites && (
+              <button
+                type="button"
+                onClick={() => onSaveToFavourites("publication", item)}
+                className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+              >
+                <Heart className="w-3.5 h-3.5 inline mr-1" />
+                Save to favourites
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Formatted publication details card - shows title, authors, abstract, keywords in a clean layout
+const PublicationDetailsCard = ({
+  publicationDetails,
+  onAskMore,
+  onSaveToFavourites,
+  userId,
+}) => {
+  if (!publicationDetails) return null;
+  const {
+    title,
+    pmid,
+    url,
+    authors,
+    journal,
+    year,
+    abstract,
+    keywords,
+    publicationTypes,
+  } = publicationDetails;
+
+  return (
+    <div className="flex justify-start mb-3">
+      <div className="max-w-[85%] w-full">
+        <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] px-4 py-3 border-b border-[#D1D3E5]">
+            <div className="flex items-start gap-2">
+              <BookOpen className="w-5 h-5 text-[#2F3C96] shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-sm text-slate-800 leading-snug">
+                  {title}
+                </h4>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {pmid && (
+                    <span className="px-2 py-0.5 bg-white/80 text-[#2F3C96] rounded text-xs font-mono border border-[#D1D3E5]">
+                      PMID: {pmid}
+                    </span>
+                  )}
+                  {publicationTypes && (
+                    <span className="px-2 py-0.5 bg-[#2F3C96]/10 text-[#2F3C96] rounded text-xs font-medium">
+                      {publicationTypes}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Authors & Citation */}
+            <section>
+              <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                Authors
+              </h5>
+              <p className="text-sm text-slate-700">{authors}</p>
+              <p className="text-xs text-slate-600 mt-1">
+                {journal} ({year})
+              </p>
+            </section>
+
+            {/* Abstract */}
+            {abstract && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                  Abstract
+                </h5>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {abstract}
+                </p>
+              </section>
+            )}
+
+            {/* Keywords */}
+            {keywords && (
+              <section>
+                <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
+                  Keywords
+                </h5>
+                <p className="text-sm text-slate-700">{keywords}</p>
+              </section>
+            )}
+
+            {/* Link to PubMed */}
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+              >
+                View on PubMed <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+
+            {/* Save to favourites */}
+            {userId && onSaveToFavourites && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSaveToFavourites("publication", {
+                      id: pmid,
+                      pmid,
+                      title,
+                      authors,
+                      journal,
+                      year,
+                      abstract,
+                      url,
+                    })
+                  }
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
+                >
+                  <Heart className="w-3.5 h-3.5" />
+                  Save to favourites
+                </button>
+              </div>
+            )}
+
+            {/* Ask more about this publication - follow-up options */}
+            {onAskMore && (
+              <div className="pt-3 mt-3 border-t border-[#D1D3E5]">
+                <p className="text-xs font-semibold text-slate-700 mb-2">
+                  Ask more about this publication
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ASK_ABOUT_OPTIONS.publication.map((opt, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onAskMore(opt.question)}
+                      className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2]/80 border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Component to render search results as separate cards
+const SearchResultsCards = ({
+  searchResults,
+  onAskAbout,
+  onSaveToFavourites,
+  userId,
+}) => {
+  if (
+    !searchResults ||
+    !searchResults.items ||
+    searchResults.items.length === 0
+  ) {
+    return null;
+  }
+
+  const { type, items } = searchResults;
+
+  return (
+    <>
+      {type === "publications" &&
+        items.map((pub, idx) => (
+          <div key={idx} className="flex justify-start mb-3">
+            <div className="max-w-[85%]">
+              <PublicationCard
+                publication={pub}
+                onAskAbout={onAskAbout}
+                onSaveToFavourites={onSaveToFavourites}
+                userId={userId}
+              />
+            </div>
+          </div>
+        ))}
+      {type === "trials" &&
+        items.map((trial, idx) => (
+          <div key={idx} className="flex justify-start mb-3">
+            <div className="max-w-[85%]">
+              <TrialCard
+                trial={trial}
+                onAskAbout={onAskAbout}
+                onSaveToFavourites={onSaveToFavourites}
+                userId={userId}
+              />
+            </div>
+          </div>
+        ))}
+      {type === "experts" &&
+        items.map((expert, idx) => (
+          <div key={idx} className="flex justify-start mb-3">
+            <div className="max-w-[85%]">
+              <ExpertCard expert={expert} onAskAbout={onAskAbout} />
+            </div>
+          </div>
+        ))}
+    </>
+  );
+};
+
+// Quick replies for "summarize for my doctor" and "Collabiora features" (no API call)
+const getCannedReply = (messageText) => {
+  const t = (messageText || "").trim().toLowerCase();
+  const summarizeForDoctor =
+    /summar(?:y|ies|ize|izing)\s+(?:for\s+)?(?:my\s+)?doctor|how\s+can\s+i\s+summar(?:y|ize)|summar(?:y|ize)\s+for\s+(?:my\s+)?doctor/i.test(
+      t,
+    ) || /how\s+to\s+summar(?:y|ize)\s+for\s+doctor/i.test(t);
+  const collabioraFeatures =
+    /collabiora\s+features?|collaboration\s+features?|what\s+(?:can\s+)?(?:collabiora|you)\s+do|collabiora\s+capabilities/i.test(
+      t,
+    );
+
+  if (summarizeForDoctor) {
+    return (
+      "You can **summarize for your doctor** using the **Favourites** page. " +
+      "Save publications and trials you care about to Favourites, then from that page you can generate a summarized report to share with your doctor. " +
+      "[Go to Favourites](/favourites) to get started."
+    );
+  }
+  if (collabioraFeatures) {
+    return (
+      "Here’s what you can do with Collabiora:\n\n" +
+      "- **Search** publications, clinical trials, and experts\n" +
+      "- **Save** items to your Favourites for quick access\n" +
+      "- **Generate summarized reports** for your doctor from your saved favourites\n\n" +
+      "To create a report for your doctor, save items to Favourites and use the summarize option there. [Go to Favourites](/favourites)"
+    );
+  }
+  return null;
+};
+
+const loadSavedChat = () => {
+  try {
+    const raw = localStorage.getItem(IORA_STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data && Array.isArray(data.messages) && data.messages.length > 0) {
+      return { messages: data.messages, isOpen: !!data.isOpen };
+    }
+  } catch (e) {
+    console.warn("iora: could not load saved chat", e);
+  }
+  return null;
+};
+
+const saveChat = (messages, isOpen) => {
+  try {
+    localStorage.setItem(
+      IORA_STORAGE_KEY,
+      JSON.stringify({ messages, isOpen, updatedAt: Date.now() }),
+    );
+  } catch (e) {
+    console.warn("iora: could not save chat", e);
+  }
+};
+
+// Rotating phrases for the speech bubble when chatbot is closed
+const SPEECH_BUBBLE_PHRASES = [
+  { primary: "Hi, I'm Yori", secondary: null },
+  { primary: "How can I help you?", secondary: null },
+];
+
+const FloatingChatbot = () => {
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [messages, setMessages] = useState([DEFAULT_GREETING]);
+  const [speechPhraseIndex, setSpeechPhraseIndex] = useState(0);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [askAboutTarget, setAskAboutTarget] = useState(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [sampleQuestionsOpen, setSampleQuestionsOpen] = useState(false);
+  const [context, setContext] = useState(null); // { type: 'trial' | 'publication', item: {...} }
+  const [isLoaderShowing, setIsLoaderShowing] = useState(false); // Hide chatbot when multi-step loader is showing
+  const messagesEndRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const scrollTimeoutRef = useRef(null);
+
+  // Detect if we're on a trial or publication detail page
+  const isTrialPage = location.pathname.startsWith("/trial/");
+  const isPublicationPage = location.pathname.startsWith("/publication/");
+
+  // Extract the current detail page ID (for tracking page switches)
+  const currentTrialId = isTrialPage
+    ? location.pathname.split("/trial/")[1]?.split("/")[0]
+    : null;
+  const currentPublicationId = isPublicationPage
+    ? location.pathname.split("/publication/")[1]?.split("/")[0]
+    : null;
+  const currentDetailPageId = currentTrialId || currentPublicationId;
+
+  // Track the last detail page ID we were on
+  const lastDetailPageIdRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      // Cancel any pending scroll
+      if (scrollTimeoutRef.current) {
+        cancelAnimationFrame(scrollTimeoutRef.current);
+      }
+      // Use requestAnimationFrame for better performance
+      scrollTimeoutRef.current = requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+  };
+
+  // Rotate speech bubble phrases when chatbot is closed (only on non-context pages)
+  useEffect(() => {
+    if (isOpen || isTrialPage || isPublicationPage || context) return;
+    const interval = setInterval(() => {
+      setSpeechPhraseIndex((prev) => {
+        const next = (prev + 1) % SPEECH_BUBBLE_PHRASES.length;
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isOpen, isTrialPage, isPublicationPage, context]);
+
+  // Listen for context events from detail pages
+  useEffect(() => {
+    const handleContextOpen = (event) => {
+      const { type, item } = event.detail;
+      if (type && item) {
+        // Check if this is a different item than what we currently have
+        const currentItemId =
+          context?.item?.nctId || context?.item?.id || context?.item?.pmid;
+        const newItemId = item.nctId || item.id || item.pmid;
+
+        // If switching to a different item OR if we have conversation history, clear it
+        if (
+          (currentItemId && currentItemId !== newItemId) ||
+          messages.length > 1
+        ) {
+          setMessages([CONTEXT_GREETING]);
+          setInput("");
+          setIsLoading(false);
+          abortControllerRef.current?.abort();
+        }
+
+        setContext({ type, item });
+        // Generate context-specific questions
+        const contextQuestions = generateContextQuestions(type, item);
+        setSuggestions(contextQuestions);
+        // Ensure we have context greeting
+        if (
+          messages.length === 1 &&
+          messages[0].content === DEFAULT_GREETING.content
+        ) {
+          setMessages([CONTEXT_GREETING]);
+        }
+      }
+    };
+
+    window.addEventListener("openChatbotWithContext", handleContextOpen);
+    return () => {
+      window.removeEventListener("openChatbotWithContext", handleContextOpen);
+    };
+  }, []);
+
+  // Clear chat history when navigating to/from detail pages or switching between detail pages
+  useEffect(() => {
+    const wasOnDetailPage = lastDetailPageIdRef.current !== null;
+    const isNowOnDetailPage = isTrialPage || isPublicationPage;
+    const switchedDetailPages =
+      wasOnDetailPage &&
+      isNowOnDetailPage &&
+      lastDetailPageIdRef.current !== currentDetailPageId;
+
+    // If navigating away from detail pages OR switching between different detail pages
+    if ((wasOnDetailPage && !isNowOnDetailPage) || switchedDetailPages) {
+      // Clear chat history completely
+      setMessages([DEFAULT_GREETING]);
+      setContext(null);
+      setSuggestions([]);
+      setInput("");
+      setIsLoading(false);
+      abortControllerRef.current?.abort();
+      // Clear saved chat for detail pages
+      if (wasOnDetailPage) {
+        try {
+          localStorage.removeItem(IORA_STORAGE_KEY);
+        } catch (e) {
+          console.warn("Could not clear saved chat:", e);
+        }
+      }
+    }
+
+    // If entering a detail page (or switching to a different one)
+    if (isNowOnDetailPage) {
+      // Reset to context greeting - always start fresh when switching detail pages
+      // Also reset if we just entered a detail page from a non-detail page
+      if (switchedDetailPages || !wasOnDetailPage) {
+        setMessages([CONTEXT_GREETING]);
+        setContext(null); // Will be set by the context event from the page
+        setInput("");
+        setIsLoading(false);
+        abortControllerRef.current?.abort();
+        // Generate context questions
+        const type = isTrialPage ? "trial" : "publication";
+        const contextQuestions = generateContextQuestions(type, {});
+        setSuggestions(contextQuestions);
+      }
+    }
+
+    // Update the last detail page ID
+    lastDetailPageIdRef.current = currentDetailPageId;
+  }, [location.pathname, isTrialPage, isPublicationPage, currentDetailPageId]);
+
+  // Generate context-specific questions based on type and item
+  const generateContextQuestions = (type, item) => {
+    if (type === "trial") {
+      return [
+        "Tell me more about this trial",
+        "What are the inclusion criteria?",
+        "How can I participate?",
+        "Where are the trial locations?",
+        "What are the potential side effects?",
+      ];
+    } else if (type === "publication") {
+      return [
+        "Summarize this publication",
+        "What are the main findings?",
+        "What methods were used?",
+        "What are the key takeaways?",
+        "Who would benefit from this research?",
+      ];
+    }
+    return [];
+  };
+
+  // Restore last conversation and open state when user is available
+  // BUT: Never restore when on detail pages - always start fresh
+  useEffect(() => {
+    if (!user) return;
+    // Never restore chat history when on detail pages - always start fresh
+    if (isTrialPage || isPublicationPage) {
+      // Start with context greeting for detail pages
+      setMessages([CONTEXT_GREETING]);
+      setHydrated(true);
+      return;
+    }
+    // Only restore saved chat when NOT on detail pages
+    const saved = loadSavedChat();
+    if (saved) {
+      setMessages(saved.messages);
+      setIsOpen(saved.isOpen);
+    }
+    setHydrated(true); // allow persisting from now on (whether we restored or not)
+  }, [user, isTrialPage, isPublicationPage]);
+
+  // Persist messages and open state (after hydration to avoid overwriting with defaults)
+  // BUT: Don't persist when on detail pages - chat should be fresh for each detail page
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    // Don't save chat history when on detail pages - each detail page should have fresh chat
+    if (isTrialPage || isPublicationPage) {
+      return;
+    }
+    saveChat(messages, isOpen);
+  }, [messages, isOpen, hydrated, user, isTrialPage, isPublicationPage]);
+
+  // Optimized scrolling - debounced and only when necessary
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      // Debounce scroll to avoid excessive calls
+      const timeoutId = setTimeout(() => scrollToBottom(), 150);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, isMinimized, messages.length]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        cancelAnimationFrame(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Listen for multi-step loader events to hide/show chatbot
+  useEffect(() => {
+    const handleLoaderShow = () => setIsLoaderShowing(true);
+    const handleLoaderHide = () => setIsLoaderShowing(false);
+
+    window.addEventListener("multiStepLoaderShow", handleLoaderShow);
+    window.addEventListener("multiStepLoaderHide", handleLoaderHide);
+
+    return () => {
+      window.removeEventListener("multiStepLoaderShow", handleLoaderShow);
+      window.removeEventListener("multiStepLoaderHide", handleLoaderHide);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkUser = () => {
+      const userData = JSON.parse(localStorage.getItem("user") || "null");
+      // Only set user if email is verified (same check as Navbar)
+      if (userData && !userData.emailVerified) {
+        setUser(null);
+        return;
+      }
+      setUser(userData);
+    };
+    const handleLogout = () => {
+      localStorage.removeItem(IORA_STORAGE_KEY);
+      setMessages([DEFAULT_GREETING]);
+      setSuggestions([]);
+      checkUser();
+    };
+    const handleStorageChange = (e) => {
+      // Listen for user/token changes in localStorage (includes email verification)
+      if (e.key === "user" || e.key === "token") {
+        checkUser();
+      }
+    };
+    checkUser();
+    window.addEventListener("login", checkUser);
+    window.addEventListener("logout", handleLogout);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("userUpdated", checkUser); // Same-tab user updates
+    return () => {
+      window.removeEventListener("login", checkUser);
+      window.removeEventListener("logout", handleLogout);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userUpdated", checkUser);
+    };
+  }, []);
+
+  // Fetch personalized suggestions when chat is fresh (first load or after reset)
+  // Skip if we have context or are on detail pages (context questions take priority)
+  useEffect(() => {
+    if (context || isTrialPage || isPublicationPage) return; // Don't fetch generic suggestions when we have context
+
+    const fetchSuggestions = async () => {
+      const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const userData =
+        user || JSON.parse(localStorage.getItem("user") || "null");
+      const role = userData?.role || "patient";
+      let condition = userData?.medicalInterests?.[0] || null;
+      if (!condition && userData?._id) {
+        try {
+          const res = await fetch(`${base}/api/profile/${userData._id}`);
+          const data = await res.json();
+          const profile = data?.profile;
+          if (profile?.patient?.conditions?.length > 0) {
+            condition = profile.patient.conditions[0];
+          } else if (
+            profile?.researcher &&
+            (profile.researcher.specialties?.length > 0 ||
+              profile.researcher.interests?.length > 0)
+          ) {
+            condition =
+              profile.researcher.specialties?.[0] ||
+              profile.researcher.interests?.[0];
+          }
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      const params = new URLSearchParams({ role });
+      if (condition) params.set("condition", condition);
+      try {
+        const res = await fetch(`${base}/api/chatbot/suggestions?${params}`);
+        const data = await res.json();
+        if (Array.isArray(data.suggestions)) setSuggestions(data.suggestions);
+      } catch (_) {
+        setSuggestions([]);
+      }
+    };
+    if (hydrated && messages.length === 1) {
+      fetchSuggestions();
+    } else if (messages.length > 1) {
+      setSuggestions([]);
+    }
+  }, [
+    user,
+    hydrated,
+    messages.length,
+    context,
+    isTrialPage,
+    isPublicationPage,
+  ]);
+
+  // Close sample questions when suggestions are cleared (e.g. after sending a message)
+  useEffect(() => {
+    if (suggestions.length === 0) setSampleQuestionsOpen(false);
+  }, [suggestions.length]);
+
+  const handleSendMessage = async (
+    messageText = input,
+    messageContext = null,
+  ) => {
+    if (!messageText.trim() || isLoading) return;
+
+    // Use component context if available, otherwise use message context
+    // If on detail page but no context set yet, create minimal context (will be enriched by backend)
+    // IMPORTANT: Only use context if it matches the current page ID (prevent cross-page context)
+    let activeContext = null;
+    if (context && context.item) {
+      const contextItemId =
+        context.item.nctId || context.item.id || context.item.pmid;
+      const matchesCurrentPage =
+        (isTrialPage && contextItemId === currentTrialId) ||
+        (isPublicationPage && contextItemId === currentPublicationId);
+      if (matchesCurrentPage) {
+        activeContext = context;
+      } else {
+        // Context doesn't match current page - clear it
+        setContext(null);
+      }
+    } else if (messageContext) {
+      activeContext = messageContext;
+    } else if (isTrialPage || isPublicationPage) {
+      // On detail page but no context yet - backend will fetch it
+      activeContext = { type: isTrialPage ? "trial" : "publication", item: {} };
+    }
+
+    const userMessage = {
+      role: "user",
+      content: messageText.trim(),
+      ...(activeContext && { context: activeContext }),
+    };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setInput("");
+    const cannedReply = getCannedReply(messageText.trim());
+    if (cannedReply) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: cannedReply,
+          searchResults: null,
+          groundingSources: null,
+        },
+      ]);
+      return;
+    }
+    setIsLoading(true);
+
+    const assistantMessageIndex = newMessages.length;
+    setMessages([
+      ...newMessages,
+      {
+        role: "assistant",
+        content: "",
+        searchResults: null,
+        groundingSources: null,
+      },
+    ]);
+
+    // Normalize messages for API: ensure content is always non-empty (backend rejects null/undefined)
+    // When on detail pages, limit conversation history to only messages from this page
+    // Filter out old messages that don't have matching context
+    let messagesToSend = newMessages;
+    if (activeContext && (isTrialPage || isPublicationPage)) {
+      // Only keep messages that are either:
+      // 1. The initial greeting (assistant)
+      // 2. Messages with matching context (same item ID)
+      const contextItemId =
+        activeContext.item?.nctId ||
+        activeContext.item?.id ||
+        activeContext.item?.pmid ||
+        currentDetailPageId;
+      messagesToSend = newMessages.filter((msg, index) => {
+        if (index === 0) return true; // Keep first greeting
+        if (msg.role === "assistant") return true; // Keep all assistant messages (responses)
+        // For user messages, only keep if they have matching context
+        if (msg.context) {
+          const msgItemId =
+            msg.context.item?.nctId ||
+            msg.context.item?.id ||
+            msg.context.item?.pmid;
+          return msgItemId === contextItemId;
+        }
+        // If no context in message but we're on detail page, include it (will add context)
+        return true;
+      });
+    }
+
+    // Normalize and add context to messages
+    messagesToSend = messagesToSend.map((m, index) => ({
+      ...m,
+      content: m.content != null && m.content !== "" ? m.content : " ",
+      // Add context to user messages when on detail pages
+      ...(m.role === "user" &&
+        activeContext &&
+        (isTrialPage || isPublicationPage) &&
+        !m.context && { context: activeContext }),
+    }));
+
+    try {
+      abortControllerRef.current = new AbortController();
+
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const requestBody = {
+        messages: messagesToSend,
+        ...(activeContext && { context: activeContext }),
+      };
+      const response = await fetch(`${apiBase}/api/chatbot/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(requestBody),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        let errMsg = "Failed to get response";
+        try {
+          const errBody = await response.json();
+          if (errBody?.error) errMsg = errBody.error;
+        } catch (_) {
+          /* ignore */
+        }
+        throw new Error(errMsg);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      let searchResults = null;
+      let trialDetails = null;
+      let publicationDetails = null;
+      let groundingSources = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.error) {
+                throw new Error(data.error);
+              }
+
+              if (data.trialDetails) {
+                trialDetails = data.trialDetails;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[assistantMessageIndex] = {
+                    role: "assistant",
+                    content: assistantContent,
+                    searchResults,
+                    trialDetails,
+                    publicationDetails,
+                    groundingSources,
+                  };
+                  return updated;
+                });
+              }
+
+              if (data.publicationDetails) {
+                publicationDetails = data.publicationDetails;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[assistantMessageIndex] = {
+                    role: "assistant",
+                    content: assistantContent,
+                    searchResults,
+                    trialDetails,
+                    publicationDetails,
+                    groundingSources,
+                  };
+                  return updated;
+                });
+              }
+
+              if (data.text) {
+                assistantContent += data.text;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[assistantMessageIndex] = {
+                    role: "assistant",
+                    content: assistantContent,
+                    searchResults,
+                    trialDetails,
+                    publicationDetails,
+                    groundingSources,
+                  };
+                  return updated;
+                });
+              }
+
+              if (data.groundingSources) {
+                groundingSources = data.groundingSources;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[assistantMessageIndex] = {
+                    role: "assistant",
+                    content: assistantContent,
+                    searchResults,
+                    trialDetails,
+                    publicationDetails,
+                    groundingSources,
+                  };
+                  return updated;
+                });
+              }
+
+              if (data.searchResults) {
+                searchResults = data.searchResults;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[assistantMessageIndex] = {
+                    role: "assistant",
+                    content: assistantContent,
+                    searchResults,
+                    trialDetails,
+                    publicationDetails,
+                    groundingSources,
+                  };
+                  return updated;
+                });
+              }
+
+              if (data.done) {
+                break;
+              }
+            } catch (e) {
+              console.warn("Invalid JSON in stream:", e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("Request aborted");
+        return;
+      }
+
+      console.error("Error sending message:", error);
+      const displayMsg =
+        error.message ||
+        "I apologize, but I encountered an error. Please try again.";
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[assistantMessageIndex] = {
+          role: "assistant",
+          content: displayMsg,
+          searchResults: null,
+        };
+        return updated;
+      });
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleOpenAskMenu = (item) => {
+    let itemType = "";
+    if (item.title) itemType = item.pmid ? "publication" : "trial";
+    else if (item.name) itemType = "expert";
+    setAskAboutTarget({ item, type: itemType });
+  };
+
+  const handleSelectAskOption = (question, item, type) => {
+    handleSendMessage(question, { type, item });
+    setAskAboutTarget(null);
+  };
+
+  const handleSaveToFavourites = async (type, item) => {
+    const userId = user?._id || user?.id;
+    if (!userId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Please sign in to save to favourites.",
+          isFavouriteSuccess: false,
+        },
+      ]);
+      return;
+    }
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    try {
+      const res = await fetch(`${base}/api/favorites/${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          item: {
+            ...item,
+            id: item.id || item.nctId || item.pmid,
+            _id: item._id || item.id,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save");
+      const label = type === "trial" ? "trial" : "publication";
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `✓ Saved this ${label} to your favourites!`,
+          isFavouriteSuccess: true,
+        },
+      ]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            err.message || "Failed to save to favourites. Please try again.",
+          isFavouriteSuccess: false,
+        },
+      ]);
+    }
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsMinimized(false);
+      setIsClosing(false);
+    }, 250); // Match animation duration
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
+
+  // Don't render only when multi-step loader is showing (show bot for everyone, including guests)
+  if (isLoaderShowing) {
+    return null;
+  }
+
+  const isGuest = !user;
+
+  return (
+    <>
+      {/* Floating Chat Button - constrained on mobile so it doesn't go off screen */}
+      {!isOpen && (
+        <div className="fixed bottom-4 right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+          {/* Speech Bubble - rotates between "Hi, I'm Yori" and "How can I help you?" */}
+          {(() => {
+            const phrase = SPEECH_BUBBLE_PHRASES[speechPhraseIndex];
+            const hasSecondary = !!phrase?.secondary;
+            const primary = phrase?.primary ?? "";
+            return (
+              <div className="relative mr-3 max-w-[calc(100vw-7rem)] sm:max-w-[calc(100%-4rem)] bg-[#E8D5FF] border-2 border-[#2F3C96] rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg animate-fade-in min-h-[2.25rem] sm:min-h-[3rem] flex items-center justify-center pointer-events-none sm:pointer-events-auto shrink-0">
+                <p className="text-[10px] sm:text-xs font-semibold text-[#2F3C96] leading-tight text-center">
+                  {isTrialPage || isPublicationPage || context ? (
+                    "I'm here to help explain this"
+                  ) : (
+                    <span className="inline-block min-w-0 sm:min-w-[10.5rem]">
+                      {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].secondary ? (
+                        <>
+                          {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].primary}
+                          <br />
+                          {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].secondary}
+                        </>
+                      ) : (
+                        SPEECH_BUBBLE_PHRASES[speechPhraseIndex].primary
+                      )}
+                    </span>
+                  )}
+                </p>
+                {/* Speech bubble tail */}
+                <div className="absolute bottom-[-8px] right-12 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-[#2F3C96]"></div>
+                <div className="absolute bottom-[-6px] right-12 w-0 h-0 border-l-7 border-r-7 border-t-7 border-l-transparent border-r-transparent border-t-[#E8D5FF]"></div>
+              </div>
+            );
+          })()}
+          <button
+            onClick={() => {
+              setIsClosing(false);
+              setIsOpen(true);
+            }}
+            className="duration-300 flex items-center justify-center group bg-cover bg-center rounded-lg overflow-hidden"
+            style={{
+              backgroundImage: "url(/bot.png)",
+              width: "80px",
+              height: "90px",
+
+              transformOrigin: "bottom right",
+            }}
+            aria-label="Open Yori chat"
+            data-tour="yori-chatbot"
+          >
+            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-[opacity,transform] duration-300 rounded-lg" />
+          </button>
+        </div>
+      )}
+
+      {/* Chat Window - full-width inset on mobile so it stays on screen */}
+      {isOpen && (
+        <div
+          className={`fixed left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:bottom-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${
+            isMinimized
+              ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
+              : "w-[calc(100vw-2rem)] sm:w-96 h-[min(600px,calc(100vh-2rem))]"
+          } ${isClosing ? "animate-chat-close" : "animate-chat-open"}`}
+          style={{
+            maxWidth: "calc(100vw - 2rem)",
+            boxShadow:
+              "0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
+          }}
+        >
+          {/* Header - site theme (royal blue) */}
+          <div
+            className="text-white px-4 py-3 rounded-t-2xl flex items-center justify-between border-b border-white/20"
+            style={{ background: "linear-gradient(135deg, #2F3C96, #474F97)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/30 overflow-hidden">
+                <img
+                  src="/Yori's Face Outline.png"
+                  alt="Yori"
+                  className="w-6 h-6 object-contain"
+                />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">Yori</h3>
+                <p className="text-xs text-white/80">
+                  Your personal AI assistant
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const shouldUseContextGreeting =
+                    isTrialPage || isPublicationPage || context;
+                  setMessages([
+                    shouldUseContextGreeting
+                      ? CONTEXT_GREETING
+                      : DEFAULT_GREETING,
+                  ]);
+                  setAskAboutTarget(null);
+                  if (!isTrialPage && !isPublicationPage) {
+                    setContext(null);
+                  }
+                  setSuggestions([]);
+                  abortControllerRef.current?.abort();
+                }}
+                className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
+                aria-label="Clear chat"
+                title="Clear chat"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleMinimize}
+                className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
+                aria-label="Minimize"
+              >
+                <Minimize2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleClose}
+                className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
+                aria-label="Close chat"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {!isMinimized &&
+            (isGuest ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80 rounded-b-2xl">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-white/80 border-2 border-[#D0C4E2] overflow-hidden">
+                  <img
+                    src="/Yori's Face Outline.png"
+                    alt="Yori"
+                    className="w-9 h-9 object-contain"
+                  />
+                </div>
+                <p className="text-slate-800 font-semibold mb-1">
+                  Sign in to use Yori at its fullest
+                </p>
+                <p className="text-sm text-slate-600 mb-5 max-w-[260px]">
+                  Chat with me for personalized help on publications, trials,
+                  and research.
+                </p>
+                <Link
+                  to="/signin"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white transition-all hover:opacity-90 shadow-md"
+                  style={{
+                    background: "linear-gradient(135deg, #2F3C96, #474F97)",
+                  }}
+                >
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Messages Container */}
+                <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80">
+                  {messages.map((message, index) => (
+                    <React.Fragment key={index}>
+                      {/* Skip assistant text when: empty placeholder OR full publication card (trials now show AI + compact bar) */}
+                      {!(
+                        message.role === "assistant" &&
+                        (!message.content ||
+                          (message.publicationDetails &&
+                            message.publicationDetails.showFullCard !== false))
+                      ) && (
+                        <MessageBubble
+                          message={message}
+                          isUser={message.role === "user"}
+                        />
+                      )}
+                      {/* Sample questions - collapsible "Show sample questions" dropdown */}
+                      {/* Show when first message (greeting) and chat is fresh */}
+                      {index === 0 &&
+                        message.role === "assistant" &&
+                        suggestions.length > 0 && (
+                          <div className="mt-2 mb-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSampleQuestionsOpen((prev) => !prev)
+                              }
+                              className="flex items-center gap-1.5 text-sm font-medium text-[#2F3C96] hover:text-[#1e266d] transition-colors"
+                            >
+                              {sampleQuestionsOpen ? (
+                                <ChevronUp className="h-4 w-4 shrink-0" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 shrink-0" />
+                              )}
+                              {sampleQuestionsOpen
+                                ? "Hide sample questions"
+                                : "Show sample questions"}
+                            </button>
+                            {sampleQuestionsOpen && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {suggestions.map((s, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => {
+                                      const activeContext =
+                                        context ||
+                                        (isTrialPage || isPublicationPage
+                                          ? {
+                                              type: isTrialPage
+                                                ? "trial"
+                                                : "publication",
+                                            }
+                                          : null);
+                                      if (activeContext) {
+                                        handleSendMessage(s, activeContext);
+                                      } else {
+                                        handleSendMessage(s);
+                                      }
+                                    }}
+                                    disabled={isLoading}
+                                    className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors disabled:opacity-50"
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      {/* Trial details card - only when showCard is true (legacy); otherwise use AI + TrialAskMoreBar */}
+                      {message.role === "assistant" &&
+                        message.trialDetails &&
+                        message.trialDetails.showCard !== false && (
+                          <TrialDetailsCard
+                            trialDetails={message.trialDetails}
+                            onAskMore={(question) => {
+                              const td = message.trialDetails;
+                              const item = {
+                                nctId: td.nctId,
+                                id: td.nctId,
+                                title: td.title,
+                                url: td.url,
+                              };
+                              handleSendMessage(question, {
+                                type: "trial",
+                                item,
+                              });
+                            }}
+                            onSaveToFavourites={handleSaveToFavourites}
+                            userId={user?._id || user?.id}
+                          />
+                        )}
+                      {/* Compact Ask more bar for trials (shown below AI response, only after response is complete) */}
+                      {message.role === "assistant" &&
+                        message.trialDetails &&
+                        message.trialDetails.showCard === false &&
+                        (!isLoading || index < messages.length - 1) && (
+                          <TrialAskMoreBar
+                            trialDetails={message.trialDetails}
+                            onAskMore={(question) => {
+                              const td = message.trialDetails;
+                              const item = {
+                                nctId: td.nctId,
+                                id: td.nctId,
+                                title: td.title,
+                                url: td.url,
+                              };
+                              handleSendMessage(question, {
+                                type: "trial",
+                                item,
+                              });
+                            }}
+                            onSaveToFavourites={handleSaveToFavourites}
+                            userId={user?._id || user?.id}
+                          />
+                        )}
+                      {/* Formatted publication details (full card for summarize) */}
+                      {message.role === "assistant" &&
+                        message.publicationDetails &&
+                        message.publicationDetails.showFullCard !== false && (
+                          <PublicationDetailsCard
+                            publicationDetails={message.publicationDetails}
+                            onAskMore={(question) => {
+                              const pd = message.publicationDetails;
+                              const item = {
+                                pmid: pd.pmid,
+                                id: pd.pmid,
+                                title: pd.title,
+                                authors: pd.authors,
+                                journal: pd.journal,
+                                year: pd.year,
+                                abstract: pd.abstract,
+                                fullAbstract: pd.abstract,
+                                url: pd.url,
+                              };
+                              handleSendMessage(question, {
+                                type: "publication",
+                                item,
+                              });
+                            }}
+                            onSaveToFavourites={handleSaveToFavourites}
+                            userId={user?._id || user?.id}
+                          />
+                        )}
+                      {/* Compact Ask more bar (for methods/takeaways - shown below AI response, only after response is complete) */}
+                      {message.role === "assistant" &&
+                        message.publicationDetails &&
+                        message.publicationDetails.showFullCard === false &&
+                        (!isLoading || index < messages.length - 1) && (
+                          <PublicationAskMoreBar
+                            publicationDetails={message.publicationDetails}
+                            onAskMore={(question) => {
+                              const pd = message.publicationDetails;
+                              const item = {
+                                pmid: pd.pmid,
+                                id: pd.pmid,
+                                title: pd.title,
+                                authors: pd.authors,
+                                journal: pd.journal,
+                                year: pd.year,
+                                abstract: pd.abstract,
+                                fullAbstract: pd.abstract,
+                                url: pd.url,
+                              };
+                              handleSendMessage(question, {
+                                type: "publication",
+                                item,
+                              });
+                            }}
+                            onSaveToFavourites={handleSaveToFavourites}
+                            userId={user?._id || user?.id}
+                          />
+                        )}
+                      {/* Render search results as separate cards after the message */}
+                      {message.role === "assistant" &&
+                        message.searchResults && (
+                          <SearchResultsCards
+                            searchResults={message.searchResults}
+                            onAskAbout={handleOpenAskMenu}
+                            onSaveToFavourites={handleSaveToFavourites}
+                            userId={user?._id || user?.id}
+                          />
+                        )}
+                      {/* Sources from grounded responses - publications to support claims */}
+                      {message.role === "assistant" &&
+                        message.groundingSources &&
+                        Array.isArray(message.groundingSources) &&
+                        message.groundingSources.length > 0 && (
+                          <div className="flex justify-start mb-3">
+                            <div className="max-w-[85%] w-full">
+                              <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
+                                <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                  <BookOpen className="w-3.5 h-3.5" />
+                                  Sources for further reading
+                                </p>
+                                <ul className="space-y-1.5">
+                                  {message.groundingSources.map((src) => (
+                                    <li key={src.index}>
+                                      <a
+                                        href={src.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1.5"
+                                      >
+                                        [{src.index}]{" "}
+                                        {src.title || `Source ${src.index}`}
+                                        <ExternalLink className="w-3 h-3 shrink-0" />
+                                      </a>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </React.Fragment>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start mb-3">
+                      <div className="bg-white border border-[#D1D3E5] rounded-2xl px-4 py-2.5 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 text-[#2F3C96] animate-spin" />
+                          <span className="text-sm text-slate-600">
+                            Thinking...
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Ask about options panel - appears above the input when user clicks "Ask about this" */}
+                {askAboutTarget && (
+                  <div className="px-4 pt-2 pb-2 border-t border-[#D1D3E5] bg-[#E8E9F2]/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-slate-700">
+                        Ask about this{" "}
+                        {askAboutTarget.type === "trial"
+                          ? "trial"
+                          : askAboutTarget.type === "publication"
+                            ? "publication"
+                            : "expert"}
+                        :
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAskAboutTarget(null)}
+                        className="text-slate-500 hover:text-slate-700 p-0.5 rounded"
+                        aria-label="Close options"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(ASK_ABOUT_OPTIONS[askAboutTarget.type] || []).map(
+                        (opt, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() =>
+                              handleSelectAskOption(
+                                opt.question,
+                                askAboutTarget.item,
+                                askAboutTarget.type,
+                              )
+                            }
+                            className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+                          >
+                            {opt.label}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Input Area - site theme */}
+                <div className="p-4 border-t border-[#D1D3E5] bg-white rounded-b-2xl">
+                  <div className="flex gap-2 items-end">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ask about publications, trials..."
+                      className="flex-1 resize-none rounded-xl border border-[#D1D3E5] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent transition-[colors,shadow] max-h-24"
+                      rows={1}
+                      disabled={isLoading}
+                    />
+                    <button
+                      onClick={() => handleSendMessage()}
+                      disabled={!input.trim() || isLoading}
+                      className="text-white rounded-xl p-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,shadow] duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                      style={{
+                        background: "linear-gradient(135deg, #2F3C96, #474F97)",
+                      }}
+                      aria-label="Send message"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Yori can make mistakes. Verify important information.
+                  </p>
+                </div>
+              </>
+            ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+export default FloatingChatbot;

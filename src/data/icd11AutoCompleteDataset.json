@@ -1,0 +1,2953 @@
+[
+  {
+    "code": "AA00",
+    "display_name": "Eye disorders",
+    "terms": [
+      "eye disease",
+      "eye disorders",
+      "eye problems",
+      "icd aa00",
+      "icd11 aa00",
+      "icd11 code aa00",
+      "ocular disease",
+      "ocular disorders",
+      "ocular problems",
+      "ophthalmic disease",
+      "ophthalmic disorders",
+      "ophthalmic problems",
+      "vision issues"
+    ]
+  },
+  {
+    "code": "AA10",
+    "display_name": "Infectious eye diseases",
+    "terms": [
+      "conjunctivitis",
+      "eye infection",
+      "icd aa10",
+      "icd11 aa10",
+      "icd11 code aa10",
+      "infectious eye diseases",
+      "infectious ocular diseases",
+      "infectious ophthalmic diseases",
+      "ocular infection",
+      "ophthalmic infection",
+      "pink eye",
+      "pink ocular",
+      "pink ophthalmic"
+    ]
+  },
+  {
+    "code": "AA40",
+    "display_name": "Cataracts",
+    "terms": [
+      "cataract",
+      "cataracts",
+      "cloudy lens",
+      "icd aa40",
+      "icd11 aa40",
+      "icd11 code aa40",
+      "lens opacity",
+      "vision clouding"
+    ]
+  },
+  {
+    "code": "AA80",
+    "display_name": "Glaucoma",
+    "terms": [
+      "eye pressure",
+      "glaucoma",
+      "icd aa80",
+      "icd11 aa80",
+      "icd11 code aa80",
+      "ocular pressure",
+      "ophthalmic pressure",
+      "optic nerve damage",
+      "vision loss"
+    ]
+  },
+  {
+    "code": "AA90",
+    "display_name": "Retinal disorders",
+    "terms": [
+      "icd aa90",
+      "icd11 aa90",
+      "icd11 code aa90",
+      "macular degeneration",
+      "retina problems",
+      "retinal detachment",
+      "retinal disease",
+      "retinal disorders"
+    ]
+  },
+  {
+    "code": "AB30",
+    "display_name": "Corneal diseases",
+    "terms": [
+      "cornea problems",
+      "corneal disease",
+      "corneal diseases",
+      "corneal ulcer",
+      "icd ab30",
+      "icd11 ab30",
+      "icd11 code ab30",
+      "keratitis"
+    ]
+  },
+  {
+    "code": "AB50",
+    "display_name": "Refractive errors",
+    "terms": [
+      "astigmatism",
+      "farsightedness",
+      "icd ab50",
+      "icd11 ab50",
+      "icd11 code ab50",
+      "nearsightedness",
+      "presbyopia",
+      "refractive error",
+      "refractive errors"
+    ]
+  },
+  {
+    "code": "AB70",
+    "display_name": "Optic nerve disorders",
+    "terms": [
+      "ab7y",
+      "icd ab70",
+      "icd11 ab70",
+      "optic nerve disorder",
+      "optic nerve disorders",
+      "optic neuritis",
+      "optic neuropathy"
+    ]
+  },
+  {
+    "code": "AB90",
+    "display_name": "Orbital disorders",
+    "terms": [
+      "code",
+      "exophthalmos",
+      "eye socket problems",
+      "icd ab90",
+      "icd11 ab90",
+      "ocular socket problems",
+      "ophthalmic socket problems",
+      "orbital disorder",
+      "orbital disorders",
+      "proptosis"
+    ]
+  },
+  {
+    "code": "AB93",
+    "display_name": "Lacrimal system disorders",
+    "terms": [
+      "chapter",
+      "dry eyes",
+      "dry oculars",
+      "dry ophthalmics",
+      "epiphora",
+      "icd ab93",
+      "icd11 ab93",
+      "lacrimal disorder",
+      "lacrimal system disorders",
+      "tear duct problems"
+    ]
+  },
+  {
+    "code": "BA00",
+    "display_name": "Hypertensive diseases",
+    "terms": [
+      "blood pressure problems",
+      "code",
+      "high blood pressure",
+      "hypertension",
+      "hypertensive diseases",
+      "icd ba00",
+      "icd11 ba00"
+    ]
+  },
+  {
+    "code": "BA04",
+    "display_name": "Secondary hypertension",
+    "terms": [
+      "code",
+      "endocrine hypertension",
+      "icd ba04",
+      "icd11 ba04",
+      "renal hypertension",
+      "secondary hypertension"
+    ]
+  },
+  {
+    "code": "BA20",
+    "display_name": "Ischemic heart diseases",
+    "terms": [
+      "angina",
+      "coronary artery disease",
+      "heart attack",
+      "icd ba20",
+      "icd11 ba20",
+      "icd11 code ba20",
+      "ischemic heart diseases",
+      "myocardial infarction"
+    ]
+  },
+  {
+    "code": "BA40",
+    "display_name": "Heart failure",
+    "terms": [
+      "cardiac failure",
+      "congestive heart failure",
+      "heart failure",
+      "icd ba40",
+      "icd11 ba40",
+      "icd11 code ba40",
+      "weak heart"
+    ]
+  },
+  {
+    "code": "BA50",
+    "display_name": "Cardiomyopathies",
+    "terms": [
+      "cardiomyopathies",
+      "cardiomyopathy",
+      "enlarged heart",
+      "heart muscle disease",
+      "icd ba50",
+      "icd11 ba50",
+      "icd11 code ba50"
+    ]
+  },
+  {
+    "code": "BA81",
+    "display_name": "Cardiac arrhythmias",
+    "terms": [
+      "arrhythmia",
+      "atrial fibrillation",
+      "cardiac arrhythmias",
+      "icd ba81",
+      "icd11 ba81",
+      "icd11 code ba81",
+      "irregular heartbeat",
+      "palpitations"
+    ]
+  },
+  {
+    "code": "BB00",
+    "display_name": "Valvular heart diseases",
+    "terms": [
+      "aortic valve",
+      "heart valve disease",
+      "icd bb00",
+      "icd11 bb00",
+      "icd11 code bb00",
+      "mitral valve",
+      "valvular disorder",
+      "valvular heart diseases"
+    ]
+  },
+  {
+    "code": "BB20",
+    "display_name": "Pericardial diseases",
+    "terms": [
+      "heart sac inflammation",
+      "icd bb20",
+      "icd11 bb20",
+      "icd11 code bb20",
+      "pericardial disease",
+      "pericardial diseases",
+      "pericarditis"
+    ]
+  },
+  {
+    "code": "BB40",
+    "display_name": "Endocarditis",
+    "terms": [
+      "endocarditis",
+      "heart valve infection",
+      "icd bb40",
+      "icd11 bb40",
+      "icd11 code bb40",
+      "infective endocarditis"
+    ]
+  },
+  {
+    "code": "BB60",
+    "display_name": "Myocarditis",
+    "terms": [
+      "heart muscle inflammation",
+      "icd bb60",
+      "icd11 bb60",
+      "icd11 code bb60",
+      "myocarditis",
+      "viral myocarditis"
+    ]
+  },
+  {
+    "code": "BB70",
+    "display_name": "Congenital heart diseases",
+    "terms": [
+      "born with heart problem",
+      "congenital heart disease",
+      "congenital heart diseases",
+      "heart defect",
+      "icd bb70",
+      "icd11 bb70",
+      "icd11 code bb70"
+    ]
+  },
+  {
+    "code": "BB80",
+    "display_name": "Heart transplantation complications",
+    "terms": [
+      "cardiac transplant complications",
+      "heart transplant problems",
+      "heart transplantation complications",
+      "icd bb80",
+      "icd11 bb80",
+      "icd11 code bb80",
+      "transplant rejection"
+    ]
+  },
+  {
+    "code": "BB90",
+    "display_name": "Other specified heart diseases",
+    "terms": [
+      "icd bb90",
+      "icd11 bb90",
+      "icd11 code bb90",
+      "miscellaneous cardiac disorders",
+      "other heart diseases",
+      "other specified heart diseases"
+    ]
+  },
+  {
+    "code": "BC40",
+    "display_name": "Aortic diseases",
+    "terms": [
+      "aortic aneurysm",
+      "aortic disease",
+      "aortic diseases",
+      "aortic dissection",
+      "icd bc40",
+      "icd11 bc40",
+      "icd11 code bc40"
+    ]
+  },
+  {
+    "code": "BC60",
+    "display_name": "Peripheral arterial diseases",
+    "terms": [
+      "claudication",
+      "icd bc60",
+      "icd11 bc60",
+      "icd11 code bc60",
+      "leg artery disease",
+      "pad",
+      "peripheral arterial diseases",
+      "peripheral artery disease"
+    ]
+  },
+  {
+    "code": "BC70",
+    "display_name": "Venous diseases",
+    "terms": [
+      "deep vein thrombosis",
+      "dvt",
+      "icd bc70",
+      "icd11 bc70",
+      "icd11 code bc70",
+      "varicose veins",
+      "venous disease",
+      "venous diseases"
+    ]
+  },
+  {
+    "code": "BC80",
+    "display_name": "Pulmonary embolism",
+    "terms": [
+      "blood clot in lung",
+      "icd bc80",
+      "icd11 bc80",
+      "icd11 code bc80",
+      "lung clot",
+      "pe",
+      "pulmonary embolism"
+    ]
+  },
+  {
+    "code": "BD10",
+    "display_name": "Cerebrovascular diseases",
+    "terms": [
+      "brain attack",
+      "cerebrovascular disease",
+      "cerebrovascular diseases",
+      "icd bd10",
+      "icd11 bd10",
+      "icd11 code bd10",
+      "ischemic stroke",
+      "stroke"
+    ]
+  },
+  {
+    "code": "BD30",
+    "display_name": "Transient ischemic attack",
+    "terms": [
+      "icd bd30",
+      "icd11 bd30",
+      "icd11 code bd30",
+      "mini-stroke",
+      "tia",
+      "transient ischemic attack",
+      "warning stroke"
+    ]
+  },
+  {
+    "code": "BD40",
+    "display_name": "Cerebral aneurysm",
+    "terms": [
+      "berry aneurysm",
+      "brain aneurysm",
+      "cerebral aneurysm",
+      "icd bd40",
+      "icd11 bd40",
+      "icd11 code bd40"
+    ]
+  },
+  {
+    "code": "BD70",
+    "display_name": "Vascular dementia",
+    "terms": [
+      "icd bd70",
+      "icd11 bd70",
+      "icd11 code bd70",
+      "multi-infarct dementia",
+      "stroke-related dementia",
+      "vascular dementia"
+    ]
+  },
+  {
+    "code": "BD90",
+    "display_name": "Other cerebrovascular diseases",
+    "terms": [
+      "cerebrovascular conditions",
+      "icd bd90",
+      "icd11 bd90",
+      "icd11 code bd90",
+      "other cerebrovascular diseases",
+      "other stroke disorders"
+    ]
+  },
+  {
+    "code": "BE10",
+    "display_name": "Pulmonary hypertension",
+    "terms": [
+      "be1f1",
+      "icd be10",
+      "icd11 be10",
+      "lung artery high pressure",
+      "pulmonary hypertension"
+    ]
+  },
+  {
+    "code": "CA00",
+    "display_name": "Upper respiratory infections",
+    "terms": [
+      "cold",
+      "common cold",
+      "icd ca00",
+      "icd11 ca00",
+      "icd11 code ca00",
+      "upper respiratory infection",
+      "upper respiratory infections",
+      "uri"
+    ]
+  },
+  {
+    "code": "CA20",
+    "display_name": "Influenza",
+    "terms": [
+      "flu",
+      "icd ca20",
+      "icd11 ca20",
+      "icd11 code ca20",
+      "influenza",
+      "seasonal flu",
+      "viral flu"
+    ]
+  },
+  {
+    "code": "CA40",
+    "display_name": "Pneumonia",
+    "terms": [
+      "icd ca40",
+      "icd11 ca40",
+      "icd11 code ca40",
+      "lung infection",
+      "pneumonia",
+      "pulmonary infection",
+      "walking pneumonia"
+    ]
+  },
+  {
+    "code": "CA60",
+    "display_name": "Tuberculosis",
+    "terms": [
+      "consumption",
+      "icd ca60",
+      "icd11 ca60",
+      "icd11 code ca60",
+      "pulmonary tb",
+      "tb",
+      "tuberculosis"
+    ]
+  },
+  {
+    "code": "CA70",
+    "display_name": "COVID-19",
+    "terms": [
+      "coronavirus",
+      "covid",
+      "covid-19",
+      "icd ca70",
+      "icd11 ca70",
+      "icd11 code ca70",
+      "sars-cov-2"
+    ]
+  },
+  {
+    "code": "CB00",
+    "display_name": "Asthma",
+    "terms": [
+      "asthma",
+      "bronchial asthma",
+      "icd cb00",
+      "icd11 cb00",
+      "icd11 code cb00",
+      "reactive airway disease",
+      "wheezing"
+    ]
+  },
+  {
+    "code": "CB20",
+    "display_name": "Chronic obstructive pulmonary disease",
+    "terms": [
+      "chronic bronchitis",
+      "chronic obstructive pulmonary disease",
+      "copd",
+      "emphysema",
+      "icd cb20",
+      "icd11 cb20",
+      "icd11 code cb20",
+      "lung disease"
+    ]
+  },
+  {
+    "code": "CB60",
+    "display_name": "Interstitial lung diseases",
+    "terms": [
+      "code",
+      "icd cb60",
+      "icd11 cb60",
+      "ild",
+      "interstitial lung disease",
+      "interstitial lung diseases",
+      "pulmonary fibrosis",
+      "scarring lungs"
+    ]
+  },
+  {
+    "code": "CB64",
+    "display_name": "Pulmonary fibrosis",
+    "terms": [
+      "chapter",
+      "icd cb64",
+      "icd11 cb64",
+      "idiopathic pulmonary fibrosis",
+      "ipf",
+      "lung scarring",
+      "pulmonary fibrosis"
+    ]
+  },
+  {
+    "code": "DA00",
+    "display_name": "Gastroesophageal reflux disease",
+    "terms": [
+      "acid reflux",
+      "gastroesophageal reflux disease",
+      "gerd",
+      "heartburn",
+      "icd da00",
+      "icd11 code da00",
+      "icd11 da00",
+      "reflux disease"
+    ]
+  },
+  {
+    "code": "DA20",
+    "display_name": "Peptic ulcer disease",
+    "terms": [
+      "duodenal ulcer",
+      "gastric ulcer",
+      "icd da20",
+      "icd11 code da20",
+      "icd11 da20",
+      "peptic ulcer",
+      "peptic ulcer disease",
+      "stomach ulcer"
+    ]
+  },
+  {
+    "code": "DA40",
+    "display_name": "Gastritis",
+    "terms": [
+      "gastritis",
+      "icd da40",
+      "icd11 code da40",
+      "icd11 da40",
+      "stomach inflammation",
+      "stomach lining irritation"
+    ]
+  },
+  {
+    "code": "DA50",
+    "display_name": "Functional dyspepsia",
+    "terms": [
+      "dyspepsia",
+      "functional dyspepsia",
+      "icd da50",
+      "icd11 code da50",
+      "icd11 da50",
+      "indigestion",
+      "upset stomach"
+    ]
+  },
+  {
+    "code": "DA60",
+    "display_name": "Irritable bowel syndrome",
+    "terms": [
+      "code",
+      "functional bowel disorder",
+      "ibs",
+      "icd da60",
+      "icd11 da60",
+      "irritable bowel",
+      "irritable bowel syndrome",
+      "spastic colon"
+    ]
+  },
+  {
+    "code": "DA63",
+    "display_name": "Other functional intestinal disorders",
+    "terms": [
+      "code",
+      "functional bowel problems",
+      "icd da63",
+      "icd11 da63",
+      "intestinal motility disorders",
+      "other functional intestinal disorders"
+    ]
+  },
+  {
+    "code": "DA90",
+    "display_name": "Inflammatory bowel disease",
+    "terms": [
+      "crohn's disease",
+      "ibd",
+      "icd da90",
+      "icd11 code da90",
+      "icd11 da90",
+      "inflammatory bowel disease",
+      "ulcerative colitis"
+    ]
+  },
+  {
+    "code": "DB10",
+    "display_name": "Celiac disease",
+    "terms": [
+      "celiac disease",
+      "celiac sprue",
+      "gluten intolerance",
+      "gluten sensitivity",
+      "icd db10",
+      "icd11 code db10",
+      "icd11 db10"
+    ]
+  },
+  {
+    "code": "DB30",
+    "display_name": "Malabsorption syndromes",
+    "terms": [
+      "icd db30",
+      "icd11 code db30",
+      "icd11 db30",
+      "malabsorption",
+      "malabsorption syndrome",
+      "malabsorption syndromes",
+      "nutrient absorption problems"
+    ]
+  },
+  {
+    "code": "DB50",
+    "display_name": "Appendicitis",
+    "terms": [
+      "appendicitis",
+      "appendix infection",
+      "icd db50",
+      "icd11 code db50",
+      "icd11 db50",
+      "inflamed appendix"
+    ]
+  },
+  {
+    "code": "DB60",
+    "display_name": "Diverticular disease",
+    "terms": [
+      "colon pockets",
+      "diverticular disease",
+      "diverticulitis",
+      "diverticulosis",
+      "icd db60",
+      "icd11 code db60",
+      "icd11 db60"
+    ]
+  },
+  {
+    "code": "DB90",
+    "display_name": "Hemorrhoids",
+    "terms": [
+      "anal swelling",
+      "hemorrhoids",
+      "icd db90",
+      "icd11 code db90",
+      "icd11 db90",
+      "piles",
+      "rectal bleeding"
+    ]
+  },
+  {
+    "code": "DC10",
+    "display_name": "Viral hepatitis",
+    "terms": [
+      "hepatitis",
+      "hepatitis virus",
+      "icd dc10",
+      "icd11 code dc10",
+      "icd11 dc10",
+      "liver inflammation",
+      "viral hepatitis"
+    ]
+  },
+  {
+    "code": "DC30",
+    "display_name": "Alcoholic liver disease",
+    "terms": [
+      "alcohol-related liver damage",
+      "alcoholic hepatitis",
+      "alcoholic liver disease",
+      "icd dc30",
+      "icd11 code dc30",
+      "icd11 dc30"
+    ]
+  },
+  {
+    "code": "DC50",
+    "display_name": "Non-alcoholic fatty liver disease",
+    "terms": [
+      "fatty liver",
+      "icd dc50",
+      "icd11 code dc50",
+      "icd11 dc50",
+      "liver steatosis",
+      "nafld",
+      "non-alcoholic fatty liver",
+      "non-alcoholic fatty liver disease"
+    ]
+  },
+  {
+    "code": "DC70",
+    "display_name": "Cirrhosis",
+    "terms": [
+      "cirrhosis",
+      "end-stage liver disease",
+      "icd dc70",
+      "icd11 code dc70",
+      "icd11 dc70",
+      "liver cirrhosis",
+      "liver scarring"
+    ]
+  },
+  {
+    "code": "DC72",
+    "display_name": "Liver fibrosis",
+    "terms": [
+      "code",
+      "hepatic fibrosis",
+      "icd dc72",
+      "icd11 dc72",
+      "liver fibrosis",
+      "liver scarring"
+    ]
+  },
+  {
+    "code": "DC80",
+    "display_name": "Gallbladder diseases",
+    "terms": [
+      "cholelithiasis",
+      "code",
+      "gallbladder disease",
+      "gallbladder diseases",
+      "gallbladder inflammation",
+      "gallstones",
+      "icd dc80",
+      "icd11 dc80"
+    ]
+  },
+  {
+    "code": "DC82",
+    "display_name": "Cholecystitis",
+    "terms": [
+      "cholecystitis",
+      "code",
+      "gallbladder infection",
+      "icd dc82",
+      "icd11 dc82",
+      "inflamed gallbladder"
+    ]
+  },
+  {
+    "code": "DC90",
+    "display_name": "Pancreatitis",
+    "terms": [
+      "code",
+      "icd dc90",
+      "icd11 dc90",
+      "inflamed pancreas",
+      "pancreatic inflammation",
+      "pancreatitis"
+    ]
+  },
+  {
+    "code": "DD00",
+    "display_name": "Intestinal obstruction",
+    "terms": [
+      "blocked intestine",
+      "bowel obstruction",
+      "code",
+      "icd dd00",
+      "icd11 dd00",
+      "ileus",
+      "intestinal blockage",
+      "intestinal obstruction"
+    ]
+  },
+  {
+    "code": "DD02",
+    "display_name": "Intestinal perforation",
+    "terms": [
+      "bowel perforation",
+      "code",
+      "icd dd02",
+      "icd11 dd02",
+      "intestinal perforation",
+      "intestinal rupture",
+      "perforated bowel"
+    ]
+  },
+  {
+    "code": "DD30",
+    "display_name": "Peritonitis",
+    "terms": [
+      "abdominal lining infection",
+      "icd dd30",
+      "icd11 code dd30",
+      "icd11 dd30",
+      "peritoneal inflammation",
+      "peritonitis"
+    ]
+  },
+  {
+    "code": "DD50",
+    "display_name": "Gastrointestinal bleeding",
+    "terms": [
+      "gastrointestinal bleeding",
+      "gi bleed",
+      "icd dd50",
+      "icd11 code dd50",
+      "icd11 dd50",
+      "intestinal bleeding",
+      "stomach bleeding"
+    ]
+  },
+  {
+    "code": "DD70",
+    "display_name": "Gastrointestinal infections",
+    "terms": [
+      "food poisoning",
+      "gastroenteritis",
+      "gastrointestinal infections",
+      "icd dd70",
+      "icd11 code dd70",
+      "icd11 dd70",
+      "intestinal infection",
+      "stomach flu"
+    ]
+  },
+  {
+    "code": "DD90",
+    "display_name": "Colorectal polyps",
+    "terms": [
+      "colon polyps",
+      "colorectal polyps",
+      "icd dd90",
+      "icd11 code dd90",
+      "icd11 dd90",
+      "intestinal growths",
+      "rectal polyps"
+    ]
+  },
+  {
+    "code": "DE10",
+    "display_name": "Gastrointestinal cancers",
+    "terms": [
+      "code",
+      "colon cancer",
+      "gastrointestinal cancers",
+      "gastrointestinal malignancy",
+      "gi cancer",
+      "icd de10",
+      "icd11 de10",
+      "stomach cancer"
+    ]
+  },
+  {
+    "code": "DE13",
+    "display_name": "Gastrointestinal stromal tumors",
+    "terms": [
+      "chapter",
+      "digestive tract tumor",
+      "gastrointestinal stromal tumor",
+      "gastrointestinal stromal tumors",
+      "gist",
+      "icd de13",
+      "icd11 de13"
+    ]
+  },
+  {
+    "code": "EA00",
+    "display_name": "Viral skin infections",
+    "terms": [
+      "ea0y",
+      "herpes",
+      "icd ea00",
+      "icd11 ea00",
+      "shingles",
+      "viral skin infection",
+      "viral skin infections",
+      "wart"
+    ]
+  },
+  {
+    "code": "EA10",
+    "display_name": "Fungal skin infections",
+    "terms": [
+      "athlete's foot",
+      "code",
+      "fungal infection",
+      "fungal skin infections",
+      "icd ea10",
+      "icd11 ea10",
+      "ringworm",
+      "yeast infection"
+    ]
+  },
+  {
+    "code": "EA12",
+    "display_name": "Dermatoses from systemic viral infection",
+    "terms": [
+      "bacterial infection",
+      "dermatoses from systemic viral infection",
+      "icd ea12",
+      "icd11 ea12",
+      "systemic viral skin manifestations",
+      "viral infection",
+      "viral rash"
+    ]
+  },
+  {
+    "code": "EA20",
+    "display_name": "Bacterial skin disorders",
+    "terms": [
+      "bacterial skin disease",
+      "bacterial skin disorders",
+      "cellulitis",
+      "code",
+      "icd ea20",
+      "icd11 ea20",
+      "impetigo",
+      "staph infection"
+    ]
+  },
+  {
+    "code": "EA40",
+    "display_name": "Eczema",
+    "terms": [
+      "atopic dermatitis",
+      "dermatitis",
+      "eczema",
+      "icd ea40",
+      "icd11 code ea40",
+      "icd11 ea40",
+      "skin inflammation"
+    ]
+  },
+  {
+    "code": "EA80",
+    "display_name": "Psoriasis",
+    "terms": [
+      "eb7y",
+      "icd ea80",
+      "icd11 ea80",
+      "plaques",
+      "psoriasis",
+      "scaly skin",
+      "skin scaling"
+    ]
+  },
+  {
+    "code": "EA90",
+    "display_name": "Acne",
+    "terms": [
+      "acne",
+      "breakouts",
+      "code",
+      "icd ea90",
+      "icd11 ea90",
+      "pimples",
+      "zits"
+    ]
+  },
+  {
+    "code": "EA95",
+    "display_name": "Urticaria and angioedema",
+    "terms": [
+      "allergic skin reaction",
+      "angioedema",
+      "hives",
+      "icd ea95",
+      "icd11 ea95",
+      "urticaria",
+      "urticaria and angioedema",
+      "urticaria angioedema or other urticarial disorders eb0y"
+    ]
+  },
+  {
+    "code": "EB00",
+    "display_name": "Other urticarial disorders",
+    "terms": [
+      "chronic urticaria",
+      "eb0y",
+      "hives variants",
+      "icd eb00",
+      "icd11 eb00",
+      "other urticarial disorders",
+      "physical urticaria"
+    ]
+  },
+  {
+    "code": "EB10",
+    "display_name": "Contact dermatitis",
+    "terms": [
+      "allergic contact dermatitis",
+      "code",
+      "contact dermatitis",
+      "icd eb10",
+      "icd11 eb10",
+      "irritant dermatitis",
+      "skin allergy"
+    ]
+  },
+  {
+    "code": "EB20",
+    "display_name": "Other inflammatory dermatoses",
+    "terms": [
+      "dermatitis variants",
+      "eb2y",
+      "icd eb20",
+      "icd11 eb20",
+      "inflammatory skin diseases",
+      "other inflammatory dermatoses"
+    ]
+  },
+  {
+    "code": "EB31",
+    "display_name": "Neutrophilic dermatoses",
+    "terms": [
+      "icd eb31",
+      "icd11 eb31",
+      "neutrophilic dermatoses",
+      "neutrophilic dermatoses eb2y",
+      "neutrophilic skin disorders",
+      "pyoderma gangrenosum",
+      "sweet syndrome"
+    ]
+  },
+  {
+    "code": "EB40",
+    "display_name": "Autoimmune blistering diseases",
+    "terms": [
+      "autoimmune blistering diseases",
+      "blistering skin disease",
+      "bullous pemphigoid",
+      "eb4y",
+      "icd eb40",
+      "icd11 eb40",
+      "pemphigus"
+    ]
+  },
+  {
+    "code": "EB50",
+    "display_name": "Lichen planus",
+    "terms": [
+      "icd eb50",
+      "icd11 code eb50",
+      "icd11 eb50",
+      "lichen planus",
+      "lichenoid eruption",
+      "purple skin bumps"
+    ]
+  },
+  {
+    "code": "EB60",
+    "display_name": "Vitiligo",
+    "terms": [
+      "code",
+      "icd eb60",
+      "icd11 eb60",
+      "loss of skin color",
+      "skin depigmentation",
+      "vitiligo",
+      "white patches"
+    ]
+  },
+  {
+    "code": "EB61",
+    "display_name": "Alopecia",
+    "terms": [
+      "alopecia",
+      "baldness",
+      "code",
+      "hair loss",
+      "hair thinning",
+      "icd eb61",
+      "icd11 eb61"
+    ]
+  },
+  {
+    "code": "EB90",
+    "display_name": "Other specified dermatoses",
+    "terms": [
+      "eb9y",
+      "icd eb90",
+      "icd11 eb90",
+      "miscellaneous dermatoses",
+      "other skin conditions",
+      "other specified dermatoses"
+    ]
+  },
+  {
+    "code": "EC10",
+    "display_name": "Melanoma",
+    "terms": [
+      "ec7y",
+      "icd ec10",
+      "icd11 ec10",
+      "malignant melanoma",
+      "melanoma",
+      "skin cancer"
+    ]
+  },
+  {
+    "code": "EC30",
+    "display_name": "Benign skin tumors",
+    "terms": [
+      "benign skin growths",
+      "benign skin tumors",
+      "icd ec30",
+      "icd11 code ec30",
+      "icd11 ec30",
+      "seborrheic keratosis",
+      "skin moles",
+      "skin tags"
+    ]
+  },
+  {
+    "code": "EC40",
+    "display_name": "Premalignant skin lesions",
+    "terms": [
+      "actinic keratosis",
+      "ec4y",
+      "icd ec40",
+      "icd11 ec40",
+      "precancerous skin lesions",
+      "premalignant skin lesions",
+      "solar keratosis"
+    ]
+  },
+  {
+    "code": "EC50",
+    "display_name": "Kaposi sarcoma",
+    "terms": [
+      "ec5y",
+      "hiv-related skin cancer",
+      "icd ec50",
+      "icd11 ec50",
+      "kaposi sarcoma",
+      "vascular skin tumor"
+    ]
+  },
+  {
+    "code": "EC90",
+    "display_name": "Other skin neoplasms",
+    "terms": [
+      "ec9y",
+      "icd ec90",
+      "icd11 ec90",
+      "miscellaneous skin neoplasms",
+      "other skin neoplasms",
+      "other skin tumors"
+    ]
+  },
+  {
+    "code": "ED00",
+    "display_name": "Lymphomas of skin",
+    "terms": [
+      "cutaneous lymphoma",
+      "ed2y",
+      "icd ed00",
+      "icd11 ed00",
+      "lymphomas of skin",
+      "mycosis fungoides",
+      "skin lymphoma"
+    ]
+  },
+  {
+    "code": "ED30",
+    "display_name": "Dermal infiltrative disorders",
+    "terms": [
+      "dermal infiltration",
+      "dermal infiltrative disorders",
+      "ed3y",
+      "icd ed30",
+      "icd11 ed30",
+      "skin infiltration disorders"
+    ]
+  },
+  {
+    "code": "ED50",
+    "display_name": "Ichthyosis",
+    "terms": [
+      "code",
+      "fish scale disease",
+      "icd ed50",
+      "icd11 ed50",
+      "ichthyosis",
+      "scaly skin disorder"
+    ]
+  },
+  {
+    "code": "ED60",
+    "display_name": "Palmoplantar keratoderma",
+    "terms": [
+      "ed6y",
+      "icd ed60",
+      "icd11 ed60",
+      "palmoplantar keratoderma",
+      "thickened palms and soles"
+    ]
+  },
+  {
+    "code": "ED70",
+    "display_name": "Other specified epidermal disorders",
+    "terms": [
+      "ed7y",
+      "icd ed70",
+      "icd11 ed70",
+      "miscellaneous skin surface disorders",
+      "other epidermal conditions",
+      "other specified epidermal disorders"
+    ]
+  },
+  {
+    "code": "ED80",
+    "display_name": "Disorders of dermis",
+    "terms": [
+      "dermal disorders",
+      "disorders of dermis",
+      "ed9y",
+      "icd ed80",
+      "icd11 ed80",
+      "skin connective tissue diseases"
+    ]
+  },
+  {
+    "code": "ED81",
+    "display_name": "Other dermal conditions",
+    "terms": [
+      "code",
+      "icd ed81",
+      "icd11 ed81",
+      "miscellaneous skin tissue disorders",
+      "other dermal conditions",
+      "other dermal problems"
+    ]
+  },
+  {
+    "code": "EE00",
+    "display_name": "Connective tissue disorders of skin",
+    "terms": [
+      "connective tissue disorders of skin",
+      "dermal collagen disorders",
+      "ee0y",
+      "icd ee00",
+      "icd11 ee00",
+      "skin connective tissue diseases"
+    ]
+  },
+  {
+    "code": "EE10",
+    "display_name": "Scleroderma",
+    "terms": [
+      "hardened skin",
+      "icd ee10",
+      "icd11 code ee10",
+      "icd11 ee10",
+      "scleroderma",
+      "systemic sclerosis"
+    ]
+  },
+  {
+    "code": "EE20",
+    "display_name": "Lupus erythematosus",
+    "terms": [
+      "code",
+      "cutaneous lupus",
+      "discoid lupus",
+      "icd ee20",
+      "icd11 ee20",
+      "lupus",
+      "lupus erythematosus"
+    ]
+  },
+  {
+    "code": "EE21",
+    "display_name": "Disorders of epidermal keratinisation",
+    "terms": [
+      "disorders of epidermal keratinisation",
+      "disorders of epidermal keratinisation ed5y",
+      "icd ee21",
+      "icd11 ee21",
+      "keratinisation disorders",
+      "skin scaling conditions"
+    ]
+  },
+  {
+    "code": "EE40",
+    "display_name": "Vasculitis of skin",
+    "terms": [
+      "cutaneous vasculitis",
+      "ef0y",
+      "icd ee40",
+      "icd11 ee40",
+      "skin blood vessel inflammation",
+      "vasculitis of skin"
+    ]
+  },
+  {
+    "code": "EE50",
+    "display_name": "Fibromatoses and keloids",
+    "terms": [
+      "code",
+      "excessive scarring",
+      "fibromatoses",
+      "fibromatoses and keloids",
+      "icd ee50",
+      "icd11 ee50",
+      "keloids",
+      "scar tissue overgrowth"
+    ]
+  },
+  {
+    "code": "EE60",
+    "display_name": "Granulomatous skin diseases",
+    "terms": [
+      "granulomatous skin conditions",
+      "granulomatous skin diseases",
+      "icd ee60",
+      "icd11 code ee60",
+      "icd11 ee60",
+      "sarcoidosis of skin",
+      "skin granulomas"
+    ]
+  },
+  {
+    "code": "EE80",
+    "display_name": "Other specified dermal disorders",
+    "terms": [
+      "icd ee80",
+      "icd11 code ee80",
+      "icd11 ee80",
+      "miscellaneous dermal conditions",
+      "other skin tissue disorders",
+      "other specified dermal disorders"
+    ]
+  },
+  {
+    "code": "EE90",
+    "display_name": "Disorders of subcutaneous tissue",
+    "terms": [
+      "code",
+      "disorders of subcutaneous tissue",
+      "fat tissue skin conditions",
+      "icd ee90",
+      "icd11 ee90",
+      "panniculitis",
+      "subcutaneous disorders"
+    ]
+  },
+  {
+    "code": "EE91",
+    "display_name": "Other subcutaneous conditions",
+    "terms": [
+      "code",
+      "icd ee91",
+      "icd11 ee91",
+      "miscellaneous subcutaneous problems",
+      "other fat tissue disorders",
+      "other subcutaneous conditions"
+    ]
+  },
+  {
+    "code": "EF00",
+    "display_name": "Other specified skin disorders",
+    "terms": [
+      "ef0y",
+      "icd ef00",
+      "icd11 ef00",
+      "miscellaneous dermatologic disorders",
+      "other skin conditions",
+      "other specified skin disorders"
+    ]
+  },
+  {
+    "code": "EF20",
+    "display_name": "Disorders of skin pigmentation",
+    "terms": [
+      "code",
+      "disorders of skin pigmentation",
+      "hyperpigmentation",
+      "hypopigmentation",
+      "icd ef20",
+      "icd11 ef20",
+      "melanin abnormalities",
+      "skin pigmentation disorders"
+    ]
+  },
+  {
+    "code": "EF30",
+    "display_name": "Melasma",
+    "terms": [
+      "chloasma",
+      "facial hyperpigmentation",
+      "icd ef30",
+      "icd11 code ef30",
+      "icd11 ef30",
+      "melasma",
+      "pregnancy mask"
+    ]
+  },
+  {
+    "code": "EF50",
+    "display_name": "Other pigmentary disorders",
+    "terms": [
+      "ef5y",
+      "icd ef50",
+      "icd11 ef50",
+      "miscellaneous color changes",
+      "other pigmentary disorders",
+      "other pigmentation conditions"
+    ]
+  },
+  {
+    "code": "EF60",
+    "display_name": "Disorders of hair and hair follicles",
+    "terms": [
+      "disorders of hair and hair follicles",
+      "ef9y",
+      "folliculitis",
+      "hair follicle disorders",
+      "hair growth problems",
+      "icd ef60",
+      "icd11 ef60"
+    ]
+  },
+  {
+    "code": "EF70",
+    "display_name": "Disorders of nails",
+    "terms": [
+      "disorders of nails",
+      "icd ef70",
+      "icd11 code ef70",
+      "icd11 ef70",
+      "nail diseases",
+      "nail disorders",
+      "nail psoriasis",
+      "onychomycosis"
+    ]
+  },
+  {
+    "code": "EG00",
+    "display_name": "Disorders of sebaceous glands",
+    "terms": [
+      "code",
+      "disorders of sebaceous glands",
+      "icd eg00",
+      "icd11 eg00",
+      "oily skin conditions",
+      "sebaceous gland disorders",
+      "seborrhea"
+    ]
+  },
+  {
+    "code": "EG02",
+    "display_name": "Disorders of epidermis and appendages",
+    "terms": [
+      "disorders of epidermis and appendages",
+      "disorders of the epidermis and epidermal appendages",
+      "epidermal disorders",
+      "hair disorders",
+      "icd eg02",
+      "icd11 eg02",
+      "nail disorders",
+      "skin appendage problems"
+    ]
+  },
+  {
+    "code": "EG30",
+    "display_name": "Disorders of sweat glands",
+    "terms": [
+      "anhidrosis",
+      "disorders of sweat glands",
+      "excessive sweating",
+      "hyperhidrosis",
+      "icd eg30",
+      "icd11 code eg30",
+      "icd11 eg30",
+      "sweat gland disorders"
+    ]
+  },
+  {
+    "code": "EG40",
+    "display_name": "Aging skin conditions",
+    "terms": [
+      "aging skin",
+      "aging skin conditions",
+      "icd eg40",
+      "icd11 code eg40",
+      "icd11 eg40",
+      "photoaging",
+      "skin aging disorders",
+      "wrinkles"
+    ]
+  },
+  {
+    "code": "EG60",
+    "display_name": "Genetic skin disorders",
+    "terms": [
+      "eg7y",
+      "epidermolysis bullosa",
+      "genetic dermatoses",
+      "genetic skin disorders",
+      "icd eg60",
+      "icd11 eg60",
+      "inherited skin conditions"
+    ]
+  },
+  {
+    "code": "EG63",
+    "display_name": "Other genetic skin diseases",
+    "terms": [
+      "code",
+      "icd eg63",
+      "icd11 eg63",
+      "miscellaneous genetic dermatoses",
+      "other genetic skin diseases",
+      "other hereditary skin disorders"
+    ]
+  },
+  {
+    "code": "EH10",
+    "display_name": "Skin manifestations of systemic diseases",
+    "terms": [
+      "code",
+      "icd eh10",
+      "icd11 eh10",
+      "skin manifestations of systemic diseases",
+      "skin signs of internal disease",
+      "systemic disease skin manifestations"
+    ]
+  },
+  {
+    "code": "EH40",
+    "display_name": "Other systemic skin manifestations",
+    "terms": [
+      "code",
+      "icd eh40",
+      "icd11 eh40",
+      "miscellaneous systemic dermatoses",
+      "other internal disease skin signs",
+      "other systemic skin manifestations"
+    ]
+  },
+  {
+    "code": "EH60",
+    "display_name": "Nutritional skin disorders",
+    "terms": [
+      "icd eh60",
+      "icd11 code eh60",
+      "icd11 eh60",
+      "nutritional deficiency skin signs",
+      "nutritional skin disorders",
+      "vitamin deficiency skin changes"
+    ]
+  },
+  {
+    "code": "EH90",
+    "display_name": "Other metabolic skin disorders",
+    "terms": [
+      "biochemical skin disorders",
+      "ek5y",
+      "icd eh90",
+      "icd11 eh90",
+      "metabolic skin conditions",
+      "other metabolic skin disorders"
+    ]
+  },
+  {
+    "code": "EJ10",
+    "display_name": "Drug eruptions",
+    "terms": [
+      "drug allergy skin",
+      "drug eruptions",
+      "drug rash",
+      "ej1y",
+      "icd ej10",
+      "icd11 ej10",
+      "medication skin reaction"
+    ]
+  },
+  {
+    "code": "EJ20",
+    "display_name": "Other adverse skin reactions",
+    "terms": [
+      "adverse skin reactions",
+      "ej6y",
+      "icd ej20",
+      "icd11 ej20",
+      "other adverse skin reactions",
+      "skin side effects"
+    ]
+  },
+  {
+    "code": "EJ40",
+    "display_name": "Radiation skin reactions",
+    "terms": [
+      "icd ej40",
+      "icd11 code ej40",
+      "icd11 ej40",
+      "radiation dermatitis",
+      "radiation skin reactions",
+      "radiotherapy skin reaction",
+      "skin radiation damage"
+    ]
+  },
+  {
+    "code": "EJ71",
+    "display_name": "Other physical agent skin damage",
+    "terms": [
+      "environmental skin damage",
+      "icd ej71",
+      "icd11 code ej71",
+      "icd11 ej71",
+      "other physical agent skin damage",
+      "physical agent skin injury"
+    ]
+  },
+  {
+    "code": "EK20",
+    "display_name": "Skin disorders in pregnancy",
+    "terms": [
+      "gestational dermatoses",
+      "icd ek20",
+      "icd11 code ek20",
+      "icd11 ek20",
+      "pregnancy skin conditions",
+      "pruritic urticarial papules",
+      "skin disorders in pregnancy"
+    ]
+  },
+  {
+    "code": "EK70",
+    "display_name": "Infant skin disorders",
+    "terms": [
+      "code",
+      "icd ek70",
+      "icd11 ek70",
+      "infant dermatoses",
+      "infant skin disorders",
+      "neonatal skin disorders",
+      "newborn skin conditions"
+    ]
+  },
+  {
+    "code": "EK71",
+    "display_name": "Other pediatric skin conditions",
+    "terms": [
+      "code",
+      "icd ek71",
+      "icd11 ek71",
+      "other childhood skin disorders",
+      "other pediatric skin conditions",
+      "pediatric dermatology"
+    ]
+  },
+  {
+    "code": "EK90",
+    "display_name": "Geriatric skin disorders",
+    "terms": [
+      "aging skin problems",
+      "code",
+      "elderly skin conditions",
+      "geriatric dermatology",
+      "geriatric skin disorders",
+      "icd ek90",
+      "icd11 ek90"
+    ]
+  },
+  {
+    "code": "EK92",
+    "display_name": "Cutaneous markers of internal disorders",
+    "terms": [
+      "cutaneous markers of internal disorders",
+      "cutaneous markers of internal disorders el3y",
+      "dermatologic clues to systemic illness",
+      "icd ek92",
+      "icd11 ek92",
+      "skin signs of internal disease"
+    ]
+  },
+  {
+    "code": "EL10",
+    "display_name": "Specific internal disease skin signs",
+    "terms": [
+      "el3y",
+      "icd el10",
+      "icd11 el10",
+      "specific internal disease skin signs",
+      "specific systemic disease skin manifestations"
+    ]
+  },
+  {
+    "code": "EL50",
+    "display_name": "Skin changes in malignancy",
+    "terms": [
+      "cancer-related skin changes",
+      "code",
+      "icd el50",
+      "icd11 el50",
+      "malignancy skin signs",
+      "paraneoplastic dermatoses",
+      "skin changes in malignancy"
+    ]
+  },
+  {
+    "code": "EL60",
+    "display_name": "Cosmetic procedure complications",
+    "terms": [
+      "aesthetic procedure side effects",
+      "code",
+      "cosmetic procedure complications",
+      "cosmetic treatment complications",
+      "icd el60",
+      "icd11 el60"
+    ]
+  },
+  {
+    "code": "EL63",
+    "display_name": "Specific cosmetic complications",
+    "terms": [
+      "aesthetic treatment complications",
+      "complications of cutaneous cosmetic procedures",
+      "cosmetic procedure problems",
+      "icd el63",
+      "icd11 el63",
+      "specific cosmetic complications"
+    ]
+  },
+  {
+    "code": "EL73",
+    "display_name": "Other treatment complications",
+    "terms": [
+      "code",
+      "icd el73",
+      "icd11 el73",
+      "miscellaneous procedure complications",
+      "other treatment complications",
+      "other treatment side effects"
+    ]
+  },
+  {
+    "code": "EL73.6",
+    "display_name": "Complications summary",
+    "terms": [
+      "chapter",
+      "complications summary",
+      "icd el73.6",
+      "icd11 el73.6",
+      "procedure side effects summary",
+      "treatment complication overview"
+    ]
+  },
+  {
+    "code": "EL80",
+    "display_name": "Adverse cutaneous effects of radiation",
+    "terms": [
+      "adverse cutaneous effects of radiation",
+      "adverse cutaneous effects of therapeutic ionizing irradiation",
+      "icd el80",
+      "icd11 el80",
+      "radiation skin damage",
+      "therapeutic radiation skin effects"
+    ]
+  },
+  {
+    "code": "FA00",
+    "display_name": "Arthritis",
+    "terms": [
+      "arthritic pain",
+      "arthritis",
+      "icd fa00",
+      "icd11 code fa00",
+      "icd11 fa00",
+      "joint inflammation",
+      "joint swelling"
+    ]
+  },
+  {
+    "code": "FA10",
+    "display_name": "Rheumatoid arthritis",
+    "terms": [
+      "autoimmune arthritis",
+      "icd fa10",
+      "icd11 code fa10",
+      "icd11 fa10",
+      "inflammatory arthritis",
+      "ra",
+      "rheumatoid arthritis"
+    ]
+  },
+  {
+    "code": "FA20",
+    "display_name": "Osteoarthritis",
+    "terms": [
+      "degenerative arthritis",
+      "icd fa20",
+      "icd11 code fa20",
+      "icd11 fa20",
+      "joint degeneration",
+      "osteoarthritis",
+      "wear-and-tear arthritis"
+    ]
+  },
+  {
+    "code": "FA30",
+    "display_name": "Spondyloarthritis",
+    "terms": [
+      "ankylosing spondylitis",
+      "back arthritis",
+      "icd fa30",
+      "icd11 code fa30",
+      "icd11 fa30",
+      "spinal arthritis",
+      "spondyloarthritis"
+    ]
+  },
+  {
+    "code": "FA70",
+    "display_name": "Gout",
+    "terms": [
+      "crystal arthritis",
+      "gout",
+      "gouty arthritis",
+      "icd fa70",
+      "icd11 code fa70",
+      "icd11 fa70",
+      "uric acid arthritis"
+    ]
+  },
+  {
+    "code": "FA80",
+    "display_name": "Other crystal arthropathies",
+    "terms": [
+      "calcium pyrophosphate disease",
+      "icd fa80",
+      "icd11 code fa80",
+      "icd11 fa80",
+      "other crystal arthritis",
+      "other crystal arthropathies",
+      "pseudogout"
+    ]
+  },
+  {
+    "code": "FA90",
+    "display_name": "Systemic connective tissue disorders",
+    "terms": [
+      "connective tissue diseases",
+      "icd fa90",
+      "icd11 code fa90",
+      "icd11 fa90",
+      "lupus",
+      "scleroderma",
+      "systemic autoimmune disorders",
+      "systemic connective tissue disorders"
+    ]
+  },
+  {
+    "code": "FB00",
+    "display_name": "Systemic lupus erythematosus",
+    "terms": [
+      "autoimmune lupus",
+      "icd fb00",
+      "icd11 code fb00",
+      "icd11 fb00",
+      "lupus",
+      "sle",
+      "systemic lupus",
+      "systemic lupus erythematosus"
+    ]
+  },
+  {
+    "code": "FB30",
+    "display_name": "Systemic sclerosis",
+    "terms": [
+      "connective tissue hardening",
+      "hardened skin disease",
+      "icd fb30",
+      "icd11 code fb30",
+      "icd11 fb30",
+      "scleroderma",
+      "systemic sclerosis"
+    ]
+  },
+  {
+    "code": "FB40",
+    "display_name": "Sjögren's syndrome",
+    "terms": [
+      "autoimmune exocrinopathy",
+      "dry mouth and eyes",
+      "dry mouth and oculars",
+      "dry mouth and ophthalmics",
+      "icd fb40",
+      "icd11 code fb40",
+      "icd11 fb40",
+      "sicca syndrome",
+      "sjögren's syndrome"
+    ]
+  },
+  {
+    "code": "FB50",
+    "display_name": "Other systemic disorders",
+    "terms": [
+      "code",
+      "icd fb50",
+      "icd11 fb50",
+      "miscellaneous connective tissue diseases",
+      "other systemic conditions",
+      "other systemic disorders"
+    ]
+  },
+  {
+    "code": "FB56.6",
+    "display_name": "Osteopathies and chondropathies",
+    "terms": [
+      "bone diseases",
+      "cartilage disorders",
+      "icd fb56.6",
+      "icd11 fb56.6",
+      "osteopathies and chondropathies",
+      "osteopathies or chondropathies"
+    ]
+  },
+  {
+    "code": "FB80",
+    "display_name": "Other specified arthropathies",
+    "terms": [
+      "icd fb80",
+      "icd11 code fb80",
+      "icd11 fb80",
+      "miscellaneous joint disorders",
+      "other arthritis types",
+      "other specified arthropathies"
+    ]
+  },
+  {
+    "code": "GA00",
+    "display_name": "Kidney diseases",
+    "terms": [
+      "icd ga00",
+      "icd11 code ga00",
+      "icd11 ga00",
+      "kidney disease",
+      "kidney diseases",
+      "kidney problems",
+      "renal disease",
+      "renal disorders"
+    ]
+  },
+  {
+    "code": "GA12",
+    "display_name": "Glomerular diseases",
+    "terms": [
+      "glomerular disease",
+      "glomerular diseases",
+      "glomerulonephritis",
+      "icd ga12",
+      "icd11 code ga12",
+      "icd11 ga12",
+      "kidney filter problems"
+    ]
+  },
+  {
+    "code": "GA20",
+    "display_name": "Tubulointerstitial diseases",
+    "terms": [
+      "icd ga20",
+      "icd11 code ga20",
+      "icd11 ga20",
+      "interstitial nephritis",
+      "kidney tubule disorders",
+      "tubulointerstitial disease",
+      "tubulointerstitial diseases"
+    ]
+  },
+  {
+    "code": "GA40",
+    "display_name": "Other kidney disorders",
+    "terms": [
+      "ga4y",
+      "icd ga40",
+      "icd11 ga40",
+      "miscellaneous renal disorders",
+      "other kidney conditions",
+      "other kidney disorders"
+    ]
+  },
+  {
+    "code": "GA80",
+    "display_name": "Kidney failure",
+    "terms": [
+      "end-stage renal disease",
+      "icd ga80",
+      "icd11 code ga80",
+      "icd11 ga80",
+      "kidney failure",
+      "kidney shutdown",
+      "renal failure"
+    ]
+  },
+  {
+    "code": "GA81",
+    "display_name": "Other kidney failure types",
+    "terms": [
+      "code",
+      "icd ga81",
+      "icd11 ga81",
+      "miscellaneous kidney failure",
+      "other kidney failure types",
+      "other renal failure"
+    ]
+  },
+  {
+    "code": "GA90",
+    "display_name": "Urinary tract infections",
+    "terms": [
+      "bladder infection",
+      "code",
+      "icd ga90",
+      "icd11 ga90",
+      "kidney infection",
+      "urinary tract infection",
+      "urinary tract infections",
+      "uti"
+    ]
+  },
+  {
+    "code": "GA91",
+    "display_name": "Other urinary infections",
+    "terms": [
+      "code",
+      "icd ga91",
+      "icd11 ga91",
+      "miscellaneous uti",
+      "other urinary infections"
+    ]
+  },
+  {
+    "code": "GB20",
+    "display_name": "Other urinary disorders",
+    "terms": [
+      "gb2y",
+      "icd gb20",
+      "icd11 gb20",
+      "miscellaneous urologic disorders",
+      "other urinary conditions",
+      "other urinary disorders"
+    ]
+  },
+  {
+    "code": "GB40",
+    "display_name": "Urinary stones",
+    "terms": [
+      "bladder stones",
+      "icd gb40",
+      "icd11 code gb40",
+      "icd11 gb40",
+      "kidney stones",
+      "nephrolithiasis",
+      "urinary calculi",
+      "urinary stones"
+    ]
+  },
+  {
+    "code": "GB50",
+    "display_name": "Urinary incontinence",
+    "terms": [
+      "bladder control problems",
+      "icd gb50",
+      "icd11 code gb50",
+      "icd11 gb50",
+      "involuntary urination",
+      "leakage",
+      "urinary incontinence"
+    ]
+  },
+  {
+    "code": "GB60",
+    "display_name": "Overactive bladder",
+    "terms": [
+      "bladder spasms",
+      "icd gb60",
+      "icd11 code gb60",
+      "icd11 gb60",
+      "oab",
+      "overactive bladder",
+      "urgency frequency syndrome"
+    ]
+  },
+  {
+    "code": "GB70",
+    "display_name": "Neurogenic bladder",
+    "terms": [
+      "icd gb70",
+      "icd11 code gb70",
+      "icd11 gb70",
+      "nerve-related bladder problems",
+      "neurogenic bladder",
+      "neurologic bladder"
+    ]
+  },
+  {
+    "code": "GB80",
+    "display_name": "Other bladder disorders",
+    "terms": [
+      "icd gb80",
+      "icd11 code gb80",
+      "icd11 gb80",
+      "miscellaneous bladder disorders",
+      "other bladder conditions",
+      "other bladder disorders"
+    ]
+  },
+  {
+    "code": "GC00",
+    "display_name": "Other specified urologic disorders",
+    "terms": [
+      "gc0y",
+      "icd gc00",
+      "icd11 gc00",
+      "miscellaneous urinary disorders",
+      "other specified urologic disorders",
+      "other urologic conditions"
+    ]
+  },
+  {
+    "code": "GC40",
+    "display_name": "Prostate diseases",
+    "terms": [
+      "icd gc40",
+      "icd11 code gc40",
+      "icd11 gc40",
+      "prostate disease",
+      "prostate diseases",
+      "prostate problems",
+      "prostatic disorders"
+    ]
+  },
+  {
+    "code": "GC51",
+    "display_name": "Other prostate conditions",
+    "terms": [
+      "code",
+      "icd gc51",
+      "icd11 gc51",
+      "miscellaneous prostatic diseases",
+      "other prostate conditions",
+      "other prostate disorders"
+    ]
+  },
+  {
+    "code": "GC70",
+    "display_name": "Prostate cancer",
+    "terms": [
+      "gc7c",
+      "icd gc70",
+      "icd11 gc70",
+      "prostate cancer",
+      "prostate malignancy",
+      "prostatic carcinoma"
+    ]
+  },
+  {
+    "code": "HA00",
+    "display_name": "Menstrual disorders",
+    "terms": [
+      "abnormal menstruation",
+      "icd ha00",
+      "icd11 code ha00",
+      "icd11 ha00",
+      "menstrual disorders",
+      "menstrual irregularities",
+      "menstrual problems",
+      "period disorders"
+    ]
+  },
+  {
+    "code": "HA20",
+    "display_name": "Polycystic ovary syndrome",
+    "terms": [
+      "hormonal imbalance",
+      "icd ha20",
+      "icd11 code ha20",
+      "icd11 ha20",
+      "ovarian cysts",
+      "pcos",
+      "polycystic ovary syndrome"
+    ]
+  },
+  {
+    "code": "HA60",
+    "display_name": "Menopause disorders",
+    "terms": [
+      "hot flashes",
+      "icd ha60",
+      "icd11 code ha60",
+      "icd11 ha60",
+      "menopausal symptoms",
+      "menopause",
+      "menopause disorders",
+      "postmenopausal disorders"
+    ]
+  },
+  {
+    "code": "JA00",
+    "display_name": "Pregnancy complications",
+    "terms": [
+      "gestational complications",
+      "icd ja00",
+      "icd11 code ja00",
+      "icd11 ja00",
+      "maternal complications",
+      "pregnancy complications",
+      "pregnancy problems"
+    ]
+  },
+  {
+    "code": "JA20",
+    "display_name": "Hypertensive disorders in pregnancy",
+    "terms": [
+      "gestational hypertension",
+      "hypertensive disorders in pregnancy",
+      "icd ja20",
+      "icd11 code ja20",
+      "icd11 ja20",
+      "preeclampsia",
+      "pregnancy hypertension",
+      "toxemia"
+    ]
+  },
+  {
+    "code": "JA40",
+    "display_name": "Diabetes in pregnancy",
+    "terms": [
+      "diabetes in pregnancy",
+      "gestational diabetes",
+      "icd ja40",
+      "icd11 code ja40",
+      "icd11 ja40",
+      "maternal diabetes",
+      "pregnancy diabetes"
+    ]
+  },
+  {
+    "code": "JA60",
+    "display_name": "Infections in pregnancy",
+    "terms": [
+      "gestational infections",
+      "icd ja60",
+      "icd11 code ja60",
+      "icd11 ja60",
+      "infections in pregnancy",
+      "maternal infections",
+      "pregnancy infections"
+    ]
+  },
+  {
+    "code": "JA80",
+    "display_name": "Other maternal disorders",
+    "terms": [
+      "icd ja80",
+      "icd11 code ja80",
+      "icd11 ja80",
+      "miscellaneous maternal disorders",
+      "other maternal disorders",
+      "other pregnancy conditions"
+    ]
+  },
+  {
+    "code": "JB00",
+    "display_name": "Labor complications",
+    "terms": [
+      "birth difficulties",
+      "delivery complications",
+      "icd jb00",
+      "icd11 code jb00",
+      "icd11 jb00",
+      "labor complications",
+      "labor problems"
+    ]
+  },
+  {
+    "code": "JB20",
+    "display_name": "Preterm labor",
+    "terms": [
+      "early delivery",
+      "icd jb20",
+      "icd11 code jb20",
+      "icd11 jb20",
+      "premature labor",
+      "preterm birth",
+      "preterm labor"
+    ]
+  },
+  {
+    "code": "JB40",
+    "display_name": "Prolonged pregnancy",
+    "terms": [
+      "icd jb40",
+      "icd11 code jb40",
+      "icd11 jb40",
+      "overdue pregnancy",
+      "post-term pregnancy",
+      "prolonged gestation",
+      "prolonged pregnancy"
+    ]
+  },
+  {
+    "code": "JB60",
+    "display_name": "Other labor disorders",
+    "terms": [
+      "icd jb60",
+      "icd11 code jb60",
+      "icd11 jb60",
+      "miscellaneous labor complications",
+      "other delivery problems",
+      "other labor disorders"
+    ]
+  },
+  {
+    "code": "KA00",
+    "display_name": "Neonatal disorders",
+    "terms": [
+      "icd ka00",
+      "icd11 code ka00",
+      "icd11 ka00",
+      "infant health problems",
+      "neonatal conditions",
+      "neonatal disorders",
+      "newborn disorders"
+    ]
+  },
+  {
+    "code": "KA20",
+    "display_name": "Perinatal infections",
+    "terms": [
+      "congenital infections",
+      "icd ka20",
+      "icd11 code ka20",
+      "icd11 ka20",
+      "newborn infections",
+      "perinatal infections"
+    ]
+  },
+  {
+    "code": "KA40",
+    "display_name": "Neonatal respiratory disorders",
+    "terms": [
+      "icd ka40",
+      "icd11 code ka40",
+      "icd11 ka40",
+      "infant lung disorders",
+      "neonatal respiratory disorders",
+      "neonatal respiratory distress",
+      "newborn breathing problems"
+    ]
+  },
+  {
+    "code": "KA60",
+    "display_name": "Neonatal jaundice",
+    "terms": [
+      "icd ka60",
+      "icd11 code ka60",
+      "icd11 ka60",
+      "infant yellowing",
+      "neonatal hyperbilirubinemia",
+      "neonatal jaundice",
+      "newborn jaundice"
+    ]
+  },
+  {
+    "code": "KA80",
+    "display_name": "Other neonatal disorders",
+    "terms": [
+      "icd ka80",
+      "icd11 code ka80",
+      "icd11 ka80",
+      "miscellaneous neonatal disorders",
+      "other neonatal disorders",
+      "other newborn conditions"
+    ]
+  },
+  {
+    "code": "KB00",
+    "display_name": "Congenital malformations",
+    "terms": [
+      "birth defects",
+      "congenital anomalies",
+      "congenital malformations",
+      "icd kb00",
+      "icd11 code kb00",
+      "icd11 kb00",
+      "structural birth abnormalities"
+    ]
+  },
+  {
+    "code": "KB20",
+    "display_name": "Chromosomal abnormalities",
+    "terms": [
+      "chromosomal abnormalities",
+      "chromosomal disorders",
+      "down syndrome",
+      "genetic syndromes",
+      "icd kb20",
+      "icd11 code kb20",
+      "icd11 kb20"
+    ]
+  },
+  {
+    "code": "KB40",
+    "display_name": "Congenital heart defects",
+    "terms": [
+      "cardiac anomalies",
+      "congenital heart defects",
+      "congenital heart disease",
+      "heart birth defects",
+      "icd kb40",
+      "icd11 code kb40",
+      "icd11 kb40"
+    ]
+  },
+  {
+    "code": "KB60",
+    "display_name": "Congenital nervous system defects",
+    "terms": [
+      "congenital brain abnormalities",
+      "congenital nervous system defects",
+      "icd kb60",
+      "icd11 code kb60",
+      "icd11 kb60",
+      "neural tube defects",
+      "spina bifida"
+    ]
+  },
+  {
+    "code": "KB80",
+    "display_name": "Other congenital malformations",
+    "terms": [
+      "icd kb80",
+      "icd11 code kb80",
+      "icd11 kb80",
+      "miscellaneous congenital anomalies",
+      "other birth defects",
+      "other congenital malformations"
+    ]
+  },
+  {
+    "code": "KC00",
+    "display_name": "Childhood infectious diseases",
+    "terms": [
+      "childhood infections",
+      "childhood infectious diseases",
+      "icd kc00",
+      "icd11 code kc00",
+      "icd11 kc00",
+      "kids' infections",
+      "pediatric infectious diseases"
+    ]
+  },
+  {
+    "code": "KC20",
+    "display_name": "Vaccine-preventable diseases",
+    "terms": [
+      "childhood vaccine diseases",
+      "icd kc20",
+      "icd11 code kc20",
+      "icd11 kc20",
+      "measles",
+      "mumps",
+      "vaccine-preventable diseases",
+      "vaccine-preventable illnesses"
+    ]
+  },
+  {
+    "code": "KC30",
+    "display_name": "Other childhood infections",
+    "terms": [
+      "icd kc30",
+      "icd11 kc30",
+      "kc3y",
+      "miscellaneous childhood illnesses",
+      "other childhood infections",
+      "other pediatric infections"
+    ]
+  },
+  {
+    "code": "KC50",
+    "display_name": "Childhood respiratory diseases",
+    "terms": [
+      "asthma in children",
+      "childhood lung diseases",
+      "childhood respiratory diseases",
+      "icd kc50",
+      "icd11 kc50",
+      "kc7y",
+      "pediatric respiratory disorders"
+    ]
+  },
+  {
+    "code": "KD10",
+    "display_name": "Childhood gastrointestinal disorders",
+    "terms": [
+      "childhood digestive problems",
+      "childhood gastrointestinal disorders",
+      "icd kd10",
+      "icd11 code kd10",
+      "icd11 kd10",
+      "kids' stomach issues",
+      "pediatric gi disorders"
+    ]
+  },
+  {
+    "code": "KD30",
+    "display_name": "Other pediatric disorders",
+    "terms": [
+      "icd kd30",
+      "icd11 kd30",
+      "kd3y",
+      "miscellaneous pediatric disorders",
+      "other childhood conditions",
+      "other pediatric disorders"
+    ]
+  },
+  {
+    "code": "LA00",
+    "display_name": "Geriatric syndromes",
+    "terms": [
+      "aging-related conditions",
+      "elderly health problems",
+      "geriatric syndromes",
+      "icd la00",
+      "icd11 code la00",
+      "icd11 la00"
+    ]
+  },
+  {
+    "code": "LA10",
+    "display_name": "Frailty",
+    "terms": [
+      "aging weakness",
+      "elderly frailty",
+      "frailty",
+      "geriatric decline",
+      "icd la10",
+      "icd11 code la10",
+      "icd11 la10"
+    ]
+  },
+  {
+    "code": "LA20",
+    "display_name": "Sarcopenia",
+    "terms": [
+      "age-related muscle loss",
+      "elderly muscle wasting",
+      "icd la20",
+      "icd11 code la20",
+      "icd11 la20",
+      "muscle loss with aging",
+      "sarcopenia"
+    ]
+  },
+  {
+    "code": "LA30",
+    "display_name": "Geriatric falls",
+    "terms": [
+      "aging balance problems",
+      "elderly falls",
+      "geriatric fall risk",
+      "geriatric falls",
+      "icd la30",
+      "icd11 code la30",
+      "icd11 la30"
+    ]
+  },
+  {
+    "code": "LA40",
+    "display_name": "Cognitive decline",
+    "terms": [
+      "age-related memory loss",
+      "cognitive decline",
+      "elderly cognitive impairment",
+      "icd la40",
+      "icd11 code la40",
+      "icd11 la40"
+    ]
+  },
+  {
+    "code": "LA60",
+    "display_name": "Geriatric nutrition disorders",
+    "terms": [
+      "aging nutritional disorders",
+      "elderly nutrition problems",
+      "geriatric malnutrition",
+      "geriatric nutrition disorders",
+      "icd la60",
+      "icd11 code la60",
+      "icd11 la60"
+    ]
+  },
+  {
+    "code": "LA70",
+    "display_name": "Geriatric infections",
+    "terms": [
+      "aging immune decline",
+      "elderly infections",
+      "geriatric infections",
+      "geriatric infectious diseases",
+      "icd la70",
+      "icd11 code la70",
+      "icd11 la70"
+    ]
+  },
+  {
+    "code": "LA80",
+    "display_name": "Other geriatric disorders",
+    "terms": [
+      "icd la80",
+      "icd11 code la80",
+      "icd11 la80",
+      "miscellaneous geriatric problems",
+      "other aging-related conditions",
+      "other geriatric disorders"
+    ]
+  },
+  {
+    "code": "LB00",
+    "display_name": "Age-related vision disorders",
+    "terms": [
+      "age-related eye problems",
+      "age-related ocular problems",
+      "age-related ophthalmic problems",
+      "age-related vision disorders",
+      "aging eye conditions",
+      "aging ocular conditions",
+      "aging ophthalmic conditions",
+      "elderly vision disorders",
+      "icd lb00",
+      "icd11 code lb00",
+      "icd11 lb00"
+    ]
+  },
+  {
+    "code": "LB10",
+    "display_name": "Age-related hearing loss",
+    "terms": [
+      "age-related hearing loss",
+      "elderly hearing impairment",
+      "icd lb10",
+      "icd11 code lb10",
+      "icd11 lb10",
+      "presbycusis"
+    ]
+  },
+  {
+    "code": "LB20",
+    "display_name": "Geriatric cardiovascular disorders",
+    "terms": [
+      "aging cardiovascular diseases",
+      "elderly heart problems",
+      "geriatric cardiac conditions",
+      "geriatric cardiovascular disorders",
+      "icd lb20",
+      "icd11 code lb20",
+      "icd11 lb20"
+    ]
+  },
+  {
+    "code": "LB30",
+    "display_name": "Geriatric respiratory disorders",
+    "terms": [
+      "aging respiratory diseases",
+      "elderly lung problems",
+      "geriatric breathing disorders",
+      "geriatric respiratory disorders",
+      "icd lb30",
+      "icd11 code lb30",
+      "icd11 lb30"
+    ]
+  },
+  {
+    "code": "LB40",
+    "display_name": "Geriatric musculoskeletal disorders",
+    "terms": [
+      "aging musculoskeletal diseases",
+      "elderly bone and joint problems",
+      "geriatric arthritis",
+      "geriatric musculoskeletal disorders",
+      "icd lb40",
+      "icd11 code lb40",
+      "icd11 lb40"
+    ]
+  },
+  {
+    "code": "LB50",
+    "display_name": "Geriatric neurological disorders",
+    "terms": [
+      "aging neurological diseases",
+      "elderly nervous system problems",
+      "geriatric nerve disorders",
+      "geriatric neurological disorders",
+      "icd lb50",
+      "icd11 code lb50",
+      "icd11 lb50"
+    ]
+  },
+  {
+    "code": "LB60",
+    "display_name": "Geriatric endocrine disorders",
+    "terms": [
+      "aging endocrine diseases",
+      "elderly hormone problems",
+      "geriatric endocrine disorders",
+      "geriatric metabolic disorders",
+      "icd lb60",
+      "icd11 code lb60",
+      "icd11 lb60"
+    ]
+  },
+  {
+    "code": "LB70",
+    "display_name": "Other age-related disorders",
+    "terms": [
+      "icd lb70",
+      "icd11 code lb70",
+      "icd11 lb70",
+      "miscellaneous age-related problems",
+      "other age-related disorders",
+      "other aging conditions"
+    ]
+  },
+  {
+    "code": "LB80",
+    "display_name": "Developmental disorders",
+    "terms": [
+      "code",
+      "developmental disabilities",
+      "developmental disorders",
+      "icd lb80",
+      "icd11 lb80"
+    ]
+  },
+  {
+    "code": "LB81",
+    "display_name": "Other developmental conditions",
+    "terms": [
+      "code",
+      "icd lb81",
+      "icd11 lb81",
+      "miscellaneous developmental disorders",
+      "other developmental conditions",
+      "other developmental problems"
+    ]
+  },
+  {
+    "code": "LC00",
+    "display_name": "Other specified conditions",
+    "terms": [
+      "icd lc00",
+      "icd11 code lc00",
+      "icd11 lc00",
+      "miscellaneous conditions",
+      "other specified conditions",
+      "other specified disorders"
+    ]
+  },
+  {
+    "code": "LC10",
+    "display_name": "Other general disorders",
+    "terms": [
+      "icd lc10",
+      "icd11 lc10",
+      "lc1y",
+      "other general conditions",
+      "other general disorders"
+    ]
+  },
+  {
+    "code": "LC20",
+    "display_name": "Additional other disorders",
+    "terms": [
+      "additional other conditions",
+      "additional other disorders",
+      "icd lc20",
+      "icd11 lc20",
+      "lc2y"
+    ]
+  },
+  {
+    "code": "LC30",
+    "display_name": "Vascular anomalies",
+    "terms": [
+      "blood vessel abnormalities",
+      "code",
+      "icd lc30",
+      "icd11 lc30",
+      "vascular anomalies"
+    ]
+  },
+  {
+    "code": "LC31",
+    "display_name": "Cutaneous vascular developmental anomalies",
+    "terms": [
+      "cutaneous vascular developmental anomalies",
+      "cutaneous vascular malformations",
+      "developmental anomalies of cutaneous vasculature",
+      "icd lc31",
+      "icd11 lc31",
+      "skin blood vessel birth defects"
+    ]
+  },
+  {
+    "code": "LC50",
+    "display_name": "Endocrine developmental disorders",
+    "terms": [
+      "endocrine birth defects",
+      "endocrine developmental disorders",
+      "hormone gland developmental disorders",
+      "icd lc50",
+      "icd11 code lc50",
+      "icd11 lc50"
+    ]
+  },
+  {
+    "code": "LC60",
+    "display_name": "Adrenal gland anomalies",
+    "terms": [
+      "adrenal developmental disorders",
+      "adrenal gland anomalies",
+      "adrenal gland birth defects",
+      "icd lc60",
+      "icd11 lc60",
+      "structural developmental anomalies of the adrenal glands"
+    ]
+  },
+  {
+    "code": "LC80",
+    "display_name": "Other developmental anomalies",
+    "terms": [
+      "icd lc80",
+      "icd11 code lc80",
+      "icd11 lc80",
+      "miscellaneous developmental anomalies",
+      "other birth defects",
+      "other developmental anomalies"
+    ]
+  },
+  {
+    "code": "LD20",
+    "display_name": "Symptoms and signs",
+    "terms": [
+      "clinical signs",
+      "icd ld20",
+      "icd11 code ld20",
+      "icd11 ld20",
+      "presenting complaints",
+      "symptoms",
+      "symptoms and signs"
+    ]
+  },
+  {
+    "code": "LD40",
+    "display_name": "Abnormal clinical findings",
+    "terms": [
+      "abnormal clinical findings",
+      "abnormal test results",
+      "clinical abnormalities",
+      "icd ld40",
+      "icd11 code ld40",
+      "icd11 ld40",
+      "laboratory abnormalities"
+    ]
+  },
+  {
+    "code": "LD50",
+    "display_name": "Other symptoms and signs",
+    "terms": [
+      "icd ld50",
+      "icd11 code ld50",
+      "icd11 ld50",
+      "miscellaneous symptoms",
+      "other clinical findings",
+      "other symptoms and signs"
+    ]
+  }
+]

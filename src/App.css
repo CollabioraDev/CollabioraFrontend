@@ -1,0 +1,462 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom Brand Colors */
+  --color-brand-purple: #D0C4E2;
+  --color-brand-royal-blue: #2F3C96;
+  --color-brand-gray: #787878;
+  --color-brand-white: #FFFFFF;
+  --color-brand-light-gray: #F5F5F5;
+
+  --color-brand-purple-50: #F5F2F8;
+  --color-brand-purple-100: #E8E0EF;
+  --color-brand-purple-200: #D0C4E2;
+  --color-brand-purple-300: #B8A5D5;
+  --color-brand-purple-400: #A086C8;
+  --color-brand-purple-500: #D0C4E2;
+  --color-brand-purple-600: #B8A5D5;
+  --color-brand-purple-700: #A086C8;
+
+  --color-brand-blue-50: #E8E9F2;
+  --color-brand-blue-100: #D1D3E5;
+  --color-brand-blue-200: #A3A7CB;
+  --color-brand-blue-300: #757BB1;
+  --color-brand-blue-400: #474F97;
+  --color-brand-blue-500: #2F3C96;
+  --color-brand-blue-600: #253075;
+  --color-brand-blue-700: #1C2454;
+
+  --color-brand-gray-50: #F5F5F5;
+  --color-brand-gray-100: #E8E8E8;
+  --color-brand-gray-200: #D0D0D0;
+  --color-brand-gray-300: #B8B8B8;
+  --color-brand-gray-400: #A0A0A0;
+  --color-brand-gray-500: #787878;
+  --color-brand-gray-600: #606060;
+  --color-brand-gray-700: #484848;
+  --animate-aurora: aurora 8s ease-in-out infinite alternate;
+
+  @keyframes aurora {
+    0% {
+      background-position: 0% 50%;
+      transform: rotate(-5deg) scale(0.9);
+    }
+
+    25% {
+      background-position: 50% 100%;
+      transform: rotate(5deg) scale(1.1);
+    }
+
+    50% {
+      background-position: 100% 50%;
+      transform: rotate(-3deg) scale(0.95);
+    }
+
+    75% {
+      background-position: 50% 0%;
+      transform: rotate(3deg) scale(1.05);
+    }
+
+    100% {
+      background-position: 0% 50%;
+      transform: rotate(-5deg) scale(0.9);
+    }
+  }
+
+  --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+  --color-color-5: var(--color-5);
+  --color-color-4: var(--color-4);
+  --color-color-3: var(--color-3);
+  --color-color-2: var(--color-2);
+  --color-color-1: var(--color-1);
+
+  @keyframes rainbow {
+    0% {
+      background-position: 0%;
+    }
+
+    100% {
+      background-position: 200%;
+    }
+  }
+
+  @keyframes rainbow {
+    0% {
+      background-position: 0%;
+    }
+
+    100% {
+      background-position: 200%;
+    }
+  }
+
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+
+  @keyframes shimmer-slide {
+    to {
+      transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
+
+  @keyframes spin-around {
+    0% {
+      transform: translateZ(0) rotate(0);
+    }
+
+    15%,
+    35% {
+      transform: translateZ(0) rotate(90deg);
+    }
+
+    65%,
+    85% {
+      transform: translateZ(0) rotate(270deg);
+    }
+
+    100% {
+      transform: translateZ(0) rotate(360deg);
+    }
+  }
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Using brand colors: white background, soft light gray for cards */
+  --background: #FFFFFF;
+  --foreground: #2F3C96;
+  --card: #F5F5F5;
+  --card-foreground: #2F3C96;
+  --popover: #FFFFFF;
+  --popover-foreground: #2F3C96;
+  /* Primary: Deep Royal Blue */
+  --primary: #2F3C96;
+  --primary-foreground: #FFFFFF;
+  /* Secondary: Soft Light Gray */
+  --secondary: #F5F5F5;
+  --secondary-foreground: #2F3C96;
+  /* Muted: Medium Gray */
+  --muted: #F5F5F5;
+  --muted-foreground: #787878;
+  /* Accent: Light Purple */
+  --accent: #D0C4E2;
+  --accent-foreground: #2F3C96;
+  --destructive: oklch(0.577 0.245 27.325);
+  /* Borders: Light Gray */
+  --border: #F5F5F5;
+  --input: #F5F5F5;
+  --ring: #D0C4E2;
+  --chart-1: #D0C4E2;
+  --chart-2: #2F3C96;
+  --chart-3: #787878;
+  --chart-4: #B8A5D5;
+  --chart-5: #474F97;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2F3C96;
+  --sidebar-primary: #2F3C96;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F5F5F5;
+  --sidebar-accent-foreground: #2F3C96;
+  --sidebar-border: #F5F5F5;
+  --sidebar-ring: #D0C4E2;
+  --color-1: #D0C4E2;
+  --color-2: #2F3C96;
+  --color-3: #B8A5D5;
+  --color-4: #474F97;
+  --color-5: #E8E0EF;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  --color-1: oklch(66.2% 0.225 25.9);
+  --color-2: oklch(60.4% 0.26 302);
+  --color-3: oklch(69.6% 0.165 251);
+  --color-4: oklch(80.2% 0.134 225);
+  --color-5: oklch(90.7% 0.231 133);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    font-family: 'Inter', sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@theme inline {
+  --animate-scroll: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+
+  @keyframes scroll {
+    to {
+      transform: translate3d(calc(-50% - 0.5rem), 0, 0); /* Use translate3d for GPU acceleration */
+    }
+  }
+}
+
+/* Optimize scroll animation with GPU acceleration */
+.animate-scroll {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Professional Toast Styling for react-hot-toast */
+.toast-notification {
+  font-family: 'Inter', sans-serif;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toast-notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -6px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Success Toast */
+.toast-success {
+  position: relative;
+  overflow: visible;
+}
+
+.toast-success::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  border-radius: 12px 0 0 12px;
+  z-index: 1;
+}
+
+.toast-success svg {
+  filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
+  position: relative;
+  z-index: 2;
+}
+
+/* Error Toast */
+.toast-error {
+  position: relative;
+  overflow: visible;
+}
+
+.toast-error::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 12px 0 0 12px;
+  z-index: 1;
+}
+
+.toast-error svg {
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+  position: relative;
+  z-index: 2;
+}
+
+/* Loading Toast */
+.toast-loading {
+  position: relative;
+  overflow: visible;
+}
+
+.toast-loading::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #2F3C96 0%, #1C2454 100%);
+  border-radius: 12px 0 0 12px;
+  z-index: 1;
+}
+
+.toast-loading svg {
+  filter: drop-shadow(0 2px 4px rgba(47, 60, 150, 0.3));
+  position: relative;
+  z-index: 2;
+}
+
+/* Toast Container - react-hot-toast creates a div with id */
+#react-hot-toast {
+  z-index: 9999;
+}
+
+/* Toast wrapper */
+#react-hot-toast>div {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toast Close Button */
+.toast-notification button[aria-label] {
+  color: #787878 !important;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 4px;
+  background: transparent !important;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.toast-notification button[aria-label]:hover {
+  opacity: 1;
+  background: rgba(120, 120, 120, 0.1) !important;
+  color: #2F3C96 !important;
+}
+
+/* Toast Content Layout */
+.toast-notification>div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Icon styling - react-hot-toast icons */
+.toast-notification svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Toast message text */
+.toast-notification>div>div {
+  flex: 1;
+  line-height: 1.5;
+  position: relative;
+  z-index: 2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .toast-notification {
+    min-width: 280px !important;
+    max-width: calc(100vw - 32px) !important;
+    margin: 8px;
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Animation for toast entrance */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Toast exit animation */
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

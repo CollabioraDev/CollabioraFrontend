@@ -1,0 +1,784 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import {
+  Beaker,
+  FileText,
+  ListChecks,
+  Mail,
+  Phone,
+  MapPin,
+  User,
+  Calendar,
+  Users,
+  CheckCircle,
+  Activity,
+  ExternalLink,
+  ArrowLeft,
+  Building2,
+  Loader2,
+  Info,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+
+export default function TrialDetails() {
+  const { nctId } = useParams();
+  const navigate = useNavigate();
+  const [trial, setTrial] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAllLocations, setShowAllLocations] = useState(false);
+
+  useEffect(() => {
+    async function fetchTrialDetails() {
+      if (!nctId) {
+        toast.error("No trial ID provided");
+        navigate("/dashboard/patient");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        
+        // Fetch original trial details (not simplified)
+        const response = await fetch(`${base}/api/search/trial/${nctId}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch trial details");
+        }
+
+        const data = await response.json();
+        if (data.trial) {
+          setTrial(data.trial);
+          // Dispatch context event for chatbot
+          const item = {
+            id: data.trial.id || data.trial._id || data.trial.nctId,
+            nctId: data.trial.nctId || data.trial.id || data.trial._id,
+            title: data.trial.title || data.trial.simplifiedTitle,
+            url: data.trial.url,
+            status: data.trial.status,
+            phase: data.trial.phase,
+            conditions: data.trial.conditions,
+            summary: data.trial.summary || data.trial.simplifiedDetails?.summary,
+            eligibilityCriteria: data.trial.eligibilityCriteria || data.trial.simplifiedDetails?.eligibilityCriteria,
+            description: data.trial.description,
+            eligibility: data.trial.eligibility,
+          };
+          window.dispatchEvent(
+            new CustomEvent("openChatbotWithContext", {
+              detail: { type: "trial", item },
+            })
+          );
+        } else {
+          toast.error("Trial not found");
+          navigate("/dashboard/patient");
+        }
+      } catch (error) {
+        console.error("Error fetching trial details:", error);
+        toast.error("Failed to load trial details");
+        navigate("/dashboard/patient");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTrialDetails();
+  }, [nctId, navigate]);
+
+  // Function to get Google Maps URL for a location
+  const getGoogleMapsUrl = (location) => {
+    if (!location) return null;
+    const address =
+      location.fullAddress ||
+      location.address ||
+      `${location.facility || ""} ${location.city || ""} ${
+        location.state || ""
+      } ${location.country || ""}`.trim();
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      address
+    )}`;
+  };
+
+  // Function to get Google Maps static image URL (no API key needed for basic usage)
+  const getMapImageUrl = (location) => {
+    if (!location) return null;
+    const address =
+      location.fullAddress ||
+      location.address ||
+      `${location.facility || ""} ${location.city || ""} ${
+        location.state || ""
+      } ${location.country || ""}`.trim();
+    // Using Google Maps Static API - note: requires API key for production
+    // For now, we'll just link to Google Maps
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <Loader2
+            className="w-12 h-12 animate-spin mx-auto mb-4"
+            style={{ color: "#2F3C96" }}
+          />
+          <p className="text-lg font-medium" style={{ color: "#787878" }}>
+            Loading trial details...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!trial) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <p className="text-lg font-medium mb-4" style={{ color: "#787878" }}>
+            Trial not found
+          </p>
+          <button
+            onClick={() => navigate("/dashboard/patient")}
+            className="px-4 py-2 rounded-lg text-white font-medium"
+            style={{ backgroundColor: "#2F3C96" }}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status) => {
+    const statusLower = status?.toLowerCase() || "";
+    if (statusLower.includes("recruiting")) {
+      return "bg-green-100 text-green-800 border-green-300";
+    } else if (statusLower.includes("completed")) {
+      return "bg-blue-100 text-blue-800 border-blue-300";
+    } else if (
+      statusLower.includes("terminated") ||
+      statusLower.includes("withdrawn")
+    ) {
+      return "bg-red-100 text-red-800 border-red-300";
+    } else if (statusLower.includes("suspended")) {
+      return "bg-yellow-100 text-yellow-800 border-yellow-300";
+    }
+    return "bg-gray-100 text-gray-800 border-gray-300";
+  };
+
+  return (
+    <div className="min-h-screen pt-20 bg-gradient-to-br from-gray-50 to-gray-100 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-sm font-medium mb-4 transition-colors"
+            style={{ color: "#2F3C96" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#253075")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#2F3C96")}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+
+          <div
+            className="bg-white rounded-xl shadow-sm border p-6"
+            style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div
+                className="p-3 rounded-lg"
+                style={{ backgroundColor: "rgba(208, 196, 226, 0.2)" }}
+              >
+                <Beaker className="w-8 h-8" style={{ color: "#2F3C96" }} />
+              </div>
+              <div className="flex-1">
+                <h1
+                  className="text-2xl font-bold mb-3"
+                  style={{ color: "#2F3C96" }}
+                >
+                  {trial.title}
+                </h1>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border"
+                    style={{
+                      backgroundColor: "rgba(209, 211, 229, 1)",
+                      color: "#253075",
+                      borderColor: "rgba(163, 167, 203, 1)",
+                    }}
+                  >
+                    {trial.id || trial._id || "N/A"}
+                  </span>
+                  {trial.status && (
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        trial.status
+                      )}`}
+                    >
+                      {trial.status.replace(/_/g, " ")}
+                    </span>
+                  )}
+                  {trial.phase && (
+                    <span
+                      className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border"
+                      style={{
+                        backgroundColor: "#F5F5F5",
+                        color: "#787878",
+                        borderColor: "rgba(232, 232, 232, 1)",
+                      }}
+                    >
+                      Phase {trial.phase}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Study Purpose / Description */}
+            {trial.description && (
+              <div
+                className="bg-white rounded-xl p-6 border shadow-sm"
+                style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+              >
+                <h2
+                  className="font-bold mb-4 flex items-center gap-2 text-lg"
+                  style={{ color: "#2F3C96" }}
+                >
+                  <FileText className="w-5 h-5" />
+                  Study Description
+                </h2>
+                <p
+                  className="text-sm leading-relaxed whitespace-pre-line"
+                  style={{ color: "#787878" }}
+                >
+                  {trial.description}
+                </p>
+              </div>
+            )}
+
+            {/* Eligibility */}
+            {trial.eligibility && (
+              <div
+                className="bg-white rounded-xl p-6 border shadow-sm"
+                style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+              >
+                <h2
+                  className="font-bold mb-4 flex items-center gap-2 text-lg"
+                  style={{ color: "#2F3C96" }}
+                >
+                  <ListChecks className="w-5 h-5" />
+                  Eligibility Criteria
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div
+                    className="bg-gray-50 rounded-lg p-4 border"
+                    style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4" style={{ color: "#2F3C96" }} />
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: "#787878" }}
+                      >
+                        Gender
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-bold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {trial.eligibility?.gender || "All"}
+                    </p>
+                  </div>
+
+                  <div
+                    className="bg-gray-50 rounded-lg p-4 border"
+                    style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar
+                        className="w-4 h-4"
+                        style={{ color: "#2F3C96" }}
+                      />
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: "#787878" }}
+                      >
+                        Age Range
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-bold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {trial.eligibility?.minimumAge !== "Not specified" &&
+                      trial.eligibility?.minimumAge
+                        ? trial.eligibility.minimumAge
+                        : "N/A"}{" "}
+                      -{" "}
+                      {trial.eligibility?.maximumAge !== "Not specified" &&
+                      trial.eligibility?.maximumAge
+                        ? trial.eligibility.maximumAge
+                        : "N/A"}
+                    </p>
+                  </div>
+
+                  <div
+                    className="bg-gray-50 rounded-lg p-4 border"
+                    style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle
+                        className="w-4 h-4"
+                        style={{ color: "#2F3C96" }}
+                      />
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: "#787878" }}
+                      >
+                        Volunteers
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-bold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {trial.eligibility?.healthyVolunteers || "Unknown"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Study Population Description */}
+                {trial.eligibility?.population && (
+                  <div className="mt-4">
+                    <h3
+                      className="font-semibold mb-2 text-sm flex items-center gap-2"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      <Users className="w-4 h-4" />
+                      Study Population
+                    </h3>
+                    <div
+                      className="bg-gray-50 rounded-lg p-4 border text-sm whitespace-pre-line"
+                      style={{
+                        color: "#787878",
+                        borderColor: "rgba(232, 224, 239, 1)",
+                      }}
+                    >
+                      {trial.eligibility.population}
+                    </div>
+                  </div>
+                )}
+
+                {trial.eligibility?.criteria &&
+                  trial.eligibility.criteria !== "Not specified" && (
+                    <div className="mt-4">
+                      <h3
+                        className="font-semibold mb-2 text-sm flex items-center gap-2"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        <ListChecks className="w-4 h-4" />
+                        Detailed Eligibility Criteria
+                      </h3>
+                      <div
+                        className="bg-gray-50 rounded-lg p-4 border text-sm whitespace-pre-line"
+                        style={{
+                          color: "#787878",
+                          borderColor: "rgba(232, 224, 239, 1)",
+                        }}
+                      >
+                        {trial.eligibility.criteria}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {/* Conditions */}
+            {trial.conditions && trial.conditions.length > 0 && (
+              <div
+                className="bg-white rounded-xl p-6 border shadow-sm"
+                style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+              >
+                <h2
+                  className="font-bold mb-4 flex items-center gap-2 text-lg"
+                  style={{ color: "#2F3C96" }}
+                >
+                  <Activity className="w-5 h-5" />
+                  Conditions Studied
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {trial.conditions.map((condition, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1.5 bg-gray-50 text-sm font-medium rounded-lg border"
+                      style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
+                    >
+                      {condition}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Contact Information */}
+            {trial.contacts && trial.contacts.length > 0 && (
+              <div
+                className="bg-gradient-to-br rounded-xl p-5 border shadow-sm"
+                style={{
+                  background: "linear-gradient(135deg, #F5F5F5, #F5F5F5)",
+                  borderColor: "rgba(232, 232, 232, 1)",
+                }}
+              >
+                <h4
+                  className="font-bold mb-4 flex items-center gap-2 text-base"
+                  style={{ color: "#2F3C96" }}
+                >
+                  <Mail className="w-5 h-5" style={{ color: "#787878" }} />
+                  Contact Information
+                </h4>
+                <div className="space-y-3">
+                  {trial.contacts.map((contact, i) => (
+                    <div
+                      key={i}
+                      className="bg-white rounded-lg p-4 border shadow-sm"
+                      style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                    >
+                      {contact.name && (
+                        <div
+                          className="font-bold mb-3 text-base flex items-center gap-2"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          <User
+                            className="w-4 h-4"
+                            style={{ color: "#787878" }}
+                          />
+                          {contact.name}
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        {contact.email && (
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="flex items-center gap-2 text-sm font-medium transition-colors"
+                            style={{ color: "#2F3C96" }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.color = "#253075")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.color = "#2F3C96")
+                            }
+                          >
+                            <Mail className="w-4 h-4" />
+                            {contact.email}
+                          </a>
+                        )}
+                        {contact.phone && (
+                          <div
+                            className="flex items-center gap-2 text-sm"
+                            style={{ color: "#787878" }}
+                          >
+                            <span style={{ color: "#2F3C96" }}>📞</span>
+                            <a
+                              href={`tel:${contact.phone}`}
+                              className="transition-colors"
+                              style={{ color: "#787878" }}
+                              onMouseEnter={(e) =>
+                                (e.target.style.color = "#2F3C96")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.color = "#787878")
+                              }
+                            >
+                              {contact.phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trial Locations */}
+            {trial.locations && trial.locations.length > 0 && (
+              <div
+                className="bg-white rounded-xl p-6 border shadow-sm"
+                style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+              >
+                <h2
+                  className="font-bold mb-4 flex items-center gap-2 text-lg"
+                  style={{ color: "#2F3C96" }}
+                >
+                  <MapPin className="w-5 h-5" />
+                  Trial Locations ({trial.locations.length})
+                </h2>
+                <div className="space-y-4">
+                  {/* Show first 5 locations in full detail */}
+                  {trial.locations.slice(0, 5).map((location, i) => (
+                    <div
+                      key={i}
+                      className="bg-gray-50 rounded-lg p-4 border"
+                      style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                    >
+                      {location.facility && (
+                        <div
+                          className="font-bold mb-2 flex items-center gap-2"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          <Building2 className="w-4 h-4" />
+                          {location.facility}
+                        </div>
+                      )}
+                      <div
+                        className="text-sm mb-2"
+                        style={{ color: "#787878" }}
+                      >
+                        {location.fullAddress || location.address}
+                      </div>
+                      {location.status && (
+                        <div
+                          className="text-xs font-medium mb-2"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          Status: {location.status}
+                        </div>
+                      )}
+                      {location.contactName && (
+                        <div
+                          className="text-xs mb-1"
+                          style={{ color: "#787878" }}
+                        >
+                          <span className="font-medium">Contact:</span>{" "}
+                          {location.contactName}
+                        </div>
+                      )}
+                      {location.contactEmail && (
+                        <a
+                          href={`mailto:${location.contactEmail}`}
+                          className="text-xs block mb-1 transition-colors"
+                          style={{ color: "#2F3C96" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#253075")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#2F3C96")
+                          }
+                        >
+                          {location.contactEmail}
+                        </a>
+                      )}
+                      {location.contactPhone && (
+                        <a
+                          href={`tel:${location.contactPhone}`}
+                          className="text-xs block mb-2 transition-colors"
+                          style={{ color: "#787878" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#2F3C96")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#787878")
+                          }
+                        >
+                          {location.contactPhone}
+                        </a>
+                      )}
+                      {getGoogleMapsUrl(location) && (
+                        <a
+                          href={getGoogleMapsUrl(location)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium transition-colors"
+                          style={{ color: "#2F3C96" }}
+                          onMouseEnter={(e) =>
+                            (e.target.style.color = "#253075")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.color = "#2F3C96")
+                          }
+                        >
+                          <MapPin className="w-3 h-3" />
+                          View on Map
+                        </a>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Show remaining locations in compressed list */}
+                  {trial.locations.length > 5 && (
+                    <>
+                      {showAllLocations && (
+                        <div className="space-y-2">
+                          {trial.locations.slice(5).map((location, i) => (
+                            <div
+                              key={i + 5}
+                              className="bg-gray-50 rounded-lg p-3 border"
+                              style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  {location.facility && (
+                                    <div
+                                      className="font-semibold mb-1 text-sm flex items-center gap-1.5"
+                                      style={{ color: "#2F3C96" }}
+                                    >
+                                      <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="truncate">{location.facility}</span>
+                                    </div>
+                                  )}
+                                  <div
+                                    className="text-xs mb-1 truncate"
+                                    style={{ color: "#787878" }}
+                                  >
+                                    {location.fullAddress || location.address}
+                                  </div>
+                                  {location.status && (
+                                    <div
+                                      className="text-xs font-medium"
+                                      style={{ color: "#2F3C96" }}
+                                    >
+                                      {location.status}
+                                    </div>
+                                  )}
+                                </div>
+                                {getGoogleMapsUrl(location) && (
+                                  <a
+                                    href={getGoogleMapsUrl(location)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium transition-colors ml-2"
+                                    style={{ color: "#2F3C96" }}
+                                    onMouseEnter={(e) =>
+                                      (e.currentTarget.style.color = "#253075")
+                                    }
+                                    onMouseLeave={(e) =>
+                                      (e.currentTarget.style.color = "#2F3C96")
+                                    }
+                                  >
+                                    <MapPin className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setShowAllLocations(!showAllLocations)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg transition-colors border"
+                        style={{
+                          color: "#2F3C96",
+                          backgroundColor: "rgba(208, 196, 226, 0.1)",
+                          borderColor: "rgba(208, 196, 226, 0.3)",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(208, 196, 226, 0.2)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgba(208, 196, 226, 0.1)";
+                        }}
+                      >
+                        {showAllLocations ? (
+                          <>
+                            <ChevronUp className="w-4 h-4" />
+                            Show Less ({trial.locations.length - 5} hidden)
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-4 h-4" />
+                            Show {trial.locations.length - 5} More Location
+                            {trial.locations.length - 5 !== 1 ? "s" : ""}
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Trial Information */}
+            <div
+              className="bg-white rounded-xl p-6 border shadow-sm"
+              style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+            >
+              <h2
+                className="font-bold mb-4 flex items-center gap-2 text-lg"
+                style={{ color: "#2F3C96" }}
+              >
+                <Info className="w-5 h-5" />
+                Trial Information
+              </h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
+                  <span className="text-sm font-medium" style={{ color: "#787878" }}>
+                    Trial ID:
+                  </span>
+                  <span className="text-sm font-semibold" style={{ color: "#2F3C96" }}>
+                    {trial.id || trial._id || "N/A"}
+                  </span>
+                </div>
+                {trial.status && (
+                  <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
+                    <span className="text-sm font-medium" style={{ color: "#787878" }}>
+                      Status:
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        trial.status
+                      )}`}
+                    >
+                      {trial.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                )}
+                {trial.phase && (
+                  <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
+                    <span className="text-sm font-medium" style={{ color: "#787878" }}>
+                      Phase:
+                    </span>
+                    <span className="text-sm font-semibold" style={{ color: "#2F3C96" }}>
+                      {trial.phase}
+                    </span>
+                  </div>
+                )}
+                {trial.conditions && trial.conditions.length > 0 && (
+                  <div className="py-2">
+                    <span className="text-sm font-medium block mb-2" style={{ color: "#787878" }}>
+                      Conditions:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {trial.conditions.map((condition, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 bg-gray-50 text-xs font-medium rounded-lg border"
+                          style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
+                        >
+                          {condition}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
