@@ -98,6 +98,8 @@ export default function DashboardPatient() {
     summary: "",
     loading: false,
   });
+  const [summaryPublication, setSummaryPublication] = useState(null);
+  const [hasSimplifiedFurther, setHasSimplifiedFurther] = useState(false);
   const [trialDetailsModal, setTrialDetailsModal] = useState({
     open: false,
     trial: null,
@@ -1048,6 +1050,14 @@ useEffect(() => {
         .join(" ");
     }
 
+    if (type === "publication") {
+      setSummaryPublication(item);
+      setHasSimplifiedFurther(false);
+    } else {
+      setSummaryPublication(null);
+      setHasSimplifiedFurther(false);
+    }
+
     setSummaryModal({
       open: true,
       title,
@@ -1090,6 +1100,56 @@ useEffect(() => {
     }
   }
 
+  async function simplifySummaryFurther() {
+    if (!summaryPublication) return;
+
+    setHasSimplifiedFurther(true);
+
+    setSummaryModal((prev) => ({
+      ...prev,
+      loading: true,
+    }));
+
+    try {
+      const res = await fetch(`${base}/api/ai/simplify-publication`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pmid:
+            summaryPublication.pmid ||
+            summaryPublication.id ||
+            summaryPublication._id,
+          publication: {
+            title: summaryPublication.title,
+            journal: summaryPublication.journal,
+            abstract: summaryPublication.abstract,
+            fullAbstract: summaryPublication.fullAbstract,
+            keywords: summaryPublication.keywords,
+            authors: summaryPublication.authors,
+            year: summaryPublication.year,
+          },
+        }),
+      }).then((r) => r.json());
+
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary:
+          res.summary ||
+          (typeof res.summary === "object" && res.summary.structured
+            ? res.summary
+            : { structured: false, summary: "Summary unavailable" }),
+        loading: false,
+      }));
+    } catch (e) {
+      console.error("Further simplification error:", e);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary: "Failed to simplify further. Please try again.",
+        loading: false,
+      }));
+    }
+  }
+
   function closeModal() {
     setSummaryModal({
       open: false,
@@ -1098,6 +1158,8 @@ useEffect(() => {
       summary: "",
       loading: false,
     });
+    setSummaryPublication(null);
+    setHasSimplifiedFurther(false);
   }
 
   async function openTrialDetailsModal(trial) {
@@ -8668,24 +8730,35 @@ useEffect(() => {
                 {summaryModal.title}
               </h4>
             </div>
-            <span
-              className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-              style={
-                summaryModal.type === "trial"
-                  ? {
-                      backgroundColor: "rgba(232, 224, 239, 0.8)",
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                style={{
+                  backgroundColor: "rgba(232, 224, 239, 0.8)",
+                  color: "#2F3C96",
+                }}
+              >
+                {summaryModal.type === "trial"
+                  ? "Clinical Trial"
+                  : "Research Publication"}
+              </span>
+              {summaryModal.type === "publication" &&
+                !summaryModal.loading &&
+                summaryPublication &&
+                !hasSimplifiedFurther && (
+                  <button
+                    type="button"
+                    onClick={simplifySummaryFurther}
+                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: "rgba(232, 224, 239, 0.9)",
                       color: "#2F3C96",
-                    }
-                  : {
-                      backgroundColor: "rgba(232, 224, 239, 0.8)",
-                      color: "#2F3C96",
-                    }
-              }
-            >
-              {summaryModal.type === "trial"
-                ? "Clinical Trial"
-                : "Research Publication"}
-            </span>
+                    }}
+                  >
+                    Simplify further
+                  </button>
+                )}
+            </div>
           </div>
           {summaryModal.loading ? (
             <div className="space-y-4 py-4">
