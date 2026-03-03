@@ -65,13 +65,13 @@ export default function Experts() {
   const [locationMode, setLocationMode] = useState("global"); // "current", "global", "custom"
   const [userLocation, setUserLocation] = useState(null);
   const [useMedicalInterest, setUseMedicalInterest] = useState(() => {
-    // Load from localStorage, default to true if not set
+    // Load from localStorage, default to false if not set
     const saved = localStorage.getItem("useMedicalInterest");
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   }); // Toggle for using medical interest
   const [userMedicalInterest, setUserMedicalInterest] = useState(""); // User's medical interest
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Track if it's the initial load
-  const [isOnPlatform, setIsOnPlatform] = useState(true); // Track if on platform is selected (default: true, unchecked shows global)
+  const [isOnPlatform, setIsOnPlatform] = useState(false); // Track if on platform is selected (default: false, unchecked shows global)
   const [isSignedIn, setIsSignedIn] = useState(false); // Track if user is signed in
   const [user, setUser] = useState(null); // Track user state
   const [results, setResults] = useState([]);
@@ -1343,7 +1343,7 @@ export default function Experts() {
           setUseMedicalInterest(
             state.useMedicalInterest !== undefined
               ? state.useMedicalInterest
-              : true,
+              : false,
           );
         }
         setUserMedicalInterest(state.userMedicalInterest || "");
@@ -1449,7 +1449,7 @@ export default function Experts() {
           !sessionStorage.getItem("experts_search_state")
         ) {
           if (localStorage.getItem("useMedicalInterest") === null) {
-            setUseMedicalInterest(true);
+            setUseMedicalInterest(false);
           }
         } else if (localStorage.getItem("useMedicalInterest") === null) {
           setUseMedicalInterest(false);
@@ -1495,9 +1495,9 @@ export default function Experts() {
           setUserMedicalInterest(medicalInterest); // Use first medical interest
 
           // Don't auto-search - user must manually search
-          // Respect localStorage state if available
+          // Respect localStorage state if available; default is unchecked
           if (localStorage.getItem("useMedicalInterest") === null) {
-            setUseMedicalInterest(true);
+            setUseMedicalInterest(false);
           }
         } else {
           setUseMedicalInterest(false);

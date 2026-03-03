@@ -121,9 +121,9 @@ export default function Trials() {
   const [locationMode, setLocationMode] = useState("global"); // "current", "global", "custom"
   const [userLocation, setUserLocation] = useState(null);
   const [useMedicalInterest, setUseMedicalInterest] = useState(() => {
-    // Load from localStorage, default to true if not set
+    // Load from localStorage, default to false if not set
     const saved = localStorage.getItem("useMedicalInterest");
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   }); // Toggle for using medical interest (backward compatibility)
   const [userMedicalInterest, setUserMedicalInterest] = useState(""); // User's medical interest (combined string for backward compatibility)
   const [userMedicalInterests, setUserMedicalInterests] = useState([]); // All user's medical interests as array
@@ -1839,7 +1839,7 @@ export default function Trials() {
           setUseMedicalInterest(
             state.useMedicalInterest !== undefined
               ? state.useMedicalInterest
-              : true,
+              : false,
           );
         }
         setUserMedicalInterest(state.userMedicalInterest || "");
@@ -1849,19 +1849,25 @@ export default function Trials() {
             .split(" ")
             .filter(Boolean);
           setUserMedicalInterests(interests);
-          // Restore enabled interests from localStorage if available, otherwise enable all
+          // Restore enabled interests from localStorage if available
           const savedEnabled = localStorage.getItem("enabledMedicalInterests");
           if (savedEnabled) {
             try {
               const savedSet = new Set(JSON.parse(savedEnabled));
-              const validEnabled = new Set(interests.filter(i => savedSet.has(i)));
+              const validEnabled = new Set(
+                interests.filter((i) => savedSet.has(i)),
+              );
               setEnabledMedicalInterests(validEnabled);
               setUserMedicalInterest(Array.from(validEnabled).join(" "));
             } catch (e) {
-              setEnabledMedicalInterests(new Set(interests));
+              // If parsing fails, keep all available but none enabled
+              setEnabledMedicalInterests(new Set());
+              setUserMedicalInterest("");
             }
           } else {
-            setEnabledMedicalInterests(new Set(interests));
+            // No saved enabled interests; keep all available but disabled by default
+            setEnabledMedicalInterests(new Set());
+            setUserMedicalInterest("");
           }
         } else {
           setUserMedicalInterests([]);
@@ -2001,7 +2007,7 @@ export default function Trials() {
           !sessionStorage.getItem("trials_search_state")
         ) {
           if (localStorage.getItem("useMedicalInterest") === null) {
-            setUseMedicalInterest(true);
+            setUseMedicalInterest(false);
           }
         } else if (localStorage.getItem("useMedicalInterest") === null) {
           setUseMedicalInterest(false);
@@ -2046,22 +2052,25 @@ export default function Trials() {
         ) {
           // Store all medical interests
           setUserMedicalInterests(userData.medicalInterests);
-          // Restore enabled interests from localStorage if available, otherwise enable all
+          // Restore enabled interests from localStorage if available
           const savedEnabled = localStorage.getItem("enabledMedicalInterests");
           if (savedEnabled) {
             try {
               const savedSet = new Set(JSON.parse(savedEnabled));
-              const validEnabled = new Set(userData.medicalInterests.filter(i => savedSet.has(i)));
+              const validEnabled = new Set(
+                userData.medicalInterests.filter((i) => savedSet.has(i)),
+              );
               setEnabledMedicalInterests(validEnabled);
               setUserMedicalInterest(Array.from(validEnabled).join(" "));
             } catch (e) {
-              setEnabledMedicalInterests(new Set(userData.medicalInterests));
-              setUserMedicalInterest(userData.medicalInterests.join(" "));
+              // If parsing fails, fall back to all interests available but none enabled
+              setEnabledMedicalInterests(new Set());
+              setUserMedicalInterest("");
             }
           } else {
-            setEnabledMedicalInterests(new Set(userData.medicalInterests));
-            const combinedInterest = userData.medicalInterests.join(" ");
-            setUserMedicalInterest(combinedInterest);
+            // No saved enabled interests; keep all medical interests available but disabled by default
+            setEnabledMedicalInterests(new Set());
+            setUserMedicalInterest("");
           }
           // Don't auto-search - user must manually trigger search
         } else {

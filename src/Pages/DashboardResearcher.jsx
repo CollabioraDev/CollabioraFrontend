@@ -1239,12 +1239,15 @@ export default function DashboardResearcher() {
     });
 
     // Researchers: audience=researcher (technical terms, structured) - still simplified, not raw
+    // Pass source so backend uses correct provider (PubMed-only on dashboard avoids lag)
     if (pub.pmid || pub.id || pub._id) {
       try {
-        const pmid = pub.pmid || pub.id || pub._id;
+        const id = String(pub.pmid || pub.id || pub._id);
+        const source = pub.source || "pubmed";
+        const sourceParam = `source=${encodeURIComponent(source)}`;
 
         const response = await fetch(
-          `${base}/api/search/publication/${pmid}/simplified?audience=researcher`,
+          `${base}/api/search/publication/${id}/simplified?audience=researcher&${sourceParam}`,
         );
 
         if (response.ok) {
@@ -1260,7 +1263,7 @@ export default function DashboardResearcher() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/publication/${pmid}/simplified`,
+          `${base}/api/search/publication/${id}/simplified?${sourceParam}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();

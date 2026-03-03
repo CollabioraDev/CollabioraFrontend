@@ -1586,11 +1586,14 @@ export default function DashboardPatient() {
 
     if (pub.pmid || pub.id || pub._id) {
       try {
-        const pmid = pub.pmid || pub.id || pub._id;
+        // Prefer PMID for URL so backend uses fast PubMed path; pass source to avoid wrong-provider fetch (lag)
+        const id = String(pub.pmid || pub.id || pub._id);
+        const source = pub.source || "pubmed";
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const sourceParam = `source=${encodeURIComponent(source)}`;
 
         const response = await fetch(
-          `${base}/api/search/publication/${pmid}/simplified`,
+          `${base}/api/search/publication/${id}/simplified?${sourceParam}`,
         );
 
         if (response.ok) {
@@ -1606,7 +1609,7 @@ export default function DashboardPatient() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/publication/${pmid}`,
+          `${base}/api/search/publication/${id}?${sourceParam}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
