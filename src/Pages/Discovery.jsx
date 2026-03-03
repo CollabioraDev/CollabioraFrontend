@@ -33,6 +33,7 @@ import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import { getDisplayName } from "../utils/researcherDisplayName.js";
 import CustomSelect from "../components/ui/CustomSelect.jsx";
 import { AuroraText } from "../components/ui/aurora-text.js";
+import HealthNewsSection from "../components/HealthNewsSection.jsx";
 import {
   IconHospital,
   IconRibbonHealth,
@@ -121,7 +122,7 @@ function linkify(text) {
       </a>
     ) : (
       part
-    )
+    ),
   );
 }
 
@@ -129,6 +130,7 @@ export default function Discovery() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [viewMode, setViewMode] = useState("news");
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerContent, setComposerContent] = useState("");
   const [composerPostType, setComposerPostType] = useState(() => {
@@ -155,6 +157,7 @@ export default function Discovery() {
   const [submittingComment, setSubmittingComment] = useState({}); // Track submitting state per post
   const [followingUserIds, setFollowingUserIds] = useState(new Set()); // User IDs the current user follows (for feed order and +Follow)
   const [followUserLoading, setFollowUserLoading] = useState(new Set()); // User IDs currently being followed/unfollowed
+
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -181,7 +184,7 @@ export default function Discovery() {
     if (!user?._id && !user?.id) return;
     const userId = user._id || user.id;
     fetch(
-      `${base}/api/follow/following-ids?userId=${encodeURIComponent(userId)}`
+      `${base}/api/follow/following-ids?userId=${encodeURIComponent(userId)}`,
     )
       .then((res) => (res.ok ? res.json() : { followingIds: [] }))
       .then((data) => setFollowingUserIds(new Set(data.followingIds || [])))
@@ -237,7 +240,7 @@ export default function Discovery() {
   useEffect(() => {
     if (!composerCommunity || followingCommunities.length === 0) return;
     const isMember = followingCommunities.some(
-      (c) => c._id === composerCommunity._id
+      (c) => c._id === composerCommunity._id,
     );
     if (!isMember) {
       setComposerCommunity(null);
@@ -253,7 +256,7 @@ export default function Discovery() {
       if (userId) params.set("userId", userId);
 
       const response = await fetch(
-        `${base}/api/communities?${params.toString()}`
+        `${base}/api/communities?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch communities");
       const data = await response.json();
@@ -272,7 +275,7 @@ export default function Discovery() {
   async function loadFollowingCommunities(userId) {
     try {
       const response = await fetch(
-        `${base}/api/communities/user/${userId}/following`
+        `${base}/api/communities/user/${userId}/following`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -288,7 +291,7 @@ export default function Discovery() {
     setLoadingSubcategories(true);
     try {
       const response = await fetch(
-        `${base}/api/communities/${communityId}/subcategories`
+        `${base}/api/communities/${communityId}/subcategories`,
       );
       if (!response.ok) throw new Error("Failed to fetch subcategories");
       const data = await response.json();
@@ -339,7 +342,7 @@ export default function Discovery() {
         setPosts((prev) => {
           const existingIds = new Set(prev.map((p) => p._id));
           const uniqueNewPosts = newPosts.filter(
-            (p) => !existingIds.has(p._id)
+            (p) => !existingIds.has(p._id),
           );
           return [...prev, ...uniqueNewPosts];
         });
@@ -381,8 +384,8 @@ export default function Discovery() {
         prev.map((post) =>
           post._id === postId
             ? { ...post, isLiked: data.isLiked, likeCount: data.likeCount }
-            : post
-        )
+            : post,
+        ),
       );
     } catch (error) {
       console.error("Error toggling like:", error);
@@ -512,7 +515,7 @@ export default function Discovery() {
       if (userId) params.set("userId", userId);
 
       const response = await fetch(
-        `${base}/api/posts/${postId}/comments?${params.toString()}`
+        `${base}/api/posts/${postId}/comments?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch comments");
       const data = await response.json();
@@ -527,8 +530,8 @@ export default function Discovery() {
         prev.map((post) =>
           post._id === postId
             ? { ...post, replyCount: data.commentCount || 0 }
-            : post
-        )
+            : post,
+        ),
       );
     } catch (error) {
       console.error("Error loading comments:", error);
@@ -606,8 +609,8 @@ export default function Discovery() {
         prev.map((post) =>
           post._id === postId
             ? { ...post, replyCount: (post.replyCount || 0) + 1 }
-            : post
-        )
+            : post,
+        ),
       );
 
       toast.success("Comment added!");
@@ -636,7 +639,7 @@ export default function Discovery() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to toggle like");
@@ -737,9 +740,9 @@ export default function Discovery() {
           reject(
             new Error(
               `Video duration (${Math.round(
-                duration
-              )}s) exceeds 2 minutes limit`
-            )
+                duration,
+              )}s) exceeds 2 minutes limit`,
+            ),
           );
         } else {
           resolve(true);
@@ -918,7 +921,7 @@ export default function Discovery() {
     const finalPostType = user.role === "researcher" ? "researcher" : "patient";
     if (composerPostType !== finalPostType) {
       console.warn(
-        `Post type mismatch: composerPostType=${composerPostType}, user.role=${user.role}. Correcting to ${finalPostType}`
+        `Post type mismatch: composerPostType=${composerPostType}, user.role=${user.role}. Correcting to ${finalPostType}`,
       );
       setComposerPostType(finalPostType);
     }
@@ -984,12 +987,12 @@ export default function Discovery() {
         <AnimatedBackground />
 
         <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-6xl pb-8">
-          {/* Header - Same style as Trials and Experts */}
+          {/* Header */}
           <div className="text-center mb-6 animate-fade-in">
             <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-[#2F3C96] via-[#474F97] to-[#D0C4E2] bg-clip-text text-transparent mb-1">
               <AuroraText
                 speed={2.5}
-                colors={["#2F3C96", "#474F97", "#757BB1", "#B8A5D5", "#D0C4E2"]}
+                colors={["#2F3C96"]}
               >
                 Discovery
               </AuroraText>
@@ -999,10 +1002,55 @@ export default function Discovery() {
             </p>
           </div>
 
-          {/* Discovery Feed - Full Width */}
-          <div>
-            {/* Post composer bar - compact input + Post button */}
-            {user && (
+          {/* Tabs for News / Community sections */}
+          <div className="max-w-6xl mx-auto mb-6">
+            <div className="flex items-center gap-0 border-b border-[#E8E8E8]">
+              <button
+                type="button"
+                onClick={() => setViewMode("news")}
+                className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                  viewMode === "news"
+                    ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
+                    : "text-[#787878] hover:text-[#484848]"
+                }`}
+              >
+                News & Articles
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("community")}
+                className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                  viewMode === "community"
+                    ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
+                    : "text-[#787878] hover:text-[#484848]"
+                }`}
+              >
+                Community
+              </button>
+            </div>
+          </div>
+
+          {/* ── News & Articles Section ──────────────────────────────── */}
+          {viewMode === "news" && (
+            <div className="mb-8">
+              <HealthNewsSection user={user} />
+            </div>
+          )}
+
+          {/* ── Discovery Community Feed ──────────────────────────────── */}
+          {viewMode === "community" && (
+            <div>
+              {/* Divider */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2">
+                  Community Feed
+                </span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              {/* Post composer bar - compact input + Post button */}
+              {user && (
                 <div className="bg-white rounded-xl border border-gray-200 mb-6 overflow-hidden">
                   <div className="flex items-center gap-3 p-2.5">
                     <div className="relative w-8 h-8 shrink-0">
@@ -1029,7 +1077,7 @@ export default function Discovery() {
                         onChange={(e) => {
                           const next = truncateToMaxWords(
                             e.target.value,
-                            POST_MAX_WORDS
+                            POST_MAX_WORDS,
                           );
                           setComposerContent(next);
                         }}
@@ -1062,483 +1110,503 @@ export default function Discovery() {
                 </div>
               )}
 
-            {/* Discovery Feed */}
-            {loading && posts.length === 0 ? (
-              <div className="flex justify-center items-center py-12 bg-white rounded-xl border border-gray-200">
-                <Loader2 className="w-8 h-8 animate-spin text-[#2F3C96]" />
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-                <p className="text-gray-700 font-medium mb-1">
-                  Posts from the community will appear here
-                </p>
-                <p className="text-sm text-gray-600">
-                  Stories, research updates, and insights from patients and
-                  researchers.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sortedPosts.map((post) => {
-                  const authorId =
-                    post.authorUserId?._id?.toString?.() ||
-                    post.authorUserId?.toString?.() ||
-                    "";
-                  const isAuthorSelf =
-                    user &&
-                    (user._id === post.authorUserId?._id ||
-                      user.id === post.authorUserId?._id ||
-                      (user._id || user.id)?.toString?.() === authorId);
-                  const isFollowingAuthor =
-                    authorId && followingUserIds.has(authorId);
-                  const followLoading =
-                    authorId && followUserLoading.has(authorId);
-                  return (
-                    <div
-                      key={post._id}
-                      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all"
-                    >
-                      {/* Post Header */}
-                      <div className="flex items-start gap-4 mb-4">
-                        <div className="relative w-12 h-12 flex-shrink-0">
-                          {/* Fallback avatar with first letter - always rendered */}
-                          <div className="w-12 h-12 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-lg absolute inset-0">
-                            <span>
-                              {post.authorUserId?.username
-                                ?.charAt(0)
-                                ?.toUpperCase() ||
-                                post.authorUserId?.name
+              {/* Discovery Feed */}
+              {loading && posts.length === 0 ? (
+                <div className="flex justify-center items-center py-12 bg-white rounded-xl border border-gray-200">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#2F3C96]" />
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+                  <p className="text-gray-700 font-medium mb-1">
+                    Posts from the community will appear here
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Stories, research updates, and insights from patients and
+                    researchers.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedPosts.map((post) => {
+                    const authorId =
+                      post.authorUserId?._id?.toString?.() ||
+                      post.authorUserId?.toString?.() ||
+                      "";
+                    const isAuthorSelf =
+                      user &&
+                      (user._id === post.authorUserId?._id ||
+                        user.id === post.authorUserId?._id ||
+                        (user._id || user.id)?.toString?.() === authorId);
+                    const isFollowingAuthor =
+                      authorId && followingUserIds.has(authorId);
+                    const followLoading =
+                      authorId && followUserLoading.has(authorId);
+                    return (
+                      <div
+                        key={post._id}
+                        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all"
+                      >
+                        {/* Post Header */}
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="relative w-12 h-12 flex-shrink-0">
+                            {/* Fallback avatar with first letter - always rendered */}
+                            <div className="w-12 h-12 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-lg absolute inset-0">
+                              <span>
+                                {post.authorUserId?.username
                                   ?.charAt(0)
                                   ?.toUpperCase() ||
-                                "U"}
-                            </span>
+                                  post.authorUserId?.name
+                                    ?.charAt(0)
+                                    ?.toUpperCase() ||
+                                  "U"}
+                              </span>
+                            </div>
+                            {/* Profile picture - overlays the fallback if available */}
+                            {post.authorUserId?.picture && (
+                              <img
+                                src={post.authorUserId.picture}
+                                alt={post.authorUserId.username}
+                                className="w-12 h-12 rounded-full object-cover absolute inset-0"
+                                onError={(e) => {
+                                  // Hide image on error to show fallback
+                                  e.target.style.display = "none";
+                                }}
+                              />
+                            )}
                           </div>
-                          {/* Profile picture - overlays the fallback if available */}
-                          {post.authorUserId?.picture && (
-                            <img
-                              src={post.authorUserId.picture}
-                              alt={post.authorUserId.username}
-                              className="w-12 h-12 rounded-full object-cover absolute inset-0"
-                              onError={(e) => {
-                                // Hide image on error to show fallback
-                                e.target.style.display = "none";
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold text-[#2F3C96]">
-                                  {getDisplayName(post.authorUserId, "Anonymous")}
-                                </h3>
-                                {post.isOfficial && (
-                                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                                )}
-                                <span className="text-sm text-gray-500">
-                                  · {formatTimeAgo(post.createdAt)}
-                                </span>
-                              </div>
-                              {post.authorUserId?.username && (
-                                <span className="text-xs text-gray-500">
-                                  @{post.authorUserId.username}
-                                </span>
-                              )}
-                            </div>
-                            {/* Delete button for post owner; +Follow for others (LinkedIn-style) */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              {!isAuthorSelf && user && authorId && (
-                                <button
-                                  onClick={() =>
-                                    handleFollowUser(authorId, post.authorRole)
-                                  }
-                                  disabled={followLoading}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                    isFollowingAuthor
-                                      ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                      : "bg-[#2F3C96] text-white hover:bg-[#253075]"
-                                  } disabled:opacity-60`}
-                                >
-                                  {followLoading ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : isFollowingAuthor ? (
-                                    <>
-                                      <UserCheck className="w-4 h-4" />
-                                      Following
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserPlus className="w-4 h-4" />
-                                      Follow
-                                    </>
-                                  )}
-                                </button>
-                              )}
-                              {isAuthorSelf && (
-                                <button
-                                  onClick={() => handleDeletePost(post._id)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
-                                  title="Delete post"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {(post.communityId || post.subcategoryId) && (
-                            <div className="flex items-center gap-2 text-sm text-brand-gray">
-                              {post.communityId && (
-                                <div className="flex items-center gap-1">
-                                  <CommunityIcon
-                                    community={post.communityId}
-                                    size="0.875rem"
-                                  />
-                                  <span>{post.communityId.name}</span>
-                                </div>
-                              )}
-                              {post.subcategoryId && (
-                                <>
-                                  <span>·</span>
-                                  <span>{post.subcategoryId.name}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Post Content */}
-                      <div className="mb-4">
-                        <p className="text-gray-800 whitespace-pre-wrap">
-                          {linkify(post.content)}
-                        </p>
-                      </div>
-
-                      {/* Linked Forum Thread Preview */}
-                      {post.linkedThreadId && (
-                        <div
-                          className="mb-4 border border-[#E8E8E8] rounded-lg p-4 bg-[#F9F9F9] hover:border-[#2F3C96]/30 transition-colors cursor-pointer"
-                          onClick={() => {
-                            navigate(
-                              `/forums?threadId=${post.linkedThreadId._id}`,
-                              {
-                                state: {
-                                  openThreadId: post.linkedThreadId._id,
-                                },
-                              }
-                            );
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full bg-[#2F3C96]/15 flex items-center justify-center shrink-0">
-                              <MessageCircle className="w-5 h-5 text-[#2F3C96]" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-medium text-[#2F3C96]">
-                                  Forum Question
-                                </span>
-                              </div>
-                              <h3 className="font-semibold text-[#484848] mb-2 line-clamp-2">
-                                {post.linkedThreadId.title || "Forum Question"}
-                              </h3>
-                              {post.linkedThreadId.body && (
-                                <p className="text-sm text-[#787878] line-clamp-3 mb-2">
-                                  {linkify(post.linkedThreadId.body)}
-                                </p>
-                              )}
-                              <p className="text-xs text-[#787878] mt-2 flex items-center gap-1">
-                                <MessageCircle className="w-3 h-3" />
-                                Click to view in forums
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Attachments */}
-                      {post.attachments && post.attachments.length > 0 && (
-                        <div className="mb-4 space-y-3">
-                          {post.attachments.map((att, idx) => (
-                            <div key={idx} className="relative">
-                              {att.type === "image" ? (
-                                <div className="relative group">
-                                  <img
-                                    src={att.url}
-                                    alt={att.name || `Image ${idx + 1}`}
-                                    className="w-full max-h-96 object-contain rounded-lg border border-gray-200 bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
-                                    onClick={() =>
-                                      window.open(att.url, "_blank")
-                                    }
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none" />
-                                </div>
-                              ) : (
-                                <a
-                                  href={att.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-brand-royal-blue/50 transition-all group"
-                                >
-                                  <div className="w-12 h-12 bg-brand-royal-blue/10 rounded-lg flex items-center justify-center group-hover:bg-brand-royal-blue/20 transition-colors">
-                                    <FileText className="w-6 h-6 text-brand-royal-blue" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                      {att.name || "Document"}
-                                    </p>
-                                    {att.size && (
-                                      <p className="text-xs text-gray-500">
-                                        {(att.size / 1024).toFixed(1)} KB
-                                      </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3 className="font-semibold text-[#2F3C96]">
+                                    {getDisplayName(
+                                      post.authorUserId,
+                                      "Anonymous",
                                     )}
-                                  </div>
-                                  <span className="text-xs text-brand-royal-blue font-medium">
-                                    View
+                                  </h3>
+                                  {post.isOfficial && (
+                                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                                  )}
+                                  <span className="text-sm text-gray-500">
+                                    · {formatTimeAgo(post.createdAt)}
                                   </span>
-                                </a>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Post Actions */}
-                      <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                        <button
-                          onClick={() => handleLike(post._id, post.isLiked)}
-                          className={`flex items-center gap-2 transition-colors ${
-                            post.isLiked
-                              ? "text-red-500"
-                              : "text-gray-500 hover:text-red-500"
-                          }`}
-                        >
-                          <Heart
-                            className={`w-5 h-5 ${
-                              post.isLiked ? "fill-current" : ""
-                            }`}
-                          />
-                          <span className="text-sm">{post.likeCount || 0}</span>
-                        </button>
-                        <button
-                          onClick={() => handleToggleComments(post._id)}
-                          className={`flex items-center gap-2 transition-colors ${
-                            expandedComments.has(post._id)
-                              ? "text-[#2F3C96]"
-                              : "text-gray-500 hover:text-[#2F3C96]"
-                          }`}
-                        >
-                          <MessageCircle
-                            className={`w-5 h-5 ${
-                              expandedComments.has(post._id)
-                                ? "fill-current"
-                                : ""
-                            }`}
-                          />
-                          <span className="text-sm">
-                            {post.replyCount || 0}
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* Comments Section */}
-                      {expandedComments.has(post._id) && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                          {/* Comment Input */}
-                          {user && (
-                            <div className="mb-4">
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-xs shrink-0">
-                                  {user?.username?.charAt(0)?.toUpperCase() ||
-                                    "U"}
                                 </div>
-                                <div className="flex-1">
-                                  <textarea
-                                    value={commentInputs[post._id] || ""}
-                                    onChange={(e) =>
-                                      setCommentInputs((prev) => ({
-                                        ...prev,
-                                        [post._id]: e.target.value,
-                                      }))
+                                {post.authorUserId?.username && (
+                                  <span className="text-xs text-gray-500">
+                                    @{post.authorUserId.username}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Delete button for post owner; +Follow for others (LinkedIn-style) */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                {!isAuthorSelf && user && authorId && (
+                                  <button
+                                    onClick={() =>
+                                      handleFollowUser(
+                                        authorId,
+                                        post.authorRole,
+                                      )
                                     }
-                                    placeholder="Write a comment..."
-                                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent resize-none text-sm"
-                                    rows={2}
-                                    onKeyDown={(e) => {
-                                      if (
-                                        e.key === "Enter" &&
-                                        (e.metaKey || e.ctrlKey)
-                                      ) {
-                                        handleSubmitComment(post._id);
-                                      }
-                                    }}
-                                  />
-                                  <div className="flex justify-end mt-2">
-                                    <button
+                                    disabled={followLoading}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                      isFollowingAuthor
+                                        ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        : "bg-[#2F3C96] text-white hover:bg-[#253075]"
+                                    } disabled:opacity-60`}
+                                  >
+                                    {followLoading ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : isFollowingAuthor ? (
+                                      <>
+                                        <UserCheck className="w-4 h-4" />
+                                        Following
+                                      </>
+                                    ) : (
+                                      <>
+                                        <UserPlus className="w-4 h-4" />
+                                        Follow
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                                {isAuthorSelf && (
+                                  <button
+                                    onClick={() => handleDeletePost(post._id)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                                    title="Delete post"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {(post.communityId || post.subcategoryId) && (
+                              <div className="flex items-center gap-2 text-sm text-brand-gray">
+                                {post.communityId && (
+                                  <div className="flex items-center gap-1">
+                                    <CommunityIcon
+                                      community={post.communityId}
+                                      size="0.875rem"
+                                    />
+                                    <span>{post.communityId.name}</span>
+                                  </div>
+                                )}
+                                {post.subcategoryId && (
+                                  <>
+                                    <span>·</span>
+                                    <span>{post.subcategoryId.name}</span>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Post Content */}
+                        <div className="mb-4">
+                          <p className="text-gray-800 whitespace-pre-wrap">
+                            {linkify(post.content)}
+                          </p>
+                        </div>
+
+                        {/* Linked Forum Thread Preview */}
+                        {post.linkedThreadId && (
+                          <div
+                            className="mb-4 border border-[#E8E8E8] rounded-lg p-4 bg-[#F9F9F9] hover:border-[#2F3C96]/30 transition-colors cursor-pointer"
+                            onClick={() => {
+                              navigate(
+                                `/forums?threadId=${post.linkedThreadId._id}`,
+                                {
+                                  state: {
+                                    openThreadId: post.linkedThreadId._id,
+                                  },
+                                },
+                              );
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-[#2F3C96]/15 flex items-center justify-center shrink-0">
+                                <MessageCircle className="w-5 h-5 text-[#2F3C96]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-medium text-[#2F3C96]">
+                                    Forum Question
+                                  </span>
+                                </div>
+                                <h3 className="font-semibold text-[#484848] mb-2 line-clamp-2">
+                                  {post.linkedThreadId.title ||
+                                    "Forum Question"}
+                                </h3>
+                                {post.linkedThreadId.body && (
+                                  <p className="text-sm text-[#787878] line-clamp-3 mb-2">
+                                    {linkify(post.linkedThreadId.body)}
+                                  </p>
+                                )}
+                                <p className="text-xs text-[#787878] mt-2 flex items-center gap-1">
+                                  <MessageCircle className="w-3 h-3" />
+                                  Click to view in forums
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Attachments */}
+                        {post.attachments && post.attachments.length > 0 && (
+                          <div className="mb-4 space-y-3">
+                            {post.attachments.map((att, idx) => (
+                              <div key={idx} className="relative">
+                                {att.type === "image" ? (
+                                  <div className="relative group">
+                                    <img
+                                      src={att.url}
+                                      alt={att.name || `Image ${idx + 1}`}
+                                      className="w-full max-h-96 object-contain rounded-lg border border-gray-200 bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                                       onClick={() =>
-                                        handleSubmitComment(post._id)
+                                        window.open(att.url, "_blank")
                                       }
-                                      disabled={
-                                        !commentInputs[post._id]?.trim() ||
-                                        submittingComment[post._id]
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors rounded-lg pointer-events-none" />
+                                  </div>
+                                ) : (
+                                  <a
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:border-brand-royal-blue/50 transition-all group"
+                                  >
+                                    <div className="w-12 h-12 bg-brand-royal-blue/10 rounded-lg flex items-center justify-center group-hover:bg-brand-royal-blue/20 transition-colors">
+                                      <FileText className="w-6 h-6 text-brand-royal-blue" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {att.name || "Document"}
+                                      </p>
+                                      {att.size && (
+                                        <p className="text-xs text-gray-500">
+                                          {(att.size / 1024).toFixed(1)} KB
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-brand-royal-blue font-medium">
+                                      View
+                                    </span>
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Post Actions */}
+                        <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
+                          <button
+                            onClick={() => handleLike(post._id, post.isLiked)}
+                            className={`flex items-center gap-2 transition-colors ${
+                              post.isLiked
+                                ? "text-red-500"
+                                : "text-gray-500 hover:text-red-500"
+                            }`}
+                          >
+                            <Heart
+                              className={`w-5 h-5 ${
+                                post.isLiked ? "fill-current" : ""
+                              }`}
+                            />
+                            <span className="text-sm">
+                              {post.likeCount || 0}
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => handleToggleComments(post._id)}
+                            className={`flex items-center gap-2 transition-colors ${
+                              expandedComments.has(post._id)
+                                ? "text-[#2F3C96]"
+                                : "text-gray-500 hover:text-[#2F3C96]"
+                            }`}
+                          >
+                            <MessageCircle
+                              className={`w-5 h-5 ${
+                                expandedComments.has(post._id)
+                                  ? "fill-current"
+                                  : ""
+                              }`}
+                            />
+                            <span className="text-sm">
+                              {post.replyCount || 0}
+                            </span>
+                          </button>
+                        </div>
+
+                        {/* Comments Section */}
+                        {expandedComments.has(post._id) && (
+                          <div className="mt-4 pt-4 border-t border-gray-100">
+                            {/* Comment Input */}
+                            {user && (
+                              <div className="mb-4">
+                                <div className="flex items-start gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-xs shrink-0">
+                                    {user?.username?.charAt(0)?.toUpperCase() ||
+                                      "U"}
+                                  </div>
+                                  <div className="flex-1">
+                                    <textarea
+                                      value={commentInputs[post._id] || ""}
+                                      onChange={(e) =>
+                                        setCommentInputs((prev) => ({
+                                          ...prev,
+                                          [post._id]: e.target.value,
+                                        }))
                                       }
-                                      className="px-4 py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 disabled:opacity-50 transition-colors"
-                                    >
-                                      {submittingComment[post._id]
-                                        ? "Posting..."
-                                        : "Post"}
-                                    </button>
+                                      placeholder="Write a comment..."
+                                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent resize-none text-sm"
+                                      rows={2}
+                                      onKeyDown={(e) => {
+                                        if (
+                                          e.key === "Enter" &&
+                                          (e.metaKey || e.ctrlKey)
+                                        ) {
+                                          handleSubmitComment(post._id);
+                                        }
+                                      }}
+                                    />
+                                    <div className="flex justify-end mt-2">
+                                      <button
+                                        onClick={() =>
+                                          handleSubmitComment(post._id)
+                                        }
+                                        disabled={
+                                          !commentInputs[post._id]?.trim() ||
+                                          submittingComment[post._id]
+                                        }
+                                        className="px-4 py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 disabled:opacity-50 transition-colors"
+                                      >
+                                        {submittingComment[post._id]
+                                          ? "Posting..."
+                                          : "Post"}
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Comments List */}
-                          {loadingComments[post._id] ? (
-                            <div className="flex justify-center py-4">
-                              <Loader2 className="w-5 h-5 animate-spin text-[#2F3C96]" />
-                            </div>
-                          ) : comments[post._id] &&
-                            comments[post._id].length > 0 ? (
-                            <div className="space-y-4">
-                              {comments[post._id].map((comment) => (
-                                <div
-                                  key={comment._id}
-                                  className="flex items-start gap-3"
-                                >
-                                  <div className="w-8 h-8 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-xs shrink-0">
-                                    {comment.authorUserId?.username
-                                      ?.charAt(0)
-                                      ?.toUpperCase() || "U"}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-sm font-semibold text-[#2F3C96]">
-                                        {getDisplayName(comment.authorUserId, "Anonymous")}
-                                      </span>
-                                      <span className="text-xs text-gray-500">
-                                        {formatTimeAgo(comment.createdAt)}
-                                      </span>
+                            {/* Comments List */}
+                            {loadingComments[post._id] ? (
+                              <div className="flex justify-center py-4">
+                                <Loader2 className="w-5 h-5 animate-spin text-[#2F3C96]" />
+                              </div>
+                            ) : comments[post._id] &&
+                              comments[post._id].length > 0 ? (
+                              <div className="space-y-4">
+                                {comments[post._id].map((comment) => (
+                                  <div
+                                    key={comment._id}
+                                    className="flex items-start gap-3"
+                                  >
+                                    <div className="w-8 h-8 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-xs shrink-0">
+                                      {comment.authorUserId?.username
+                                        ?.charAt(0)
+                                        ?.toUpperCase() || "U"}
                                     </div>
-                                    <p className="text-sm text-gray-700 mb-2">
-                                      {linkify(comment.content)}
-                                    </p>
-                                    <button
-                                      onClick={() =>
-                                        handleLikeComment(
-                                          post._id,
-                                          comment._id,
-                                          comment.isLiked
-                                        )
-                                      }
-                                      className={`flex items-center gap-1 text-xs transition-colors ${
-                                        comment.isLiked
-                                          ? "text-red-500"
-                                          : "text-gray-500 hover:text-red-500"
-                                      }`}
-                                    >
-                                      <Heart
-                                        className={`w-3.5 h-3.5 ${
-                                          comment.isLiked ? "fill-current" : ""
-                                        }`}
-                                      />
-                                      <span>{comment.likeCount || 0}</span>
-                                    </button>
-                                    {/* Render nested comments */}
-                                    {comment.children &&
-                                      comment.children.length > 0 && (
-                                        <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-200 space-y-3">
-                                          {comment.children.map(
-                                            (childComment) => (
-                                              <div
-                                                key={childComment._id}
-                                                className="flex items-start gap-2"
-                                              >
-                                                <div className="w-6 h-6 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-[10px] shrink-0">
-                                                  {childComment.authorUserId?.username
-                                                    ?.charAt(0)
-                                                    ?.toUpperCase() || "U"}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                  <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-xs font-semibold text-[#2F3C96]">
-                                                      {getDisplayName(childComment.authorUserId, "Anonymous")}
-                                                    </span>
-                                                    <span className="text-[10px] text-gray-500">
-                                                      {formatTimeAgo(
-                                                        childComment.createdAt
-                                                      )}
-                                                    </span>
-                                                  </div>
-                                                  <p className="text-xs text-gray-700 mb-1">
-                                                    {linkify(childComment.content)}
-                                                  </p>
-                                                  <button
-                                                    onClick={() =>
-                                                      handleLikeComment(
-                                                        post._id,
-                                                        childComment._id,
-                                                        childComment.isLiked
-                                                      )
-                                                    }
-                                                    className={`flex items-center gap-1 text-[10px] transition-colors ${
-                                                      childComment.isLiked
-                                                        ? "text-red-500"
-                                                        : "text-gray-500 hover:text-red-500"
-                                                    }`}
-                                                  >
-                                                    <Heart
-                                                      className={`w-3 h-3 ${
-                                                        childComment.isLiked
-                                                          ? "fill-current"
-                                                          : ""
-                                                      }`}
-                                                    />
-                                                    <span>
-                                                      {childComment.likeCount ||
-                                                        0}
-                                                    </span>
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            )
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-semibold text-[#2F3C96]">
+                                          {getDisplayName(
+                                            comment.authorUserId,
+                                            "Anonymous",
                                           )}
-                                        </div>
-                                      )}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          {formatTimeAgo(comment.createdAt)}
+                                        </span>
+                                      </div>
+                                      <p className="text-sm text-gray-700 mb-2">
+                                        {linkify(comment.content)}
+                                      </p>
+                                      <button
+                                        onClick={() =>
+                                          handleLikeComment(
+                                            post._id,
+                                            comment._id,
+                                            comment.isLiked,
+                                          )
+                                        }
+                                        className={`flex items-center gap-1 text-xs transition-colors ${
+                                          comment.isLiked
+                                            ? "text-red-500"
+                                            : "text-gray-500 hover:text-red-500"
+                                        }`}
+                                      >
+                                        <Heart
+                                          className={`w-3.5 h-3.5 ${
+                                            comment.isLiked
+                                              ? "fill-current"
+                                              : ""
+                                          }`}
+                                        />
+                                        <span>{comment.likeCount || 0}</span>
+                                      </button>
+                                      {/* Render nested comments */}
+                                      {comment.children &&
+                                        comment.children.length > 0 && (
+                                          <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-200 space-y-3">
+                                            {comment.children.map(
+                                              (childComment) => (
+                                                <div
+                                                  key={childComment._id}
+                                                  className="flex items-start gap-2"
+                                                >
+                                                  <div className="w-6 h-6 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-[10px] shrink-0">
+                                                    {childComment.authorUserId?.username
+                                                      ?.charAt(0)
+                                                      ?.toUpperCase() || "U"}
+                                                  </div>
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                      <span className="text-xs font-semibold text-[#2F3C96]">
+                                                        {getDisplayName(
+                                                          childComment.authorUserId,
+                                                          "Anonymous",
+                                                        )}
+                                                      </span>
+                                                      <span className="text-[10px] text-gray-500">
+                                                        {formatTimeAgo(
+                                                          childComment.createdAt,
+                                                        )}
+                                                      </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-700 mb-1">
+                                                      {linkify(
+                                                        childComment.content,
+                                                      )}
+                                                    </p>
+                                                    <button
+                                                      onClick={() =>
+                                                        handleLikeComment(
+                                                          post._id,
+                                                          childComment._id,
+                                                          childComment.isLiked,
+                                                        )
+                                                      }
+                                                      className={`flex items-center gap-1 text-[10px] transition-colors ${
+                                                        childComment.isLiked
+                                                          ? "text-red-500"
+                                                          : "text-gray-500 hover:text-red-500"
+                                                      }`}
+                                                    >
+                                                      <Heart
+                                                        className={`w-3 h-3 ${
+                                                          childComment.isLiked
+                                                            ? "fill-current"
+                                                            : ""
+                                                        }`}
+                                                      />
+                                                      <span>
+                                                        {childComment.likeCount ||
+                                                          0}
+                                                      </span>
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              ),
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 text-center py-4">
-                              No comments yet. Be the first to comment!
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500 text-center py-4">
+                                No comments yet. Be the first to comment!
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                {/* Load More */}
-                {hasMore && (
-                  <button
-                    onClick={() => loadPosts()}
-                    disabled={loadingMore}
-                    className="w-full py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    {loadingMore ? (
-                      <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#2F3C96]" />
-                    ) : (
-                      "Load More"
-                    )}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+                  {/* Load More */}
+                  {hasMore && (
+                    <button
+                      onClick={() => loadPosts()}
+                      disabled={loadingMore}
+                      className="w-full py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      {loadingMore ? (
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#2F3C96]" />
+                      ) : (
+                        "Load More"
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Composer Modal */}
@@ -1568,7 +1636,7 @@ export default function Discovery() {
                     onChange={(e) => {
                       const next = truncateToMaxWords(
                         e.target.value,
-                        POST_MAX_WORDS
+                        POST_MAX_WORDS,
                       );
                       setComposerContent(next);
                     }}

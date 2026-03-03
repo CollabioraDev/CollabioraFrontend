@@ -41,8 +41,8 @@ export default function ErrorPage() {
               className="inline-flex items-center justify-center rounded-full bg-brand-blue-700 p-4 sm:p-5 shadow-lg"
             >
               <img
-                src="/Yori's Face Outline.png"
-                alt="Yori – CuraLink's friendly assistant"
+                src="/sad-yori-face.png"
+                alt="Yori – Collabiora's friendly assistant"
                 className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               />
             </motion.div>

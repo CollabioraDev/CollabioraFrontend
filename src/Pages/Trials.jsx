@@ -2182,7 +2182,7 @@ export default function Trials() {
             <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-1">
               <AuroraText
                 speed={2.5}
-                colors={["#2F3C96", "#474F97", "#757BB1", "#B8A5D5", "#D0C4E2"]}
+                colors={["#2F3C96"]}
               >
                 Explore Clinical Trials
               </AuroraText>

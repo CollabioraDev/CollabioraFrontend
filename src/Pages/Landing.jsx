@@ -253,8 +253,8 @@ export default function Landing() {
                 </div>
                 <div>
                   <AuroraText
-                    speed={2}
-                    colors={["#D0C4E2", "#474F97", "#B8A5D5", "#E8E0EF"]}
+                    speed={2.5}
+                    colors={["#2F3C96"]}
                   >
                     Made Simple
                   </AuroraText>

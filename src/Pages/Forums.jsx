@@ -2450,11 +2450,7 @@ export default function Forums() {
                 <AuroraText
                   speed={2.5}
                   colors={[
-                    "#2F3C96",
-                    "#474F97",
-                    "#757BB1",
-                    "#B8A5D5",
-                    "#D0C4E2",
+                  "#2F3C96"
                   ]}
                 >
                   Health Forums
