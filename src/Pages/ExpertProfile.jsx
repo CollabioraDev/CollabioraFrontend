@@ -72,6 +72,7 @@ export default function ExpertProfile() {
   const [showAllPublications, setShowAllPublications] = useState(false);
   const [interestsModalOpen, setInterestsModalOpen] = useState(false);
   const [mobileMoreInfoOpen, setMobileMoreInfoOpen] = useState(false);
+  const [bookMeetingModalOpen, setBookMeetingModalOpen] = useState(false);
 
   // Get expert data from URL params
   const expertName = searchParams.get("name");
@@ -113,7 +114,7 @@ export default function ExpertProfile() {
         }
 
         const response = await fetch(
-          `${base}/api/expert/profile?${params.toString()}`
+          `${base}/api/expert/profile?${params.toString()}`,
         );
         if (!response.ok) {
           throw new Error("Failed to fetch profile");
@@ -132,7 +133,7 @@ export default function ExpertProfile() {
       if (userData?._id || userData?.id) {
         try {
           const favResponse = await fetch(
-            `${base}/api/favorites/${userData._id || userData.id}`
+            `${base}/api/favorites/${userData._id || userData.id}`,
           );
           if (favResponse.ok) {
             const favData = await favResponse.json();
@@ -330,7 +331,7 @@ export default function ExpertProfile() {
           `${base}/api/favorites/${
             user._id || user.id
           }?type=${type}&id=${encodeURIComponent(checkId)}`,
-          { method: "DELETE" }
+          { method: "DELETE" },
         );
         toast.success("Removed from favorites");
       } else {
@@ -378,7 +379,7 @@ export default function ExpertProfile() {
 
       // Refresh favorites from backend
       const favResponse = await fetch(
-        `${base}/api/favorites/${user._id || user.id}`
+        `${base}/api/favorites/${user._id || user.id}`,
       );
       const favData = await favResponse.json();
       setFavorites(favData.items || []);
@@ -410,7 +411,7 @@ export default function ExpertProfile() {
       if (expertOrcid) params.set("expertOrcid", expertOrcid);
 
       const response = await fetch(
-        `${base}/api/expert-invites/check?${params.toString()}`
+        `${base}/api/expert-invites/check?${params.toString()}`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -589,22 +590,31 @@ export default function ExpertProfile() {
     return false;
   });
 
+  const isOnPlatform =
+    profile.isOnPlatform ||
+    profile.onPlatform ||
+    profile.isCollabiora ||
+    profile.isCollabioraExpert ||
+    false;
+
   // Affiliation line for header: "Institution · Location"
   const affiliationStr =
     profile.affiliation && typeof profile.affiliation === "string"
       ? profile.affiliation
-      : profile.affiliation?.name ||
-        profile.affiliation?.institution ||
-        "";
+      : profile.affiliation?.name || profile.affiliation?.institution || "";
   const locationStr =
     profile.location && typeof profile.location === "string"
       ? profile.location
       : profile.location?.city && profile.location?.country
         ? `${profile.location.city}, ${profile.location.country}`
         : profile.location?.city || profile.location?.country || "";
-  const affiliationLine = [affiliationStr, locationStr].filter(Boolean).join(" · ");
+  const affiliationLine = [affiliationStr, locationStr]
+    .filter(Boolean)
+    .join(" · ");
 
-  const orcidValue = profile.orcid || profile.externalLinks?.orcid?.match(/orcid\.org\/([\d-X]+)/)?.[1];
+  const orcidValue =
+    profile.orcid ||
+    profile.externalLinks?.orcid?.match(/orcid\.org\/([\d-X]+)/)?.[1];
   const copyOrcidToClipboard = () => {
     if (!orcidValue) return;
     navigator.clipboard.writeText(orcidValue);
@@ -664,16 +674,19 @@ export default function ExpertProfile() {
                 {(() => {
                   const parts = [];
                   parts.push(
-                    <span key="collabiora" className="flex items-center gap-1.5">
+                    <span
+                      key="collabiora"
+                      className="flex items-center gap-1.5"
+                    >
                       <Info className="w-3.5 h-3.5" />
-                      On Collabiora? → No
-                    </span>
+                      On Collabiora? → {isOnPlatform ? "Yes" : "No"}
+                    </span>,
                   );
                   parts.push(
                     <span key="contact" className="flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5" />
-                      Contactable? → Not yet
-                    </span>
+                      Contactable? → {isOnPlatform ? "Yes" : "Not yet"}
+                    </span>,
                   );
                   if (orcidValue) {
                     parts.push(
@@ -687,17 +700,20 @@ export default function ExpertProfile() {
                           <LinkIcon className="w-3.5 h-3.5 group-hover:opacity-90" />
                           ORCID: {orcidValue}
                         </button>
-                      </span>
+                      </span>,
                     );
                   }
                   return parts.length
-                    ? parts.reduce((acc, el, i) => (
-                        <React.Fragment key={i}>
-                          {acc}
-                          {i > 0 && <span className="text-white/45">•</span>}
-                          {el}
-                        </React.Fragment>
-                      ), null)
+                    ? parts.reduce(
+                        (acc, el, i) => (
+                          <React.Fragment key={i}>
+                            {acc}
+                            {i > 0 && <span className="text-white/45">•</span>}
+                            {el}
+                          </React.Fragment>
+                        ),
+                        null,
+                      )
                     : null;
                 })()}
                 {orcidValue && (
@@ -745,33 +761,22 @@ export default function ExpertProfile() {
                 <button
                   onClick={() => {
                     if (!user?._id && !user?.id) {
-                      toast.error("Please sign in to invite experts");
+                      toast.error("Please sign in to book a meeting");
                       return;
                     }
-                    if (hasInvited) {
-                      toast.info("You have already invited this expert");
-                      return;
-                    }
-                    setContactModal(true);
+                    setBookMeetingModalOpen(true);
                   }}
-                  disabled={hasInvited || inviteLoading || checkingInvite}
+                  disabled={inviteLoading || checkingInvite}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    hasInvited
-                      ? "bg-white/15 border border-white/30 text-white"
-                      : "bg-white text-[#2F3C96] hover:bg-white/95 shadow-sm"
+                    "bg-white text-[#2F3C96] hover:bg-white/95 shadow-sm"
                   }`}
                 >
                   {inviteLoading || checkingInvite ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : hasInvited ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Invited
-                    </>
                   ) : (
                     <>
-                      <UserPlus className="w-4 h-4" />
-                      Invite to Platform
+                      <Calendar className="w-4 h-4" />
+                      Book a Meeting
                     </>
                   )}
                 </button>
@@ -784,7 +789,9 @@ export default function ExpertProfile() {
                       id: profile.id || expertId,
                     });
                   }}
-                  disabled={favoritingItems.has(getFavoriteKey(profile, "expert"))}
+                  disabled={favoritingItems.has(
+                    getFavoriteKey(profile, "expert"),
+                  )}
                   className={`ml-auto p-2 rounded-lg transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
                     isExpertFavorited
                       ? "bg-red-500/25 text-white border border-red-300/40"
@@ -795,7 +802,9 @@ export default function ExpertProfile() {
                   {favoritingItems.has(getFavoriteKey(profile, "expert")) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Heart className={`w-4 h-4 ${isExpertFavorited ? "fill-current" : ""}`} />
+                    <Heart
+                      className={`w-4 h-4 ${isExpertFavorited ? "fill-current" : ""}`}
+                    />
                   )}
                 </button>
               </div>
@@ -962,7 +971,7 @@ export default function ExpertProfile() {
                                 {pub.authors
                                   .slice(0, 3)
                                   .map((a) =>
-                                    typeof a === "string" ? a : a.name || a
+                                    typeof a === "string" ? a : a.name || a,
                                   )
                                   .join(", ")}
                                 {pub.authors.length > 3 && " et al."}
@@ -1019,7 +1028,6 @@ export default function ExpertProfile() {
                           onClick={() => generateSummary(pub, "publication")}
                           className="flex-1 px-4 py-2 bg-gradient-to-r from-[#2F3C96] to-[#253075] text-white rounded-lg text-xs font-semibold hover:from-[#253075] hover:to-[#1C2454] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                         >
-                          <Sparkles className="w-3.5 h-3.5" />
                           Understand this Paper
                         </button>
                         {pub.link && (
@@ -1045,13 +1053,9 @@ export default function ExpertProfile() {
                     className="px-6 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-colors flex items-center gap-2"
                   >
                     {showAllPublications ? (
-                      <>
-                        Show Less
-                      </>
+                      <>Show Less</>
                     ) : (
-                      <>
-                        Show More ({profile.publications.length - 5} more)
-                      </>
+                      <>Show More ({profile.publications.length - 5} more)</>
                     )}
                   </button>
                 </div>
@@ -1071,7 +1075,8 @@ export default function ExpertProfile() {
                   const isFavorited = favorites.some(
                     (fav) =>
                       fav.type === "trial" &&
-                      (fav.item?.id === trial.id || fav.item?._id === trial._id)
+                      (fav.item?.id === trial.id ||
+                        fav.item?._id === trial._id),
                   );
                   return (
                     <div
@@ -1088,11 +1093,11 @@ export default function ExpertProfile() {
                             toggleFavorite(
                               "trial",
                               trial.id || trial._id,
-                              trial
+                              trial,
                             );
                           }}
                           disabled={favoritingItems.has(
-                            getFavoriteKey(trial, "trial")
+                            getFavoriteKey(trial, "trial"),
                           )}
                           className={`p-1.5 rounded-md border transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                             isFavorited
@@ -1101,7 +1106,7 @@ export default function ExpertProfile() {
                           }`}
                         >
                           {favoritingItems.has(
-                            getFavoriteKey(trial, "trial")
+                            getFavoriteKey(trial, "trial"),
                           ) ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
@@ -1261,41 +1266,31 @@ export default function ExpertProfile() {
                 <button
                   onClick={() => {
                     if (!user?._id && !user?.id) {
-                      toast.error("Please sign in to invite experts");
+                      toast.error("Please sign in to book a meeting");
                       return;
                     }
-                    if (hasInvited) {
-                      toast.info("You have already invited this expert");
-                      return;
-                    }
-                    setContactModal(true);
+                    setBookMeetingModalOpen(true);
                   }}
-                  disabled={hasInvited || inviteLoading || checkingInvite}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    hasInvited
-                      ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100 border"
-                      : "bg-[#2F3C96] text-white hover:bg-[#253075]"
-                  }`}
+                  disabled={inviteLoading || checkingInvite}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed bg-[#2F3C96] text-white hover:bg-[#253075]"
                 >
                   {inviteLoading || checkingInvite ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : hasInvited ? (
-                    <Check className="w-4 h-4" />
                   ) : (
-                    <UserPlus className="w-4 h-4" />
+                    <Calendar className="w-4 h-4" />
                   )}
-                  {hasInvited ? "Invited" : "Invite to Platform"}
+                  Book a Meeting
                 </button>
                 <button
                   onClick={() =>
                     toggleFavorite(
                       "expert",
                       profile.orcid || profile.name,
-                      profile
+                      profile,
                     )
                   }
                   disabled={favoritingItems.has(
-                    getFavoriteKey(profile, "expert")
+                    getFavoriteKey(profile, "expert"),
                   )}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 border disabled:opacity-50 disabled:cursor-not-allowed ${
                     isExpertFavorited
@@ -1321,6 +1316,105 @@ export default function ExpertProfile() {
       </div>
 
       {/* Modals */}
+      {/* Book Meeting Modal */}
+      <Modal
+        isOpen={bookMeetingModalOpen}
+        onClose={() => setBookMeetingModalOpen(false)}
+        title="Book a meeting"
+      >
+        <div className="space-y-5">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="inline-flex items-center justify-center rounded-full bg-brand-blue-700 p-4 sm:p-5 shadow-lg">
+                <img
+                  src="/sad-yori-face.png"
+                  alt="Yori – Collabiora's friendly assistant"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                />
+              </div>
+            </div>
+            {!isOnPlatform ? (
+              <>
+                <h3 className="text-lg font-semibold text-[#2F3C96] mb-1">
+                  This expert isn&apos;t on Collabiora yet
+                </h3>
+                <p className="text-sm text-[#787878] max-w-md">
+                  You can invite {profile.name} to join the platform so that you
+                  can book meetings and collaborate with them directly inside
+                  Collabiora.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-[#2F3C96] mb-1">
+                  Booking coming soon
+                </h3>
+                <p className="text-sm text-[#787878] max-w-md">
+                  Meeting booking for Collabiora experts will be available here
+                  soon. In the meantime, you can follow this expert and explore
+                  their work.
+                </p>
+              </>
+            )}
+          </div>
+
+          {!isOnPlatform && (
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                onClick={() => {
+                  if (!user?._id && !user?.id) {
+                    toast.error("Please sign in to invite experts");
+                    return;
+                  }
+                  if (hasInvited) {
+                    toast.info("You have already invited this expert");
+                    return;
+                  }
+                  sendInvite();
+                }}
+                disabled={inviteLoading || hasInvited}
+                className="flex-1 px-4 py-2 bg-[#2F3C96] text-white rounded-lg font-semibold hover:bg-[#253075] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {inviteLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sending invite...
+                  </>
+                ) : hasInvited ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Invited
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    Invite to Platform
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setBookMeetingModalOpen(false)}
+                disabled={inviteLoading}
+                className="flex-1 px-4 py-2 bg-[#F5F5F5] text-[#787878] rounded-lg font-semibold hover:bg-[rgba(232,232,232,1)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Close
+              </button>
+            </div>
+          )}
+
+          {isOnPlatform && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => setBookMeetingModalOpen(false)}
+                className="px-6 py-2 bg-[#2F3C96] text-white rounded-lg font-semibold hover:bg-[#253075] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </div>
+      </Modal>
+
       {/* Summary Modal */}
       <Modal
         isOpen={summaryModal.open}
@@ -1438,10 +1532,7 @@ export default function ExpertProfile() {
                       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                       style={{ backgroundColor: "rgba(232, 224, 239, 0.6)" }}
                     >
-                      <Heart
-                        className="w-4 h-4"
-                        style={{ color: "#2F3C96" }}
-                      />
+                      <Heart className="w-4 h-4" style={{ color: "#2F3C96" }} />
                     </div>
                     <div className="flex-1">
                       <h5
@@ -1805,14 +1896,14 @@ export default function ExpertProfile() {
                       publicationDetailsModal.publication.pmid ||
                         publicationDetailsModal.publication.id ||
                         publicationDetailsModal.publication.link,
-                      publicationDetailsModal.publication
+                      publicationDetailsModal.publication,
                     )
                   }
                   disabled={favoritingItems.has(
                     getFavoriteKey(
                       publicationDetailsModal.publication,
-                      "publication"
-                    )
+                      "publication",
+                    ),
                   )}
                   className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 border shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
                     favorites.some(
@@ -1823,7 +1914,7 @@ export default function ExpertProfile() {
                           fav.item?.link ===
                             publicationDetailsModal.publication.link ||
                           fav.item?.pmid ===
-                            publicationDetailsModal.publication.pmid)
+                            publicationDetailsModal.publication.pmid),
                     )
                       ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
                       : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -1832,8 +1923,8 @@ export default function ExpertProfile() {
                   {favoritingItems.has(
                     getFavoriteKey(
                       publicationDetailsModal.publication,
-                      "publication"
-                    )
+                      "publication",
+                    ),
                   ) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
@@ -1847,7 +1938,7 @@ export default function ExpertProfile() {
                               fav.item?.link ===
                                 publicationDetailsModal.publication.link ||
                               fav.item?.pmid ===
-                                publicationDetailsModal.publication.pmid)
+                                publicationDetailsModal.publication.pmid),
                         )
                           ? "fill-current"
                           : ""
@@ -1857,22 +1948,22 @@ export default function ExpertProfile() {
                   {favoritingItems.has(
                     getFavoriteKey(
                       publicationDetailsModal.publication,
-                      "publication"
-                    )
+                      "publication",
+                    ),
                   )
                     ? "Processing..."
                     : favorites.some(
-                        (fav) =>
-                          fav.type === "publication" &&
-                          (fav.item?.title ===
-                            publicationDetailsModal.publication.title ||
-                            fav.item?.link ===
-                              publicationDetailsModal.publication.link ||
-                            fav.item?.pmid ===
-                              publicationDetailsModal.publication.pmid)
-                      )
-                    ? "Remove from Favorites"
-                    : "Add to Favorites"}
+                          (fav) =>
+                            fav.type === "publication" &&
+                            (fav.item?.title ===
+                              publicationDetailsModal.publication.title ||
+                              fav.item?.link ===
+                                publicationDetailsModal.publication.link ||
+                              fav.item?.pmid ===
+                                publicationDetailsModal.publication.pmid),
+                        )
+                      ? "Remove from Favorites"
+                      : "Add to Favorites"}
                 </button>
               </div>
             </div>
@@ -1908,9 +1999,9 @@ export default function ExpertProfile() {
       >
         <div className="space-y-4">
           <p className="text-[#787878]">
-            Would you like to invite {profile.name} to join Collabiora? We'll send
-            them an invitation to create an account on our platform, enabling direct
-            communication and collaboration opportunities.
+            Would you like to invite {profile.name} to join Collabiora? We'll
+            send them an invitation to create an account on our platform,
+            enabling direct communication and collaboration opportunities.
           </p>
           <div className="flex gap-3">
             <button

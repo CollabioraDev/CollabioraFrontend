@@ -180,7 +180,9 @@ export default function EmailVerificationStep({ email, onVerified, onResend, onE
           // Mark as sent and store the email used
           localStorage.setItem(lastSentKey, Date.now().toString());
           localStorage.setItem(verificationEmailKey, userEmail);
-          toast.success("Verification email sent! Please check your inbox.");
+          toast.success(
+            "Verification email sent. Please check your spam folder if you don’t see it.",
+          );
         }
       } catch (error) {
         console.error("Error sending initial verification email:", error);
@@ -431,7 +433,9 @@ export default function EmailVerificationStep({ email, onVerified, onResend, onE
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Verification email sent! Please check your inbox.");
+        toast.success(
+          "Verification email sent. Please check your spam folder if you don’t see it.",
+        );
         // Store OTP expiry
         if (data.otpExpiresAt) {
           const expiry = new Date(data.otpExpiresAt);
@@ -642,7 +646,7 @@ export default function EmailVerificationStep({ email, onVerified, onResend, onE
             </Button>
 
             <div className="text-center">
-              <p className="text-xs mb-2" style={{ color: "#787878" }}>
+              <p className="text-xs mb-1" style={{ color: "#787878" }}>
                 Didn't receive the code?
               </p>
               <button
@@ -653,6 +657,10 @@ export default function EmailVerificationStep({ email, onVerified, onResend, onE
               >
                 {resending ? "Sending..." : "Resend Code"}
               </button>
+              <p className="mt-2 text-[11px]" style={{ color: "#787878" }}>
+                Verification email sent. Please check your spam folder if you don’t
+                see it.
+              </p>
             </div>
 
             <div className="pt-2 border-t" style={{ borderColor: "#E8E8E8" }}>

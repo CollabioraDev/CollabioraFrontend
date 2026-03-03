@@ -172,8 +172,8 @@ export default function DashboardPatient() {
     useState(false);
   const [trialFilter, setTrialFilter] = useState("RECRUITING"); // Status filter for trials - default to RECRUITING
   const [publicationSort, setPublicationSort] = useState("relevance"); // Sort option for publications
-  const [showCollabioraExperts, setShowCollabioraExperts] = useState(true); // Toggle for Collabiora Experts
-  const [showGlobalExperts, setShowGlobalExperts] = useState(false); // Toggle for Global Experts
+  const [showCollabioraExperts, setShowCollabioraExperts] = useState(false); // Toggle for On-Platform Experts (collapsed by default)
+  const [showGlobalExperts, setShowGlobalExperts] = useState(true); // Toggle for Global Experts (expanded by default)
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [loadingFiltered, setLoadingFiltered] = useState(false);
   const [favoritingItems, setFavoritingItems] = useState(new Set()); // Track items being favorited/unfavorited
@@ -524,46 +524,50 @@ export default function DashboardPatient() {
     "WITHDRAWN",
   ];
 
-const sortOptions = [
-  { value: "relevance", label: "Relevance" },
-  { value: "year_desc", label: "Year (Newest First)" },
-  { value: "year_asc", label: "Year (Oldest First)" },
-  { value: "title_asc", label: "Title (A-Z)" },
-  { value: "title_desc", label: "Title (Z-A)" },
-];
+  const sortOptions = [
+    { value: "relevance", label: "Relevance" },
+    { value: "year_desc", label: "Year (Newest First)" },
+    { value: "year_asc", label: "Year (Oldest First)" },
+    { value: "title_asc", label: "Title (A-Z)" },
+    { value: "title_desc", label: "Title (Z-A)" },
+  ];
 
-function selectCommunitiesForConditions(communities, conditions) {
-  const list = Array.isArray(communities) ? communities : [];
-  if (list.length === 0) return [];
+  function selectCommunitiesForConditions(communities, conditions) {
+    const list = Array.isArray(communities) ? communities : [];
+    if (list.length === 0) return [];
 
-  const normalizedConditions = (Array.isArray(conditions) ? conditions : [])
-    .map((c) => String(c || "").toLowerCase().trim())
-    .filter(Boolean);
+    const normalizedConditions = (Array.isArray(conditions) ? conditions : [])
+      .map((c) =>
+        String(c || "")
+          .toLowerCase()
+          .trim(),
+      )
+      .filter(Boolean);
 
-  return list
-    .map((community) => {
-      const name = String(community.name || "").toLowerCase();
-      const description = String(community.description || "").toLowerCase();
-      let score = 0;
+    return list
+      .map((community) => {
+        const name = String(community.name || "").toLowerCase();
+        const description = String(community.description || "").toLowerCase();
+        let score = 0;
 
-      normalizedConditions.forEach((cond) => {
-        if (!cond) return;
-        if (name.includes(cond)) score += 3;
-        if (description.includes(cond)) score += 2;
+        normalizedConditions.forEach((cond) => {
+          if (!cond) return;
+          if (name.includes(cond)) score += 3;
+          if (description.includes(cond)) score += 2;
+        });
+
+        return { ...community, _matchScore: score };
+      })
+      .sort((a, b) => {
+        const scoreDiff = (b._matchScore || 0) - (a._matchScore || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        const membersA = a.memberCount ?? 0;
+        const membersB = b.memberCount ?? 0;
+        return membersB - membersA;
       });
+  }
 
-      return { ...community, _matchScore: score };
-    })
-    .sort((a, b) => {
-      const scoreDiff = (b._matchScore || 0) - (a._matchScore || 0);
-      if (scoreDiff !== 0) return scoreDiff;
-      const membersA = a.memberCount ?? 0;
-      const membersB = b.memberCount ?? 0;
-      return membersB - membersA;
-    });
-}
-
-useEffect(() => {
+  useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
 
     // Redirect to sign in if user is not logged in
@@ -2598,7 +2602,10 @@ useEffect(() => {
         const allCommunities = Array.isArray(data.communities)
           ? data.communities
           : [];
-        const ranked = selectCommunitiesForConditions(allCommunities, conditions);
+        const ranked = selectCommunitiesForConditions(
+          allCommunities,
+          conditions,
+        );
         setRecommendedCommunities(ranked.slice(0, 4));
       } catch (error) {
         console.error("Error loading recommended communities:", error);
@@ -3206,76 +3213,78 @@ useEffect(() => {
                 {/* Tabs row */}
                 <div className="flex items-center gap-3 overflow-x-auto min-w-0 relative z-10">
                   {[
-                  {
-                    key: "publications",
-                    label: "Library",
-                    icon: FileText,
-                  },
-                  {
-                    key: "trials",
-                    label: "Trials",
-                    icon: Beaker,
-                  },
-                  {
-                    key: "experts",
-                    label: "Experts",
-                    icon: Users,
-                  },
-                  {
-                    key: "forums",
-                    label: "Forums",
-                    icon: MessageCircle,
-                  },
-                  {
-                    key: "favorites",
-                    label: "Favourites",
-                    icon: Star,
-                  },
-                ].map((category) => {
-                  const Icon = category.icon;
-                  const isSelected = selectedCategory === category.key;
-                  const isSectionLoading =
-                    ["trials", "publications", "experts"].includes(
-                      category.key,
-                    ) &&
-                    (refreshingSection === category.key ||
-                      refreshingSectionsBg.has(category.key));
-                  return (
-                    <button
-                      key={category.key}
-                      onClick={() =>
-                        !isSectionLoading && setSelectedCategory(category.key)
-                      }
-                      disabled={isSectionLoading}
-                      className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-xl border transition-all duration-200 ${
-                        isSelected
-                          ? "bg-[#2F3C96] text-white border-[#2F3C96] shadow-sm"
-                          : "bg-white/80 text-slate-600 border-[rgba(208,196,226,0.9)] hover:text-[#2F3C96] hover:border-[#2F3C96]"
-                      } ${
-                        isSectionLoading ? "opacity-80 cursor-not-allowed" : ""
-                      }`}
-                      style={{ userSelect: "text" }}
-                      {...(category.key === "publications"
-                        ? { "data-tour": "dashboard-tab-publications" }
-                        : category.key === "favorites"
-                          ? { "data-tour": "dashboard-tab-favorites" }
-                          : {})}
-                    >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <span className="text-sm font-semibold tracking-tight">
-                        {category.label}
-                      </span>
-                      {isSectionLoading && (
-                        <Loader2
-                          className="w-4 h-4 animate-spin shrink-0"
-                          style={{
-                            color: isSelected ? "white" : "#2F3C96",
-                          }}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+                    {
+                      key: "publications",
+                      label: "Library",
+                      icon: FileText,
+                    },
+                    {
+                      key: "trials",
+                      label: "Trials",
+                      icon: Beaker,
+                    },
+                    {
+                      key: "experts",
+                      label: "Experts",
+                      icon: Users,
+                    },
+                    {
+                      key: "forums",
+                      label: "Forums",
+                      icon: MessageCircle,
+                    },
+                    {
+                      key: "favorites",
+                      label: "Favourites",
+                      icon: Star,
+                    },
+                  ].map((category) => {
+                    const Icon = category.icon;
+                    const isSelected = selectedCategory === category.key;
+                    const isSectionLoading =
+                      ["trials", "publications", "experts"].includes(
+                        category.key,
+                      ) &&
+                      (refreshingSection === category.key ||
+                        refreshingSectionsBg.has(category.key));
+                    return (
+                      <button
+                        key={category.key}
+                        onClick={() =>
+                          !isSectionLoading && setSelectedCategory(category.key)
+                        }
+                        disabled={isSectionLoading}
+                        className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-xl border transition-all duration-200 ${
+                          isSelected
+                            ? "bg-[#2F3C96] text-white border-[#2F3C96] shadow-sm"
+                            : "bg-white/80 text-slate-600 border-[rgba(208,196,226,0.9)] hover:text-[#2F3C96] hover:border-[#2F3C96]"
+                        } ${
+                          isSectionLoading
+                            ? "opacity-80 cursor-not-allowed"
+                            : ""
+                        }`}
+                        style={{ userSelect: "text" }}
+                        {...(category.key === "publications"
+                          ? { "data-tour": "dashboard-tab-publications" }
+                          : category.key === "favorites"
+                            ? { "data-tour": "dashboard-tab-favorites" }
+                            : {})}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="text-sm font-semibold tracking-tight">
+                          {category.label}
+                        </span>
+                        {isSectionLoading && (
+                          <Loader2
+                            className="w-4 h-4 animate-spin shrink-0"
+                            style={{
+                              color: isSelected ? "white" : "#2F3C96",
+                            }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Tutorial / Redo tour button (desktop only) */}
@@ -3294,12 +3303,14 @@ useEffect(() => {
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor =
                       "rgba(208, 196, 226, 0.35)";
-                    e.currentTarget.style.borderColor = "rgba(47, 60, 150, 0.5)";
+                    e.currentTarget.style.borderColor =
+                      "rgba(47, 60, 150, 0.5)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor =
                       "rgba(208, 196, 226, 0.2)";
-                    e.currentTarget.style.borderColor = "rgba(47, 60, 150, 0.3)";
+                    e.currentTarget.style.borderColor =
+                      "rgba(47, 60, 150, 0.3)";
                   }}
                   title="View / Redo dashboard tutorial"
                   aria-label="View dashboard tutorial"
@@ -4269,7 +4280,7 @@ useEffect(() => {
 
               {selectedCategory === "experts" && (
                 <div className="col-span-full">
-                  {/* Experts List - Recommended Experts First, Then Global Experts */}
+                  {/* Experts List - On-Platform Experts (collapsed) and Global Experts (expanded) */}
                   {(() => {
                     const collabioraExperts = sortByMatchPercentage(
                       data.experts,
@@ -4281,642 +4292,206 @@ useEffect(() => {
 
                     return hasRecommendedExperts || hasGlobalExperts ? (
                       <div className="space-y-8">
-                        {/* Recommended Experts Section */}
+                        {/* On-Platform Experts Section (dropdown, collapsed by default) */}
                         {hasRecommendedExperts && (
-                          <div className="col-span-full">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {collabioraExperts.map((e, idx) => {
-                                  const isCuralinkExpert = !!(
-                                    e._id || e.userId
-                                  );
-                                  const expertId =
-                                    e.name ||
-                                    e.id ||
-                                    e._id ||
-                                    e.userId ||
-                                    `expert-${idx}`;
-                                  const itemId =
-                                    e.name || e.orcid || e.id || e._id;
-                                  const medicalInterests = isCuralinkExpert
-                                    ? [
-                                        ...(e.specialties || []),
-                                        ...(e.interests || []),
-                                      ]
-                                    : e.researchInterests || [];
-                                  const locationText =
-                                    isCuralinkExpert && e.location
-                                      ? typeof e.location === "string"
-                                        ? e.location
-                                        : `${e.location.city || ""}${
-                                            e.location.city &&
-                                            e.location.country
-                                              ? ", "
-                                              : ""
-                                          }${e.location.country || ""}`.trim()
-                                      : e.location || null;
-
-                                  // Check if expert is favorited by exact name match (consistent with Experts.jsx)
-                                  const isFavorited = favorites.some((fav) => {
-                                    if (fav.type !== "expert") return false;
-
-                                    // Check by exact name match (primary identifier)
-                                    if (e.name && fav.item?.name) {
-                                      return fav.item.name === e.name;
-                                    }
-
-                                    // Fallback: check by id
-                                    if (
-                                      fav.item?.id === itemId ||
-                                      fav.item?._id === itemId ||
-                                      fav.item?.orcid === itemId
-                                    ) {
-                                      return true;
-                                    }
-
-                                    return false;
-                                  });
-
-                                  return (
-                                    <div
-                                      key={expertId}
-                                      className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"
+                          <div className="col-span-full rounded-2xl border-2 shadow-lg overflow-hidden">
+                            <button
+                              type="button"
+                              className="w-full flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                              onClick={() =>
+                                setShowCollabioraExperts((prev) => !prev)
+                              }
+                            >
+                              <div className="flex items-center gap-3 text-left">
+                                <div
+                                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-md"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, #2F3C96, #253075)",
+                                  }}
+                                >
+                                  <UserPlus className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base sm:text-lg font-semibold text-slate-900">
+                                      On-platform {expertsLabel}
+                                    </span>
+                                    <span
+                                      className="text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full"
                                       style={{
-                                        borderColor: "rgba(208, 196, 226, 0.3)",
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.currentTarget.style.boxShadow =
-                                          "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
-                                        e.currentTarget.style.borderColor =
-                                          "rgba(47, 60, 150, 0.4)";
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.currentTarget.style.boxShadow =
-                                          "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
-                                        e.currentTarget.style.borderColor =
-                                          "rgba(208, 196, 226, 0.3)";
+                                        backgroundColor:
+                                          "rgba(208, 196, 226, 0.3)",
+                                        color: "#253075",
                                       }}
                                     >
-                                      <div className="p-4 flex flex-col flex-grow">
-                                        {/* Match Progress Bar - same as global */}
-                                        {e.matchPercentage !== undefined && (
-                                          <div className="mb-3">
-                                            <div className="mb-1">
-                                              <span
-                                                className="text-xs font-bold"
-                                                style={{ color: "#2F3C96" }}
-                                              >
-                                                {e.matchPercentage}% Match
-                                              </span>
-                                            </div>
-                                            <div
-                                              className="w-full h-1.5 rounded-full overflow-hidden"
-                                              style={{
-                                                backgroundColor:
-                                                  "rgba(208, 196, 226, 0.3)",
-                                              }}
-                                            >
-                                              <div
-                                                className="h-full rounded-full transition-all"
-                                                style={{
-                                                  width: `${e.matchPercentage}%`,
-                                                  background:
-                                                    "linear-gradient(90deg, #2F3C96, #253075)",
-                                                }}
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {isCuralinkExpert &&
-                                          e.available === true && (
-                                            <div
-                                              className="mb-3 flex items-center gap-2 px-2 py-1.5 rounded-lg border text-xs font-semibold"
-                                              style={{
-                                                backgroundColor:
-                                                  "rgba(208, 196, 226, 0.2)",
-                                                borderColor:
-                                                  "rgba(208, 196, 226, 0.3)",
-                                                color: "#2F3C96",
-                                              }}
-                                            >
-                                              <Calendar className="w-3.5 h-3.5" />{" "}
-                                              Available for Meetings
-                                            </div>
-                                          )}
-
-                                        <div className="flex items-start gap-3 mb-3">
-                                          <div
-                                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
-                                            style={{
-                                              background:
-                                                "linear-gradient(135deg, #2F3C96, #253075)",
-                                            }}
-                                          >
-                                            {e.name?.charAt(0)?.toUpperCase() ||
-                                              "E"}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2 mb-1">
-                                              <div className="min-w-0">
-                                                <h3 className="text-sm font-bold text-slate-900 truncate">
-                                                  {e.name ||
-                                                    `Unknown ${expertLabel}`}
-                                                </h3>
-                                                {e.orcid && (
-                                                  <p
-                                                    className="text-xs truncate mt-0.5"
-                                                    style={{ color: "#2F3C96" }}
-                                                  >
-                                                    ORCID: {e.orcid}
-                                                  </p>
-                                                )}
-                                              </div>
-                                              <button
-                                                onClick={(ev) => {
-                                                  ev.stopPropagation();
-                                                  toggleFavorite(
-                                                    "expert",
-                                                    itemId,
-                                                    e,
-                                                  );
-                                                }}
-                                                disabled={favoritingItems.has(
-                                                  getFavoriteKey(
-                                                    "expert",
-                                                    itemId,
-                                                    e,
-                                                  ),
-                                                )}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-500 disabled:opacity-50 shrink-0"
-                                                title={
-                                                  isFavorited
-                                                    ? "Remove from Favourites"
-                                                    : "Add to Favourites"
-                                                }
-                                              >
-                                                {favoritingItems.has(
-                                                  getFavoriteKey(
-                                                    "expert",
-                                                    itemId,
-                                                    e,
-                                                  ),
-                                                ) ? (
-                                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                ) : (
-                                                  <Heart
-                                                    className={`w-3.5 h-3.5 ${isFavorited ? "fill-current text-red-500" : ""}`}
-                                                  />
-                                                )}
-                                              </button>
-                                            </div>
-                                            {(locationText ||
-                                              (e.affiliation &&
-                                                !isCuralinkExpert) ||
-                                              e.location) && (
-                                              <div className="flex items-center text-xs text-slate-600 mt-1 mb-1">
-                                                <Building2 className="w-3 h-3 mr-1 shrink-0" />
-                                                <span className="truncate">
-                                                  {locationText ||
-                                                    e.affiliation ||
-                                                    e.location}
-                                                </span>
-                                              </div>
-                                            )}
-                                            {(e.biography || e.bio) && (
-                                              <p className="text-xs text-slate-600 line-clamp-2 mb-2">
-                                                {e.biography || e.bio}
-                                              </p>
-                                            )}
-                                            {medicalInterests.length > 0 && (
-                                              <div className="flex flex-wrap gap-1">
-                                                {medicalInterests
-                                                  .slice(0, 4)
-                                                  .map((interest, idx) => (
-                                                    <span
-                                                      key={idx}
-                                                      className="text-xs px-1.5 py-0.5 rounded-full"
-                                                      style={{
-                                                        backgroundColor:
-                                                          "rgba(208, 196, 226, 0.2)",
-                                                        color: "#2F3C96",
-                                                      }}
-                                                    >
-                                                      {interest}
-                                                    </span>
-                                                  ))}
-                                                {medicalInterests.length >
-                                                  4 && (
-                                                  <span className="text-xs text-slate-500">
-                                                    +
-                                                    {medicalInterests.length -
-                                                      4}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-2 mt-auto items-center">
-                                          {isCuralinkExpert ? (
-                                            <>
-                                              <button
-                                                onClick={() => {
-                                                  const expertUserId =
-                                                    e._id || e.userId || e.id;
-                                                  if (expertUserId) {
-                                                    const params =
-                                                      new URLSearchParams();
-                                                    if (e.name)
-                                                      params.set(
-                                                        "name",
-                                                        e.name,
-                                                      );
-                                                    if (locationText)
-                                                      params.set(
-                                                        "location",
-                                                        locationText,
-                                                      );
-                                                    if (e.bio)
-                                                      params.set("bio", e.bio);
-                                                    navigate(
-                                                      `/collabiora-expert/profile/${expertUserId}?${params.toString()}`,
-                                                    );
-                                                  }
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
-                                                style={{
-                                                  background:
-                                                    "linear-gradient(135deg, #2F3C96, #253075)",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                  e.target.style.background =
-                                                    "linear-gradient(135deg, #253075, #1C2454)";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                  e.target.style.background =
-                                                    "linear-gradient(135deg, #2F3C96, #253075)";
-                                                }}
-                                              >
-                                                View Profile
-                                              </button>
-                                              <button
-                                                onClick={(ev) => {
-                                                  ev.stopPropagation();
-                                                  openGlobalExpertDetailsModal(
-                                                    e,
-                                                  );
-                                                }}
-                                                className="p-2 rounded-lg border transition-all shrink-0"
-                                                style={{
-                                                  backgroundColor:
-                                                    "rgba(208, 196, 226, 0.2)",
-                                                  borderColor:
-                                                    "rgba(208, 196, 226, 0.3)",
-                                                  color: "#787878",
-                                                }}
-                                                onMouseEnter={(ev) => {
-                                                  ev.currentTarget.style.backgroundColor =
-                                                    "rgba(208, 196, 226, 0.3)";
-                                                  ev.currentTarget.style.color =
-                                                    "#2F3C96";
-                                                }}
-                                                onMouseLeave={(ev) => {
-                                                  ev.currentTarget.style.backgroundColor =
-                                                    "rgba(208, 196, 226, 0.2)";
-                                                  ev.currentTarget.style.color =
-                                                    "#787878";
-                                                }}
-                                                title="Details"
-                                              >
-                                                <Info className="w-3.5 h-3.5" />
-                                              </button>
-                                            </>
-                                          ) : (
-                                            <>
-                                              {e.email && (
-                                                <a
-                                                  href={`mailto:${e.email}`}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toast.success(
-                                                      "Message sent successfully!",
-                                                    );
-                                                  }}
-                                                  className="flex items-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
-                                                  style={{
-                                                    background:
-                                                      "linear-gradient(135deg, #2F3C96, #253075)",
-                                                  }}
-                                                  onMouseEnter={(e) => {
-                                                    e.target.style.background =
-                                                      "linear-gradient(135deg, #253075, #1C2454)";
-                                                  }}
-                                                  onMouseLeave={(e) => {
-                                                    e.target.style.background =
-                                                      "linear-gradient(135deg, #2F3C96, #253075)";
-                                                  }}
-                                                >
-                                                  <Mail className="w-3.5 h-3.5" />
-                                                  Contact
-                                                </a>
-                                              )}
-                                              <button
-                                                onClick={() => {
-                                                  const params =
-                                                    new URLSearchParams();
-                                                  params.set(
-                                                    "name",
-                                                    e.name || "",
-                                                  );
-                                                  if (e.affiliation)
-                                                    params.set(
-                                                      "affiliation",
-                                                      e.affiliation,
-                                                    );
-                                                  if (e.location)
-                                                    params.set(
-                                                      "location",
-                                                      e.location,
-                                                    );
-                                                  if (e.orcid)
-                                                    params.set(
-                                                      "orcid",
-                                                      e.orcid,
-                                                    );
-                                                  if (e.biography)
-                                                    params.set(
-                                                      "biography",
-                                                      e.biography,
-                                                    );
-                                                  if (
-                                                    e.researchInterests &&
-                                                    Array.isArray(
-                                                      e.researchInterests,
-                                                    )
-                                                  ) {
-                                                    params.set(
-                                                      "researchInterests",
-                                                      JSON.stringify(
-                                                        e.researchInterests,
-                                                      ),
-                                                    );
-                                                  }
-                                                  params.set(
-                                                    "from",
-                                                    "dashboard",
-                                                  );
-                                                  navigate(
-                                                    `/expert/profile?${params.toString()}`,
-                                                  );
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
-                                                style={{
-                                                  background:
-                                                    "linear-gradient(135deg, #2F3C96, #253075)",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                  e.target.style.background =
-                                                    "linear-gradient(135deg, #253075, #1C2454)";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                  e.target.style.background =
-                                                    "linear-gradient(135deg, #2F3C96, #253075)";
-                                                }}
-                                              >
-                                                View Profile
-                                              </button>
-                                              <button
-                                                onClick={(event) => {
-                                                  event.stopPropagation();
-                                                  openGlobalExpertDetailsModal(
-                                                    e,
-                                                  );
-                                                }}
-                                                className="p-2 rounded-lg border transition-all shrink-0"
-                                                style={{
-                                                  backgroundColor:
-                                                    "rgba(208, 196, 226, 0.2)",
-                                                  borderColor:
-                                                    "rgba(208, 196, 226, 0.3)",
-                                                  color: "#787878",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                  e.currentTarget.style.backgroundColor =
-                                                    "rgba(208, 196, 226, 0.3)";
-                                                  e.currentTarget.style.color =
-                                                    "#2F3C96";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                  e.currentTarget.style.backgroundColor =
-                                                    "rgba(208, 196, 226, 0.2)";
-                                                  e.currentTarget.style.color =
-                                                    "#787878";
-                                                }}
-                                                title="Details"
-                                              >
-                                                <Info className="w-3.5 h-3.5" />
-                                              </button>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Global Experts Section */}
-                        {hasGlobalExperts && (
-                          <>
-                            <div className="col-span-full">
-                              <div
-                                className="mb-8 p-6 rounded-2xl border-2 shadow-lg"
-                                style={{
-                                  background:
-                                    "linear-gradient(135deg, rgba(47, 60, 150, 0.1), rgba(37, 48, 117, 0.05))",
-                                  borderColor: "rgba(208, 196, 226, 0.3)",
-                                }}
-                              >
-                                <div className="flex items-start gap-4">
-                                  <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md"
-                                    style={{
-                                      background:
-                                        "linear-gradient(135deg, #2F3C96, #253075)",
-                                    }}
-                                  >
-                                    <BookOpen className="w-6 h-6 text-white" />
+                                      {collabioraExperts.length}{" "}
+                                      {collabioraExperts.length === 1
+                                        ? expertLabel
+                                        : expertsLabel}
+                                    </span>
                                   </div>
-                                  <div className="flex-1">
-                                    <h3
-                                      className="text-2xl font-bold mb-2 flex items-center gap-2"
-                                      style={{ color: "#2F3C96" }}
-                                    >
-                                      Global Research Experts
-                                      <span
-                                        className="text-sm font-normal px-3 py-1 rounded-full"
-                                        style={{
-                                          backgroundColor:
-                                            "rgba(208, 196, 226, 0.3)",
-                                          color: "#253075",
-                                        }}
-                                      >
-                                        {globalExpertsList.length}{" "}
-                                        {globalExpertsList.length === 1
-                                          ? "Researcher"
-                                          : "Researchers"}
-                                      </span>
-                                    </h3>
-                                    <p
-                                      className="text-sm leading-relaxed"
-                                      style={{ color: "#787878" }}
-                                    >
-                                      Discover leading researchers and their
-                                      published work in your field. Explore
-                                      their publications, research interests,
-                                      and academic achievements.
-                                    </p>
-                                  </div>
+                                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                    Connect with {expertsLabel.toLowerCase()}{" "}
+                                    who are active on Collabiora and available
+                                    for direct collaboration.
+                                  </p>
                                 </div>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {globalExpertsList.map((e, idx) => {
-                                  const isCuralinkExpert = !!(
-                                    e._id || e.userId
-                                  );
-                                  const expertId =
-                                    e.name ||
-                                    e.id ||
-                                    e._id ||
-                                    e.userId ||
-                                    `expert-${idx}`;
-                                  const itemId =
-                                    e.name || e.orcid || e.id || e._id;
-                                  const isExpanded =
-                                    expandedGlobalCards[expertId];
-                                  const expertPublications =
-                                    globalExpertPublications[expertId] || [];
-                                  const isLoadingPubs =
-                                    loadingGlobalExpertPublications[expertId];
-                                  const medicalInterests = isCuralinkExpert
-                                    ? [
-                                        ...(e.specialties || []),
-                                        ...(e.interests || []),
-                                      ]
-                                    : e.researchInterests || [];
-                                  const locationText =
-                                    isCuralinkExpert && e.location
-                                      ? typeof e.location === "string"
-                                        ? e.location
-                                        : `${e.location.city || ""}${e.location.city && e.location.country ? ", " : ""}${e.location.country || ""}`.trim()
-                                      : e.location || null;
-                                  const isFavorited = favorites.some((fav) => {
-                                    if (fav.type !== "expert") return false;
-                                    if (e.name && fav.item?.name)
-                                      return fav.item.name === e.name;
-                                    if (
-                                      fav.item?.id === itemId ||
-                                      fav.item?._id === itemId ||
-                                      fav.item?.orcid === itemId
-                                    )
-                                      return true;
-                                    return false;
-                                  });
-                                  const totalCitations =
-                                    e.metrics?.totalCitations ??
-                                    e.realCitationCount ??
-                                    0;
-                                  const totalPubs =
-                                    e.metrics?.totalPublications ??
-                                    e.realWorksCount ??
-                                    0;
-                                  const hIndex =
-                                    e.metrics?.hIndex ??
-                                    e.semanticScholar?.hIndex;
-                                  const institution =
-                                    e.affiliation ||
-                                    (e.institutions && e.institutions[0]) ||
-                                    null;
+                              <ChevronDown
+                                className={`w-5 h-5 shrink-0 text-[#2F3C96] transition-transform ${
+                                  showCollabioraExperts ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
 
-                                  return (
-                                    <div
-                                      key={expertId}
-                                      className={`rounded-xl shadow-sm border transition-all duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-0.5 ${
-                                        isExpanded
-                                          ? "bg-white shadow-lg ring-1 ring-opacity-50"
-                                          : "bg-white border-slate-200 hover:shadow-lg"
-                                      }`}
-                                      style={
-                                        isExpanded
-                                          ? {
-                                              borderColor:
-                                                "rgba(47, 60, 150, 0.4)",
-                                              boxShadow:
-                                                "0 10px 15px -3px rgba(47, 60, 150, 0.1)",
-                                            }
-                                          : {
-                                              borderColor:
-                                                "rgba(208, 196, 226, 0.3)",
-                                            }
-                                      }
-                                      onClick={() => toggleGlobalExpertCard(e)}
-                                    >
-                                      <div className="p-4">
-                                        {/* Match bar */}
-                                        {e.matchPercentage !== undefined && (
-                                          <div className="mb-3">
-                                            <div className="mb-1">
-                                              <span
-                                                className="text-xs font-bold"
-                                                style={{ color: "#2F3C96" }}
+                            {showCollabioraExperts && (
+                              <div className="p-4 sm:p-6 bg-white">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  {collabioraExperts.map((e, idx) => {
+                                    const isCuralinkExpert = !!(
+                                      e._id || e.userId
+                                    );
+                                    const expertId =
+                                      e.name ||
+                                      e.id ||
+                                      e._id ||
+                                      e.userId ||
+                                      `expert-${idx}`;
+                                    const itemId =
+                                      e.name || e.orcid || e.id || e._id;
+                                    const medicalInterests = isCuralinkExpert
+                                      ? [
+                                          ...(e.specialties || []),
+                                          ...(e.interests || []),
+                                        ]
+                                      : e.researchInterests || [];
+                                    const locationText =
+                                      isCuralinkExpert && e.location
+                                        ? typeof e.location === "string"
+                                          ? e.location
+                                          : `${e.location.city || ""}${
+                                              e.location.city &&
+                                              e.location.country
+                                                ? ", "
+                                                : ""
+                                            }${e.location.country || ""}`.trim()
+                                        : e.location || null;
+
+                                    // Check if expert is favorited by exact name match (consistent with Experts.jsx)
+                                    const isFavorited = favorites.some(
+                                      (fav) => {
+                                        if (fav.type !== "expert") return false;
+
+                                        // Check by exact name match (primary identifier)
+                                        if (e.name && fav.item?.name) {
+                                          return fav.item.name === e.name;
+                                        }
+
+                                        // Fallback: check by id
+                                        if (
+                                          fav.item?.id === itemId ||
+                                          fav.item?._id === itemId ||
+                                          fav.item?.orcid === itemId
+                                        ) {
+                                          return true;
+                                        }
+
+                                        return false;
+                                      },
+                                    );
+
+                                    return (
+                                      <div
+                                        key={expertId}
+                                        className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"
+                                        style={{
+                                          borderColor:
+                                            "rgba(208, 196, 226, 0.3)",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.boxShadow =
+                                            "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
+                                          e.currentTarget.style.borderColor =
+                                            "rgba(47, 60, 150, 0.4)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.boxShadow =
+                                            "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+                                          e.currentTarget.style.borderColor =
+                                            "rgba(208, 196, 226, 0.3)";
+                                        }}
+                                      >
+                                        <div className="p-4 flex flex-col flex-grow">
+                                          {/* Match Progress Bar - same as global */}
+                                          {e.matchPercentage !== undefined && (
+                                            <div className="mb-3">
+                                              <div className="mb-1">
+                                                <span
+                                                  className="text-xs font-bold"
+                                                  style={{ color: "#2F3C96" }}
+                                                >
+                                                  {e.matchPercentage}% Match
+                                                </span>
+                                              </div>
+                                              <div
+                                                className="w-full h-1.5 rounded-full overflow-hidden"
+                                                style={{
+                                                  backgroundColor:
+                                                    "rgba(208, 196, 226, 0.3)",
+                                                }}
                                               >
-                                                {e.matchPercentage}% Match
-                                              </span>
+                                                <div
+                                                  className="h-full rounded-full transition-all"
+                                                  style={{
+                                                    width: `${e.matchPercentage}%`,
+                                                    background:
+                                                      "linear-gradient(90deg, #2F3C96, #253075)",
+                                                  }}
+                                                />
+                                              </div>
                                             </div>
+                                          )}
+
+                                          {isCuralinkExpert &&
+                                            e.available === true && (
+                                              <div
+                                                className="mb-3 flex items-center gap-2 px-2 py-1.5 rounded-lg border text-xs font-semibold"
+                                                style={{
+                                                  backgroundColor:
+                                                    "rgba(208, 196, 226, 0.2)",
+                                                  borderColor:
+                                                    "rgba(208, 196, 226, 0.3)",
+                                                  color: "#2F3C96",
+                                                }}
+                                              >
+                                                <Calendar className="w-3.5 h-3.5" />{" "}
+                                                Available for Meetings
+                                              </div>
+                                            )}
+
+                                          <div className="flex items-start gap-3 mb-3">
                                             <div
-                                              className="w-full h-1.5 rounded-full overflow-hidden"
+                                              className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
                                               style={{
-                                                backgroundColor:
-                                                  "rgba(208, 196, 226, 0.3)",
+                                                background:
+                                                  "linear-gradient(135deg, #2F3C96, #253075)",
                                               }}
                                             >
-                                              <div
-                                                className="h-full rounded-full transition-all"
-                                                style={{
-                                                  width: `${e.matchPercentage}%`,
-                                                  background:
-                                                    "linear-gradient(90deg, #2F3C96, #253075)",
-                                                }}
-                                              />
+                                              {e.name
+                                                ?.charAt(0)
+                                                ?.toUpperCase() || "E"}
                                             </div>
-                                          </div>
-                                        )}
-                                        <div className="flex items-start gap-3">
-                                          <div
-                                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
-                                            style={{
-                                              background:
-                                                "linear-gradient(135deg, #2F3C96, #253075)",
-                                            }}
-                                          >
-                                            {e.name?.charAt(0)?.toUpperCase() ||
-                                              "E"}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between gap-2 mb-1">
-                                              <div className="min-w-0">
-                                                <h3 className="text-sm font-bold text-slate-900 truncate">
-                                                  {e.name ||
-                                                    `Unknown ${expertLabel}`}
-                                                </h3>
-                                                {e.orcid &&
-                                                  !isCuralinkExpert && (
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-start justify-between gap-2 mb-1">
+                                                <div className="min-w-0">
+                                                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                                                    {e.name ||
+                                                      `Unknown ${expertLabel}`}
+                                                  </h3>
+                                                  {e.orcid && (
                                                     <p
-                                                      className="text-xs truncate"
+                                                      className="text-xs truncate mt-0.5"
                                                       style={{
                                                         color: "#2F3C96",
                                                       }}
@@ -4924,8 +4499,7 @@ useEffect(() => {
                                                       ORCID: {e.orcid}
                                                     </p>
                                                   )}
-                                              </div>
-                                              <div className="flex items-center gap-1 shrink-0">
+                                                </div>
                                                 <button
                                                   onClick={(ev) => {
                                                     ev.stopPropagation();
@@ -4942,11 +4516,11 @@ useEffect(() => {
                                                       e,
                                                     ),
                                                   )}
-                                                  className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-500 disabled:opacity-50"
+                                                  className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-500 disabled:opacity-50 shrink-0"
                                                   title={
                                                     isFavorited
-                                                      ? "Remove from favorites"
-                                                      : "Add to favorites"
+                                                      ? "Remove from Favourites"
+                                                      : "Add to Favourites"
                                                   }
                                                 >
                                                   {favoritingItems.has(
@@ -4963,344 +4537,770 @@ useEffect(() => {
                                                     />
                                                   )}
                                                 </button>
-                                                <button
-                                                  onClick={(ev) => {
-                                                    ev.stopPropagation();
-                                                    toggleGlobalExpertCard(e);
-                                                  }}
-                                                  className={`p-1.5 rounded-lg ${isExpanded ? "" : "text-slate-500 hover:bg-slate-100"}`}
-                                                  style={
-                                                    isExpanded
-                                                      ? {
-                                                          backgroundColor:
-                                                            "rgba(208, 196, 226, 0.3)",
-                                                          color: "#2F3C96",
-                                                        }
-                                                      : {}
-                                                  }
-                                                  onMouseEnter={(ev) => {
-                                                    if (!isExpanded)
-                                                      ev.currentTarget.style.color =
-                                                        "#2F3C96";
-                                                  }}
-                                                  onMouseLeave={(ev) => {
-                                                    if (!isExpanded)
-                                                      ev.currentTarget.style.color =
-                                                        "";
-                                                  }}
-                                                >
-                                                  <ChevronDown
-                                                    className={`w-3.5 h-3.5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
-                                                  />
-                                                </button>
                                               </div>
-                                            </div>
-                                            {(institution ||
-                                              locationText ||
-                                              e.location) && (
-                                              <div className="flex items-center text-xs text-slate-600 mb-2">
-                                                <Building2 className="w-3 h-3 mr-1 shrink-0" />
-                                                <span className="truncate">
-                                                  {institution ||
-                                                    locationText ||
-                                                    e.location}
-                                                </span>
-                                              </div>
-                                            )}
-                                            {(e.biography || e.bio) && (
-                                              <p className="text-xs text-slate-600 line-clamp-2 mb-2">
-                                                {e.biography || e.bio}
-                                              </p>
-                                            )}
-                                            {/* Metrics (Experts-style) */}
-                                            <div className="flex flex-wrap gap-1.5 mb-2">
-                                              {totalCitations > 0 && (
-                                                <span
-                                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
-                                                  style={{
-                                                    backgroundColor:
-                                                      "rgba(208, 196, 226, 0.2)",
-                                                    color: "#2F3C96",
-                                                  }}
-                                                >
-                                                  <TrendingUp className="w-3 h-3" />{" "}
-                                                  {totalCitations.toLocaleString()}{" "}
-                                                  citations
-                                                </span>
-                                              )}
-                                              {hIndex != null && hIndex > 0 && (
-                                                <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-medium">
-                                                  <Award className="w-3 h-3" />{" "}
-                                                  h-index: {hIndex}
-                                                </span>
-                                              )}
-                                              {totalPubs > 0 && (
-                                                <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium">
-                                                  <BookOpen className="w-3 h-3" />{" "}
-                                                  {totalPubs.toLocaleString()}{" "}
-                                                  works
-                                                </span>
-                                              )}
-                                            </div>
-                                            {medicalInterests.length > 0 && (
-                                              <div className="flex flex-wrap gap-1">
-                                                {medicalInterests
-                                                  .slice(0, 4)
-                                                  .map((interest, i) => (
-                                                    <span
-                                                      key={i}
-                                                      className="text-xs px-1.5 py-0.5 rounded-full"
-                                                      style={{
-                                                        backgroundColor:
-                                                          "rgba(208, 196, 226, 0.2)",
-                                                        color: "#2F3C96",
-                                                      }}
-                                                    >
-                                                      {interest}
-                                                    </span>
-                                                  ))}
-                                                {medicalInterests.length >
-                                                  4 && (
-                                                  <span className="text-xs text-slate-500">
-                                                    +
-                                                    {medicalInterests.length -
-                                                      4}
+                                              {(locationText ||
+                                                (e.affiliation &&
+                                                  !isCuralinkExpert) ||
+                                                e.location) && (
+                                                <div className="flex items-center text-xs text-slate-600 mt-1 mb-1">
+                                                  <Building2 className="w-3 h-3 mr-1 shrink-0" />
+                                                  <span className="truncate">
+                                                    {locationText ||
+                                                      e.affiliation ||
+                                                      e.location}
                                                   </span>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                        {/* Expanded: publications (Experts-style) */}
-                                        <div
-                                          className={`overflow-hidden transition-all duration-300 ${isExpanded ? "max-h-[420px] opacity-100 mt-3" : "max-h-0 opacity-0 mt-0"}`}
-                                        >
-                                          <div className="pt-3 border-t border-slate-200">
-                                            {isLoadingPubs ? (
-                                              <div className="flex items-center justify-center py-3">
-                                                <Loader2
-                                                  className="w-4 h-4 animate-spin mr-2"
-                                                  style={{ color: "#2F3C96" }}
-                                                />
-                                                <span className="text-sm text-slate-600">
-                                                  Loading publications...
-                                                </span>
-                                              </div>
-                                            ) : expertPublications.length >
-                                              0 ? (
-                                              <div className="space-y-2">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                  <BookOpen
-                                                    className="w-3.5 h-3.5"
-                                                    style={{ color: "#2F3C96" }}
-                                                  />
-                                                  <h4
-                                                    className="text-xs font-semibold"
-                                                    style={{ color: "#2F3C96" }}
-                                                  >
-                                                    Top Publications
-                                                  </h4>
                                                 </div>
-                                                {expertPublications
-                                                  .slice(0, 2)
-                                                  .map((pub, i) => (
-                                                    <div
-                                                      key={i}
-                                                      onClick={(ev) =>
-                                                        ev.stopPropagation()
-                                                      }
-                                                      className="rounded-lg p-2 border"
-                                                      style={{
-                                                        backgroundColor:
-                                                          "rgba(208, 196, 226, 0.2)",
-                                                        borderColor:
-                                                          "rgba(208, 196, 226, 0.3)",
-                                                      }}
-                                                    >
-                                                      <a
-                                                        href={pub.link || "#"}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="block"
-                                                      >
-                                                        <h5
-                                                          className="text-xs font-semibold text-slate-900 line-clamp-2 mb-1 hover:opacity-80"
-                                                          style={{
-                                                            transition:
-                                                              "color 0.2s",
-                                                          }}
-                                                          onMouseEnter={(
-                                                            ev,
-                                                          ) => {
-                                                            ev.currentTarget.style.color =
-                                                              "#2F3C96";
-                                                          }}
-                                                          onMouseLeave={(
-                                                            ev,
-                                                          ) => {
-                                                            ev.currentTarget.style.color =
-                                                              "";
-                                                          }}
-                                                        >
-                                                          {pub.title}
-                                                        </h5>
-                                                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                                                          {pub.year && (
-                                                            <span
-                                                              style={{
-                                                                color:
-                                                                  "#2F3C96",
-                                                              }}
-                                                            >
-                                                              {pub.year}
-                                                            </span>
-                                                          )}
-                                                          {pub.citations >
-                                                            0 && (
-                                                            <span>
-                                                              {pub.citations}{" "}
-                                                              citations
-                                                            </span>
-                                                          )}
-                                                        </div>
-                                                      </a>
-                                                    </div>
-                                                  ))}
-                                                {expertPublications.length >
-                                                  2 && (
-                                                  <button
-                                                    type="button"
-                                                    onClick={(ev) => {
-                                                      ev.stopPropagation();
-                                                      openGlobalExpertDetailsModal(
-                                                        e,
-                                                      );
-                                                    }}
-                                                    className="w-full text-xs font-medium py-1.5 flex items-center justify-center gap-1 hover:opacity-80"
-                                                    style={{ color: "#2F3C96" }}
-                                                  >
-                                                    View all{" "}
-                                                    {expertPublications.length}{" "}
-                                                    publications{" "}
-                                                    <ExternalLink className="w-3 h-3" />
-                                                  </button>
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <div className="text-center py-3">
-                                                <BookOpen className="w-5 h-5 text-slate-300 mx-auto mb-1" />
-                                                <p className="text-xs text-slate-500">
-                                                  No publications found
+                                              )}
+                                              {(e.biography || e.bio) && (
+                                                <p className="text-xs text-slate-600 line-clamp-2 mb-2">
+                                                  {e.biography || e.bio}
                                                 </p>
-                                              </div>
-                                            )}
+                                              )}
+                                              {medicalInterests.length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                  {medicalInterests
+                                                    .slice(0, 4)
+                                                    .map((interest, idx) => (
+                                                      <span
+                                                        key={idx}
+                                                        className="text-xs px-1.5 py-0.5 rounded-full"
+                                                        style={{
+                                                          backgroundColor:
+                                                            "rgba(208, 196, 226, 0.2)",
+                                                          color: "#2F3C96",
+                                                        }}
+                                                      >
+                                                        {interest}
+                                                      </span>
+                                                    ))}
+                                                  {medicalInterests.length >
+                                                    4 && (
+                                                    <span className="text-xs text-slate-500">
+                                                      +
+                                                      {medicalInterests.length -
+                                                        4}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
-                                        </div>
-                                        {/* Actions row */}
-                                        <div
-                                          className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100"
-                                          onClick={(ev) => ev.stopPropagation()}
-                                        >
-                                          {isCuralinkExpert ? (
-                                            <button
-                                              onClick={() => {
-                                                const id =
-                                                  e._id || e.userId || e.id;
-                                                if (id)
-                                                  navigate(
-                                                    `/collabiora-expert/profile/${id}?name=${encodeURIComponent(e.name || "")}&location=${encodeURIComponent(locationText || "")}&bio=${encodeURIComponent(e.bio || "")}`,
-                                                  );
-                                              }}
-                                              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                                              style={{
-                                                background:
-                                                  "linear-gradient(135deg, #2F3C96, #253075)",
-                                              }}
-                                              onMouseEnter={(ev) => {
-                                                ev.currentTarget.style.background =
-                                                  "linear-gradient(135deg, #253075, #1C2454)";
-                                              }}
-                                              onMouseLeave={(ev) => {
-                                                ev.currentTarget.style.background =
-                                                  "linear-gradient(135deg, #2F3C96, #253075)";
-                                              }}
-                                            >
-                                              View Profile
-                                            </button>
-                                          ) : (
-                                            <>
-                                              {e.email && (
-                                                <a
-                                                  href={`mailto:${e.email}`}
-                                                  onClick={() =>
-                                                    toast.success(
-                                                      "Opening email...",
-                                                    )
-                                                  }
-                                                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+
+                                          {/* Action Buttons */}
+                                          <div className="flex gap-2 mt-auto items-center">
+                                            {isCuralinkExpert ? (
+                                              <>
+                                                <button
+                                                  onClick={() => {
+                                                    const expertUserId =
+                                                      e._id || e.userId || e.id;
+                                                    if (expertUserId) {
+                                                      const params =
+                                                        new URLSearchParams();
+                                                      if (e.name)
+                                                        params.set(
+                                                          "name",
+                                                          e.name,
+                                                        );
+                                                      if (locationText)
+                                                        params.set(
+                                                          "location",
+                                                          locationText,
+                                                        );
+                                                      if (e.bio)
+                                                        params.set(
+                                                          "bio",
+                                                          e.bio,
+                                                        );
+                                                      navigate(
+                                                        `/collabiora-expert/profile/${expertUserId}?${params.toString()}`,
+                                                      );
+                                                    }
+                                                  }}
+                                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
                                                   style={{
                                                     background:
                                                       "linear-gradient(135deg, #2F3C96, #253075)",
                                                   }}
-                                                  onMouseEnter={(ev) => {
-                                                    ev.currentTarget.style.background =
+                                                  onMouseEnter={(e) => {
+                                                    e.target.style.background =
                                                       "linear-gradient(135deg, #253075, #1C2454)";
                                                   }}
-                                                  onMouseLeave={(ev) => {
-                                                    ev.currentTarget.style.background =
+                                                  onMouseLeave={(e) => {
+                                                    e.target.style.background =
                                                       "linear-gradient(135deg, #2F3C96, #253075)";
                                                   }}
                                                 >
-                                                  <Mail className="w-3 h-3" />{" "}
-                                                  Contact
-                                                </a>
+                                                  View Profile
+                                                </button>
+                                                <button
+                                                  onClick={(ev) => {
+                                                    ev.stopPropagation();
+                                                    openGlobalExpertDetailsModal(
+                                                      e,
+                                                    );
+                                                  }}
+                                                  className="p-2 rounded-lg border transition-all shrink-0"
+                                                  style={{
+                                                    backgroundColor:
+                                                      "rgba(208, 196, 226, 0.2)",
+                                                    borderColor:
+                                                      "rgba(208, 196, 226, 0.3)",
+                                                    color: "#787878",
+                                                  }}
+                                                  onMouseEnter={(ev) => {
+                                                    ev.currentTarget.style.backgroundColor =
+                                                      "rgba(208, 196, 226, 0.3)";
+                                                    ev.currentTarget.style.color =
+                                                      "#2F3C96";
+                                                  }}
+                                                  onMouseLeave={(ev) => {
+                                                    ev.currentTarget.style.backgroundColor =
+                                                      "rgba(208, 196, 226, 0.2)";
+                                                    ev.currentTarget.style.color =
+                                                      "#787878";
+                                                  }}
+                                                  title="Details"
+                                                >
+                                                  <Info className="w-3.5 h-3.5" />
+                                                </button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                {e.email && (
+                                                  <a
+                                                    href={`mailto:${e.email}`}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      toast.success(
+                                                        "Message sent successfully!",
+                                                      );
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
+                                                    style={{
+                                                      background:
+                                                        "linear-gradient(135deg, #2F3C96, #253075)",
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                      e.target.style.background =
+                                                        "linear-gradient(135deg, #253075, #1C2454)";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                      e.target.style.background =
+                                                        "linear-gradient(135deg, #2F3C96, #253075)";
+                                                    }}
+                                                  >
+                                                    <Mail className="w-3.5 h-3.5" />
+                                                    Contact
+                                                  </a>
+                                                )}
+                                                <button
+                                                  onClick={() => {
+                                                    const params =
+                                                      new URLSearchParams();
+                                                    params.set(
+                                                      "name",
+                                                      e.name || "",
+                                                    );
+                                                    if (e.affiliation)
+                                                      params.set(
+                                                        "affiliation",
+                                                        e.affiliation,
+                                                      );
+                                                    if (e.location)
+                                                      params.set(
+                                                        "location",
+                                                        e.location,
+                                                      );
+                                                    if (e.orcid)
+                                                      params.set(
+                                                        "orcid",
+                                                        e.orcid,
+                                                      );
+                                                    if (e.biography)
+                                                      params.set(
+                                                        "biography",
+                                                        e.biography,
+                                                      );
+                                                    if (
+                                                      e.researchInterests &&
+                                                      Array.isArray(
+                                                        e.researchInterests,
+                                                      )
+                                                    ) {
+                                                      params.set(
+                                                        "researchInterests",
+                                                        JSON.stringify(
+                                                          e.researchInterests,
+                                                        ),
+                                                      );
+                                                    }
+                                                    params.set(
+                                                      "from",
+                                                      "dashboard",
+                                                    );
+                                                    navigate(
+                                                      `/expert/profile?${params.toString()}`,
+                                                    );
+                                                  }}
+                                                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-white rounded-lg text-xs font-semibold transition-all shadow-sm"
+                                                  style={{
+                                                    background:
+                                                      "linear-gradient(135deg, #2F3C96, #253075)",
+                                                  }}
+                                                  onMouseEnter={(e) => {
+                                                    e.target.style.background =
+                                                      "linear-gradient(135deg, #253075, #1C2454)";
+                                                  }}
+                                                  onMouseLeave={(e) => {
+                                                    e.target.style.background =
+                                                      "linear-gradient(135deg, #2F3C96, #253075)";
+                                                  }}
+                                                >
+                                                  View Profile
+                                                </button>
+                                                <button
+                                                  onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    openGlobalExpertDetailsModal(
+                                                      e,
+                                                    );
+                                                  }}
+                                                  className="p-2 rounded-lg border transition-all shrink-0"
+                                                  style={{
+                                                    backgroundColor:
+                                                      "rgba(208, 196, 226, 0.2)",
+                                                    borderColor:
+                                                      "rgba(208, 196, 226, 0.3)",
+                                                    color: "#787878",
+                                                  }}
+                                                  onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor =
+                                                      "rgba(208, 196, 226, 0.3)";
+                                                    e.currentTarget.style.color =
+                                                      "#2F3C96";
+                                                  }}
+                                                  onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor =
+                                                      "rgba(208, 196, 226, 0.2)";
+                                                    e.currentTarget.style.color =
+                                                      "#787878";
+                                                  }}
+                                                  title="Details"
+                                                >
+                                                  <Info className="w-3.5 h-3.5" />
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Global Experts Section (dropdown, expanded by default) */}
+                        {hasGlobalExperts && (
+                          <div className="col-span-full rounded-2xl border-2 shadow-lg overflow-hidden">
+                            <button
+                              type="button"
+                              className="w-full flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                              onClick={() =>
+                                setShowGlobalExperts((prev) => !prev)
+                              }
+                            >
+                              <div className="flex items-center gap-3 text-left">
+                                <div
+                                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-md"
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, #2F3C96, #253075)",
+                                  }}
+                                >
+                                  <BookOpen className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base sm:text-lg font-semibold text-slate-900">
+                                      Global {expertsLabel}
+                                    </span>
+                                    <span
+                                      className="text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full"
+                                      style={{
+                                        backgroundColor:
+                                          "rgba(208, 196, 226, 0.3)",
+                                        color: "#253075",
+                                      }}
+                                    >
+                                      {globalExpertsList.length}{" "}
+                                      {globalExpertsList.length === 1
+                                        ? "Researcher"
+                                        : "Researchers"}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                    Discover leading{" "}
+                                    {expertsLabel.toLowerCase()} and their
+                                    published work worldwide.
+                                  </p>
+                                </div>
+                              </div>
+                              <ChevronDown
+                                className={`w-5 h-5 shrink-0 text-[#2F3C96] transition-transform ${
+                                  showGlobalExperts ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
+
+                            {showGlobalExperts && (
+                              <div className="p-4 sm:p-6 bg-white">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  {globalExpertsList.map((e, idx) => {
+                                    const isCuralinkExpert = !!(
+                                      e._id || e.userId
+                                    );
+                                    const expertId =
+                                      e.name ||
+                                      e.id ||
+                                      e._id ||
+                                      e.userId ||
+                                      `expert-${idx}`;
+                                    const itemId =
+                                      e.name || e.orcid || e.id || e._id;
+                                    const isExpanded =
+                                      expandedGlobalCards[expertId];
+                                    const expertPublications =
+                                      globalExpertPublications[expertId] || [];
+                                    const isLoadingPubs =
+                                      loadingGlobalExpertPublications[expertId];
+                                    const medicalInterests = isCuralinkExpert
+                                      ? [
+                                          ...(e.specialties || []),
+                                          ...(e.interests || []),
+                                        ]
+                                      : e.researchInterests || [];
+                                    const locationText =
+                                      isCuralinkExpert && e.location
+                                        ? typeof e.location === "string"
+                                          ? e.location
+                                          : `${e.location.city || ""}${e.location.city && e.location.country ? ", " : ""}${e.location.country || ""}`.trim()
+                                        : e.location || null;
+                                    const isFavorited = favorites.some(
+                                      (fav) => {
+                                        if (fav.type !== "expert") return false;
+                                        if (e.name && fav.item?.name)
+                                          return fav.item.name === e.name;
+                                        if (
+                                          fav.item?.id === itemId ||
+                                          fav.item?._id === itemId ||
+                                          fav.item?.orcid === itemId
+                                        )
+                                          return true;
+                                        return false;
+                                      },
+                                    );
+                                    const totalCitations =
+                                      e.metrics?.totalCitations ??
+                                      e.realCitationCount ??
+                                      0;
+                                    const totalPubs =
+                                      e.metrics?.totalPublications ??
+                                      e.realWorksCount ??
+                                      0;
+                                    const hIndex =
+                                      e.metrics?.hIndex ??
+                                      e.semanticScholar?.hIndex;
+                                    const institution =
+                                      e.affiliation ||
+                                      (e.institutions && e.institutions[0]) ||
+                                      null;
+
+                                    return (
+                                      <div
+                                        key={expertId}
+                                        className={`rounded-xl shadow-sm border transition-all duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-0.5 ${
+                                          isExpanded
+                                            ? "bg-white shadow-lg ring-1 ring-opacity-50"
+                                            : "bg-white border-slate-200 hover:shadow-lg"
+                                        }`}
+                                        style={
+                                          isExpanded
+                                            ? {
+                                                borderColor:
+                                                  "rgba(47, 60, 150, 0.4)",
+                                                boxShadow:
+                                                  "0 10px 15px -3px rgba(47, 60, 150, 0.1)",
+                                              }
+                                            : {
+                                                borderColor:
+                                                  "rgba(208, 196, 226, 0.3)",
+                                              }
+                                        }
+                                        onClick={() =>
+                                          toggleGlobalExpertCard(e)
+                                        }
+                                      >
+                                        <div className="p-4">
+                                          {/* Match bar */}
+                                          {e.matchPercentage !== undefined && (
+                                            <div className="mb-3">
+                                              <div className="mb-1">
+                                                <span
+                                                  className="text-xs font-bold"
+                                                  style={{ color: "#2F3C96" }}
+                                                >
+                                                  {e.matchPercentage}% Match
+                                                </span>
+                                              </div>
+                                              <div
+                                                className="w-full h-1.5 rounded-full overflow-hidden"
+                                                style={{
+                                                  backgroundColor:
+                                                    "rgba(208, 196, 226, 0.3)",
+                                                }}
+                                              >
+                                                <div
+                                                  className="h-full rounded-full transition-all"
+                                                  style={{
+                                                    width: `${e.matchPercentage}%`,
+                                                    background:
+                                                      "linear-gradient(90deg, #2F3C96, #253075)",
+                                                  }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+                                          <div className="flex items-start gap-3">
+                                            <div
+                                              className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
+                                              style={{
+                                                background:
+                                                  "linear-gradient(135deg, #2F3C96, #253075)",
+                                              }}
+                                            >
+                                              {e.name
+                                                ?.charAt(0)
+                                                ?.toUpperCase() || "E"}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-start justify-between gap-2 mb-1">
+                                                <div className="min-w-0">
+                                                  <h3 className="text-sm font-bold text-slate-900 truncate">
+                                                    {e.name ||
+                                                      `Unknown ${expertLabel}`}
+                                                  </h3>
+                                                  {e.orcid &&
+                                                    !isCuralinkExpert && (
+                                                      <p
+                                                        className="text-xs truncate"
+                                                        style={{
+                                                          color: "#2F3C96",
+                                                        }}
+                                                      >
+                                                        ORCID: {e.orcid}
+                                                      </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                  <button
+                                                    onClick={(ev) => {
+                                                      ev.stopPropagation();
+                                                      toggleFavorite(
+                                                        "expert",
+                                                        itemId,
+                                                        e,
+                                                      );
+                                                    }}
+                                                    disabled={favoritingItems.has(
+                                                      getFavoriteKey(
+                                                        "expert",
+                                                        itemId,
+                                                        e,
+                                                      ),
+                                                    )}
+                                                    className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-red-500 disabled:opacity-50"
+                                                    title={
+                                                      isFavorited
+                                                        ? "Remove from favorites"
+                                                        : "Add to favorites"
+                                                    }
+                                                  >
+                                                    {favoritingItems.has(
+                                                      getFavoriteKey(
+                                                        "expert",
+                                                        itemId,
+                                                        e,
+                                                      ),
+                                                    ) ? (
+                                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                    ) : (
+                                                      <Heart
+                                                        className={`w-3.5 h-3.5 ${isFavorited ? "fill-current text-red-500" : ""}`}
+                                                      />
+                                                    )}
+                                                  </button>
+                                                  <button
+                                                    onClick={(ev) => {
+                                                      ev.stopPropagation();
+                                                      toggleGlobalExpertCard(e);
+                                                    }}
+                                                    className={`p-1.5 rounded-lg ${isExpanded ? "" : "text-slate-500 hover:bg-slate-100"}`}
+                                                    style={
+                                                      isExpanded
+                                                        ? {
+                                                            backgroundColor:
+                                                              "rgba(208, 196, 226, 0.3)",
+                                                            color: "#2F3C96",
+                                                          }
+                                                        : {}
+                                                    }
+                                                    onMouseEnter={(ev) => {
+                                                      if (!isExpanded)
+                                                        ev.currentTarget.style.color =
+                                                          "#2F3C96";
+                                                    }}
+                                                    onMouseLeave={(ev) => {
+                                                      if (!isExpanded)
+                                                        ev.currentTarget.style.color =
+                                                          "";
+                                                    }}
+                                                  >
+                                                    <ChevronDown
+                                                      className={`w-3.5 h-3.5 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
+                                                    />
+                                                  </button>
+                                                </div>
+                                              </div>
+                                              {(institution ||
+                                                locationText ||
+                                                e.location) && (
+                                                <div className="flex items-center text-xs text-slate-600 mb-2">
+                                                  <Building2 className="w-3 h-3 mr-1 shrink-0" />
+                                                  <span className="truncate">
+                                                    {institution ||
+                                                      locationText ||
+                                                      e.location}
+                                                  </span>
+                                                </div>
                                               )}
+                                              {(e.biography || e.bio) && (
+                                                <p className="text-xs text-slate-600 line-clamp-2 mb-2">
+                                                  {e.biography || e.bio}
+                                                </p>
+                                              )}
+                                              {/* Metrics (Experts-style) */}
+                                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                                {totalCitations > 0 && (
+                                                  <span
+                                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
+                                                    style={{
+                                                      backgroundColor:
+                                                        "rgba(208, 196, 226, 0.2)",
+                                                      color: "#2F3C96",
+                                                    }}
+                                                  >
+                                                    <TrendingUp className="w-3 h-3" />{" "}
+                                                    {totalCitations.toLocaleString()}{" "}
+                                                    citations
+                                                  </span>
+                                                )}
+                                                {hIndex != null &&
+                                                  hIndex > 0 && (
+                                                    <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-medium">
+                                                      <Award className="w-3 h-3" />{" "}
+                                                      h-index: {hIndex}
+                                                    </span>
+                                                  )}
+                                                {totalPubs > 0 && (
+                                                  <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium">
+                                                    <BookOpen className="w-3 h-3" />{" "}
+                                                    {totalPubs.toLocaleString()}{" "}
+                                                    works
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {medicalInterests.length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                  {medicalInterests
+                                                    .slice(0, 4)
+                                                    .map((interest, i) => (
+                                                      <span
+                                                        key={i}
+                                                        className="text-xs px-1.5 py-0.5 rounded-full"
+                                                        style={{
+                                                          backgroundColor:
+                                                            "rgba(208, 196, 226, 0.2)",
+                                                          color: "#2F3C96",
+                                                        }}
+                                                      >
+                                                        {interest}
+                                                      </span>
+                                                    ))}
+                                                  {medicalInterests.length >
+                                                    4 && (
+                                                    <span className="text-xs text-slate-500">
+                                                      +
+                                                      {medicalInterests.length -
+                                                        4}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {/* Expanded: publications (Experts-style) */}
+                                          <div
+                                            className={`overflow-hidden transition-all duration-300 ${isExpanded ? "max-h-[420px] opacity-100 mt-3" : "max-h-0 opacity-0 mt-0"}`}
+                                          >
+                                            <div className="pt-3 border-t border-slate-200">
+                                              {isLoadingPubs ? (
+                                                <div className="flex items-center justify-center py-3">
+                                                  <Loader2
+                                                    className="w-4 h-4 animate-spin mr-2"
+                                                    style={{ color: "#2F3C96" }}
+                                                  />
+                                                  <span className="text-sm text-slate-600">
+                                                    Loading publications...
+                                                  </span>
+                                                </div>
+                                              ) : expertPublications.length >
+                                                0 ? (
+                                                <div className="space-y-2">
+                                                  <div className="flex items-center gap-2 mb-2">
+                                                    <BookOpen
+                                                      className="w-3.5 h-3.5"
+                                                      style={{
+                                                        color: "#2F3C96",
+                                                      }}
+                                                    />
+                                                    <h4
+                                                      className="text-xs font-semibold"
+                                                      style={{
+                                                        color: "#2F3C96",
+                                                      }}
+                                                    >
+                                                      Top Publications
+                                                    </h4>
+                                                  </div>
+                                                  {expertPublications
+                                                    .slice(0, 2)
+                                                    .map((pub, i) => (
+                                                      <div
+                                                        key={i}
+                                                        onClick={(ev) =>
+                                                          ev.stopPropagation()
+                                                        }
+                                                        className="rounded-lg p-2 border"
+                                                        style={{
+                                                          backgroundColor:
+                                                            "rgba(208, 196, 226, 0.2)",
+                                                          borderColor:
+                                                            "rgba(208, 196, 226, 0.3)",
+                                                        }}
+                                                      >
+                                                        <a
+                                                          href={pub.link || "#"}
+                                                          target="_blank"
+                                                          rel="noreferrer"
+                                                          className="block"
+                                                        >
+                                                          <h5
+                                                            className="text-xs font-semibold text-slate-900 line-clamp-2 mb-1 hover:opacity-80"
+                                                            style={{
+                                                              transition:
+                                                                "color 0.2s",
+                                                            }}
+                                                            onMouseEnter={(
+                                                              ev,
+                                                            ) => {
+                                                              ev.currentTarget.style.color =
+                                                                "#2F3C96";
+                                                            }}
+                                                            onMouseLeave={(
+                                                              ev,
+                                                            ) => {
+                                                              ev.currentTarget.style.color =
+                                                                "";
+                                                            }}
+                                                          >
+                                                            {pub.title}
+                                                          </h5>
+                                                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                                                            {pub.year && (
+                                                              <span
+                                                                style={{
+                                                                  color:
+                                                                    "#2F3C96",
+                                                                }}
+                                                              >
+                                                                {pub.year}
+                                                              </span>
+                                                            )}
+                                                            {pub.citations >
+                                                              0 && (
+                                                              <span>
+                                                                {pub.citations}{" "}
+                                                                citations
+                                                              </span>
+                                                            )}
+                                                          </div>
+                                                        </a>
+                                                      </div>
+                                                    ))}
+                                                  {expertPublications.length >
+                                                    2 && (
+                                                    <button
+                                                      type="button"
+                                                      onClick={(ev) => {
+                                                        ev.stopPropagation();
+                                                        openGlobalExpertDetailsModal(
+                                                          e,
+                                                        );
+                                                      }}
+                                                      className="w-full text-xs font-medium py-1.5 flex items-center justify-center gap-1 hover:opacity-80"
+                                                      style={{
+                                                        color: "#2F3C96",
+                                                      }}
+                                                    >
+                                                      View all{" "}
+                                                      {
+                                                        expertPublications.length
+                                                      }{" "}
+                                                      publications{" "}
+                                                      <ExternalLink className="w-3 h-3" />
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div className="text-center py-3">
+                                                  <BookOpen className="w-5 h-5 text-slate-300 mx-auto mb-1" />
+                                                  <p className="text-xs text-slate-500">
+                                                    No publications found
+                                                  </p>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {/* Actions row */}
+                                          <div
+                                            className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100"
+                                            onClick={(ev) =>
+                                              ev.stopPropagation()
+                                            }
+                                          >
+                                            {isCuralinkExpert ? (
                                               <button
                                                 onClick={() => {
-                                                  const params =
-                                                    new URLSearchParams();
-                                                  params.set(
-                                                    "name",
-                                                    e.name || "",
-                                                  );
-                                                  if (e.affiliation)
-                                                    params.set(
-                                                      "affiliation",
-                                                      e.affiliation,
+                                                  const id =
+                                                    e._id || e.userId || e.id;
+                                                  if (id)
+                                                    navigate(
+                                                      `/collabiora-expert/profile/${id}?name=${encodeURIComponent(e.name || "")}&location=${encodeURIComponent(locationText || "")}&bio=${encodeURIComponent(e.bio || "")}`,
                                                     );
-                                                  if (e.location)
-                                                    params.set(
-                                                      "location",
-                                                      e.location,
-                                                    );
-                                                  if (e.orcid)
-                                                    params.set(
-                                                      "orcid",
-                                                      e.orcid,
-                                                    );
-                                                  if (e.biography)
-                                                    params.set(
-                                                      "biography",
-                                                      e.biography,
-                                                    );
-                                                  if (
-                                                    Array.isArray(
-                                                      e.researchInterests,
-                                                    )
-                                                  )
-                                                    params.set(
-                                                      "researchInterests",
-                                                      JSON.stringify(
-                                                        e.researchInterests,
-                                                      ),
-                                                    );
-                                                  params.set(
-                                                    "from",
-                                                    "dashboard",
-                                                  );
-                                                  navigate(
-                                                    `/expert/profile?${params.toString()}`,
-                                                  );
                                                 }}
                                                 className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
                                                 style={{
@@ -5318,41 +5318,133 @@ useEffect(() => {
                                               >
                                                 View Profile
                                               </button>
-                                              <button
-                                                onClick={() =>
-                                                  openGlobalExpertDetailsModal(
-                                                    e,
-                                                  )
-                                                }
-                                                className="p-1.5 rounded-lg border text-slate-600 hover:opacity-90"
-                                                style={{
-                                                  borderColor:
-                                                    "rgba(208, 196, 226, 0.3)",
-                                                  backgroundColor:
-                                                    "rgba(208, 196, 226, 0.2)",
-                                                }}
-                                                onMouseEnter={(ev) => {
-                                                  ev.currentTarget.style.color =
-                                                    "#2F3C96";
-                                                }}
-                                                onMouseLeave={(ev) => {
-                                                  ev.currentTarget.style.color =
-                                                    "";
-                                                }}
-                                                title="Details"
-                                              >
-                                                <Info className="w-3.5 h-3.5" />
-                                              </button>
-                                            </>
-                                          )}
+                                            ) : (
+                                              <>
+                                                {e.email && (
+                                                  <a
+                                                    href={`mailto:${e.email}`}
+                                                    onClick={() =>
+                                                      toast.success(
+                                                        "Opening email...",
+                                                      )
+                                                    }
+                                                    className="flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                                                    style={{
+                                                      background:
+                                                        "linear-gradient(135deg, #2F3C96, #253075)",
+                                                    }}
+                                                    onMouseEnter={(ev) => {
+                                                      ev.currentTarget.style.background =
+                                                        "linear-gradient(135deg, #253075, #1C2454)";
+                                                    }}
+                                                    onMouseLeave={(ev) => {
+                                                      ev.currentTarget.style.background =
+                                                        "linear-gradient(135deg, #2F3C96, #253075)";
+                                                    }}
+                                                  >
+                                                    <Mail className="w-3 h-3" />{" "}
+                                                    Contact
+                                                  </a>
+                                                )}
+                                                <button
+                                                  onClick={() => {
+                                                    const params =
+                                                      new URLSearchParams();
+                                                    params.set(
+                                                      "name",
+                                                      e.name || "",
+                                                    );
+                                                    if (e.affiliation)
+                                                      params.set(
+                                                        "affiliation",
+                                                        e.affiliation,
+                                                      );
+                                                    if (e.location)
+                                                      params.set(
+                                                        "location",
+                                                        e.location,
+                                                      );
+                                                    if (e.orcid)
+                                                      params.set(
+                                                        "orcid",
+                                                        e.orcid,
+                                                      );
+                                                    if (e.biography)
+                                                      params.set(
+                                                        "biography",
+                                                        e.biography,
+                                                      );
+                                                    if (
+                                                      Array.isArray(
+                                                        e.researchInterests,
+                                                      )
+                                                    )
+                                                      params.set(
+                                                        "researchInterests",
+                                                        JSON.stringify(
+                                                          e.researchInterests,
+                                                        ),
+                                                      );
+                                                    params.set(
+                                                      "from",
+                                                      "dashboard",
+                                                    );
+                                                    navigate(
+                                                      `/expert/profile?${params.toString()}`,
+                                                    );
+                                                  }}
+                                                  className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                                                  style={{
+                                                    background:
+                                                      "linear-gradient(135deg, #2F3C96, #253075)",
+                                                  }}
+                                                  onMouseEnter={(ev) => {
+                                                    ev.currentTarget.style.background =
+                                                      "linear-gradient(135deg, #253075, #1C2454)";
+                                                  }}
+                                                  onMouseLeave={(ev) => {
+                                                    ev.currentTarget.style.background =
+                                                      "linear-gradient(135deg, #2F3C96, #253075)";
+                                                  }}
+                                                >
+                                                  View Profile
+                                                </button>
+                                                <button
+                                                  onClick={() =>
+                                                    openGlobalExpertDetailsModal(
+                                                      e,
+                                                    )
+                                                  }
+                                                  className="p-1.5 rounded-lg border text-slate-600 hover:opacity-90"
+                                                  style={{
+                                                    borderColor:
+                                                      "rgba(208, 196, 226, 0.3)",
+                                                    backgroundColor:
+                                                      "rgba(208, 196, 226, 0.2)",
+                                                  }}
+                                                  onMouseEnter={(ev) => {
+                                                    ev.currentTarget.style.color =
+                                                      "#2F3C96";
+                                                  }}
+                                                  onMouseLeave={(ev) => {
+                                                    ev.currentTarget.style.color =
+                                                      "";
+                                                  }}
+                                                  title="Details"
+                                                >
+                                                  <Info className="w-3.5 h-3.5" />
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          </>
+                            )}
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -5440,26 +5532,24 @@ useEffect(() => {
                         Finding communities that match your conditions...
                       </div>
                     ) : recommendedCommunities.length > 0 ? (
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                         {recommendedCommunities.map((community) => (
                           <button
                             key={
-                              community._id ||
-                              community.slug ||
-                              community.name
+                              community._id || community.slug || community.name
                             }
                             type="button"
                             onClick={() =>
                               navigate(`/forums/community/${community._id}`)
                             }
-                            className="w-full text-left bg-white rounded-xl shadow-sm border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col h-full"
+                            className="w-full text-left bg-white/95 rounded-2xl shadow-sm border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex flex-col h-full"
                             style={{
                               borderColor: "rgba(208, 196, 226, 0.6)",
                             }}
                           >
-                            <div className="p-4 flex items-start gap-3">
+                            <div className="p-5 flex items-start gap-4">
                               <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
                                 style={{
                                   backgroundColor: "rgba(208, 196, 226, 0.35)",
                                 }}
@@ -5470,9 +5560,9 @@ useEffect(() => {
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
+                                <div className="flex items-center gap-2 mb-1.5">
                                   <h4
-                                    className="text-sm font-semibold truncate"
+                                    className="text-sm md:text-base font-semibold truncate"
                                     style={{ color: "#2F3C96" }}
                                   >
                                     {community.name}
@@ -5485,16 +5575,18 @@ useEffect(() => {
                                 </div>
                                 {community.description && (
                                   <p
-                                    className="text-xs text-slate-600 line-clamp-2"
+                                    className="text-xs md:text-sm text-slate-600 line-clamp-3"
                                     style={{ color: "#787878" }}
                                   >
                                     {community.description}
                                   </p>
                                 )}
-                                <div className="mt-2 flex items-center gap-2 text-[11px] text-[#787878]">
-                                  <Users className="w-3.5 h-3.5" />
+                                <div className="mt-3 flex items-center gap-2 text-[11px] md:text-xs text-[#787878]">
+                                  <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                   <span>
-                                    {(community.memberCount ?? 0).toLocaleString()}{" "}
+                                    {(
+                                      community.memberCount ?? 0
+                                    ).toLocaleString()}{" "}
                                     members
                                   </span>
                                 </div>
