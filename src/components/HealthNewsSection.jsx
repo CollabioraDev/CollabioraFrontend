@@ -255,19 +255,20 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
                           <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
                             {heading || `Key insight ${i + 1}`}
                           </p>
-                          <ReactMarkdown
-                            className="text-sm text-gray-700 leading-relaxed"
-                            components={{
-                              strong: ({ children }) => (
-                                <strong className="font-semibold text-[#2F3C96]">
-                                  {children}
-                                </strong>
-                              ),
-                              p: ({ children }) => <>{children}</>,
-                            }}
-                          >
-                            {body}
-                          </ReactMarkdown>
+                          <div className="text-sm text-gray-700 leading-relaxed">
+                            <ReactMarkdown
+                              components={{
+                                strong: ({ children }) => (
+                                  <strong className="font-semibold text-[#2F3C96]">
+                                    {children}
+                                  </strong>
+                                ),
+                                p: ({ children }) => <>{children}</>,
+                              }}
+                            >
+                              {body}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -494,12 +495,6 @@ export default function HealthNewsSection({ user }) {
   // ── Determine displayed articles ─────────────────────────────────────────
   const displayedArticles = searchQuery ? searchResults || [] : articles;
   const isSearchMode = !!searchQuery;
-
-  // ── Handle category box click ─────────────────────────────────────────
-  function handleCategoryClick(key) {
-    setActiveCategory(key);
-    setActiveCondition(null); // clear condition filter
-  }
 
   // ── Handle condition pill click ───────────────────────────────────────
   function handleConditionClick(cond) {

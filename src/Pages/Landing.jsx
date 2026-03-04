@@ -13,7 +13,6 @@ import {
   Beaker,
   User,
   LogIn,
-  Star,
   MessageSquare,
   UserPlus,
   Lock,
@@ -194,51 +193,6 @@ export default function Landing() {
               transition={{ duration: 0.8 }}
               className="relative"
             >
-              {/* Next-Generation Badge - Hidden on mobile */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="mb-3 sm:mb-4 hidden sm:block"
-              >
-                <div
-                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border-2 shadow-md"
-                  style={{
-                    backgroundColor: "#F5F2F8",
-                    borderColor: "#D0C4E2",
-                  }}
-                >
-                  <motion.div
-                    animate={{
-                      rotate: [0, 10, -10, 0],
-                      scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatDelay: 2,
-                      ease: "easeInOut", // Optimized easing
-                    }}
-                    style={{
-                      willChange: "transform",
-                      transform: "translateZ(0)", // GPU acceleration
-                    }}
-                  >
-                    <Star
-                      className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                      style={{ color: "#2F3C96" }}
-                      fill="#2F3C96"
-                    />
-                  </motion.div>
-                  <span
-                    className="text-[10px] sm:text-xs font-semibold"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Next-Generation Healthcare Platform
-                  </span>
-                </div>
-              </motion.div>
-
               {/* Main Heading */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -502,7 +456,7 @@ export default function Landing() {
               className="relative"
             >
               <div
-                className="rounded-2xl sm:rounded-3xl pt-5 sm:pt-6 px-6 sm:px-6 md:px-8 pb-6 sm:pb-7 md:pb-8 border-2 sm:shadow-2xl overflow-hidden text-center"
+                className="rounded-2xl sm:rounded-3xl pt-6 sm:pt-8 px-6 sm:px-8 md:px-10 pb-6 sm:pb-8 md:pb-10 border-2 sm:shadow-2xl overflow-hidden text-center"
                 style={{
                   backgroundColor: isMobile
                     ? "transparent"
@@ -518,27 +472,15 @@ export default function Landing() {
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="text-lg sm:text-2xl font-extrabold mb-2"
+                    className="text-lg sm:text-2xl font-extrabold mb-6 sm:mb-7"
                     style={{ color: "#2F3C96" }}
                   >
                     Join the Platform
                   </motion.h3>
                 )}
 
-                {/* Supporting description */}
-                <motion.p
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.4 }}
-                  className="text-xs sm:text-sm leading-relaxed mb-4 max-w-sm mx-auto"
-                  style={{ color: "#787878" }}
-                >
-                  Access verified health information and participate in
-                  cutting-edge research tailored to your health journey.
-                </motion.p>
-
                 {/* CTA */}
-                <div>
+                <div className={!user ? "space-y-4" : ""}>
                   {user ? (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -586,12 +528,6 @@ export default function Landing() {
                             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
                           </div>
                         </ShinyButton>
-                        <p
-                          className="mt-1.5 text-[11px] sm:text-xs text-center"
-                          style={{ color: "#787878", opacity: 0.9 }}
-                        >
-                          Create your free account
-                        </p>
                       </motion.div>
 
                       <motion.div
@@ -601,7 +537,7 @@ export default function Landing() {
                       >
                         <ShinyButton
                           onClick={() => navigate("/explore")}
-                          className="group relative w-full mt-3 px-5 sm:px-6 py-4 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                          className="group relative w-full mt-0 px-5 sm:px-6 py-4 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                           style={{
                             backgroundColor: "#474F96",
                             borderWidth: "0px",
@@ -612,12 +548,6 @@ export default function Landing() {
                             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
                           </div>
                         </ShinyButton>
-                        <p
-                          className="mt-1.5 text-[11px] sm:text-xs text-center"
-                          style={{ color: "#787878", opacity: 0.9 }}
-                        >
-                          No account required
-                        </p>
                       </motion.div>
                     </>
                   )}
@@ -826,7 +756,7 @@ export default function Landing() {
         )}
       </AnimatePresence>
 
-      <style jsx>{`
+      <style>{`
         @keyframes gradient-slow {
           0% {
             background-position: 0% 50%;
