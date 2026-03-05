@@ -6,6 +6,7 @@ import GlobalSearch from "./GlobalSearch";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { listenForMessages } from "../utils/crossTabSync.js";
 import { getDisplayName } from "../utils/researcherDisplayName.js";
+import { IconBell } from "@tabler/icons-react";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
@@ -28,7 +29,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAtTop, setIsAtTop] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Check if we're on the landing page
   const isLandingPage = location.pathname === "/";
@@ -66,6 +66,11 @@ export default function Navbar() {
     location.pathname === "/forgot-password" ||
     location.pathname === "/reset-password";
 
+  // Auth callback / complete-profile (setting up account): show only Explore, Forums, Discovery
+  const isAuthCallbackPage =
+    location.pathname === "/auth/callback" ||
+    location.pathname === "/auth/complete-profile";
+
   // On explore page: show Explore (dropdown) + Forums + Discovery
   const isSignInOrExplorePage = location.pathname === "/explore";
 
@@ -100,6 +105,10 @@ export default function Navbar() {
     // Forgot Password / Reset Password pages: always show About Us, FAQ, Contact (regardless of auth state)
     if (isForgotOrResetPasswordPage) {
       return ["About Us", "FAQ", "Contact"];
+    }
+    // Auth callback / complete-profile (setting up account): show only Explore, Forums, Discovery
+    if (isAuthCallbackPage) {
+      return ["Explore", "Forums", "Discovery"];
     }
     // About Us, Contact, Sign In, Onboarding: basic nav for guests, app nav for signed-in
     if (isSimpleNavPage && !user) {
@@ -284,18 +293,9 @@ export default function Navbar() {
         // On onboarding pages, always keep navbar at top state (no scroll effect)
         if (isOnboardingPage) {
           setIsAtTop(true);
-          setScrollProgress(0);
           return;
         }
         setIsAtTop(scrollY < 50);
-
-        // Calculate scroll progress
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
-        const scrollableHeight = documentHeight - windowHeight;
-        const progress =
-          scrollableHeight > 0 ? (scrollY / scrollableHeight) * 100 : 0;
-        setScrollProgress(Math.min(100, Math.max(0, progress)));
       });
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -825,20 +825,7 @@ export default function Navbar() {
                     }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                      />
-                    </svg>
+                    <IconBell className="w-5 h-5" stroke={1.75} />
                     {/* Notification dot indicator */}
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 bg-red-500 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center">
@@ -1266,7 +1253,7 @@ export default function Navbar() {
                               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                             />
                           </svg>
-                          <span>Sign Out</span>
+                          <span>SignOut</span>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-4 h-4 ml-auto"
@@ -1334,20 +1321,7 @@ export default function Navbar() {
                 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
+                <IconBell className="w-5 h-5" stroke={1.75} />
                 {/* Notification dot indicator */}
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1.5 bg-red-500 rounded-full border-2 border-white text-white text-xs font-bold flex items-center justify-center">
@@ -1401,31 +1375,6 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Scroll Progress Bar - Below Navbar (hidden on onboarding pages) */}
-        {!isOnboardingPage && (
-          <motion.div
-            className="pointer-events-none absolute bottom-0 left-0 right-0 h-1 z-[60]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: scrollProgress > 0 ? 1 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              className="h-full"
-              style={{
-                background: "linear-gradient(90deg, #2F3C96, #474F97, #B8A5D5)",
-                boxShadow: "0 0 10px rgba(47, 60, 150, 0.5)",
-              }}
-              animate={{
-                width: `${scrollProgress}%`,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 30,
-              }}
-            />
-          </motion.div>
-        )}
       </motion.div>
 
       <AnimatePresence>
@@ -1650,7 +1599,7 @@ export default function Navbar() {
                       "linear-gradient(135deg, #dc2626, #ef4444)";
                   }}
                 >
-                  Logout
+                  SignOut
                 </button>
               ) : (
                 <PrefetchLink

@@ -1,43 +1,7 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Users, FlaskConical, BookOpen, Globe } from "lucide-react";
-
-const AnimatedNumber = ({ value, delay = 0 }) => {
-  const [displayValue, setDisplayValue] = useState("0");
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true });
-
-  useEffect(() => {
-    if (!isInView) return;
-
-    const numericValue = parseInt(value.replace(/[^0-9]/g, ""));
-    const suffix = value.replace(/[0-9]/g, "");
-    const duration = 2000;
-    const steps = 60;
-    const increment = numericValue / steps;
-    let current = 0;
-
-    const timer = setTimeout(() => {
-      const interval = setInterval(() => {
-        current += increment;
-        if (current >= numericValue) {
-          setDisplayValue(numericValue + suffix);
-          clearInterval(interval);
-        } else {
-          setDisplayValue(Math.floor(current) + suffix);
-        }
-      }, duration / steps);
-    }, delay * 1000);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [isInView, value, delay]);
-
-  return <span ref={ref}>{displayValue}</span>;
-};
 
 const StatsSection = () => {
   const stats = [
@@ -131,17 +95,8 @@ const StatsSection = () => {
                       </div>
                     </motion.div>
 
-                    {/* Animated Value */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.6,
-                        delay: stat.delay + 0.3,
-                      }}
-                      className="mb-1.5 sm:mb-2"
-                    >
+                    {/* Value (static, no count-up animation) */}
+                    <div className="mb-1.5 sm:mb-2">
                       <span
                         className="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight block"
                         style={{
@@ -153,12 +108,9 @@ const StatsSection = () => {
                           backgroundClip: "text",
                         }}
                       >
-                        <AnimatedNumber
-                          value={stat.value}
-                          delay={stat.delay + 0.3}
-                        />
+                        {stat.value}
                       </span>
-                    </motion.div>
+                    </div>
 
                     {/* Label */}
                     <motion.p

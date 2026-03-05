@@ -4658,13 +4658,10 @@ export default function DashboardResearcher() {
                   </div>
                 ) : (
                   (() => {
-                    // Filter trials by RECRUITING status when trialFilter is RECRUITING
-                    const filteredTrials =
-                      trialFilter === "RECRUITING"
-                        ? data.trials.filter((t) => t.status === "RECRUITING")
-                        : data.trials;
-                    return filteredTrials.length > 0 ? (
-                      sortByMatchPercentage(filteredTrials).map((t, idx) => (
+                    // Show trials from API (already filtered by status in fetchFilteredTrials)
+                    const trialsToShow = data.trials;
+                    return trialsToShow.length > 0 ? (
+                      sortByMatchPercentage(trialsToShow).map((t, idx) => (
                         <div
                           key={idx}
                           className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"

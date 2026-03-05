@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
-import AnimatedBackgroundDiff from "../components/ui/AnimatedBackgroundDiff.jsx";
+import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 
 /**
  * Auth0 Callback Page
@@ -263,7 +263,7 @@ export default function Auth0Callback() {
   return (
     <Layout>
       <div className="relative min-h-screen overflow-hidden">
-        <AnimatedBackgroundDiff />
+        <AnimatedBackground />
 
         <div className="flex justify-center items-center min-h-screen px-4 py-6 relative z-10">
           <motion.div
