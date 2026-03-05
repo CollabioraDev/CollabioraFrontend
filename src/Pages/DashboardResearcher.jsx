@@ -74,6 +74,8 @@ import PageTutorial, {
   useTutorialCompleted,
   resetTutorialCompleted,
 } from "../components/PageTutorial.jsx";
+import SmartSearchInput from "../components/SmartSearchInput.jsx";
+import icd11Dataset from "../data/icd11Dataset.json";
 
 export default function DashboardResearcher() {
   const [data, setData] = useState({
@@ -210,6 +212,40 @@ export default function DashboardResearcher() {
   const [newInterestInput, setNewInterestInput] = useState("");
   const [savingInterests, setSavingInterests] = useState(false);
   const [editInterestsModalOpen, setEditInterestsModalOpen] = useState(false);
+
+  // ICD-11 suggestion terms for research interests (same dataset as Publications.jsx)
+  const icd11SuggestionTerms = useMemo(() => {
+    const termsSet = new Set();
+    if (Array.isArray(icd11Dataset)) {
+      icd11Dataset.forEach((item) => {
+        if (item.display_name && typeof item.display_name === "string") {
+          termsSet.add(item.display_name.trim());
+        }
+        if (Array.isArray(item.patient_terms)) {
+          item.patient_terms.forEach((term) => {
+            if (typeof term !== "string") return;
+            const t = term.trim();
+            if (!t) return;
+            const lower = t.toLowerCase();
+            const hasIcd =
+              lower.includes("icd11 code") ||
+              lower.includes("icd code") ||
+              /icd11\s+[a-z]{2}[0-9]{2}/i.test(t) ||
+              /icd\s+[a-z]{2}[0-9]{2}/i.test(t);
+            if (!hasIcd) termsSet.add(t);
+          });
+        }
+        if (Array.isArray(item.research_interests)) {
+          item.research_interests.forEach((term) => {
+            if (typeof term === "string" && term.trim())
+              termsSet.add(term.trim());
+          });
+        }
+      });
+    }
+    return Array.from(termsSet);
+  }, []);
+
   const [refreshingSection, setRefreshingSection] = useState(null);
   const [refreshingSectionsBg, setRefreshingSectionsBg] = useState(new Set());
   const navigate = useNavigate();
@@ -749,9 +785,17 @@ export default function DashboardResearcher() {
                 return matchB - matchA;
               }),
             });
-            setGlobalExperts(
-              (fetchedData.globalExperts || []).slice(0, GLOBAL_EXPERTS_LIMIT),
-            );
+            // Global collaborators (experts) already include matchPercentage from the
+            // deterministic pipeline + profile-based matching. Sort by match %
+            // and keep the top N, consistent with the patient dashboard.
+            const sortedGlobalExperts = (fetchedData.globalExperts || [])
+              .sort((a, b) => {
+                const matchA = a.matchPercentage ?? 0;
+                const matchB = b.matchPercentage ?? 0;
+                return matchB - matchA;
+              })
+              .slice(0, GLOBAL_EXPERTS_LIMIT);
+            setGlobalExperts(sortedGlobalExperts);
           }
 
           // Process favorites
@@ -2579,11 +2623,11 @@ export default function DashboardResearcher() {
 
   // Loading states for multi-step loader (only shown on first load)
   const loadingStates = [
-    { text: "Getting personalized trials..." },
-    { text: "Getting publications..." },
-    { text: "Getting global experts..." },
-    { text: "Getting collaborators..." },
-    { text: "Creating personalized dashboard..." },
+    { text: "Searching clinical trials..." },
+    { text: "Collecting research publications..." },
+    { text: "Discovering global experts..." },
+    { text: "Finding potential collaborators..." },
+    { text: "Preparing your dashboard..." },
   ];
 
   // Skeleton loader for subsequent loads — matches new layout (profile card, tabs, interests bar, content)
@@ -3499,23 +3543,34 @@ export default function DashboardResearcher() {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add an interest..."
-                    value={newInterestInput}
-                    onChange={(e) => setNewInterestInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addInterest(newInterestInput);
-                      }
-                    }}
-                    className="flex-1 px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)]"
-                    style={{ borderColor: "rgba(47, 60, 150, 0.3)" }}
-                  />
+                  <div className="flex-1 min-w-0">
+                    <SmartSearchInput
+                      value={newInterestInput}
+                      onChange={setNewInterestInput}
+                      onSubmit={(term) => {
+                        const v = (term || "").trim();
+                        if (v) {
+                          addInterest(v);
+                          setNewInterestInput("");
+                        }
+                      }}
+                      extraTerms={icd11SuggestionTerms}
+                      maxSuggestions={10}
+                      placeholder="Search or select a condition/interest (ICD-11)..."
+                      autoSubmitOnSelect={true}
+                      inputClassName="rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)] w-full px-3 py-2.5"
+                      className="w-full"
+                    />
+                  </div>
                   <button
                     type="button"
-                    onClick={() => addInterest(newInterestInput)}
+                    onClick={() => {
+                      const v = newInterestInput.trim();
+                      if (v) {
+                        addInterest(v);
+                        setNewInterestInput("");
+                      }
+                    }}
                     className="px-4 py-2.5 rounded-xl text-sm font-medium border shrink-0 transition-colors hover:opacity-90"
                     style={{
                       color: "#2F3C96",

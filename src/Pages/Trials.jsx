@@ -153,6 +153,8 @@ export default function Trials() {
     summary: "",
     loading: false,
   });
+  const [summaryTrial, setSummaryTrial] = useState(null);
+  const [hasSimplifiedFurther, setHasSimplifiedFurther] = useState(false);
   const [detailsModal, setDetailsModal] = useState({
     open: false,
     trial: null,
@@ -1260,7 +1262,7 @@ export default function Trials() {
   }, []);
 
   async function generateSummary(item) {
-    // For "Understand this trial": simplified for patients, technical for researchers
+    // For "Understand this trial": simplified for patients, technical for researchers (same first-level key insights style as Publications for patients)
     const isResearcher = userProfile?.researcher !== undefined;
     const shouldSimplify = !isResearcher;
 
@@ -1276,6 +1278,8 @@ export default function Trials() {
       .filter(Boolean)
       .join(" ");
 
+    setSummaryTrial(item);
+    setHasSimplifiedFurther(false);
     setSummaryModal({
       open: true,
       title,
@@ -1312,6 +1316,57 @@ export default function Trials() {
       setSummaryModal((prev) => ({
         ...prev,
         summary: "Failed to generate summary. Please try again.",
+        loading: false,
+      }));
+    }
+  }
+
+  async function simplifyTrialFurther() {
+    if (!summaryTrial) return;
+    setSummaryModal((prev) => ({ ...prev, loading: true }));
+
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    try {
+      const r = await fetch(`${base}/api/ai/simplify-trial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trial: summaryTrial }),
+      });
+      const res = await r.json();
+
+      if (!r.ok || res.error) {
+        setSummaryModal((prev) => ({
+          ...prev,
+          summary: {
+            structured: false,
+            summary: res.error || "Failed to simplify further. Please try again.",
+          },
+          loading: false,
+        }));
+        return;
+      }
+
+      const summary =
+        res.summary &&
+        typeof res.summary === "object" &&
+        res.summary.structured
+          ? res.summary
+          : { structured: false, summary: res.summary?.summary || "Summary unavailable" };
+
+      setHasSimplifiedFurther(true);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary,
+        loading: false,
+      }));
+    } catch (e) {
+      console.error("Trial simplify further error:", e);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary: {
+          structured: false,
+          summary: "Failed to simplify further. Please try again.",
+        },
         loading: false,
       }));
     }
@@ -2157,9 +2212,12 @@ export default function Trials() {
         target: "[data-tour='yori-chatbot']",
         title: "Meet Yori!",
         content: isSignedIn
-          ? "That's me! Click anytime to ask questions about trials, publications, or research. I'm here to help!"
-          : "That's me! Sign in to chat with me and get personalized help with trials, publications, and research.",
-        placement: "left",
+          ? "That's me! You can always click the helper in the bottom-right corner to ask questions about trials, publications, or research."
+          : "That's me! Sign in and use the helper in the bottom-right corner to get personalized help with trials, publications, and research.",
+        placement: "top",
+        allowTargetClick: true,
+        spotlightShape: "circle",
+        spotlightPadding: 18,
       },
     ],
     [isSignedIn]
@@ -3219,15 +3277,17 @@ export default function Trials() {
         {/* Summary Modal */}
         <Modal
           isOpen={summaryModal.open}
-          onClose={() =>
+          onClose={() => {
             setSummaryModal({
               open: false,
               title: "",
               type: "",
               summary: "",
               loading: false,
-            })
-          }
+            });
+            setSummaryTrial(null);
+            setHasSimplifiedFurther(false);
+          }}
           title="Key Insights"
         >
           <div className="space-y-4">
@@ -3240,15 +3300,33 @@ export default function Trials() {
                   {summaryModal.title}
                 </h4>
               </div>
-              <span
-                className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-                style={{
-                  backgroundColor: "rgba(232, 224, 239, 0.8)",
-                  color: "#2F3C96",
-                }}
-              >
-                Clinical Trial
-              </span>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span
+                  className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                  style={{
+                    backgroundColor: "rgba(232, 224, 239, 0.8)",
+                    color: "#2F3C96",
+                  }}
+                >
+                  Clinical Trial
+                </span>
+                {summaryModal.type === "trial" &&
+                  !summaryModal.loading &&
+                  summaryTrial &&
+                  !hasSimplifiedFurther && (
+                  <button
+                    type="button"
+                    onClick={simplifyTrialFurther}
+                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: "rgba(232, 224, 239, 0.9)",
+                      color: "#2F3C96",
+                    }}
+                  >
+                    Simplify further
+                  </button>
+                )}
+              </div>
             </div>
             {summaryModal.loading ? (
               <div className="space-y-4 py-4">
@@ -3258,7 +3336,7 @@ export default function Trials() {
                 >
                   <Sparkles className="w-4 h-4 animate-pulse" />
                   <span className="text-sm font-medium">
-                    Preparing structured insights…
+                    Preparing key insights…
                   </span>
                 </div>
                 <div className="animate-pulse space-y-3">

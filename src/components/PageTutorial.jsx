@@ -321,20 +321,42 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
         {step.target && targetRect && highlightReady && (
           <motion.div
             className="absolute pointer-events-none"
-            style={{
-              top: targetRect.top - 8 + "px",
-              left: targetRect.left - 8 + "px",
-              width: targetRect.width + 16 + "px",
-              height: targetRect.height + 16 + "px",
-              borderRadius: 12,
-              boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
-              border: "2px solid #2F3C96",
+            style={() => {
+              const padding = step.spotlightPadding ?? 8;
+              const shape = step.spotlightShape || "rect";
+
+              if (shape === "circle") {
+                const size =
+                  Math.max(targetRect.width, targetRect.height) + padding * 2;
+                const top = targetRect.top + targetRect.height / 2 - size / 2;
+                const left = targetRect.left + targetRect.width / 2 - size / 2;
+                return {
+                  top: `${top}px`,
+                  left: `${left}px`,
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  borderRadius: size / 2,
+                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                  border: "2px solid #2F3C96",
+                };
+              }
+
+              return {
+                top: targetRect.top - padding + "px",
+                left: targetRect.left - padding + "px",
+                width: targetRect.width + padding * 2 + "px",
+                height: targetRect.height + padding * 2 + "px",
+                borderRadius: 12,
+                boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
+                border: "2px solid #2F3C96",
+              };
             }}
             initial={{ opacity: 0, scale: 0.99 }}
             animate={{
               opacity: 1,
               scale: 1,
-              boxShadow: "0 0 0 9999px rgba(0,0,0,0.5), 0 0 24px rgba(47,60,150,0.35)",
+              boxShadow:
+                "0 0 0 9999px rgba(0,0,0,0.5), 0 0 24px rgba(47,60,150,0.35)",
             }}
             transition={{
               duration: 0.18,

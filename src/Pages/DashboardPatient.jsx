@@ -75,6 +75,8 @@ import PageTutorial, {
   useTutorialCompleted,
   resetTutorialCompleted,
 } from "../components/PageTutorial.jsx";
+import SmartSearchInput from "../components/SmartSearchInput.jsx";
+import icd11Dataset from "../data/icd11Dataset.json";
 
 export default function DashboardPatient() {
   const [data, setData] = useState({
@@ -99,6 +101,7 @@ export default function DashboardPatient() {
     loading: false,
   });
   const [summaryPublication, setSummaryPublication] = useState(null);
+  const [summaryTrial, setSummaryTrial] = useState(null);
   const [hasSimplifiedFurther, setHasSimplifiedFurther] = useState(false);
   const [trialDetailsModal, setTrialDetailsModal] = useState({
     open: false,
@@ -193,6 +196,34 @@ export default function DashboardPatient() {
   const [newConditionInput, setNewConditionInput] = useState("");
   const [savingConditions, setSavingConditions] = useState(false);
   const [editConditionsModalOpen, setEditConditionsModalOpen] = useState(false);
+
+  // ICD-11 suggestion terms for conditions (same dataset as Publications.jsx)
+  const icd11SuggestionTerms = useMemo(() => {
+    const termsSet = new Set();
+    if (Array.isArray(icd11Dataset)) {
+      icd11Dataset.forEach((item) => {
+        if (item.display_name && typeof item.display_name === "string") {
+          termsSet.add(item.display_name.trim());
+        }
+        if (Array.isArray(item.patient_terms)) {
+          item.patient_terms.forEach((term) => {
+            if (typeof term !== "string") return;
+            const t = term.trim();
+            if (!t) return;
+            const lower = t.toLowerCase();
+            const hasIcd =
+              lower.includes("icd11 code") ||
+              lower.includes("icd code") ||
+              /icd11\s+[a-z]{2}[0-9]{2}/i.test(t) ||
+              /icd\s+[a-z]{2}[0-9]{2}/i.test(t);
+            if (!hasIcd) termsSet.add(t);
+          });
+        }
+      });
+    }
+    return Array.from(termsSet);
+  }, []);
+
   const [refreshingSection, setRefreshingSection] = useState(null); // "trials" | "publications" | "experts" — active section loading
   const [refreshingSectionsBg, setRefreshingSectionsBg] = useState(new Set()); // background sections loading
   const [favoritesReportModal, setFavoritesReportModal] = useState({
@@ -769,6 +800,10 @@ export default function DashboardPatient() {
               }),
             };
             setData(sortedData);
+
+            // Global experts are already computed on the backend using the
+            // deterministic experts pipeline + profile-based matching.
+            // Just sort and store the top N from the recommendations response.
             const sortedGlobalExperts = (fetchedData.globalExperts || [])
               .sort((a, b) => {
                 const matchA = a.matchPercentage ?? 0;
@@ -1056,9 +1091,11 @@ export default function DashboardPatient() {
 
     if (type === "publication") {
       setSummaryPublication(item);
+      setSummaryTrial(null);
       setHasSimplifiedFurther(false);
     } else {
       setSummaryPublication(null);
+      setSummaryTrial(item);
       setHasSimplifiedFurther(false);
     }
 
@@ -1077,7 +1114,11 @@ export default function DashboardPatient() {
         body: JSON.stringify({
           text,
           type,
-          simplify: true, // Always simplify for patient view
+          simplify: true, // Always simplify for patient view (same as Publications for patients)
+          // For publications: pass pmid so backend fetches full publication and returns same first-level key insights as Publications.jsx
+          ...(type === "publication" && {
+            pmid: item.pmid || item.id,
+          }),
           // Pass full trial object for structured summary
           ...(type === "trial" && { trial: item }),
         }),
@@ -1087,11 +1128,9 @@ export default function DashboardPatient() {
         ...prev,
         summary:
           res.summary ||
-          (type === "publication"
-            ? { structured: false, summary: "Summary unavailable" }
-            : type === "trial"
-              ? { structured: false, summary: "Summary unavailable" }
-              : "Summary unavailable"),
+          (typeof res.summary === "object" && res.summary.structured
+            ? res.summary
+            : { structured: false, summary: "Summary unavailable" }),
         loading: false,
       }));
     } catch (e) {
@@ -1108,11 +1147,7 @@ export default function DashboardPatient() {
     if (!summaryPublication) return;
 
     setHasSimplifiedFurther(true);
-
-    setSummaryModal((prev) => ({
-      ...prev,
-      loading: true,
-    }));
+    setSummaryModal((prev) => ({ ...prev, loading: true }));
 
     try {
       const res = await fetch(`${base}/api/ai/simplify-publication`, {
@@ -1154,6 +1189,57 @@ export default function DashboardPatient() {
     }
   }
 
+  async function simplifyTrialFurther() {
+    if (!summaryTrial) return;
+
+    setSummaryModal((prev) => ({ ...prev, loading: true }));
+
+    try {
+      const r = await fetch(`${base}/api/ai/simplify-trial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trial: summaryTrial }),
+      });
+      const res = await r.json();
+
+      if (!r.ok || res.error) {
+        setSummaryModal((prev) => ({
+          ...prev,
+          summary: {
+            structured: false,
+            summary: res.error || "Failed to simplify further. Please try again.",
+          },
+          loading: false,
+        }));
+        return;
+      }
+
+      const summary =
+        res.summary &&
+        typeof res.summary === "object" &&
+        res.summary.structured
+          ? res.summary
+          : { structured: false, summary: res.summary?.summary || "Summary unavailable" };
+
+      setHasSimplifiedFurther(true);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary,
+        loading: false,
+      }));
+    } catch (e) {
+      console.error("Trial simplify further error:", e);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary: {
+          structured: false,
+          summary: "Failed to simplify further. Please try again.",
+        },
+        loading: false,
+      }));
+    }
+  }
+
   function closeModal() {
     setSummaryModal({
       open: false,
@@ -1163,6 +1249,7 @@ export default function DashboardPatient() {
       loading: false,
     });
     setSummaryPublication(null);
+    setSummaryTrial(null);
     setHasSimplifiedFurther(false);
   }
 
@@ -2632,10 +2719,10 @@ export default function DashboardPatient() {
 
   // Loading states for multi-step loader (only shown on first load)
   const loadingStates = [
-    { text: "Getting personalized trials..." },
-    { text: "Getting publications..." },
-    { text: "Getting experts..." },
-    { text: "Creating personalized dashboard..." },
+    { text: "Searching clinical trials..." },
+    { text: "Gathering research publications..." },
+    { text: "Finding relevant experts..." },
+    { text: "Preparing your dashboard..." },
   ];
 
   // Skeleton loader for subsequent loads — matches new layout (profile card, tabs, conditions bar, content)
@@ -3485,23 +3572,34 @@ export default function DashboardPatient() {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add a condition..."
-                    value={newConditionInput}
-                    onChange={(e) => setNewConditionInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCondition(newConditionInput);
-                      }
-                    }}
-                    className="flex-1 px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)]"
-                    style={{ borderColor: "rgba(47, 60, 150, 0.3)" }}
-                  />
+                  <div className="flex-1 min-w-0">
+                    <SmartSearchInput
+                      value={newConditionInput}
+                      onChange={setNewConditionInput}
+                      onSubmit={(term) => {
+                        const v = (term || "").trim();
+                        if (v) {
+                          addCondition(v);
+                          setNewConditionInput("");
+                        }
+                      }}
+                      extraTerms={icd11SuggestionTerms}
+                      maxSuggestions={10}
+                      placeholder="Search or select a condition (ICD-11)..."
+                      autoSubmitOnSelect={true}
+                      inputClassName="rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)] w-full px-3 py-2.5"
+                      className="w-full"
+                    />
+                  </div>
                   <button
                     type="button"
-                    onClick={() => addCondition(newConditionInput)}
+                    onClick={() => {
+                      const v = newConditionInput.trim();
+                      if (v) {
+                        addCondition(v);
+                        setNewConditionInput("");
+                      }
+                    }}
                     className="px-4 py-2.5 rounded-xl text-sm font-medium border shrink-0 transition-colors hover:opacity-90"
                     style={{
                       color: "#2F3C96",
@@ -8844,6 +8942,22 @@ export default function DashboardPatient() {
                   <button
                     type="button"
                     onClick={simplifySummaryFurther}
+                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    style={{
+                      backgroundColor: "rgba(232, 224, 239, 0.9)",
+                      color: "#2F3C96",
+                    }}
+                  >
+                    Simplify further
+                  </button>
+                )}
+              {summaryModal.type === "trial" &&
+                !summaryModal.loading &&
+                summaryTrial &&
+                !hasSimplifiedFurther && (
+                  <button
+                    type="button"
+                    onClick={simplifyTrialFurther}
                     className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
                     style={{
                       backgroundColor: "rgba(232, 224, 239, 0.9)",

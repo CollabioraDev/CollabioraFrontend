@@ -474,9 +474,12 @@ export default function Publications() {
         target: "[data-tour='yori-chatbot']",
         title: "Meet Yori!",
         content: isSignedIn
-          ? "That's me! Click anytime to ask questions about publications, trials, or research. I'm here to help!"
-          : "That's me! Sign in to chat with me and get personalized help with publications, trials, and research.",
-        placement: "left",
+          ? "That's me! You can always click the helper in the bottom-right corner to ask questions about publications, trials, or research."
+          : "That's me! Sign in and use the helper in the bottom-right corner to get personalized help with publications, trials, and research.",
+        placement: "top",
+        allowTargetClick: true,
+        spotlightShape: "circle",
+        spotlightPadding: 18,
       },
     ],
     [onSearchAction, isSignedIn],
