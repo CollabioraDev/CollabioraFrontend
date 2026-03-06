@@ -180,7 +180,6 @@ export default function DashboardPatient() {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [loadingFiltered, setLoadingFiltered] = useState(false);
   const [favoritingItems, setFavoritingItems] = useState(new Set()); // Track items being favorited/unfavorited
-  const [isProfileBannerExpanded, setIsProfileBannerExpanded] = useState(false); // For mobile collapsible profile banner
   const [isMedicalConditionsExpanded, setIsMedicalConditionsExpanded] =
     useState(false); // For mobile Medical Conditions dropdown
   const [simplifiedTitles, setSimplifiedTitles] = useState(new Map()); // Cache of simplified publication titles
@@ -1207,7 +1206,8 @@ export default function DashboardPatient() {
           ...prev,
           summary: {
             structured: false,
-            summary: res.error || "Failed to simplify further. Please try again.",
+            summary:
+              res.error || "Failed to simplify further. Please try again.",
           },
           loading: false,
         }));
@@ -1215,11 +1215,12 @@ export default function DashboardPatient() {
       }
 
       const summary =
-        res.summary &&
-        typeof res.summary === "object" &&
-        res.summary.structured
+        res.summary && typeof res.summary === "object" && res.summary.structured
           ? res.summary
-          : { structured: false, summary: res.summary?.summary || "Summary unavailable" };
+          : {
+              structured: false,
+              summary: res.summary?.summary || "Summary unavailable",
+            };
 
       setHasSimplifiedFurther(true);
       setSummaryModal((prev) => ({
@@ -2931,6 +2932,8 @@ export default function DashboardPatient() {
         return "Forums";
       case "favorites":
         return "Favourites";
+      case "meetings":
+        return "Meetings";
       default:
         return "";
     }
@@ -2983,448 +2986,84 @@ export default function DashboardPatient() {
       `}</style>
       <AnimatedBackground />
       <div className="px-4 sm:px-6 md:px-8 lg:px-12 mx-auto max-w-7xl pt-14 pb-12 relative rounded-t-3xl bg-[#F7F8FC] sm:bg-transparent">
-        {/* Top Bar with Profile and Insights */}
-        <div className="mt-8 mb-8">
-          {/* Profile Section - Mobile: compact card, full card tappable. Desktop: unchanged */}
-          <div
-            className="w-full mt-8 rounded-2xl border bg-white shadow-md border-gray-100 sm:bg-white/90 sm:backdrop-blur-sm sm:border-indigo-100/70 sm:shadow-[0_10px_40px_rgba(15,23,42,0.06)]"
-            data-tour="dashboard-welcome"
-          >
-            {/* Collapsible Header - Mobile: whole row is one button. Desktop: row + separate chevron */}
-            <div className="flex items-center justify-between gap-4 p-4 sm:p-4">
-              <button
-                type="button"
-                onClick={() =>
-                  setIsProfileBannerExpanded(!isProfileBannerExpanded)
-                }
-                className="sm:hidden flex items-center gap-3 flex-1 min-w-0 text-left w-full"
-              >
-                {user?.picture && !imageError ? (
-                  <img
-                    src={user.picture}
-                    alt={user?.username || "User"}
-                    className="w-11 h-11 rounded-full object-cover shadow-md ring-2 shrink-0"
-                    style={{ ringColor: "rgba(47, 60, 150, 0.4)" }}
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 shrink-0"
-                    style={{
-                      backgroundColor: "#2F3C96",
-                      ringColor: "rgba(47, 60, 150, 0.4)",
-                    }}
-                  >
-                    {user?.username?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className="text-base font-bold truncate"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Welcome back, {user?.username || "User"} 👋
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Here&apos;s what&apos;s new today
-                  </p>
-                </div>
-                {isProfileBannerExpanded ? (
-                  <ChevronUp className="w-5 h-5 shrink-0 text-[#2F3C96]" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 shrink-0 text-[#2F3C96]" />
-                )}
-              </button>
-              <div className="hidden sm:flex items-center gap-4 flex-1 min-w-0">
-                {user?.picture && !imageError ? (
-                  <img
-                    src={user.picture}
-                    alt={user?.username || "User"}
-                    className="w-12 h-12 rounded-full object-cover shadow-lg ring-2 shrink-0 backdrop-blur-sm"
-                    style={{ ringColor: "rgba(47, 60, 150, 0.5)" }}
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div
-                    className="w-12 h-12 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 shrink-0"
-                    style={{
-                      backgroundColor: "#2F3C96",
-                      ringColor: "rgba(47, 60, 150, 0.5)",
-                    }}
-                  >
-                    {user?.username?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
-                )}
-                <div className="flex flex-row items-center justify-between gap-4 flex-1 min-w-0">
-                  <h3
-                    className="text-base sm:text-lg font-bold min-w-0"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Hello, {user?.username || "User"} - here&apos;s your health
-                    dashboard
-                  </h3>
-                  <span
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full shrink-0 text-xs sm:text-sm"
-                    style={{
-                      backgroundColor: "rgba(47, 60, 150, 0.15)",
-                      border: "1px solid rgba(47, 60, 150, 0.3)",
-                      color: "#2F3C96",
-                    }}
-                  >
-                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate max-w-[150px] sm:max-w-none">
-                      {locationText}
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <div className="hidden sm:flex items-center gap-3 shrink-0 flex-wrap">
-                {!user?.emailVerified && (
-                  <button
-                    onClick={() => setVerifyEmailModalOpen(true)}
-                    className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:scale-105"
-                    style={{
-                      backgroundColor: "#d97706",
-                      border: "1px solid rgba(217, 119, 6, 0.5)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#b45309";
-                      e.currentTarget.style.borderColor =
-                        "rgba(217, 119, 6, 0.7)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#d97706";
-                      e.currentTarget.style.borderColor =
-                        "rgba(217, 119, 6, 0.5)";
-                    }}
-                  >
-                    <Mail className="w-4 h-4 shrink-0" />
-                    <span className="whitespace-nowrap">Verify Now</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Collapsible Content - Profile Details & Meetings */}
-            <div
-              className={`relative z-10 overflow-hidden transition-all duration-300 ${
-                isProfileBannerExpanded
-                  ? "max-h-[2000px] opacity-100"
-                  : "max-h-0 opacity-0"
-              } sm:max-h-none sm:opacity-100`}
-            >
-              <div className="px-5 sm:px-4 pb-5 sm:pb-0 border-t border-indigo-100/70 sm:border-t-0 pt-4 sm:pt-0">
-                {/* Mobile: Location & research interests/conditions in dropdown */}
-                <div className="sm:hidden space-y-4 mb-4">
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                      Location
-                    </span>
-                    <div
-                      className="flex items-center gap-2 text-sm"
-                      style={{ color: "#2F3C96" }}
-                    >
-                      <MapPin className="w-4 h-4 shrink-0" />
-                      <span>{locationText}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-                      Research interests / Conditions
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {(userConditions.length > 0
-                        ? userConditions
-                        : [userDisease].filter(Boolean)
-                      ).map((c, i) => {
-                        const isSelected =
-                          userConditions.length > 0 &&
-                          primaryConditionIndicesDisplay.includes(i);
-                        return (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium border"
-                            style={{
-                              backgroundColor: isSelected
-                                ? "rgba(47, 60, 150, 0.15)"
-                                : "rgba(255, 255, 255, 0.9)",
-                              borderColor: isSelected
-                                ? "rgba(47, 60, 150, 0.5)"
-                                : "rgba(47, 60, 150, 0.25)",
-                              color: "#2F3C96",
-                            }}
-                          >
-                            {isSelected && (
-                              <CheckCircle2
-                                className="w-3.5 h-3.5 shrink-0"
-                                style={{ color: "#2F3C96" }}
-                              />
-                            )}
-                            <span>{c}</span>
-                          </span>
-                        );
-                      })}
-                      {!userConditions?.length && !userDisease && (
-                        <span className="text-sm text-slate-500">—</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {/* Action Buttons - Mobile */}
-                <div className="sm:hidden flex items-center gap-3 flex-wrap">
-                  {!user?.emailVerified && (
-                    <button
-                      onClick={() => setVerifyEmailModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold text-white shadow-lg"
-                      style={{
-                        backgroundColor: "#d97706",
-                        border: "1px solid rgba(217, 119, 6, 0.5)",
-                      }}
-                    >
-                      <Mail className="w-4 h-4 shrink-0" />
-                      <span>Verify Now</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Section - Full Width */}
+        {/* Main Content Section - Block-based layout */}
         <div className="mt-6 mb-8">
-          {/* Category Tabs - Modern underline style on desktop, grid on mobile */}
+          {/* Category blocks - clear cards for easy navigation */}
           <div
-            className="mb-8 border-b border-indigo-100/70 pb-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 pt-8 mb-8"
             data-tour="dashboard-tabs"
           >
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              {/* Mobile: Compact icon cards – 2x3 grid, icon in circle, press effect */}
-              <div className="grid grid-cols-2 sm:hidden gap-2 flex-1 min-w-0">
-                {[
-                  {
-                    key: "publications",
-                    label: "Library",
-                    icon: FileText,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "trials",
-                    label: "Trials",
-                    icon: Beaker,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "experts",
-                    label: "Experts",
-                    icon: Users,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "favorites",
-                    label: "Favourites",
-                    icon: Star,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                ].map((category) => {
-                  const Icon = category.icon;
-                  const isSelected = selectedCategory === category.key;
-                  const isSectionLoading =
-                    ["trials", "publications", "experts"].includes(
-                      category.key,
-                    ) &&
-                    (refreshingSection === category.key ||
-                      refreshingSectionsBg.has(category.key));
-                  return (
-                    <button
-                      key={category.key}
-                      onClick={() =>
-                        !isSectionLoading && setSelectedCategory(category.key)
-                      }
-                      disabled={isSectionLoading}
-                      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white shadow-sm border transition-all duration-200 active:scale-95 ${
-                        isSelected
-                          ? "text-[#2F3C96] border-[#2F3C96]/40 ring-1 ring-[#2F3C96]/20"
-                          : "text-slate-600 border-gray-100 hover:border-indigo-100"
-                      } ${isSectionLoading ? "opacity-80 cursor-not-allowed" : ""}`}
-                      {...(category.key === "publications"
-                        ? { "data-tour": "dashboard-tab-publications" }
-                        : category.key === "favorites"
-                          ? { "data-tour": "dashboard-tab-favorites" }
-                          : {})}
-                    >
-                      <span
-                        className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
-                        style={{
-                          backgroundColor: isSelected
-                            ? "rgba(47, 60, 150, 0.18)"
-                            : category.iconBg,
-                        }}
-                      >
-                        {isSectionLoading ? (
-                          <Loader2
-                            className="w-5 h-5 animate-spin shrink-0"
-                            style={{ color: "#2F3C96" }}
-                          />
-                        ) : (
-                          <Icon
-                            className="w-5 h-5 shrink-0"
-                            style={{ color: "#2F3C96" }}
-                          />
-                        )}
-                      </span>
-                      <span className="text-xs font-semibold text-center tracking-tight">
-                        {category.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Desktop: Underline style tabs + tutorial button in gradient bar */}
-              <div
-                className="hidden sm:flex items-center justify-between gap-4 min-w-0 flex-1 rounded-xl border px-4 py-2 relative overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #D0C4E2, #E8E0EF, #F5F2F8)",
-                  borderColor: "rgba(208, 196, 226, 0.5)",
-                }}
-              >
-                {/* Decorative background elements */}
-                <div
-                  className="pointer-events-none absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-32"
-                  style={{ backgroundColor: "rgba(47, 60, 150, 0.1)" }}
-                ></div>
-                <div
-                  className="pointer-events-none absolute bottom-0 left-0 w-48 h-48 rounded-full -ml-24 -mb-24"
-                  style={{ backgroundColor: "rgba(47, 60, 150, 0.1)" }}
-                ></div>
-
-                {/* Tabs row */}
-                <div className="flex items-center gap-3 overflow-x-auto min-w-0 relative z-10">
-                  {[
-                    {
-                      key: "publications",
-                      label: "Library",
-                      icon: FileText,
-                    },
-                    {
-                      key: "trials",
-                      label: "Trials",
-                      icon: Beaker,
-                    },
-                    {
-                      key: "experts",
-                      label: "Experts",
-                      icon: Users,
-                    },
-                    {
-                      key: "forums",
-                      label: "Forums",
-                      icon: MessageCircle,
-                    },
-                    {
-                      key: "favorites",
-                      label: "Favourites",
-                      icon: Star,
-                    },
-                  ].map((category) => {
-                    const Icon = category.icon;
-                    const isSelected = selectedCategory === category.key;
-                    const isSectionLoading =
-                      ["trials", "publications", "experts"].includes(
-                        category.key,
-                      ) &&
-                      (refreshingSection === category.key ||
-                        refreshingSectionsBg.has(category.key));
-                    return (
-                      <button
-                        key={category.key}
-                        onClick={() =>
-                          !isSectionLoading && setSelectedCategory(category.key)
-                        }
-                        disabled={isSectionLoading}
-                        className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-xl border transition-all duration-200 ${
-                          isSelected
-                            ? "bg-[#2F3C96] text-white border-[#2F3C96] shadow-sm"
-                            : "bg-white/80 text-slate-600 border-[rgba(208,196,226,0.9)] hover:text-[#2F3C96] hover:border-[#2F3C96]"
-                        } ${
-                          isSectionLoading
-                            ? "opacity-80 cursor-not-allowed"
-                            : ""
-                        }`}
-                        style={{ userSelect: "text" }}
-                        {...(category.key === "publications"
-                          ? { "data-tour": "dashboard-tab-publications" }
-                          : category.key === "favorites"
-                            ? { "data-tour": "dashboard-tab-favorites" }
-                            : {})}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span className="text-sm font-semibold tracking-tight">
-                          {category.label}
-                        </span>
-                        {isSectionLoading && (
-                          <Loader2
-                            className="w-4 h-4 animate-spin shrink-0"
-                            style={{
-                              color: isSelected ? "white" : "#2F3C96",
-                            }}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tutorial / Redo tour button (desktop only) */}
+            {[
+              { key: "publications", label: "Library", icon: FileText },
+              { key: "trials", label: "Trials", icon: Beaker },
+              { key: "experts", label: expertsLabel, icon: Users },
+              { key: "forums", label: "Forums", icon: MessageCircle },
+              { key: "favorites", label: "Favourites", icon: Star },
+              { key: "meetings", label: "Meetings", icon: Calendar },
+            ].map((category) => {
+              const Icon = category.icon;
+              const isSelected = selectedCategory === category.key;
+              const isSectionLoading =
+                ["trials", "publications", "experts"].includes(category.key) &&
+                (refreshingSection === category.key ||
+                  refreshingSectionsBg.has(category.key));
+              return (
                 <button
+                  key={category.key}
                   type="button"
-                  onClick={() => {
-                    resetTutorialCompleted("dashboard");
-                    setForceShowTutorial(true);
-                  }}
-                  className="hidden sm:flex shrink-0 items-center justify-center w-9 h-9 rounded-lg border transition-colors relative z-10"
-                  style={{
-                    borderColor: "rgba(47, 60, 150, 0.3)",
-                    color: "#2F3C96",
-                    backgroundColor: "rgba(208, 196, 226, 0.2)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(208, 196, 226, 0.35)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(47, 60, 150, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(208, 196, 226, 0.2)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(47, 60, 150, 0.3)";
-                  }}
-                  title="View / Redo dashboard tutorial"
-                  aria-label="View dashboard tutorial"
+                  onClick={() =>
+                    !isSectionLoading && setSelectedCategory(category.key)
+                  }
+                  disabled={isSectionLoading}
+                  className={`group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${
+                    isSelected
+                      ? "bg-[#2F3C96] border-[#2F3C96] shadow-lg shadow-[#2F3C96]/20 text-white"
+                      : "bg-white border-indigo-100/80 hover:border-[#2F3C96]/50 hover:shadow-md text-slate-700"
+                  } ${isSectionLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+                  {...(category.key === "publications"
+                    ? { "data-tour": "dashboard-tab-publications" }
+                    : category.key === "favorites"
+                      ? { "data-tour": "dashboard-tab-favorites" }
+                      : {})}
                 >
-                  <HelpCircle className="w-5 h-5" />
+                  <span
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${
+                      isSelected ? "bg-white/20" : "bg-indigo-50"
+                    }`}
+                  >
+                    {isSectionLoading ? (
+                      <Loader2
+                        className="w-6 h-6 animate-spin shrink-0"
+                        style={{ color: isSelected ? "white" : "#2F3C96" }}
+                      />
+                    ) : (
+                      <Icon
+                        className="w-6 h-6 shrink-0"
+                        style={{ color: isSelected ? "white" : "#2F3C96" }}
+                      />
+                    )}
+                  </span>
+                  <div className="min-w-0 w-full">
+                    <span className="block text-sm font-bold truncate">
+                      {category.label}
+                    </span>
+                  </div>
                 </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Medical Conditions Bar - desktop only; on mobile shown in profile dropdown */}
+          {/* Medical Conditions - compact block (desktop) */}
           <div
-            className="hidden sm:flex rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 items-center justify-between gap-4 flex-wrap"
+            className="hidden sm:flex rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm p-4 mb-8 items-center justify-between gap-4 flex-wrap"
             data-tour="dashboard-conditions-bar"
           >
-            <div className="space-y-0.5">
+            <div>
               <span
                 className="block text-sm font-semibold"
                 style={{ color: "#2F3C96" }}
               >
                 Medical Conditions
-              </span>
-              <span className="block text-xs text-slate-500">
-                Used to personalize your feed
               </span>
             </div>
             <div className="flex flex-1 min-w-0 flex-wrap items-center gap-2">
@@ -3462,7 +3101,7 @@ export default function DashboardPatient() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <button
                 type="button"
                 onClick={openEditConditionsModal}
@@ -3497,6 +3136,31 @@ export default function DashboardPatient() {
                   <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                 )}
                 <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const total =
+                    (selectedFavoriteItems.experts?.length || 0) +
+                    (selectedFavoriteItems.publications?.length || 0) +
+                    (selectedFavoriteItems.trials?.length || 0);
+                  if (total === 0) {
+                    setSelectedCategory("favorites");
+                    toast.error("Select items from Favourites to include in your report, then try again.");
+                    return;
+                  }
+                  generateFavoritesSummaryReport();
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{
+                  backgroundColor: "#D0C4E2",
+                  color: "#2F3C96",
+                  borderColor: "rgba(47, 60, 150, 0.4)",
+                }}
+                title="Generate a PDF summary of your saved items to share with your doctor"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Generate Summary Report
               </button>
             </div>
           </div>
@@ -3643,35 +3307,30 @@ export default function DashboardPatient() {
             </Modal>
           )}
 
-          {/* Main Recommendations Section */}
-          <div className="mt-10" data-tour="dashboard-recommendations">
+          {/* Main content block - single card for recommendations */}
+          <div
+            className="rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm overflow-hidden p-6 sm:p-8"
+            data-tour="dashboard-recommendations"
+          >
             <div className="mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <div>
-                  <h2
-                    className="text-xl font-bold mb-0.5 sm:mb-3 sm:text-2xl lg:text-3xl xl:text-4xl"
-                    style={{
-                      background: "linear-gradient(135deg, #2F3C96, #253075)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    <span className="sm:hidden">Personalized For You</span>
-                    <span className="hidden sm:inline">
-                      Your Personalized Recommendations
-                    </span>
-                  </h2>
-                  <p className="text-xs text-slate-500 sm:hidden">
-                    Based on your activity
-                  </p>
-                </div>
-                {/* Placeholder for future timestamp / metadata */}
-              </div>
+              <h2
+                className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
+                style={{
+                  background: "linear-gradient(135deg, #2F3C96, #253075)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                <span className="sm:hidden">Personalized For You</span>
+                <span className="hidden sm:inline">
+                  Your Personalized Recommendations
+                </span>
+              </h2>
             </div>
 
-            {/* Mobile only: Medical Conditions as dropdown – pure white card on tinted bg */}
-            <div className="sm:hidden rounded-2xl bg-white border border-gray-100 shadow-md overflow-hidden mb-6">
+            {/* Mobile only: Medical Conditions as dropdown – block style */}
+            <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-6">
               <button
                 type="button"
                 onClick={() =>
@@ -3689,7 +3348,7 @@ export default function DashboardPatient() {
                       ? "Tap to collapse"
                       : userConditions.length > 0
                         ? `${userConditions.length} condition${userConditions.length !== 1 ? "s" : ""} · Tap to view details`
-                        : "Used to personalize your feed · Tap to view details"}
+                        : "Tap to view details"}
                   </span>
                 </div>
                 {isMedicalConditionsExpanded ? (
@@ -3779,14 +3438,39 @@ export default function DashboardPatient() {
                       )}
                       <span>Refresh recommendations</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const total =
+                          (selectedFavoriteItems.experts?.length || 0) +
+                          (selectedFavoriteItems.publications?.length || 0) +
+                          (selectedFavoriteItems.trials?.length || 0);
+                        if (total === 0) {
+                          setSelectedCategory("favorites");
+                          toast.error("Select items from Favourites to include in your report, then try again.");
+                          return;
+                        }
+                        generateFavoritesSummaryReport();
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-2 transition-all hover:opacity-90 active:scale-[0.99]"
+                      style={{
+                        backgroundColor: "#D0C4E2",
+                        color: "#2F3C96",
+                        borderColor: "rgba(47, 60, 150, 0.4)",
+                      }}
+                      title="Generate a PDF summary to share with your doctor"
+                    >
+                      <FileText className="w-4 h-4 shrink-0" />
+                      Generate Summary Report
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Grid of Items - Larger Cards - Full Width with 3 columns */}
+            {/* Grid of Items - block cards within main content block */}
             <div
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
               data-tour="dashboard-content"
             >
               {selectedCategory === "trials" &&
@@ -6103,6 +5787,27 @@ export default function DashboardPatient() {
                       </div>
                     );
                   })()}
+                </div>
+              )}
+
+              {selectedCategory === "meetings" && (
+                <div className="col-span-full">
+                  <div className="rounded-2xl border-2 border-dashed border-indigo-200/80 bg-indigo-50/30 p-8 sm:p-12 text-center">
+                    <Calendar
+                      className="w-14 h-14 mx-auto mb-4 opacity-60"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <h3
+                      className="text-lg font-bold mb-2"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      Meetings
+                    </h3>
+                    <p className="text-sm text-slate-600 max-w-sm mx-auto">
+                      Your scheduled meetings will appear here. Schedule and
+                      manage meetings with experts from your dashboard.
+                    </p>
+                  </div>
                 </div>
               )}
 

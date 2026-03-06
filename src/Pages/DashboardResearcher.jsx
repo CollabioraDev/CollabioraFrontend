@@ -270,7 +270,7 @@ export default function DashboardResearcher() {
   const DASHBOARD_RESEARCHER_STEP_YORI = 10;
 
   const DASHBOARD_RESEARCHER_TOUR_SELECTORS = [
-    "[data-tour='dashboard-researcher-welcome']",
+    "[data-tour='dashboard-researcher-tabs']",
     "[data-tour='dashboard-researcher-recommendations']",
     "[data-tour='dashboard-researcher-interests-bar']",
     "[data-tour='dashboard-researcher-tab-publications']",
@@ -321,10 +321,10 @@ export default function DashboardResearcher() {
   const DASHBOARD_RESEARCHER_TUTORIAL_STEPS = useMemo(
     () => [
       {
-        target: "[data-tour='dashboard-researcher-welcome']",
-        title: "Your Profile",
+        target: "[data-tour='dashboard-researcher-tabs']",
+        title: "Dashboard sections",
         content:
-          "Hi! I'm Yori. This is your researcher dashboard. Your profile shows your name, specialties. Use the tabs below to switch between sections.",
+          "Hi! I'm Yori. This is your researcher dashboard. Use these blocks to switch between Your Profile, Collaborators, Forums, Publications, Clinical Trials, Favourites, and Meetings.",
         placement: "bottom",
       },
       {
@@ -2708,7 +2708,7 @@ export default function DashboardResearcher() {
             </div>
 
             {/* Research interests bar skeleton */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 flex items-center justify-between gap-4 flex-wrap">
+            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border-2 border-[#D0C4E2]/50 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 flex items-center justify-between gap-4 flex-wrap">
               <div className="space-y-2">
                 <div
                   className="h-4 w-32 rounded animate-pulse"
@@ -2848,6 +2848,8 @@ export default function DashboardResearcher() {
         return "Clinical Trials";
       case "favorites":
         return "Favourites";
+      case "meetings":
+        return "Meetings";
       default:
         return "";
     }
@@ -2894,499 +2896,117 @@ export default function DashboardResearcher() {
       />
       <style>{`
         .category-button-hover:hover:not(:active) {
-          background-color: rgba(255, 255, 255, 0.8) !important;
-          border-color: rgba(47, 60, 150, 0.3) !important;
+          background-color: rgba(208, 196, 226, 0.25) !important;
+          border-color: rgba(47, 60, 150, 0.4) !important;
         }
       `}</style>
       <AnimatedBackground />
-      <div className="px-4 sm:px-6 md:px-8 lg:px-12 mx-auto max-w-7xl pt-14 pb-12 relative rounded-t-3xl bg-[#F7F8FC] sm:bg-transparent">
-        {/* Top Bar with Profile and Insights */}
-        <div className="mt-8 mb-8">
-          {/* Profile Section - Mobile: compact card, full card tappable. Desktop: unchanged */}
-          <div
-            className="w-full mt-8 rounded-2xl border bg-white shadow-md border-gray-100 sm:bg-white/90 sm:backdrop-blur-sm sm:border-indigo-100/70 sm:shadow-[0_10px_40px_rgba(15,23,42,0.06)]"
-            data-tour="dashboard-researcher-welcome"
-          >
-            {/* Collapsible Header - Mobile: whole row is one button. Desktop: row + chevron */}
-            <div className="flex items-center justify-between gap-3 sm:gap-4 p-4 sm:p-5">
-              <button
-                type="button"
-                onClick={() =>
-                  setIsProfileBannerExpanded(!isProfileBannerExpanded)
-                }
-                className="sm:hidden flex items-center gap-3 flex-1 min-w-0 text-left w-full"
-              >
-                {user?.picture && !imageError ? (
-                  <img
-                    src={user.picture}
-                    alt={getDisplayName(user, "Researcher")}
-                    className="w-11 h-11 rounded-full object-cover shadow-md ring-2 shrink-0"
-                    style={{ ringColor: "rgba(47, 60, 150, 0.4)" }}
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md ring-2 shrink-0"
-                    style={{
-                      backgroundColor: "#2F3C96",
-                      ringColor: "rgba(47, 60, 150, 0.4)",
-                    }}
-                  >
-                    {(user?.username || getDisplayName(user, "R"))
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h3
-                    className="text-base font-bold truncate"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Welcome back, {getDisplayName(user, "Researcher")} 👋
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Here&apos;s what&apos;s new today
-                  </p>
-                </div>
-                {isProfileBannerExpanded ? (
-                  <ChevronUp className="w-5 h-5 shrink-0 text-[#2F3C96]" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 shrink-0 text-[#2F3C96]" />
-                )}
-              </button>
-              <div className="hidden sm:flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                {user?.picture && !imageError ? (
-                  <img
-                    src={user.picture}
-                    alt={getDisplayName(user, "Researcher")}
-                    className="w-12 h-12 rounded-full object-cover shadow-lg ring-2 shrink-0 backdrop-blur-sm"
-                    style={{ ringColor: "rgba(47, 60, 150, 0.5)" }}
-                    onError={() => setImageError(true)}
-                  />
-                ) : (
-                  <div
-                    className="w-12 h-12 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 shrink-0"
-                    style={{
-                      backgroundColor: "#2F3C96",
-                      ringColor: "rgba(47, 60, 150, 0.5)",
-                    }}
-                  >
-                    {(user?.username || getDisplayName(user, "R"))
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-                )}
-                <div className="flex items-center flex-1 min-w-0">
-                  <h3
-                    className="text-base sm:text-lg font-bold"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Hello, {getDisplayName(user, "Researcher")}
-                  </h3>
-                </div>
-              </div>
-              <div className="hidden sm:flex flex-wrap items-center gap-3 shrink-0">
-                {userProfile?.researcher?.specialties &&
-                  userProfile.researcher.specialties.length > 0 && (
-                    <span
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                      style={{
-                        backgroundColor: "rgba(47, 60, 150, 0.15)",
-                        border: "1px solid rgba(47, 60, 150, 0.3)",
-                        color: "#2F3C96",
-                      }}
-                    >
-                      <span className="truncate max-w-[150px] sm:max-w-none">
-                        Specialties:{" "}
-                        {userProfile.researcher.specialties.join(", ")}
-                      </span>
-                    </span>
-                  )}
-                <span
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                  style={{
-                    backgroundColor: "rgba(47, 60, 150, 0.15)",
-                    border: "1px solid rgba(47, 60, 150, 0.3)",
-                    color: "#2F3C96",
-                  }}
-                >
-                  <MapPin className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate max-w-[150px] sm:max-w-none">
-                    {locationText}
-                  </span>
-                </span>
-                {userProfile?.researcher?.orcid ? (
-                  <span
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border-green-200"
-                    style={{
-                      border: "1px solid rgba(16, 185, 129, 0.3)",
-                      color: "#059669",
-                    }}
-                  >
-                    <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate max-w-[150px] sm:max-w-none">
-                      Verified
-                    </span>
-                  </span>
-                ) : userProfile?.researcher?.verificationDocumentUrl ? (
-                  <span
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-50 border-yellow-200"
-                    style={{
-                      border: "1px solid rgba(234, 179, 8, 0.3)",
-                      color: "#d97706",
-                    }}
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate max-w-[150px] sm:max-w-none">
-                      Profile under review
-                    </span>
-                  </span>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Collapsible Content - Profile Details */}
-            <div
-              className={`relative z-10 overflow-hidden transition-all duration-300 ${
-                isProfileBannerExpanded
-                  ? "max-h-[2000px] opacity-100"
-                  : "max-h-0 opacity-0"
-              } sm:max-h-none sm:opacity-100`}
-            >
-              <div className="px-5 sm:px-4 pb-5 sm:pb-0 border-t border-indigo-100/70 sm:border-t-0 pt-4 sm:pt-0">
-                {/* Profile Info - Full Details for Mobile */}
-                <div className="sm:hidden flex flex-col gap-3 mb-4">
-                  <h3
-                    className="text-base font-bold"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Hello, {getDisplayName(user, "Researcher")}
-                  </h3>
-                  <div
-                    className="flex flex-wrap items-center gap-3 text-xs"
-                    style={{ color: "#787878" }}
-                  >
-                    {userProfile?.researcher?.specialties &&
-                      userProfile.researcher.specialties.length > 0 && (
-                        <span
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                          style={{
-                            backgroundColor: "rgba(47, 60, 150, 0.15)",
-                            border: "1px solid rgba(47, 60, 150, 0.3)",
-                            color: "#2F3C96",
-                          }}
-                        >
-                          <Briefcase className="w-3.5 h-3.5 shrink-0" />
-                          <span>
-                            Specialties:{" "}
-                            {userProfile.researcher.specialties.join(", ")}
-                          </span>
-                        </span>
-                      )}
-                    <span
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                      style={{
-                        backgroundColor: "rgba(47, 60, 150, 0.15)",
-                        border: "1px solid rgba(47, 60, 150, 0.3)",
-                        color: "#2F3C96",
-                      }}
-                    >
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span>{locationText}</span>
-                    </span>
-                    {/* Researcher Verification Status - Mobile */}
-                    {userProfile?.researcher?.orcid ? (
-                      <span
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border-green-200"
-                        style={{
-                          border: "1px solid rgba(16, 185, 129, 0.3)",
-                          color: "#059669",
-                        }}
-                      >
-                        <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>Verified</span>
-                      </span>
-                    ) : userProfile?.researcher?.verificationDocumentUrl ? (
-                      <span
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-50 border-yellow-200"
-                        style={{
-                          border: "1px solid rgba(234, 179, 8, 0.3)",
-                          color: "#d97706",
-                        }}
-                      >
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>Profile under review</span>
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Action Buttons - Mobile */}
-                <div className="sm:hidden flex items-center gap-3 flex-wrap mb-4">
-                  {!user?.emailVerified && (
-                    <button
-                      onClick={() => setVerifyEmailModalOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold text-white shadow-lg"
-                      style={{
-                        backgroundColor: "#d97706",
-                        border: "1px solid rgba(217, 119, 6, 0.5)",
-                      }}
-                    >
-                      <Mail className="w-4 h-4 shrink-0" />
-                      <span>Verify Now</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Section - Full Width */}
+      <div className="px-4 sm:px-6 md:px-8 lg:px-12 mx-auto max-w-7xl pt-14 pb-12 relative rounded-t-3xl bg-linear-to-b from-[#F5F0FA] via-[#F7F4FC] to-[#F7F8FC] sm:from-transparent sm:via-transparent sm:to-transparent">
+        {/* Main Content Section - Block-based layout */}
         <div className="mt-6 mb-8">
-          {/* Category Tabs - Modern underline style on desktop, grid on mobile */}
+          {/* Category blocks - clear cards for easy navigation (same style as Patient) */}
           <div
-            className="mb-8 border-b border-indigo-100/70 pb-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 pt-8 mb-8"
             data-tour="dashboard-researcher-tabs"
           >
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-              {/* Mobile: Compact icon cards – same UI as Patient, no Forums */}
-              <div className="grid grid-cols-2 sm:hidden gap-2 flex-1 min-w-0">
-                {[
-                  {
-                    key: "profile",
-                    label: "Your Profile",
-                    icon: User,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "collaborators",
-                    label: "Collaborators",
-                    icon: Users,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "publications",
-                    label: "Publications",
-                    icon: FileText,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "trials",
-                    label: "Clinical Trials",
-                    icon: Beaker,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                  {
-                    key: "favorites",
-                    label: "Favourites",
-                    icon: Star,
-                    iconBg: "rgba(47, 60, 150, 0.1)",
-                  },
-                ].map((category) => {
-                  const Icon = category.icon;
-                  const isSelected = selectedCategory === category.key;
-                  const isSectionLoading =
-                    ["publications", "trials", "collaborators"].includes(
-                      category.key,
-                    ) &&
-                    (refreshingSection === category.key ||
-                      refreshingSectionsBg.has(category.key));
-                  return (
-                    <button
-                      key={category.key}
-                      onClick={() =>
-                        !isSectionLoading && setSelectedCategory(category.key)
-                      }
-                      disabled={isSectionLoading}
-                      className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-white shadow-sm border transition-all duration-200 active:scale-95 ${
-                        isSelected
-                          ? "text-[#2F3C96] border-[#2F3C96]/40 ring-1 ring-[#2F3C96]/20"
-                          : "text-slate-600 border-gray-100 hover:border-indigo-100"
-                      } ${isSectionLoading ? "opacity-80 cursor-not-allowed" : ""}`}
-                      {...(category.key === "publications"
-                        ? {
-                            "data-tour":
-                              "dashboard-researcher-tab-publications",
-                          }
-                        : category.key === "favorites"
-                          ? {
-                              "data-tour": "dashboard-researcher-tab-favorites",
-                            }
-                          : {})}
-                    >
-                      <span
-                        className="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
-                        style={{
-                          backgroundColor: isSelected
-                            ? "rgba(47, 60, 150, 0.18)"
-                            : category.iconBg,
-                        }}
-                      >
-                        {isSectionLoading ? (
-                          <Loader2
-                            className="w-5 h-5 animate-spin shrink-0"
-                            style={{ color: "#2F3C96" }}
-                          />
-                        ) : (
-                          <Icon
-                            className="w-5 h-5 shrink-0"
-                            style={{ color: "#2F3C96" }}
-                          />
-                        )}
-                      </span>
-                      <span className="text-xs font-semibold text-center tracking-tight leading-tight">
-                        {category.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Desktop: Tabs with gradient bar (match patient dashboard) */}
-              <div
-                className="hidden sm:flex items-center justify-between gap-4 min-w-0 flex-1 rounded-xl border px-4 py-2 relative overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #D0C4E2, #E8E0EF, #F5F2F8)",
-                  borderColor: "rgba(208, 196, 226, 0.5)",
-                }}
-              >
-                {/* Decorative background elements */}
-                <div
-                  className="pointer-events-none absolute top-0 right-0 w-64 h-64 rounded-full -mr-32 -mt-32"
-                  style={{ backgroundColor: "rgba(47, 60, 150, 0.1)" }}
-                ></div>
-                <div
-                  className="pointer-events-none absolute bottom-0 left-0 w-48 h-48 rounded-full -ml-24 -mb-24"
-                  style={{ backgroundColor: "rgba(47, 60, 150, 0.1)" }}
-                ></div>
-
-                {/* Tabs row */}
-                <div className="flex items-center gap-3 overflow-x-auto min-w-0 relative z-10">
-                  {[
-                    {
-                      key: "profile",
-                      label: "Your Profile",
-                      icon: User,
-                    },
-                    {
-                      key: "collaborators",
-                      label: "Collaborators",
-                      icon: Users,
-                    },
-                    {
-                      key: "forums",
-                      label: "Forums",
-                      icon: MessageCircle,
-                    },
-                    {
-                      key: "publications",
-                      label: "Publications",
-                      icon: FileText,
-                    },
-                    {
-                      key: "trials",
-                      label: "Clinical Trials",
-                      icon: Beaker,
-                    },
-                    {
-                      key: "favorites",
-                      label: "Favourites",
-                      icon: Star,
-                    },
-                  ].map((category) => {
-                    const Icon = category.icon;
-                    const isSelected = selectedCategory === category.key;
-                    const isSectionLoading =
-                      ["publications", "trials", "collaborators"].includes(
-                        category.key,
-                      ) &&
-                      (refreshingSection === category.key ||
-                        refreshingSectionsBg.has(category.key));
-                    return (
-                      <button
-                        key={category.key}
-                        onClick={() =>
-                          !isSectionLoading && setSelectedCategory(category.key)
-                        }
-                        disabled={isSectionLoading}
-                        className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-full border transition-all duration-200 ${
-                          isSelected
-                            ? "bg-[#2F3C96] text-white border-[#2F3C96] shadow-sm"
-                            : "bg-white/80 text-slate-600 border-[rgba(208,196,226,0.9)] hover:text-[#2F3C96] hover:border-[#2F3C96]"
-                        } ${
-                          isSectionLoading
-                            ? "opacity-80 cursor-not-allowed"
-                            : ""
-                        }`}
-                        style={{ userSelect: "text" }}
-                        {...(category.key === "publications"
-                          ? {
-                              "data-tour":
-                                "dashboard-researcher-tab-publications",
-                            }
-                          : category.key === "favorites"
-                            ? {
-                                "data-tour":
-                                  "dashboard-researcher-tab-favorites",
-                              }
-                            : {})}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span className="text-sm font-semibold">
-                          {category.label}
-                        </span>
-                        {category.key !== "profile" && isSectionLoading && (
-                          <Loader2
-                            className="w-4 h-4 animate-spin shrink-0"
-                            style={{
-                              color: isSelected ? "white" : "#2F3C96",
-                            }}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Tutorial / Redo tour button */}
+            {[
+              { key: "profile", label: "Your Profile", icon: User },
+              { key: "collaborators", label: "Collaborators", icon: Users },
+              { key: "forums", label: "Forums", icon: MessageCircle },
+              { key: "publications", label: "Publications", icon: FileText },
+              { key: "trials", label: "Clinical Trials", icon: Beaker },
+              { key: "favorites", label: "Favourites", icon: Star },
+              { key: "meetings", label: "Meetings", icon: Calendar },
+            ].map((category) => {
+              const Icon = category.icon;
+              const isSelected = selectedCategory === category.key;
+              const isSectionLoading =
+                ["publications", "trials", "collaborators"].includes(
+                  category.key,
+                ) &&
+                (refreshingSection === category.key ||
+                  refreshingSectionsBg.has(category.key));
+              return (
                 <button
+                  key={category.key}
                   type="button"
-                  onClick={() => {
-                    resetTutorialCompleted("dashboard-researcher");
-                    setForceShowTutorial(true);
-                  }}
-                  className="hidden sm:flex shrink-0 items-center justify-center w-9 h-9 rounded-lg border transition-colors relative z-10"
-                  style={{
-                    borderColor: "rgba(47, 60, 150, 0.3)",
-                    color: "#2F3C96",
-                    backgroundColor: "rgba(208, 196, 226, 0.2)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(208, 196, 226, 0.35)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(47, 60, 150, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      "rgba(208, 196, 226, 0.2)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(47, 60, 150, 0.3)";
-                  }}
-                  title="View / Redo dashboard tutorial"
-                  aria-label="View dashboard tutorial"
+                  onClick={() =>
+                    !isSectionLoading && setSelectedCategory(category.key)
+                  }
+                  disabled={isSectionLoading}
+                  className={`group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] category-button-hover ${
+                    isSelected
+                      ? "bg-[#2F3C96] border-[#2F3C96] shadow-lg shadow-[#2F3C96]/25 text-white"
+                      : "bg-white border-[#D0C4E2]/60 hover:border-[#2F3C96]/50 hover:shadow-md text-slate-700"
+                  } ${isSectionLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+                  {...(category.key === "publications"
+                    ? { "data-tour": "dashboard-researcher-tab-publications" }
+                    : category.key === "favorites"
+                      ? { "data-tour": "dashboard-researcher-tab-favorites" }
+                      : {})}
                 >
-                  <HelpCircle className="w-5 h-5" />
+                  <span
+                    className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${
+                      isSelected ? "bg-white/20" : "bg-[#D0C4E2]/30"
+                    }`}
+                  >
+                    {isSectionLoading ? (
+                      <Loader2
+                        className="w-6 h-6 animate-spin shrink-0"
+                        style={{ color: isSelected ? "white" : "#2F3C96" }}
+                      />
+                    ) : (
+                      <Icon
+                        className="w-6 h-6 shrink-0"
+                        style={{ color: isSelected ? "white" : "#2F3C96" }}
+                      />
+                    )}
+                  </span>
+                  <div className="min-w-0 w-full">
+                    <span className="block text-sm font-bold truncate">
+                      {category.label}
+                    </span>
+                  </div>
                 </button>
-              </div>
-            </div>
+              );
+            })}
+          </div>
+          {/* Tutorial button - compact */}
+          <div className="flex justify-end mb-2 -mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                resetTutorialCompleted("dashboard-researcher");
+                setForceShowTutorial(true);
+              }}
+              className="inline-flex items-center justify-center w-9 h-9 rounded-lg border transition-colors"
+              style={{
+                borderColor: "rgba(47, 60, 150, 0.3)",
+                color: "#2F3C96",
+                backgroundColor: "rgba(208, 196, 226, 0.2)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "rgba(208, 196, 226, 0.35)";
+                e.currentTarget.style.borderColor =
+                  "rgba(47, 60, 150, 0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "rgba(208, 196, 226, 0.2)";
+                e.currentTarget.style.borderColor =
+                  "rgba(47, 60, 150, 0.3)";
+              }}
+              title="View / Redo dashboard tutorial"
+              aria-label="View dashboard tutorial"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Research interests bar — chips, Edit + Refresh (same layout as Patient Medical Conditions) */}
+          {/* Research interests bar — chips, Edit + Refresh + Generate Summary Report */}
           <div
-            className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 flex items-center justify-between gap-4 flex-wrap"
+            className="rounded-2xl bg-white/90 backdrop-blur-sm border-2 border-[#D0C4E2]/50 border-l-4 border-l-[#2F3C96] shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 flex items-center justify-between gap-4 flex-wrap"
             data-tour="dashboard-researcher-interests-bar"
           >
             <div className="space-y-0.5">
@@ -3433,7 +3053,7 @@ export default function DashboardResearcher() {
                 <span className="text-sm text-slate-500">—</span>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               <button
                 type="button"
                 onClick={openEditInterestsModal}
@@ -3468,6 +3088,31 @@ export default function DashboardResearcher() {
                   <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                 )}
                 <span>Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const total =
+                    (selectedFavoriteItems.experts?.length || 0) +
+                    (selectedFavoriteItems.publications?.length || 0) +
+                    (selectedFavoriteItems.trials?.length || 0);
+                  if (total === 0) {
+                    setSelectedCategory("favorites");
+                    toast.error("Select items from Favourites to include in your report, then try again.");
+                    return;
+                  }
+                  generateFavoritesSummaryReport();
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{
+                  backgroundColor: "#D0C4E2",
+                  color: "#2F3C96",
+                  borderColor: "rgba(47, 60, 150, 0.4)",
+                }}
+                title="Generate a PDF summary of your saved items to share"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Generate Summary Report
               </button>
             </div>
           </div>
@@ -3616,19 +3261,25 @@ export default function DashboardResearcher() {
 
           {/* Main Recommendations Section */}
           <div
-            className="bg-white rounded-2xl shadow-xl border p-6 sm:p-8"
-            style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
+            className="bg-white rounded-2xl shadow-md border-2 border-[#D0C4E2]/50 p-6 sm:p-8 relative overflow-hidden"
             data-tour="dashboard-researcher-recommendations"
           >
+            {/* Accent bar */}
+            <div
+              className="absolute top-0 left-0 right-0 h-1.5 rounded-t-2xl"
+              style={{
+                background: "linear-gradient(90deg, #2F3C96 0%, #D0C4E2 100%)",
+              }}
+            />
             {selectedCategory !== "profile" && (
-              <div className="mb-8">
+              <div className="mb-8 pt-0.5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                   <div>
                     <h2
                       className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl xl:text-4xl bg-clip-text text-transparent"
                       style={{
                         backgroundImage:
-                          "linear-gradient(135deg, #2F3C96, #253075)",
+                          "linear-gradient(135deg, #2F3C96 0%, #4a5bb8 50%, #253075 100%)",
                       }}
                     >
                       <span className="sm:hidden">Personalized For You</span>
@@ -4664,21 +4315,21 @@ export default function DashboardResearcher() {
                       sortByMatchPercentage(trialsToShow).map((t, idx) => (
                         <div
                           key={idx}
-                          className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"
+                          className="bg-white rounded-2xl shadow-md border-2 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(47,60,150,0.12)] overflow-hidden flex flex-col h-full"
                           style={{
-                            borderColor: "rgba(208, 196, 226, 0.3)",
+                            borderColor: "rgba(208, 196, 226, 0.5)",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.boxShadow =
-                              "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
+                              "0 12px 24px -4px rgba(47, 60, 150, 0.15), 0 4px 8px -2px rgba(208, 196, 226, 0.2)";
                             e.currentTarget.style.borderColor =
-                              "rgba(47, 60, 150, 0.4)";
+                              "rgba(47, 60, 150, 0.45)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.boxShadow =
-                              "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)";
                             e.currentTarget.style.borderColor =
-                              "rgba(208, 196, 226, 0.3)";
+                              "rgba(208, 196, 226, 0.5)";
                           }}
                         >
                           <div className="p-5 flex flex-col flex-grow">
@@ -4713,7 +4364,7 @@ export default function DashboardResearcher() {
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
                                   style={{
-                                    backgroundColor: "rgba(208, 196, 226, 0.3)",
+                                    backgroundColor: "rgba(208, 196, 226, 0.35)",
                                   }}
                                 >
                                   <div
@@ -4721,7 +4372,7 @@ export default function DashboardResearcher() {
                                     style={{
                                       width: `${t.matchPercentage}%`,
                                       background:
-                                        "linear-gradient(90deg, #2F3C96, #253075)",
+                                        "linear-gradient(90deg, #2F3C96, #4a5bb8, #253075)",
                                     }}
                                   ></div>
                                 </div>
@@ -4974,9 +4625,9 @@ export default function DashboardResearcher() {
                       return (
                         <div
                           key={idx}
-                          className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"
+                          className="bg-white rounded-2xl shadow-md border-2 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(47,60,150,0.12)] overflow-hidden flex flex-col h-full"
                           style={{
-                            borderColor: "rgba(208, 196, 226, 0.3)",
+                            borderColor: "rgba(208, 196, 226, 0.5)",
                           }}
                           {...(idx === 0
                             ? {
@@ -4986,15 +4637,15 @@ export default function DashboardResearcher() {
                             : {})}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.boxShadow =
-                              "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
+                              "0 12px 24px -4px rgba(47, 60, 150, 0.15), 0 4px 8px -2px rgba(208, 196, 226, 0.2)";
                             e.currentTarget.style.borderColor =
-                              "rgba(47, 60, 150, 0.4)";
+                              "rgba(47, 60, 150, 0.45)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.boxShadow =
-                              "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+                              "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)";
                             e.currentTarget.style.borderColor =
-                              "rgba(208, 196, 226, 0.3)";
+                              "rgba(208, 196, 226, 0.5)";
                           }}
                         >
                           <div className="p-5 flex flex-col flex-grow">
@@ -5019,7 +4670,7 @@ export default function DashboardResearcher() {
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
                                   style={{
-                                    backgroundColor: "rgba(208, 196, 226, 0.3)",
+                                    backgroundColor: "rgba(208, 196, 226, 0.35)",
                                   }}
                                 >
                                   <div
@@ -5027,7 +4678,7 @@ export default function DashboardResearcher() {
                                     style={{
                                       width: `${p.matchPercentage}%`,
                                       background:
-                                        "linear-gradient(90deg, #2F3C96, #253075)",
+                                        "linear-gradient(90deg, #2F3C96, #4a5bb8, #253075)",
                                     }}
                                   ></div>
                                 </div>
@@ -7012,6 +6663,30 @@ export default function DashboardResearcher() {
                       </div>
                     );
                   })()}
+                </div>
+              )}
+
+              {selectedCategory === "meetings" && (
+                <div className="col-span-full">
+                  <div
+                    className="rounded-2xl border-2 border-dashed border-[#D0C4E2]/80 p-8 sm:p-12 text-center"
+                    style={{ backgroundColor: "rgba(208, 196, 226, 0.15)" }}
+                  >
+                    <Calendar
+                      className="w-14 h-14 mx-auto mb-4 opacity-60"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <h3
+                      className="text-lg font-bold mb-2"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      Meetings
+                    </h3>
+                    <p className="text-sm text-slate-600 max-w-sm mx-auto">
+                      Your scheduled meetings will appear here. Schedule and
+                      manage meetings with collaborators from your dashboard.
+                    </p>
+                  </div>
                 </div>
               )}
 
