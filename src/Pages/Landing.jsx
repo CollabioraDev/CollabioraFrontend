@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -191,8 +190,8 @@ export default function Landing() {
       <AnimatedBackground isMobile={isMobile} />
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 md:pt-28 pb-12 sm:pb-10 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
-        <div className="max-w-5xl relative z-10 w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
+      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-24  sm:pt-20 sm:pb-10 md:pt-28 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
+        <div className="max-w-5xl relative z-10 w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-10 lg:gap-20">
           {/* ── LEFT: Headline + bullets ── */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
