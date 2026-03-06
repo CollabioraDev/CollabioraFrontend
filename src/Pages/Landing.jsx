@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -190,7 +191,7 @@ export default function Landing() {
       <AnimatedBackground isMobile={isMobile} />
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 md:pt-28 pb-12 sm:pb-10 md:pb-16 overflow-hidden min-h-[calc(100vh)]">
+      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 md:pt-28 pb-12 sm:pb-10 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
         <div className="max-w-5xl relative z-10 w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
           {/* ── LEFT: Headline + bullets ── */}
           <motion.div
@@ -209,7 +210,7 @@ export default function Landing() {
                 Health Decisions
               </h1>
 
-              <ul className="space-y-6 flex flex-col items-center lg:items-start">
+              <ul className="hidden md:flex space-y-6 flex-col items-center lg:items-start">
                 {[
                   {
                     text: "Learn more about you and your loved one's health",
@@ -267,13 +268,24 @@ export default function Landing() {
             />
           </motion.div>
 
-          {/* ── RIGHT: Duolingo-style CTAs ── */}
+          {/* ── RIGHT: Hero illustration + CTAs ── */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex-shrink-0 w-full max-w-[280px] flex flex-col justify-center gap-4 items-center lg:items-start"
+            className="flex-shrink-0 w-full max-w-[320px] lg:max-w-[380px] flex flex-col justify-center gap-6 items-center lg:items-end"
           >
+            {/* Hero illustration — centered on mobile, right-aligned on desktop */}
+            <div className="w-full max-w-[280px] lg:max-w-[320px] flex justify-center lg:justify-end lg:mr-7 ">
+              <motion.img
+                src="/hero-bg.png"
+                alt="Connect with healthcare and research"
+                className="w-full h-auto max-h-[240px] md:max-h-[280px] lg:max-h-[320px] object-contain object-center"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+              />
+            </div>
             {!user ? (
               <div className="flex flex-col gap-4 w-full">
                 {/* Primary — solid box button */}

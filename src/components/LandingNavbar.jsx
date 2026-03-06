@@ -8,6 +8,7 @@ export default function LandingNavbar() {
   const [user, setUser] = useState(null);
   const [isPastHero, setIsPastHero] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const scrollRafRef = useRef(null);
   const navigate = useNavigate();
 
@@ -34,6 +35,14 @@ export default function LandingNavbar() {
       window.removeEventListener("login", updateUser);
       window.removeEventListener("logout", () => setUser(null));
     };
+  }, []);
+
+  /* ── Mobile detection ── */
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   /* ── Scroll tracking ── */
@@ -98,7 +107,13 @@ export default function LandingNavbar() {
             src="/logo.png"
             alt="Collabiora"
             animate={{
-              height: isAtTop ? "4.5rem" : "3.5rem",
+              height: isMobile
+                ? isAtTop
+                  ? "3.5rem"
+                  : "2.5rem"
+                : isAtTop
+                  ? "4.5rem"
+                  : "3.5rem",
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="w-auto"
