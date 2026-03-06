@@ -39,6 +39,8 @@ import {
   AlertCircle,
   Copy,
   MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import Modal from "../components/ui/Modal.jsx";
@@ -100,6 +102,7 @@ export default function CollabioraExpertProfile() {
     message: "",
     preferredDate: "",
     preferredTime: "",
+    calendarMonth: new Date().toISOString().slice(0, 7), // YYYY-MM for calendar view
   });
   const [connectionRequestModal, setConnectionRequestModal] = useState({
     open: false,
@@ -108,6 +111,13 @@ export default function CollabioraExpertProfile() {
   const [messageModal, setMessageModal] = useState({
     open: false,
     body: "",
+  });
+  const [questionsAfterBookingModal, setQuestionsAfterBookingModal] = useState({
+    open: false,
+    requestId: null,
+    researcherName: "",
+    questions: "",
+    submitting: false,
   });
   const [showAllInterests, setShowAllInterests] = useState(false);
   const [interestsModalOpen, setInterestsModalOpen] = useState(false);
@@ -485,9 +495,9 @@ export default function CollabioraExpertProfile() {
         }),
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send meeting request");
+        throw new Error(data.error || "Failed to send meeting request");
       }
 
       toast.success("Meeting request sent successfully!");
@@ -496,14 +506,72 @@ export default function CollabioraExpertProfile() {
         message: "",
         preferredDate: "",
         preferredTime: "",
+        calendarMonth: new Date().toISOString().slice(0, 7),
       });
       setMeetingRequestStatus({
         hasRequest: true,
         status: "pending",
       });
+      // Open "Have questions for {researcher}?" popup; questions will be sent with request
+      if (data.meetingRequest?._id && profile?.name) {
+        setQuestionsAfterBookingModal({
+          open: true,
+          requestId: data.meetingRequest._id,
+          researcherName: profile.name,
+          questions: "",
+          submitting: false,
+        });
+      }
     } catch (error) {
       console.error("Error sending meeting request:", error);
       toast.error(error.message || "Failed to send meeting request");
+    }
+  }
+
+  /** Mock blocked slots per date so the booking flow is clear (researcher has some times unavailable). */
+  function getBlockedSlotsForDate(dateStr) {
+    if (!dateStr) return [];
+    const today = new Date();
+    const toYMD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const todayStr = toYMD(today);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(today);
+    dayAfter.setDate(dayAfter.getDate() + 2);
+    if (dateStr === todayStr) return ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30"];
+    if (dateStr === toYMD(tomorrow)) return ["14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
+    if (dateStr === toYMD(dayAfter)) return ["10:00", "10:30", "11:00", "11:30"];
+    return [];
+  }
+
+  async function submitQuestionsAfterBooking() {
+    const { requestId, questions } = questionsAfterBookingModal;
+    if (!requestId) return;
+    setQuestionsAfterBookingModal((prev) => ({ ...prev, submitting: true }));
+    try {
+      const response = await fetch(`${base}/api/meeting-requests/${requestId}/questions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientQuestions: questions.trim() || null }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to send questions");
+      }
+      if (questions.trim()) {
+        toast.success("Your questions have been sent to the researcher.");
+      }
+      setQuestionsAfterBookingModal({
+        open: false,
+        requestId: null,
+        researcherName: "",
+        questions: "",
+        submitting: false,
+      });
+    } catch (error) {
+      console.error("Error submitting questions:", error);
+      toast.error(error.message || "Failed to send questions");
+      setQuestionsAfterBookingModal((prev) => ({ ...prev, submitting: false }));
     }
   }
 
@@ -1002,6 +1070,7 @@ export default function CollabioraExpertProfile() {
                               message: "",
                               preferredDate: "",
                               preferredTime: "",
+                              calendarMonth: new Date().toISOString().slice(0, 7),
                             })
                           }
                           className="px-4 py-2 bg-white text-[#2F3C96] rounded-lg text-sm font-semibold hover:bg-white/95 transition-all flex items-center gap-2 shadow-sm"
@@ -1037,6 +1106,35 @@ export default function CollabioraExpertProfile() {
               )}
             </div>
           </div>
+
+          {/* Booking & consultation info — for patients viewing researcher */}
+          {user?.role === "patient" && (profile.meetingRate != null || profile.interestedInMeetings) && (
+            <div className="bg-white rounded-xl shadow-md border border-[rgba(232,232,232,1)] p-5 mb-6">
+              <h3 className="text-sm font-semibold text-[#2F3C96] mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Booking & consultation
+              </h3>
+              <div className="space-y-2 text-sm text-slate-700">
+                <div className="flex flex-wrap items-center gap-4">
+                  {profile.meetingRate != null && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-semibold text-[#2F3C96]">${profile.meetingRate}</span>
+                      <span className="text-slate-600">per 30 min</span>
+                    </span>
+                  )}
+                  {profile.interestedInMeetings && (
+                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-medium border border-emerald-200">
+                      Accepts meeting requests
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 border-t border-slate-100 pt-2 mt-2">
+                  <Clock className="w-3.5 h-3.5 inline mr-1 align-middle" />
+                  Available: Mon–Fri 2–5 PM (your time). Some slots are blocked and will appear as unavailable in the calendar.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Research Interests — below header, max 3–4 chips + "View all interests" modal */}
           {((profile.specialties && profile.specialties.length > 0) ||
@@ -1893,7 +1991,7 @@ export default function CollabioraExpertProfile() {
         </div>
       </div>
 
-      {/* Meeting Request Modal (for patients) */}
+      {/* Meeting Request Modal (for patients) — Cal.com-style */}
       <Modal
         isOpen={meetingRequestModal.open}
         onClose={() =>
@@ -1902,67 +2000,177 @@ export default function CollabioraExpertProfile() {
             message: "",
             preferredDate: "",
             preferredTime: "",
+            calendarMonth: new Date().toISOString().slice(0, 7),
           })
         }
-        title="Request a Meeting"
+        title="Book a meeting"
       >
-        <div className="space-y-4">
+        <div className="space-y-5 max-h-[70vh] overflow-y-auto">
+          {/* Researcher summary — compact card */}
+          {profile && (
+            <div className="rounded-xl bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5]/80 border border-[#D1D3E5] p-4 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-[#2F3C96]/20 flex items-center justify-center shrink-0">
+                <User className="w-6 h-6 text-[#2F3C96]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-800 truncate">{profile.name}</p>
+                {profile.meetingRate != null && (
+                  <p className="text-sm text-slate-600">
+                    <span className="font-medium text-[#2F3C96]">${profile.meetingRate}</span> per 30 min
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Date: calendar + time slots */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Mini calendar */}
+            <div>
+              <p className="text-sm font-semibold text-[#2F3C96] mb-2">Select date</p>
+              {(() => {
+                const [y, m] = meetingRequestModal.calendarMonth.split("-").map(Number);
+                const first = new Date(y, m - 1, 1);
+                const daysInMonth = new Date(y, m, 0).getDate();
+                const startWeekday = first.getDay();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const monthLabel = first.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+                const prevMonth = () => {
+                  const d = new Date(y, m - 2, 1);
+                  setMeetingRequestModal((prev) => ({ ...prev, calendarMonth: d.toISOString().slice(0, 7) }));
+                };
+                const nextMonth = () => {
+                  const d = new Date(y, m, 1);
+                  setMeetingRequestModal((prev) => ({ ...prev, calendarMonth: d.toISOString().slice(0, 7) }));
+                };
+                const pad = Array.from({ length: startWeekday }, () => null);
+                const days = pad.concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
+                return (
+                  <div className="border border-[#D1D3E5] rounded-xl overflow-hidden bg-white">
+                    <div className="flex items-center justify-between px-3 py-2 bg-[#E8E9F2]/80 border-b border-[#D1D3E5]">
+                      <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-white/60 text-[#2F3C96]">
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <span className="text-sm font-semibold text-slate-800">{monthLabel}</span>
+                      <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-white/60 text-[#2F3C96]">
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-7 gap-0.5 p-2">
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                        <div key={d} className="text-center text-[10px] font-medium text-slate-500 py-1">
+                          {d.slice(0, 1)}
+                        </div>
+                      ))}
+                      {days.map((day, idx) => {
+                        if (day === null) return <div key={`pad-${idx}`} />;
+                        const dateStr = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                        const cellDate = new Date(y, m - 1, day);
+                        cellDate.setHours(0, 0, 0, 0);
+                        const isPast = cellDate < today;
+                        const isSelected = meetingRequestModal.preferredDate === dateStr;
+                        return (
+                          <button
+                            key={dateStr}
+                            type="button"
+                            disabled={isPast}
+                            onClick={() =>
+                              setMeetingRequestModal((prev) => ({
+                                ...prev,
+                                preferredDate: dateStr,
+                                preferredTime: isSelected && prev.preferredTime ? prev.preferredTime : "",
+                              }))
+                            }
+                            className={`aspect-square flex items-center justify-center text-sm rounded-lg transition-colors ${
+                              isPast
+                                ? "text-slate-300 cursor-not-allowed"
+                                : isSelected
+                                  ? "bg-[#2F3C96] text-white font-semibold"
+                                  : "hover:bg-[#E8E9F2] text-slate-700"
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Time slots */}
+            <div>
+              <p className="text-sm font-semibold text-[#2F3C96] mb-2">Select time</p>
+              {!meetingRequestModal.preferredDate ? (
+                <p className="text-sm text-slate-500 italic">Pick a date first</p>
+              ) : (
+                <>
+                  <p className="text-xs text-slate-500 mb-2">Blocked slots are marked. Choose an available time.</p>
+                <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {Array.from({ length: 21 }, (_, i) => {
+                    const h = 8 + Math.floor(i / 2);
+                    const min = (i % 2) * 30;
+                    const slot = `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+                    const label = new Date(2000, 0, 1, h, min).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    });
+                    const blocked = getBlockedSlotsForDate(meetingRequestModal.preferredDate).includes(slot);
+                    const isSelected = meetingRequestModal.preferredTime === slot && !blocked;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        disabled={blocked}
+                        onClick={() =>
+                          !blocked &&
+                          setMeetingRequestModal((prev) => ({ ...prev, preferredTime: slot }))
+                        }
+                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-colors ${
+                          blocked
+                            ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 line-through"
+                            : isSelected
+                              ? "bg-[#2F3C96] text-white ring-2 ring-[#2F3C96] ring-offset-1"
+                              : "bg-slate-100 text-slate-700 hover:bg-[#E8E9F2] hover:border-[#D1D3E5] border border-transparent"
+                        }`}
+                        title={blocked ? "This slot is blocked by the researcher" : undefined}
+                      >
+                        {blocked ? "Blocked" : label}
+                      </button>
+                    );
+                  })}
+                </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Message */}
           <div>
             <label className="block text-sm font-semibold text-[#2F3C96] mb-2">
-              Message
+              Add a message <span className="text-red-500">*</span>
             </label>
             <textarea
               value={meetingRequestModal.message}
               onChange={(e) =>
-                setMeetingRequestModal({
-                  ...meetingRequestModal,
-                  message: e.target.value,
-                })
+                setMeetingRequestModal((prev) => ({ ...prev, message: e.target.value }))
               }
-              rows={4}
-              className="w-full px-4 py-2 border border-[rgba(209,211,229,1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-              placeholder="Please introduce yourself and explain why you'd like to meet with this expert..."
+              rows={3}
+              className="w-full px-4 py-2 border border-[#D1D3E5] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent resize-none"
+              placeholder="Introduce yourself and why you'd like to meet..."
             />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-[#2F3C96] mb-2">
-              Preferred Date (Optional)
-            </label>
-            <input
-              type="date"
-              value={meetingRequestModal.preferredDate}
-              onChange={(e) =>
-                setMeetingRequestModal({
-                  ...meetingRequestModal,
-                  preferredDate: e.target.value,
-                })
-              }
-              className="w-full px-4 py-2 border border-[rgba(209,211,229,1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-[#2F3C96] mb-2">
-              Preferred Time (Optional)
-            </label>
-            <input
-              type="time"
-              value={meetingRequestModal.preferredTime}
-              onChange={(e) =>
-                setMeetingRequestModal({
-                  ...meetingRequestModal,
-                  preferredTime: e.target.value,
-                })
-              }
-              className="w-full px-4 py-2 border border-[rgba(209,211,229,1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div className="flex gap-3">
+
+          <div className="flex gap-3 pt-1">
             <button
               onClick={sendMeetingRequest}
-              className="flex-1 px-4 py-2 bg-[#2F3C96] text-white rounded-lg font-semibold hover:bg-[#253075] transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-[#2F3C96] text-white rounded-xl font-semibold hover:bg-[#253075] transition-colors flex items-center justify-center gap-2"
             >
               <Calendar className="w-4 h-4" />
-              Send Meeting Request
+              Request meeting
             </button>
             <button
               onClick={() =>
@@ -1971,11 +2179,78 @@ export default function CollabioraExpertProfile() {
                   message: "",
                   preferredDate: "",
                   preferredTime: "",
+                  calendarMonth: new Date().toISOString().slice(0, 7),
                 })
               }
-              className="flex-1 px-4 py-2 bg-slate-100 text-[#787878] rounded-lg font-semibold hover:bg-slate-200 transition-colors"
+              className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-colors"
             >
               Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Have questions for researcher? (after booking) */}
+      <Modal
+        isOpen={questionsAfterBookingModal.open}
+        onClose={() =>
+          setQuestionsAfterBookingModal({
+            open: false,
+            requestId: null,
+            researcherName: "",
+            questions: "",
+            submitting: false,
+          })
+        }
+        title={`Have some questions for ${questionsAfterBookingModal.researcherName || "this researcher"}?`}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Add any questions you&apos;d like the researcher to see with your meeting request. They&apos;ll get a notification and can view this in Activity.
+          </p>
+          <div>
+            <label className="block text-sm font-semibold text-[#2F3C96] mb-2">
+              Your questions (optional)
+            </label>
+            <textarea
+              value={questionsAfterBookingModal.questions}
+              onChange={(e) =>
+                setQuestionsAfterBookingModal((prev) => ({
+                  ...prev,
+                  questions: e.target.value,
+                }))
+              }
+              rows={4}
+              className="w-full px-4 py-2 border border-[rgba(209,211,229,1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              placeholder="e.g. What should I prepare before our call? Any documents to bring?"
+            />
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => submitQuestionsAfterBooking()}
+              disabled={questionsAfterBookingModal.submitting}
+              className="flex-1 px-4 py-2 bg-[#2F3C96] text-white rounded-lg font-semibold hover:bg-[#253075] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {questionsAfterBookingModal.submitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              {questionsAfterBookingModal.submitting ? "Sending..." : "Send to researcher"}
+            </button>
+            <button
+              onClick={() =>
+                setQuestionsAfterBookingModal({
+                  open: false,
+                  requestId: null,
+                  researcherName: "",
+                  questions: "",
+                  submitting: false,
+                })
+              }
+              className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-colors"
+            >
+              Skip
             </button>
           </div>
         </div>

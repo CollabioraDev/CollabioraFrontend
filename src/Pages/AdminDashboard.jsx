@@ -181,6 +181,7 @@ const SECTIONS = [
   { id: "page-feedback", label: "Page Feedback", icon: MessageCircle },
   { id: "contacts", label: "Contact Messages", icon: Mail },
   { id: "onboarding-cleanup", label: "Onboarding Cleanup", icon: AlertTriangle },
+  { id: "meeting-requests", label: "Meeting Requests", icon: Calendar },
 ];
 
 const SIDEBAR_GROUPS = [
@@ -198,7 +199,7 @@ const SIDEBAR_GROUPS = [
     ],
   },
   { title: "SUPPORT", items: ["reviews", "page-feedback", "contacts"] },
-  { title: "OTHERS", items: ["onboarding-cleanup"] },
+  { title: "OTHERS", items: ["onboarding-cleanup", "meeting-requests"] },
 ];
 
 export default function AdminDashboard() {
@@ -313,6 +314,11 @@ export default function AdminDashboard() {
   const [selectedIncompleteUserIds, setSelectedIncompleteUserIds] = useState([]);
   const [bulkResettingOnboarding, setBulkResettingOnboarding] = useState(false);
   const [bulkDeletingIncomplete, setBulkDeletingIncomplete] = useState(false);
+  // Meeting requests (admin testing)
+  const [meetingRequestsList, setMeetingRequestsList] = useState([]);
+  const [loadingMeetingRequests, setLoadingMeetingRequests] = useState(false);
+  const [clearingAllMeetings, setClearingAllMeetings] = useState(false);
+  const [deletingMeetingId, setDeletingMeetingId] = useState(null);
 
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -401,7 +407,66 @@ export default function AdminDashboard() {
     if (activeSection === "onboarding-cleanup") {
       fetchIncompleteOnboarding();
     }
+    if (activeSection === "meeting-requests") {
+      fetchMeetingRequests();
+    }
   }, [activeSection]);
+
+  const fetchMeetingRequests = async () => {
+    const { token, headers } = getAuth();
+    if (!token) return;
+    setLoadingMeetingRequests(true);
+    try {
+      const res = await fetch(`${base}/api/admin/meeting-requests`, { headers });
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      setMeetingRequestsList(data.requests || []);
+    } catch (e) {
+      toast.error("Failed to load meeting requests");
+    } finally {
+      setLoadingMeetingRequests(false);
+    }
+  };
+
+  const clearAllMeetingRequests = async () => {
+    if (!confirm("Clear ALL meeting requests and their notifications? This cannot be undone.")) return;
+    const { token, headers } = getAuth();
+    if (!token) return;
+    setClearingAllMeetings(true);
+    try {
+      const res = await fetch(`${base}/api/admin/meeting-requests/clear-all`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+      });
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      toast.success(data.message || "All cleared");
+      setMeetingRequestsList([]);
+    } catch (e) {
+      toast.error("Failed to clear meeting requests");
+    } finally {
+      setClearingAllMeetings(false);
+    }
+  };
+
+  const cancelOneMeetingRequest = async (id) => {
+    const { token, headers } = getAuth();
+    if (!token) return;
+    setDeletingMeetingId(id);
+    try {
+      const res = await fetch(`${base}/api/admin/meeting-requests/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (handleAdminAuthFailure(res)) return;
+      toast.success("Meeting request cancelled");
+      setMeetingRequestsList((prev) => prev.filter((r) => r._id !== id));
+    } catch (e) {
+      toast.error("Failed to cancel meeting request");
+    } finally {
+      setDeletingMeetingId(null);
+    }
+  };
 
   // Reviews/Feedback
   const fetchReviews = async () => {
@@ -4511,6 +4576,95 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeSection === "meeting-requests" && (
+                <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+                  <h2 className="text-xl font-bold text-brand-royal-blue mb-2 flex items-center gap-2">
+                    <Calendar className="w-6 h-6 text-brand-royal-blue" />
+                    Meeting Requests
+                  </h2>
+                  <p className="text-sm text-brand-gray mb-4">
+                    Cancel individual meeting requests or clear all (including related notifications). Useful for testing.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <button
+                      onClick={fetchMeetingRequests}
+                      className="px-3 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue rounded-lg hover:bg-brand-royal-blue/20 flex items-center gap-1.5 transition-colors"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Refresh
+                    </button>
+                    {meetingRequestsList.length > 0 && (
+                      <button
+                        onClick={clearAllMeetingRequests}
+                        disabled={clearingAllMeetings}
+                        className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {clearingAllMeetings ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                        Clear all ({meetingRequestsList.length})
+                      </button>
+                    )}
+                  </div>
+                  {loadingMeetingRequests ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : meetingRequestsList.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="w-16 h-16 text-brand-gray-300 mx-auto mb-4" />
+                      <p className="text-brand-gray font-medium">No meeting requests</p>
+                      <p className="text-sm text-brand-gray/70 mt-1">Patient–researcher meeting requests will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {meetingRequestsList.map((req) => (
+                        <div
+                          key={req._id}
+                          className="bg-[#F5F5F5] rounded-lg p-4 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all flex justify-between items-start gap-4"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-slate-800">
+                              {req.patientId?.username || "Patient"} → {req.expertId?.username || "Expert"}
+                            </p>
+                            <p className="text-sm text-brand-gray mt-1 line-clamp-2">{req.message}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                req.status === "pending" ? "bg-amber-100 text-amber-800" :
+                                req.status === "accepted" ? "bg-green-100 text-green-800" :
+                                req.status === "rejected" ? "bg-red-100 text-red-800" : "bg-slate-100 text-slate-700"
+                              }`}>
+                                {req.status}
+                              </span>
+                              {req.preferredDate && (
+                                <span className="text-xs text-brand-gray">
+                                  {new Date(req.preferredDate).toLocaleDateString()}
+                                  {req.preferredTime ? ` ${req.preferredTime}` : ""}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => cancelOneMeetingRequest(req._id)}
+                            disabled={deletingMeetingId === req._id}
+                            className="shrink-0 px-3 py-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            {deletingMeetingId === req._id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                            Cancel
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

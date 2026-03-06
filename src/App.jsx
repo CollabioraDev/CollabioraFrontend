@@ -9,6 +9,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import "./App.css";
 import Navbar from "./components/Navbar.jsx";
+import LandingNavbar from "./components/LandingNavbar.jsx";
 import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
 import FeedbackWidget from "./components/FeedbackWidget.jsx";
@@ -114,7 +115,7 @@ const AppContent = () => {
 
   return (
     <div>
-      {showLayout && <Navbar />}
+      {showLayout && (isHomePage ? <LandingNavbar /> : <Navbar />)}
       {showLayout && showChatbot && (
         <Suspense fallback={null}>
           <FloatingChatbot />

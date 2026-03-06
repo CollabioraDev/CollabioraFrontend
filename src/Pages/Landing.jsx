@@ -19,6 +19,8 @@ import {
   FileText,
   Smartphone,
   X,
+  Heart,
+  Users,
 } from "lucide-react";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import TrustedNetworksMarquee from "../components/TrustedNetworksMarquee";
@@ -168,9 +170,7 @@ export default function Landing() {
   const displayName = user?.name || user?.username || "there";
   const firstName = displayName.split(" ")[0];
   const landingWelcomeName =
-    user?.role === "researcher"
-      ? getDisplayName(user, "there")
-      : firstName;
+    user?.role === "researcher" ? getDisplayName(user, "there") : firstName;
 
   const getDashboardPath = () => {
     if (!user) return "/dashboard/patient";
@@ -190,388 +190,202 @@ export default function Landing() {
       <AnimatedBackground isMobile={isMobile} />
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 md:pt-35 pb-12 sm:pb-10 md:pb-18 overflow-hidden">
-        <div className="max-w-6xl relative z-10 w-full">
-          {/* Hero Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-10 items-center">
-            {/* Left Section - Main Message */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="relative"
-            >
-              {/* Main Heading */}
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-3xl sm:text-5xl md:text-6xl lg:text-6xl font-extrabold leading-[1.15] mb-4 sm:mb-6 tracking-tight sm:pt-0 pt-10"
+      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-20 md:pt-28 pb-12 sm:pb-10 md:pb-16 overflow-hidden min-h-[calc(100vh)]">
+        <div className="max-w-5xl relative z-10 w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
+          {/* ── LEFT: Headline + bullets ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex-1 flex flex-col justify-center items-center lg:items-start w-full"
+          >
+            <div className="max-w-xl w-full text-center lg:text-left space-y-8">
+              <h1
+                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight"
+                style={{ color: "#2F3C96" }}
               >
-                <div className="mb-1 sm:mb-2">
-                  <AuroraText speed={2.5} colors={["#2F3C96"]}>
-                    Health Research
-                  </AuroraText>
-                </div>
-                <div>
-                  <AuroraText speed={2.5} colors={["#2F3C96"]}>
-                    Made Simple
-                  </AuroraText>
-                </div>
-              </motion.h1>
+                Empower Your
+                <br />
+                Health Decisions
+              </h1>
 
-              {/* Simplified Value Props - Collapsible on Mobile */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-                className="mb-4 sm:mb-6"
-              >
-                {isMobile ? (
-                  <>
-                    <button
-                      onClick={() => setIsBulletsExpanded(!isBulletsExpanded)}
-                      className="flex items-center justify-between w-full mb-2"
-                      style={{ color: "#2F3C96" }}
+              <ul className="space-y-6 flex flex-col items-center lg:items-start">
+                {[
+                  {
+                    text: "Learn more about you and your loved one's health",
+                    icon: <Heart className="w-4 h-4" />,
+                  },
+                  {
+                    text: "Learn and participate in latest treatments",
+                    icon: <Beaker className="w-4 h-4" />,
+                  },
+                  {
+                    text: "Connect with others who are experiencing the same",
+                    icon: <Users className="w-4 h-4" />,
+                  },
+                ].map(({ text, icon }, idx) => (
+                  <motion.li
+                    key={idx}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.15 + idx * 0.1 }}
+                    className="flex items-center gap-4 text-left w-full"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                      style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
                     >
-                      <span className="text-sm font-semibold">
-                        Key Features
-                      </span>
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
-                          isBulletsExpanded ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {isBulletsExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="space-y-2"
-                      >
-                        {[
-                          "Find clinical trials tailored to your needs",
-                          "Connect with researchers and experts",
-                          "Connect and collaborate in well-moderated forums",
-                        ].map((text, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: idx * 0.1 }}
-                            className="flex items-center gap-2"
-                          >
-                            <div
-                              className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                              style={{ backgroundColor: "#E8E0EF" }}
-                            >
-                              <CheckCircle2
-                                className="w-3 h-3"
-                                style={{ color: "#2F3C96" }}
-                              />
-                            </div>
-                            <span
-                              className="text-xs font-medium leading-tight"
-                              style={{ color: "#2F3C96" }}
-                            >
-                              {text}
-                            </span>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </>
-                ) : (
-                  <div className="space-y-2.5">
-                    {[
-                      "Find clinical trials tailored to your needs",
-                      "Connect with researchers and experts",
-                      "Connect and collaborate in well-moderated forums",
-                    ].map((text, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4 + idx * 0.1 }}
-                        className="flex items-center gap-2.5"
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: "#E8E0EF" }}
-                        >
-                          <CheckCircle2
-                            className="w-3.5 h-3.5"
-                            style={{ color: "#2F3C96" }}
-                          />
-                        </div>
-                        <span
-                          className="text-sm font-medium leading-tight"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          {text}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
+                      {icon}
+                    </div>
+                    <span
+                      className="text-[16px] md:text-lg font-bold md:whitespace-nowrap"
+                      style={{ color: "#474F96" }}
+                    >
+                      {text}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
 
-            {/* Right Section - Get Started */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
+          {/* ── Vertical Separator (desktop only) ── */}
+          <motion.div
+            initial={{ opacity: 0, scaleY: 0 }}
+            animate={{ opacity: 1, scaleY: 1 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            className="hidden lg:block flex-shrink-0 self-stretch"
+            style={{ originY: "50%" }}
+          >
+            <div
+              className="w-px h-full mx-auto"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent, #D0C4E2 25%, #D0C4E2 75%, transparent)",
+                minHeight: 200,
+              }}
+            />
+          </motion.div>
+
+          {/* ── RIGHT: Duolingo-style CTAs ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex-shrink-0 w-full max-w-[280px] flex flex-col justify-center gap-4 items-center lg:items-start"
+          >
+            {!user ? (
+              <div className="flex flex-col gap-4 w-full">
+                {/* Primary — solid box button */}
+                <button
+                  onClick={() => navigate("/onboarding")}
+                  className="w-full py-4 rounded-lg font-bold text-[15px] uppercase tracking-wider border border-[#1c2459] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96] hover:opacity-90"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  Get Started
+                </button>
+
+                {/* Secondary — outlined box button */}
+                <button
+                  onClick={() => navigate("/signin")}
+                  className="w-full py-4 rounded-lg font-bold text-[15px] uppercase tracking-wider border-2 border-[#D0C4E2] bg-white transition-colors hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D0C4E2]"
+                  style={{
+                    borderColor: "#D0C4E2",
+                    color: "#2F3C96",
+                    backgroundColor: "#FFFFFF",
+                  }}
+                >
+                  I already have an account
+                </button>
+              </div>
+            ) : (
               <div
-                className="rounded-2xl sm:rounded-3xl pt-6 sm:pt-8 px-6 sm:px-8 md:px-10 pb-6 sm:pb-8 md:pb-10 border-2 sm:shadow-2xl overflow-hidden text-center"
+                className="flex flex-col gap-5 w-full p-6 rounded-2xl border-2"
                 style={{
-                  backgroundColor: isMobile
-                    ? "transparent"
-                    : "rgba(245, 242, 248, 0.95)",
-                  borderColor: isMobile ? "transparent" : "#D0C4E2",
+                  borderColor: "#D0C4E2",
+                  backgroundColor: "rgba(245, 242, 248, 0.95)",
                 }}
               >
-                {/* Eyebrow / kicker */}
+                <p
+                  className="text-xl font-extrabold text-center lg:text-left"
+                  style={{ color: "#2F3C96" }}
+                >
+                  Welcome back, {landingWelcomeName}!
+                </p>
 
-                {/* Headline - only for non-logged-in users */}
-                {!user && (
-                  <motion.h3
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="text-lg sm:text-2xl font-extrabold mb-6 sm:mb-7"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Join the Platform
-                  </motion.h3>
-                )}
+                <button
+                  onClick={handleDashboardClick}
+                  className="w-full py-4 rounded-xl font-bold text-[15px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459] flex items-center justify-center gap-2"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  Go to Dashboard
+                </button>
 
-                {/* CTA */}
-                <div className={!user ? "space-y-4" : "space-y-5 text-left"}>
-                  {user ? (
-                    <>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.35 }}
-                        className="text-left"
-                      >
-                        <p
-                          className="text-base sm:text-lg font-semibold"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          <AuroraText speed={2.5} colors={["#2F3C96"]}>
-                            Welcome back, {landingWelcomeName}
-                          </AuroraText>
-                        </p>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.45 }}
-                      >
-                        <ShinyButton
-                          onClick={handleDashboardClick}
-                          className="group relative w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-                          style={{
-                            backgroundColor: "#D0C4E2",
-                            color: "#2F3C96",
-                            borderWidth: "0px",
-                          }}
-                        >
-                          <div className="relative z-10 flex items-center justify-center gap-2">
-                            <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="font-bold text-sm sm:text-base">
-                              Go to Dashboard
-                            </span>
-                            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                          </div>
-                        </ShinyButton>
-                      </motion.div>
-
-                      {/* Info cards for signed-in users */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.55 }}
-                        className="mt-3"
-                      >
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          {/* People Followed */}
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4, delay: 0.6 }}
-                            className="p-3 rounded-lg border"
-                            style={{
-                              backgroundColor: "rgba(255, 255, 255, 0.7)",
-                              borderColor: "#D0C4E2",
-                            }}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <UserPlus
-                                className="w-4 h-4"
-                                style={{ color: "#2F3C96" }}
-                              />
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: "#2F3C96" }}
-                              >
-                                People Followed
-                              </span>
-                            </div>
-                            <p
-                              className="text-xl font-bold"
-                              style={{ color: "#2F3C96" }}
-                            >
-                              {userStats.peopleFollowed}
-                            </p>
-                          </motion.div>
-
-                          {/* Community Posts */}
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4, delay: 0.7 }}
-                            className="p-3 rounded-lg border"
-                            style={{
-                              backgroundColor: "rgba(255, 255, 255, 0.7)",
-                              borderColor: "#D0C4E2",
-                            }}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <FileText
-                                className="w-4 h-4"
-                                style={{ color: "#2F3C96" }}
-                              />
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: "#2F3C96" }}
-                              >
-                                Posts
-                              </span>
-                            </div>
-                            <p
-                              className="text-xl font-bold"
-                              style={{ color: "#2F3C96" }}
-                            >
-                              {userStats.communityPosts}
-                            </p>
-                          </motion.div>
-
-                          {/* Communities Joined */}
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.4, delay: 0.8 }}
-                            className="p-3 rounded-lg border col-span-2 sm:col-span-1"
-                            style={{
-                              backgroundColor: "rgba(255, 255, 255, 0.7)",
-                              borderColor: "#D0C4E2",
-                            }}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <MessageSquare
-                                className="w-4 h-4"
-                                style={{ color: "#2F3C96" }}
-                              />
-                              <span
-                                className="text-xs font-semibold"
-                                style={{ color: "#2F3C96" }}
-                              >
-                                Communities Joined
-                              </span>
-                            </div>
-                            <p
-                              className="text-xl font-bold"
-                              style={{ color: "#2F3C96" }}
-                            >
-                              {communitiesJoinedDisplay}
-                              </p>
-                          </motion.div>
-                        </div>
-                      </motion.div>
-                    </>
-                  ) : (
-                    <>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.5 }}
-                      >
-                        <ShinyButton
-                          onClick={() => navigate("/onboarding")}
-                          className="group relative w-full px-5 sm:px-6 py-4 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-                          style={{
-                            backgroundColor: "#D0C4E2",
-                            color: "#2F3C96",
-                            borderWidth: "0px",
-                          }}
-                        >
-                          <div className="relative z-10 flex items-center justify-center gap-2">
-                            <span className="font-bold text-base">
-                              Get Started
-                            </span>
-                            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
-                          </div>
-                        </ShinyButton>
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.55 }}
-                      >
-                        <ShinyButton
-                          onClick={() => navigate("/explore")}
-                          className="group relative w-full mt-0 px-5 sm:px-6 py-4 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-                          style={{
-                            backgroundColor: "#474F96",
-                            borderWidth: "0px",
-                          }}
-                        >
-                          <div
-                            className="relative z-10 flex items-center justify-center gap-2"
-                            style={{ color: "#FFFFFF" }}
-                          >
-                            <span className="font-bold text-base">Explore</span>
-                            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
-                          </div>
-                        </ShinyButton>
-                      </motion.div>
-                    </>
-                  )}
-
-                  {/* Add to Home Screen - mobile only, when not already installed */}
-                  {showAddToHomeButton && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 flex justify-center"
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
+                    <UserPlus
+                      className="w-5 h-5 mb-1"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: "#474F96" }}
                     >
-                      <button
-                        type="button"
-                        onClick={handleAddToHomeClick}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all active:scale-[0.98]"
-                        style={{
-                          backgroundColor: "rgba(245, 242, 248, 0.9)",
-                          borderColor: "#D0C4E2",
-                          color: "#2F3C96",
-                        }}
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        Add to Home Screen
-                      </button>
-                    </motion.div>
-                  )}
+                      Following
+                    </span>
+                    <span
+                      className="text-xl font-extrabold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {userStats.peopleFollowed}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
+                    <MessageSquare
+                      className="w-5 h-5 mb-1"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: "#474F96" }}
+                    >
+                      Communities
+                    </span>
+                    <span
+                      className="text-xl font-extrabold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {communitiesJoinedDisplay}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </motion.div>
-          </div>
+            )}
+
+            {/* Add to Home Screen - mobile only */}
+            {showAddToHomeButton && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-center lg:justify-start"
+              >
+                <button
+                  type="button"
+                  onClick={handleAddToHomeClick}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all active:scale-[0.98]"
+                  style={{
+                    backgroundColor: "rgba(245, 242, 248, 0.9)",
+                    borderColor: "#D0C4E2",
+                    color: "#2F3C96",
+                  }}
+                >
+                  <Smartphone className="w-4 h-4" />
+                  Add to Home Screen
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
       </section>
 

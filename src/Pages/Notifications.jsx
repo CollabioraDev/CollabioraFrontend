@@ -52,6 +52,7 @@ export default function Notifications() {
   const [acceptMeetingModal, setAcceptMeetingModal] = useState({
     open: false,
     requestId: null,
+    request: null, // full request for patient message, questions, preferred time
     meetingDate: "",
     meetingNotes: "",
   });
@@ -408,7 +409,7 @@ export default function Notifications() {
 
       if (response.ok) {
         toast.success("Meeting scheduled successfully!");
-        setAcceptMeetingModal({ open: false, requestId: null, meetingDate: "", meetingNotes: "" });
+        setAcceptMeetingModal({ open: false, requestId: null, request: null, meetingDate: "", meetingNotes: "" });
         const userId = user?._id || user?.id;
         loadMeetingRequests(userId);
         loadInsights(userId);
@@ -652,6 +653,39 @@ export default function Notifications() {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString();
+  }
+
+  /** Format date/time in user's local timezone for meetings (e.g. "Mar 15, 2025 at 2:30 PM") */
+  function formatInUserTime(dateInput, options = {}) {
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(date.getTime())) return "—";
+    const { dateOnly = false, includeTz = true } = options;
+    if (dateOnly) {
+      return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    }
+    const str = date.toLocaleString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    if (includeTz) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return `${str} (${tz})`;
+    }
+    return str;
+  }
+
+  /** Build datetime-local value (YYYY-MM-DDTHH:mm) in local time from date + time string */
+  function toLocalDatetimeLocalValue(dateStr, timeStr) {
+    if (!dateStr || !timeStr) return "";
+    const [h, m] = timeStr.split(":").map(Number);
+    const [y, mo, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, mo - 1, d, h || 0, m || 0);
+    return `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   }
 
   function handleNotificationClick(notification) {
@@ -1434,9 +1468,20 @@ export default function Notifications() {
                             {request.preferredDate && (
                               <p className="text-xs text-slate-600 mb-1">
                                 <Calendar className="w-3 h-3 inline mr-1" />
-                                Preferred: {new Date(request.preferredDate).toLocaleDateString()}
-                                {request.preferredTime && ` at ${request.preferredTime}`}
+                                <span className="font-medium text-slate-700">Requested time (your time):</span>{" "}
+                                {formatInUserTime(
+                                  request.preferredTime
+                                    ? `${request.preferredDate}T${request.preferredTime}:00`
+                                    : request.preferredDate,
+                                  { includeTz: true }
+                                )}
                               </p>
+                            )}
+                            {request.patientQuestions && (
+                              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-slate-700">
+                                <span className="font-semibold text-amber-800">Patient&apos;s questions:</span>
+                                <p className="mt-0.5 whitespace-pre-wrap">{request.patientQuestions}</p>
+                              </div>
                             )}
                             <p className="text-xs text-slate-500">
                               {formatDate(request.createdAt)}
@@ -1449,7 +1494,8 @@ export default function Notifications() {
                               setAcceptMeetingModal({
                                 open: true,
                                 requestId: request._id,
-                                meetingDate: request.preferredDate ? new Date(request.preferredDate).toISOString().slice(0, 16) : "",
+                                request,
+                                meetingDate: toLocalDatetimeLocalValue(request.preferredDate, request.preferredTime || "09:00"),
                                 meetingNotes: "",
                               });
                             }}
@@ -1523,10 +1569,18 @@ export default function Notifications() {
                                 </span>
                               )}
                             </div>
-                            {meeting.meetingDate && (
+                            {(meeting.meetingDate || meeting.preferredDate) && (
                               <p className="text-sm text-slate-700 mb-2">
                                 <Calendar className="w-3 h-3 inline mr-1" />
-                                {meetingDate.toLocaleString()}
+                                <span className="font-medium text-slate-800">Your time:</span>{" "}
+                                {formatInUserTime(
+                                  meeting.meetingDate
+                                    ? meeting.meetingDate
+                                    : meeting.preferredTime
+                                      ? `${meeting.preferredDate}T${meeting.preferredTime}:00`
+                                      : `${meeting.preferredDate}T12:00:00`,
+                                  { includeTz: true }
+                                )}
                               </p>
                             )}
                             {meeting.meetingNotes && (
@@ -1575,6 +1629,22 @@ export default function Notifications() {
                               <p className="text-xs text-slate-600 mb-1">
                                 {request.message}
                               </p>
+                              {request.preferredDate && (
+                                <p className="text-xs text-slate-600 mb-1">
+                                  <span className="font-medium">Your requested time:</span>{" "}
+                                  {formatInUserTime(
+                                    request.preferredTime
+                                      ? `${request.preferredDate}T${request.preferredTime}:00`
+                                      : `${request.preferredDate}T12:00:00`,
+                                    { includeTz: true }
+                                  )}
+                                </p>
+                              )}
+                              {request.patientQuestions && (
+                                <p className="text-xs text-slate-600 italic mb-1">
+                                  Questions: {request.patientQuestions}
+                                </p>
+                              )}
                               <p className="text-xs text-slate-500">
                                 {formatDate(request.createdAt)}
                               </p>
@@ -1776,15 +1846,47 @@ export default function Notifications() {
 
         {/* Accept Meeting Modal */}
         {acceptMeetingModal.open && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 border border-slate-200">
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">
-                Schedule Meeting
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
+              <h3 className="text-xl font-bold text-slate-900 mb-4">
+                Accept & schedule meeting
               </h3>
+
+              {acceptMeetingModal.request && (
+                <div className="mb-4 space-y-3 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                  <p className="text-sm font-semibold text-slate-800">
+                    {acceptMeetingModal.request.patientId?.username || "Patient"}
+                  </p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                    {acceptMeetingModal.request.message}
+                  </p>
+                  {acceptMeetingModal.request.preferredDate && (
+                    <p className="text-xs text-slate-600">
+                      <Calendar className="w-3.5 h-3.5 inline mr-1 align-middle" />
+                      <span className="font-medium">Requested time (your time):</span>{" "}
+                      {formatInUserTime(
+                        acceptMeetingModal.request.preferredTime
+                          ? `${acceptMeetingModal.request.preferredDate}T${acceptMeetingModal.request.preferredTime}:00`
+                          : acceptMeetingModal.request.preferredDate,
+                        { includeTz: true }
+                      )}
+                    </p>
+                  )}
+                  {acceptMeetingModal.request.patientQuestions && (
+                    <div className="pt-2 border-t border-slate-200">
+                      <p className="text-xs font-semibold text-amber-800 mb-1">Patient&apos;s questions:</p>
+                      <p className="text-sm text-slate-700 whitespace-pre-wrap bg-amber-50/80 rounded p-2">
+                        {acceptMeetingModal.request.patientQuestions}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Meeting Date & Time *
+                    Meeting date & time (your time) *
                   </label>
                   <input
                     type="datetime-local"
@@ -1801,7 +1903,7 @@ export default function Notifications() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Meeting Notes (Optional)
+                    Reply to patient (optional)
                   </label>
                   <textarea
                     value={acceptMeetingModal.meetingNotes}
@@ -1813,8 +1915,9 @@ export default function Notifications() {
                     }
                     rows={3}
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Add any notes about the meeting..."
+                    placeholder="e.g. Confirmed! Please bring your recent lab results. We'll meet via the link I'll send."
                   />
+                  <p className="text-xs text-slate-500 mt-1">This will be shared with the patient when you schedule.</p>
                 </div>
                 <div className="flex gap-3 pt-2">
                   <button
@@ -1828,13 +1931,14 @@ export default function Notifications() {
                     disabled={!acceptMeetingModal.meetingDate}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Schedule Meeting
+                    Schedule meeting
                   </button>
                   <button
                     onClick={() =>
                       setAcceptMeetingModal({
                         open: false,
                         requestId: null,
+                        request: null,
                         meetingDate: "",
                         meetingNotes: "",
                       })
