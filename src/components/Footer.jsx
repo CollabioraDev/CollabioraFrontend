@@ -33,7 +33,9 @@ export default function Footer() {
               className="text-sm font-semibold mb-2"
               style={{ color: "#2F3C96" }}
             >
-              Health Research Made Simple
+              Empower Your
+              <br />
+              Health Decisions
             </p>
             <p className="text-xs leading-relaxed" style={{ color: "#787878" }}>
               Making health research transparent, ethical, and accessible to everyone. Join the movement to humanize science.
