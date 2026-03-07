@@ -161,13 +161,17 @@ export default function OnboardPatient() {
 
     try {
       const draft = JSON.parse(raw);
-      console.log("[OnboardPatient] Restoring form draft from sessionStorage", draft);
+      console.log(
+        "[OnboardPatient] Restoring form draft from sessionStorage",
+        draft,
+      );
 
       // Restore all fields
       if (draft.firstName) setFirstName(draft.firstName);
       if (draft.lastName) setLastName(draft.lastName);
       if (draft.handle) setHandle(draft.handle);
-      if (draft.selectedConditions?.length) setSelectedConditions(draft.selectedConditions);
+      if (draft.selectedConditions?.length)
+        setSelectedConditions(draft.selectedConditions);
       if (draft.gender) setGender(draft.gender);
       if (draft.city) setCity(draft.city);
       if (draft.country) setCountry(draft.country);
@@ -182,27 +186,40 @@ export default function OnboardPatient() {
         }
       }
       if (draft.agreedToTerms) setAgreedToTerms(draft.agreedToTerms);
-      if (draft.isMedicalProfessional !== null && draft.isMedicalProfessional !== undefined) {
+      if (
+        draft.isMedicalProfessional !== null &&
+        draft.isMedicalProfessional !== undefined
+      ) {
         setIsMedicalProfessional(draft.isMedicalProfessional);
       }
-      if (draft.institutionAffiliation) setInstitutionAffiliation(draft.institutionAffiliation);
-      if (draft.educationEntries?.length) setEducationEntries(draft.educationEntries);
-      if (draft.isAcademicResearcher !== null && draft.isAcademicResearcher !== undefined) {
+      if (draft.institutionAffiliation)
+        setInstitutionAffiliation(draft.institutionAffiliation);
+      if (draft.educationEntries?.length)
+        setEducationEntries(draft.educationEntries);
+      if (
+        draft.isAcademicResearcher !== null &&
+        draft.isAcademicResearcher !== undefined
+      ) {
         setIsAcademicResearcher(draft.isAcademicResearcher);
       }
       if (draft.orcid) setOrcid(draft.orcid);
       if (draft.hasOrcid !== undefined) setHasOrcid(draft.hasOrcid);
-      if (draft.verificationDocumentUrl) setVerificationDocumentUrl(draft.verificationDocumentUrl);
+      if (draft.verificationDocumentUrl)
+        setVerificationDocumentUrl(draft.verificationDocumentUrl);
       if (draft.profession) setProfession(draft.profession);
       if (draft.academicRank) setAcademicRank(draft.academicRank);
       if (draft.primarySpecialty) setPrimarySpecialty(draft.primarySpecialty);
-      if (draft.subspecialtySelectValue) setSubspecialtySelectValue(draft.subspecialtySelectValue);
+      if (draft.subspecialtySelectValue)
+        setSubspecialtySelectValue(draft.subspecialtySelectValue);
       if (draft.subspecialties?.length) setSubspecialties(draft.subspecialties);
-      if (draft.researchInterests?.length) setResearchInterests(draft.researchInterests);
+      if (draft.researchInterests?.length)
+        setResearchInterests(draft.researchInterests);
       if (draft.certifications?.length) setCertifications(draft.certifications);
       if (draft.skills?.length) setSkills(draft.skills);
-      if (draft.interestedInMeetings) setInterestedInMeetings(draft.interestedInMeetings);
-      if (draft.interestedInForums) setInterestedInForums(draft.interestedInForums);
+      if (draft.interestedInMeetings)
+        setInterestedInMeetings(draft.interestedInMeetings);
+      if (draft.interestedInForums)
+        setInterestedInForums(draft.interestedInForums);
       if (draft.meetingRate) setMeetingRate(draft.meetingRate);
 
       // Restore the step the user was on
@@ -214,7 +231,10 @@ export default function OnboardPatient() {
         setShouldAutoComplete(true);
       } else {
         const restoredStep = draft.step || 2;
-        const restoredMax = Math.max(draft.maxStepReached || restoredStep, restoredStep);
+        const restoredMax = Math.max(
+          draft.maxStepReached || restoredStep,
+          restoredStep,
+        );
         setStep(restoredStep);
         setMaxStepReached(restoredMax);
       }
@@ -323,11 +343,14 @@ export default function OnboardPatient() {
               if (r.interests?.length) setResearchInterests(r.interests);
               if (r.certifications?.length) setCertifications(r.certifications);
               if (r.skills?.length) setSkills(r.skills);
-              if (r.institutionAffiliation) setInstitutionAffiliation(r.institutionAffiliation);
+              if (r.institutionAffiliation)
+                setInstitutionAffiliation(r.institutionAffiliation);
               if (r.orcid) setOrcid(r.orcid);
               if (r.education?.length) setEducationEntries(r.education);
-              if (r.interestedInMeetings !== undefined) setInterestedInMeetings(r.interestedInMeetings);
-              if (r.interestedInForums !== undefined) setInterestedInForums(r.interestedInForums);
+              if (r.interestedInMeetings !== undefined)
+                setInterestedInMeetings(r.interestedInMeetings);
+              if (r.interestedInForums !== undefined)
+                setInterestedInForums(r.interestedInForums);
               if (r.meetingRate) setMeetingRate(String(r.meetingRate));
               if (r.gender) setGender(r.gender);
               if (r.location) {
@@ -351,7 +374,10 @@ export default function OnboardPatient() {
             setAgreedToTerms(true);
           })
           .catch((err) => {
-            console.error("[OnboardPatient] Failed to fetch profile for returning user:", err);
+            console.error(
+              "[OnboardPatient] Failed to fetch profile for returning user:",
+              err,
+            );
           });
       }
     } catch (e) {
@@ -378,11 +404,18 @@ export default function OnboardPatient() {
           // Restore full form state so we stay on step 2 with researcher/institution preserved
           if (formDraft) {
             if (formDraft.step != null) setStep(formDraft.step);
-            if (formDraft.maxStepReached != null) setMaxStepReached(formDraft.maxStepReached);
-            if (formDraft.isMedicalProfessional !== null && formDraft.isMedicalProfessional !== undefined) {
+            if (formDraft.maxStepReached != null)
+              setMaxStepReached(formDraft.maxStepReached);
+            if (
+              formDraft.isMedicalProfessional !== null &&
+              formDraft.isMedicalProfessional !== undefined
+            ) {
               setIsMedicalProfessional(formDraft.isMedicalProfessional);
             }
-            if (formDraft.isAcademicResearcher !== null && formDraft.isAcademicResearcher !== undefined) {
+            if (
+              formDraft.isAcademicResearcher !== null &&
+              formDraft.isAcademicResearcher !== undefined
+            ) {
               setIsAcademicResearcher(formDraft.isAcademicResearcher);
             }
             if (formDraft.institutionAffiliation?.trim()) {
@@ -391,14 +424,17 @@ export default function OnboardPatient() {
             if (formDraft.educationEntries?.length) {
               setEducationEntries(formDraft.educationEntries);
             }
-            if (formDraft.profession?.trim()) setProfession(formDraft.profession);
-            if (formDraft.academicRank?.trim()) setAcademicRank(formDraft.academicRank);
+            if (formDraft.profession?.trim())
+              setProfession(formDraft.profession);
+            if (formDraft.academicRank?.trim())
+              setAcademicRank(formDraft.academicRank);
           } else if (draft) {
             // Fallback to unified draft only
             if (draft.institutionAffiliation?.trim()) {
               setInstitutionAffiliation(draft.institutionAffiliation);
             }
-            if (draft.educationEntries) setEducationEntries(draft.educationEntries);
+            if (draft.educationEntries)
+              setEducationEntries(draft.educationEntries);
             if (draft.profession?.trim()) setProfession(draft.profession);
             if (draft.academicRank?.trim()) setAcademicRank(draft.academicRank);
           }
@@ -428,7 +464,8 @@ export default function OnboardPatient() {
             if (
               profile.educations &&
               profile.educations.length > 0 &&
-              (!formDraft?.educationEntries?.length && !draft?.educationEntries?.length)
+              !formDraft?.educationEntries?.length &&
+              !draft?.educationEntries?.length
             ) {
               const orcidEducations = profile.educations
                 .slice(0, 3)
@@ -477,7 +514,10 @@ export default function OnboardPatient() {
     // If this is an OAuth flow (oauth=true in URL), always respect the URL step
     // Don't try to "resume" or redirect based on user state
     if (isOAuthFlow) {
-      console.log("[OnboardPatient] OAuth flow detected, respecting URL step:", step);
+      console.log(
+        "[OnboardPatient] OAuth flow detected, respecting URL step:",
+        step,
+      );
       return;
     }
 
@@ -1253,7 +1293,9 @@ export default function OnboardPatient() {
 
     // Wait for all restored state to be applied by React
     const timer = setTimeout(() => {
-      console.log("[OnboardPatient] Auto-completing profile after OAuth restore");
+      console.log(
+        "[OnboardPatient] Auto-completing profile after OAuth restore",
+      );
       setShouldAutoComplete(false);
       handleOAuthComplete();
     }, 300);
@@ -2200,7 +2242,9 @@ export default function OnboardPatient() {
                           <UniversityInput
                             value={institutionAffiliation}
                             onChange={setInstitutionAffiliation}
-                            location={(city || country) ? getLocationData() : null}
+                            location={
+                              city || country ? getLocationData() : null
+                            }
                             strict
                             placeholder="Search and select your institution"
                             maxSuggestions={10}
@@ -3490,11 +3534,16 @@ export default function OnboardPatient() {
                         }}
                       >
                         {locationLoading ? (
-                          <Loader2 size={14} className="animate-spin shrink-0" />
+                          <Loader2
+                            size={14}
+                            className="animate-spin shrink-0"
+                          />
                         ) : (
                           <MapPin size={14} className="shrink-0" />
                         )}
-                        {locationLoading ? "Detecting…" : "Use my current location"}
+                        {locationLoading
+                          ? "Detecting…"
+                          : "Use my current location"}
                       </button>
                     </div>
                     {locationError && (
@@ -3521,7 +3570,10 @@ export default function OnboardPatient() {
                           suppressDropdown={locationFilledFromGeo}
                           inputClassName="w-full py-1.5 px-2.5 text-sm border rounded-lg transition-all focus:outline-none focus:ring-2"
                         />
-                        <p className="text-xs mt-1" style={{ color: "#787878" }}>
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: "#787878" }}
+                        >
                           Type to see country suggestions
                         </p>
                       </div>
@@ -3542,7 +3594,10 @@ export default function OnboardPatient() {
                           suppressDropdown={locationFilledFromGeo}
                           inputClassName="w-full py-1.5 px-2.5 text-sm border rounded-lg transition-all focus:outline-none focus:ring-2"
                         />
-                        <p className="text-xs mt-1" style={{ color: "#787878" }}>
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: "#787878" }}
+                        >
                           Type to see city suggestions
                         </p>
                       </div>

@@ -46,7 +46,157 @@ import {
   TrendingUp,
   TrendingDown,
   Activity,
+  Download,
 } from "lucide-react";
+import { jsPDF } from "jspdf";
+
+// --- Export helpers for experts/patients (TXT & PDF) ---
+function downloadAsText(content, filename) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvCell(val) {
+  if (val == null) return "";
+  const s = String(val).trim();
+  if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadAsCsv(content, filename) {
+  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportExpertsAsTxt(experts) {
+  const lines = ["Collabiora – Experts / Researchers Export", "Generated: " + new Date().toLocaleString(), ""];
+  experts.forEach((e, i) => {
+    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    lines.push(`${i + 1}. ${e.name || "—"}`);
+    if (e.email) lines.push(`   Email: ${e.email}`);
+    lines.push(`   Verified: ${e.isVerified ? "Yes" : "No"}`);
+    if (loc) lines.push(`   Location: ${loc}`);
+    if (e.specialties?.length) lines.push(`   Specialties: ${e.specialties.join(", ")}`);
+    if (e.accountCreated) lines.push(`   Account created: ${new Date(e.accountCreated).toLocaleDateString()}`);
+    lines.push("");
+  });
+  downloadAsText(lines.join("\n"), "experts-export.txt");
+}
+
+function exportExpertsAsPdf(experts) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  let y = 15;
+  doc.setFontSize(14);
+  doc.text("Collabiora – Experts / Researchers", 14, y);
+  y += 8;
+  doc.setFontSize(9);
+  doc.text("Generated: " + new Date().toLocaleString(), 14, y);
+  y += 10;
+  doc.setFontSize(10);
+  experts.forEach((e, i) => {
+    if (y > 270) { doc.addPage(); y = 15; }
+    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    doc.setFont("helvetica", "bold");
+    doc.text(`${i + 1}. ${(e.name || "—").substring(0, 60)}`, 14, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    if (e.email) { doc.text(`Email: ${e.email.substring(0, 80)}`, 14, y); y += 5; }
+    doc.text(`Verified: ${e.isVerified ? "Yes" : "No"}`, 14, y); y += 5;
+    if (loc) { doc.text(`Location: ${loc.substring(0, 80)}`, 14, y); y += 5; }
+    if (e.specialties?.length) { doc.text(`Specialties: ${e.specialties.join(", ").substring(0, 100)}`, 14, y); y += 5; }
+    if (e.accountCreated) { doc.text(`Account created: ${new Date(e.accountCreated).toLocaleDateString()}`, 14, y); y += 5; }
+    y += 4;
+  });
+  doc.save("experts-export.pdf");
+}
+
+function exportExpertsAsCsv(experts) {
+  const headers = ["#", "Name", "Email", "Verified", "Location", "Specialties", "Account created"];
+  const rows = experts.map((e, i) => {
+    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    return [
+      i + 1,
+      e.name || "",
+      e.email || "",
+      e.isVerified ? "Yes" : "No",
+      loc,
+      (e.specialties && e.specialties.length) ? e.specialties.join("; ") : "",
+      e.accountCreated ? new Date(e.accountCreated).toLocaleDateString() : "",
+    ].map(escapeCsvCell).join(",");
+  });
+  const csv = [headers.map(escapeCsvCell).join(","), ...rows].join("\r\n");
+  downloadAsCsv(csv, "experts-export.csv");
+}
+
+function exportPatientsAsTxt(patients) {
+  const lines = ["Collabiora – Patients Export", "Generated: " + new Date().toLocaleString(), ""];
+  patients.forEach((p, i) => {
+    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    lines.push(`${i + 1}. ${p.name || "—"}`);
+    if (p.email) lines.push(`   Email: ${p.email}`);
+    if (loc) lines.push(`   Location: ${loc}`);
+    if (p.conditions?.length) lines.push(`   Conditions: ${p.conditions.join(", ")}`);
+    if (p.accountCreated) lines.push(`   Account created: ${new Date(p.accountCreated).toLocaleDateString()}`);
+    lines.push("");
+  });
+  downloadAsText(lines.join("\n"), "patients-export.txt");
+}
+
+function exportPatientsAsPdf(patients) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  let y = 15;
+  doc.setFontSize(14);
+  doc.text("Collabiora – Patients", 14, y);
+  y += 8;
+  doc.setFontSize(9);
+  doc.text("Generated: " + new Date().toLocaleString(), 14, y);
+  y += 10;
+  doc.setFontSize(10);
+  patients.forEach((p, i) => {
+    if (y > 270) { doc.addPage(); y = 15; }
+    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    doc.setFont("helvetica", "bold");
+    doc.text(`${i + 1}. ${(p.name || "—").substring(0, 60)}`, 14, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    if (p.email) { doc.text(`Email: ${p.email.substring(0, 80)}`, 14, y); y += 5; }
+    if (loc) { doc.text(`Location: ${loc.substring(0, 80)}`, 14, y); y += 5; }
+    if (p.conditions?.length) { doc.text(`Conditions: ${p.conditions.join(", ").substring(0, 100)}`, 14, y); y += 5; }
+    if (p.accountCreated) { doc.text(`Account created: ${new Date(p.accountCreated).toLocaleDateString()}`, 14, y); y += 5; }
+    y += 4;
+  });
+  doc.save("patients-export.pdf");
+}
+
+function exportPatientsAsCsv(patients) {
+  const headers = ["#", "Name", "Email", "Location", "Conditions", "Account created"];
+  const rows = patients.map((p, i) => {
+    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    return [
+      i + 1,
+      p.name || "",
+      p.email || "",
+      loc,
+      (p.conditions && p.conditions.length) ? p.conditions.join("; ") : "",
+      p.accountCreated ? new Date(p.accountCreated).toLocaleDateString() : "",
+    ].map(escapeCsvCell).join(",");
+  });
+  const csv = [headers.map(escapeCsvCell).join(","), ...rows].join("\r\n");
+  downloadAsCsv(csv, "patients-export.csv");
+}
 
 // Mini SVG line chart for overview (no deps)
 function MiniLineChart({
@@ -246,12 +396,12 @@ function getSurveyFromReview(review) {
 
 const SECTIONS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "search", label: "Search Management", icon: Search },
-  { id: "experts", label: "Experts Management", icon: User },
-  { id: "patients", label: "Patient Management", icon: UserCircle },
-  { id: "forums", label: "Forums Management", icon: MessageSquare },
-  { id: "posts", label: "Discovery Management", icon: FileText },
-  { id: "community", label: "Community Management", icon: Users },
+  { id: "search", label: "Search", icon: Search },
+  { id: "experts", label: "Experts", icon: User },
+  { id: "patients", label: "Patients", icon: UserCircle },
+  { id: "forums", label: "Forums", icon: MessageSquare },
+  { id: "posts", label: "Discovery", icon: FileText },
+  { id: "community", label: "Community", icon: Users },
   { id: "work", label: "Work Moderation", icon: FileCheck },
   { id: "reviews", label: "Reviews", icon: Star },
   { id: "page-feedback", label: "Page Feedback", icon: MessageCircle },
@@ -265,18 +415,10 @@ const SECTIONS = [
 ];
 
 const SIDEBAR_GROUPS = [
+  { title: "MENU", items: ["overview", "work"] },
   {
-    title: "MENU",
-    items: [
-      "overview",
-      "search",
-      "experts",
-      "patients",
-      "forums",
-      "posts",
-      "community",
-      "work",
-    ],
+    title: "MANAGEMENT",
+    items: ["search", "experts", "patients", "forums", "posts", "community"],
   },
   { title: "SUPPORT", items: ["reviews", "page-feedback", "contacts"] },
   { title: "OTHERS", items: ["onboarding-cleanup", "meeting-requests"] },
@@ -1430,6 +1572,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminEmail");
     navigate("/admin/login");
     toast.success("Logged out successfully");
   };
@@ -2291,7 +2434,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen flex bg-brand-light-gray items-center justify-center">
+        <div className="min-h-screen flex bg-slate-50 items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
         </div>
       </Layout>
@@ -2301,28 +2444,41 @@ export default function AdminDashboard() {
   const verifiedCount = experts.filter((e) => e.isVerified).length;
   const unverifiedCount = experts.filter((e) => !e.isVerified).length;
 
+  const activeSectionLabel = SECTIONS.find((s) => s.id === activeSection)?.label ?? "Dashboard";
+  const adminEmail = typeof localStorage !== "undefined" ? localStorage.getItem("adminEmail") || "" : "";
+
   return (
     <Layout>
-      <div className="min-h-screen flex bg-brand-light-gray">
-        {/* Sidebar - platform pink/lavender theme */}
-        <aside className="w-64 shrink-0 bg-brand-purple-100 flex flex-col fixed left-0 top-0 bottom-0 z-20 shadow-xl border-r border-brand-purple-200">
-          <div className="p-4 border-b border-brand-purple-200 flex items-center gap-2">
-            <img
-              src="/logo1.png"
-              alt="Collabiora"
-              className="h-8 w-8 shrink-0 object-contain"
-            />
-            <span className="font-semibold text-brand-royal-blue">
-              Collabiora Admin
-            </span>
+      <div className="min-h-screen flex bg-slate-50/80">
+        {/* Sidebar — site colour (light pink/lavender) */}
+        <aside className="w-60 shrink-0 flex flex-col fixed left-0 top-0 bottom-0 z-20 bg-brand-purple-100 border-r border-brand-purple-200 shadow-sm">
+          <div className="shrink-0 px-4 py-3 flex items-center gap-3 border-b border-brand-purple-200">
+            <div className="w-9 h-9 rounded-lg bg-brand-royal-blue/10 flex items-center justify-center shrink-0">
+              <img
+                src="/logo1.png"
+                alt="Collabiora"
+                className="h-5 w-5 object-contain"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="font-semibold text-brand-royal-blue text-sm block truncate">
+                Collabiora
+              </span>
+              <span className="text-[11px] text-brand-royal-blue/80 font-medium block">Admin</span>
+              {adminEmail ? (
+                <span className="text-[10px] text-brand-royal-blue/70 truncate block mt-0.5" title={adminEmail}>
+                  {adminEmail}
+                </span>
+              ) : null}
+            </div>
           </div>
-          <nav className="flex-1 overflow-y-auto scrollbar-hide py-4">
+          <nav className="flex-1 overflow-y-auto overscroll-contain py-3">
             {SIDEBAR_GROUPS.map((group) => (
-              <div key={group.title} className="mb-6">
-                <p className="text-[11px] font-semibold text-brand-royal-blue/80 uppercase tracking-wider px-4 mb-2">
+              <div key={group.title} className="mb-5">
+                <p className="text-[10px] font-semibold text-brand-royal-blue/70 uppercase tracking-widest px-3 mb-1.5">
                   {group.title}
                 </p>
-                <ul className="space-y-0.5">
+                <ul className="space-y-0.5 px-2">
                   {group.items.map((id) => {
                     const section = SECTIONS.find((s) => s.id === id);
                     if (!section) return null;
@@ -2333,17 +2489,14 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => setActiveSection(id)}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-all border-l-4 border-transparent ${
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition-colors rounded-lg ${
                             isActive
-                              ? "bg-brand-royal-blue/10 text-brand-royal-blue border-brand-royal-blue"
-                              : "text-brand-royal-blue/90 hover:bg-brand-purple-200/60 hover:text-brand-royal-blue"
+                              ? "bg-brand-royal-blue text-white shadow-sm"
+                              : "text-brand-royal-blue/90 hover:bg-brand-purple-200/70 hover:text-brand-royal-blue"
                           }`}
                         >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span className="flex-1 truncate">
-                            {section.label}
-                          </span>
-                          <ChevronDown className="w-4 h-4 shrink-0 opacity-70" />
+                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-brand-royal-blue/80"}`} />
+                          <span className="flex-1 truncate">{section.label}</span>
                         </button>
                       </li>
                     );
@@ -2352,20 +2505,24 @@ export default function AdminDashboard() {
               </div>
             ))}
           </nav>
-          <div className="p-4 border-t border-brand-purple-200">
-            <Button
+          <div className="p-3 border-t border-brand-purple-200">
+            <button
+              type="button"
               onClick={handleLogout}
-              variant="ghost"
-              className="w-full flex items-center justify-center gap-2 text-brand-royal-blue hover:text-brand-royal-blue hover:bg-brand-purple-200/60 rounded-lg py-2.5"
+              className="w-full flex items-center justify-center gap-2 text-brand-royal-blue/90 hover:text-brand-royal-blue hover:bg-brand-purple-200/70 rounded-lg py-2.5 text-sm font-medium transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
+              LogOut
+            </button>
           </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 ml-64 relative">
+        <main className="flex-1 min-w-0 ml-60 relative">
+          {/* Top bar — section title (site colour) */}
+          <header className="sticky top-0 z-10 h-14 shrink-0 flex items-center px-6 bg-brand-purple-100/95 backdrop-blur-sm border-b border-brand-purple-200/80 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
+            <h1 className="text-lg font-semibold text-brand-royal-blue">{activeSectionLabel}</h1>
+          </header>
           <div className="p-6 space-y-6">
             {activeSection === "overview" &&
               (() => {
@@ -2403,8 +2560,8 @@ export default function AdminDashboard() {
                       ) : (
                         <>
                           {/* Total patients & researchers */}
-                          <div className="rounded-xl border border-[rgba(208,196,226,0.4)] bg-white/90 p-3 shadow-sm">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                               Site totals
                             </h3>
                             <p className="text-sm text-gray-700">
@@ -2421,8 +2578,8 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* This Week Summary */}
-                          <div className="rounded-xl border border-[rgba(208,196,226,0.4)] bg-white/90 p-3 shadow-sm">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                               This week summary
                             </h3>
                             <p className="text-sm text-gray-700">
@@ -2459,8 +2616,8 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Row 1 — Smart KPI cards with trends */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <div className="bg-white rounded-xl border border-brand-gray-100 p-4 shadow-sm hover:shadow transition-shadow">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
                                 <UserCircle className="w-5 h-5 text-brand-royal-blue" />
                                 {newJoinersLastMonth !== undefined && (
@@ -2488,7 +2645,7 @@ export default function AdminDashboard() {
                                 )
                               </p>
                             </div>
-                            <div className="bg-white rounded-xl border border-brand-gray-100 p-4 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
                                 <User className="w-5 h-5 text-brand-royal-blue" />
                                 <span className="text-xs font-medium text-emerald-600">
@@ -2509,7 +2666,7 @@ export default function AdminDashboard() {
                                 )}
                               </p>
                             </div>
-                            <div className="bg-white rounded-xl border border-brand-gray-100 p-4 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
                                 <MessageSquare className="w-5 h-5 text-brand-royal-blue" />
                                 <span className="text-xs text-brand-gray">
@@ -2522,7 +2679,7 @@ export default function AdminDashboard() {
                               </p>
                               <p className="text-sm text-brand-gray">Forums</p>
                             </div>
-                            <div className="bg-white rounded-xl border border-brand-gray-100 p-4 shadow-sm hover:shadow transition-shadow">
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
                                 <FileText className="w-5 h-5 text-brand-royal-blue" />
                                 {(overviewStats?.discoveryPostsLast7Days ??
@@ -2547,13 +2704,13 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Row 2 — Platform Health */}
-                          <div className="rounded-xl border border-[rgba(208,196,226,0.4)] bg-white/90 p-3 shadow-sm">
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-3">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
                               Platform health
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                              <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
-                                <p className="text-xs text-brand-gray">
+                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <p className="text-xs text-slate-500">
                                   Active signups (7d)
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
@@ -2562,24 +2719,24 @@ export default function AdminDashboard() {
                                       0)}
                                 </p>
                               </div>
-                              <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
-                                <p className="text-xs text-brand-gray">
+                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <p className="text-xs text-slate-500">
                                   Returning rate
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
                                   —
                                 </p>
                               </div>
-                              <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
-                                <p className="text-xs text-brand-gray">
+                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <p className="text-xs text-slate-500">
                                   Unresolved feedback
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
                                   {overviewStats?.unresolvedFeedbackCount ?? 0}
                                 </p>
                               </div>
-                              <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5">
-                                <p className="text-xs text-brand-gray">
+                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <p className="text-xs text-slate-500">
                                   Avg dashboard load
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
@@ -2592,8 +2749,8 @@ export default function AdminDashboard() {
                           {/* Month comparison (from Feb) — calendar month = same as "New joiners" KPI above */}
                           {(overviewStats?.monthlyComparison?.length ?? 0) >
                             0 && (
-                            <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm overflow-x-auto">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-1">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm overflow-x-auto">
+                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
                                 Month comparison (from Feb)
                               </h3>
                               <p className="text-xs text-brand-gray mb-3">
@@ -2647,14 +2804,14 @@ export default function AdminDashboard() {
                           )}
 
                           {/* Row 3 — New users compact + Charts */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                 New users (last 30 days)
                               </h3>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="rounded-lg bg-brand-light-gray p-2 border border-brand-gray-100">
-                                  <p className="text-xs font-semibold text-brand-gray">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                                  <p className="text-xs font-semibold text-slate-500">
                                     Patients
                                   </p>
                                   <p className="text-sm font-bold text-brand-royal-blue">
@@ -2668,8 +2825,8 @@ export default function AdminDashboard() {
                                       "—"}
                                   </p>
                                 </div>
-                                <div className="rounded-lg bg-brand-light-gray p-2 border border-brand-gray-100">
-                                  <p className="text-xs font-semibold text-brand-gray">
+                                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                                  <p className="text-xs font-semibold text-slate-500">
                                     Researchers
                                   </p>
                                   <p className="text-sm font-bold text-brand-royal-blue">
@@ -2686,8 +2843,8 @@ export default function AdminDashboard() {
                                 </div>
                               </div>
                             </div>
-                            <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                 Experts
                               </h3>
                               <div className="flex items-center gap-2">
@@ -2724,8 +2881,8 @@ export default function AdminDashboard() {
                                     ),
                                   );
                                   return (
-                                    <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                                      <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                         Signups over time
                                       </h3>
                                       <div className="h-[80px] flex items-end gap-px">
@@ -2777,8 +2934,8 @@ export default function AdminDashboard() {
                                   );
                                 })()}
                               {engagementOverTime.length > 0 && (
-                                <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                     Engagement (forums + posts)
                                   </h3>
                                   <div className="h-[80px] flex items-end gap-px">
@@ -2812,9 +2969,9 @@ export default function AdminDashboard() {
                           )}
 
                           {/* Row 5 — Conversion funnels */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                 Researchers funnel
                               </h3>
                               <div className="space-y-1 text-sm">
@@ -2832,8 +2989,8 @@ export default function AdminDashboard() {
                                 </p>
                               </div>
                             </div>
-                            <div className="rounded-xl border border-brand-gray-100 bg-white p-3 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-gray mb-2">
+                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                 Patients (
                                 {overviewStats?.currentMonthLabel ?? "this month"}
                                 )
@@ -2863,7 +3020,7 @@ export default function AdminDashboard() {
 
                     {/* Right sidebar — Alerts */}
                     <div className="lg:w-72 shrink-0">
-                      <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 shadow-sm sticky top-4">
+                      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm sticky top-20">
                         <h3 className="text-sm font-semibold text-amber-900 flex items-center gap-2 mb-2">
                           <AlertTriangle className="w-4 h-4" />
                           Attention needed
@@ -2916,11 +3073,7 @@ export default function AdminDashboard() {
 
             {activeSection === "search" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-brand-royal-blue flex items-center gap-2">
-                    <Search className="w-6 h-6 text-brand-royal-blue" />
-                    Search Management
-                  </h2>
+                <div className="flex items-center justify-end mb-4">
                   <Button
                     onClick={fetchSearchStats}
                     disabled={loadingStats}
@@ -3111,19 +3264,43 @@ export default function AdminDashboard() {
             {activeSection === "experts" && (
               <div className="bg-white rounded-2xl shadow-xl border border-brand-purple-200/50 overflow-hidden">
                 <div className="bg-gradient-to-r from-brand-royal-blue/8 via-brand-purple-50 to-transparent border-b border-brand-purple-200/40 px-6 py-4">
-                  <h2 className="text-xl font-bold text-brand-royal-blue flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-brand-royal-blue/10">
-                      <User className="w-5 h-5 text-brand-royal-blue" />
-                    </div>
-                    Experts Management
-                  </h2>
-                  <p className="text-sm text-brand-gray mt-1">
+                  <p className="text-sm text-brand-gray">
                     Review and verify expert profiles
                     <span className="ml-2 font-semibold text-brand-royal-blue">
                       · {(overviewStats?.totalResearchers ?? experts.length)}{" "}
                       total researchers
                     </span>
                   </p>
+                </div>
+                <div className="px-6 pt-4 pb-2 border-b border-brand-purple-200/40 flex flex-wrap items-center gap-3">
+                  <span className="text-sm font-medium text-brand-gray flex items-center gap-2">
+                    <Download className="w-4 h-4 text-brand-royal-blue" />
+                    Export list:
+                  </span>
+                  <Button
+                    onClick={() => exportExpertsAsTxt(experts)}
+                    disabled={experts.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    TXT
+                  </Button>
+                  <Button
+                    onClick={() => exportExpertsAsPdf(experts)}
+                    disabled={experts.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </Button>
+                  <Button
+                    onClick={() => exportExpertsAsCsv(experts)}
+                    disabled={experts.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    CSV
+                  </Button>
                 </div>
                 <div className="p-6">
                   {(() => {
@@ -3559,10 +3736,6 @@ export default function AdminDashboard() {
 
             {activeSection === "patients" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue mb-1 flex items-center gap-2">
-                  <UserCircle className="w-6 h-6 text-brand-royal-blue" />
-                  Patient Management
-                </h2>
                 <p className="text-sm text-brand-gray mb-4">
                   <span className="font-semibold text-brand-royal-blue">
                     {(overviewStats?.totalPatients ?? patients.length)} total
@@ -3591,6 +3764,34 @@ export default function AdminDashboard() {
                     <option value="desc">Newest / Z–A / Most first</option>
                     <option value="asc">Oldest / A–Z / Least first</option>
                   </select>
+                  <span className="ml-4 text-sm font-medium text-brand-gray flex items-center gap-2">
+                    <Download className="w-4 h-4 text-brand-royal-blue" />
+                    Export:
+                  </span>
+                  <Button
+                    onClick={() => exportPatientsAsTxt(patients)}
+                    disabled={patients.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    TXT
+                  </Button>
+                  <Button
+                    onClick={() => exportPatientsAsPdf(patients)}
+                    disabled={patients.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </Button>
+                  <Button
+                    onClick={() => exportPatientsAsCsv(patients)}
+                    disabled={patients.length === 0}
+                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    CSV
+                  </Button>
                 </div>
 
                 {loadingPatients ? (
@@ -3730,10 +3931,6 @@ export default function AdminDashboard() {
 
             {activeSection === "forums" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue flex items-center gap-2">
-                  <MessageSquare className="w-6 h-6" />
-                  Forums Management
-                </h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -3950,10 +4147,6 @@ export default function AdminDashboard() {
 
             {activeSection === "posts" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue mb-4 flex items-center gap-2">
-                  <FileText className="w-6 h-6" />
-                  Discovery Management
-                </h2>
                 <p className="text-sm text-brand-gray mb-4">
                   Compact list. Click a row to expand full content. Delete
                   requires confirmation.
@@ -4187,11 +4380,6 @@ export default function AdminDashboard() {
 
             {activeSection === "community" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue flex items-center gap-2">
-                  <Users className="w-6 h-6" />
-                  Community Management
-                </h2>
-
                 {/* Tabs: Patient Communities | Researcher Communities */}
                 <div className="flex gap-0 border-b border-[rgba(208,196,226,0.5)]">
                   <button
@@ -5015,11 +5203,6 @@ export default function AdminDashboard() {
 
             {activeSection === "work" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue flex items-center gap-2">
-                  <FileCheck className="w-6 h-6" />
-                  Work Moderation
-                </h2>
-
                 {loadingWorkSubmissions ? (
                   <div className="flex justify-center py-6">
                     <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
@@ -5100,12 +5283,6 @@ export default function AdminDashboard() {
             {activeSection === "reviews" && (
               <div className="space-y-6">
                 <div>
-                  <h2
-                    className="text-2xl font-bold mb-4"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    User Reviews & Feedback
-                  </h2>
                   {reviewStats && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                       <div className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]">
@@ -5329,12 +5506,6 @@ export default function AdminDashboard() {
             {activeSection === "contacts" && (
               <div className="space-y-6">
                 <div>
-                  <h2
-                    className="text-2xl font-bold mb-4"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    Contact Messages
-                  </h2>
                   {contactStats && (
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
                       <div className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]">
@@ -5653,13 +5824,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <h2
-                          className="text-2xl font-bold tracking-tight"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          Page Feedback
-                        </h2>
-                        <p className="text-sm text-brand-gray mt-0.5">
+                        <p className="text-sm text-brand-gray">
                           Review and act on user feedback by page and type
                         </p>
                       </div>
@@ -6306,10 +6471,6 @@ export default function AdminDashboard() {
 
             {activeSection === "onboarding-cleanup" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-6 h-6 text-amber-500" />
-                  Onboarding Cleanup
-                </h2>
                 <p className="text-sm text-brand-gray mb-4">
                   Users who have partially completed onboarding. You can reset
                   their data so they can start fresh, or delete their account
@@ -6586,10 +6747,6 @@ export default function AdminDashboard() {
 
             {activeSection === "meeting-requests" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <h2 className="text-xl font-bold text-brand-royal-blue mb-2 flex items-center gap-2">
-                  <Calendar className="w-6 h-6 text-brand-royal-blue" />
-                  Meeting Requests
-                </h2>
                 <p className="text-sm text-brand-gray mb-4">
                   Cancel individual meeting requests or clear all (including
                   related notifications). Useful for testing.

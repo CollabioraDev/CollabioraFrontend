@@ -152,6 +152,7 @@ export default function Auth0Callback() {
         // ─── STEP B: Admin shortcut ───
         if (data.isAdmin && data.token) {
           localStorage.setItem("adminToken", data.token);
+          if (user?.email) localStorage.setItem("adminEmail", user.email);
           navigate("/admin/dashboard");
           return;
         }
