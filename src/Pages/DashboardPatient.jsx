@@ -2777,13 +2777,13 @@ export default function DashboardPatient() {
           </div>
 
           {/* Category tabs skeleton — border-b, mobile grid 2 cols, desktop underline */}
-          <div className="mt-6 mb-8">
-            <div className="mb-8 border-b border-indigo-100/70 pb-3">
-              <div className="grid grid-cols-2 sm:hidden gap-3">
+          <div className="mt-4 sm:mt-6 mb-4 sm:mb-8">
+            <div className="mb-4 sm:mb-8 border-b border-indigo-100/70 pb-2 sm:pb-3">
+              <div className="grid grid-cols-2 sm:hidden gap-2">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className="h-14 rounded-xl animate-pulse"
+                    className="h-10 sm:h-14 rounded-xl animate-pulse"
                     style={{ backgroundColor: "rgba(47, 60, 150, 0.08)" }}
                   />
                 ))}
@@ -2800,7 +2800,7 @@ export default function DashboardPatient() {
             </div>
 
             {/* Medical Conditions bar skeleton */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 mb-10 flex items-center justify-between gap-4 flex-wrap">
+            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-3 sm:p-4 mb-6 sm:mb-10 flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
               <div className="space-y-2">
                 <div
                   className="h-4 w-36 rounded animate-pulse"
@@ -2823,8 +2823,8 @@ export default function DashboardPatient() {
             </div>
 
             {/* Main content skeleton — card grid */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-6 sm:p-8">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="rounded-2xl bg-white/90 backdrop-blur-sm border border-indigo-100/70 shadow-[0_10px_40px_rgba(15,23,42,0.04)] p-4 sm:p-6 md:p-8">
+              <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                 <div
                   className="h-7 w-48 rounded-lg animate-pulse"
                   style={{ backgroundColor: "rgba(47, 60, 150, 0.1)" }}
@@ -2840,13 +2840,13 @@ export default function DashboardPatient() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
                     key={i}
                     className="rounded-xl border border-indigo-100/50 overflow-hidden bg-white/80"
                   >
-                    <div className="p-5">
+                    <div className="p-4 sm:p-5">
                       <div className="flex items-center justify-between mb-3">
                         <div
                           className="h-4 w-20 rounded-full animate-pulse"
@@ -2988,9 +2988,9 @@ export default function DashboardPatient() {
       <div className="px-4 sm:px-6 md:px-8 lg:px-12 mx-auto max-w-7xl pt-14 pb-12 relative rounded-t-3xl bg-[#F7F8FC] sm:bg-transparent">
         {/* Main Content Section - Block-based layout */}
         <div className="mt-6 mb-8">
-          {/* Category blocks - clear cards for easy navigation */}
+          {/* Category blocks - clear cards for easy navigation (compact on mobile) */}
           <div
-            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 pt-8 mb-8"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4 pt-4 sm:pt-8 mb-4 sm:mb-8"
             data-tour="dashboard-tabs"
           >
             {[
@@ -3015,7 +3015,7 @@ export default function DashboardPatient() {
                     !isSectionLoading && setSelectedCategory(category.key)
                   }
                   disabled={isSectionLoading}
-                  className={`group flex flex-col items-start gap-3 p-5 rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${
+                  className={`group flex flex-col items-start gap-1.5 sm:gap-3 p-3 sm:p-5 rounded-xl sm:rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${
                     isSelected
                       ? "bg-[#2F3C96] border-[#2F3C96] shadow-lg shadow-[#2F3C96]/20 text-white"
                       : "bg-white border-indigo-100/80 hover:border-[#2F3C96]/50 hover:shadow-md text-slate-700"
@@ -3027,24 +3027,24 @@ export default function DashboardPatient() {
                       : {})}
                 >
                   <span
-                    className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${
+                    className={`flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shrink-0 ${
                       isSelected ? "bg-white/20" : "bg-indigo-50"
                     }`}
                   >
                     {isSectionLoading ? (
                       <Loader2
-                        className="w-6 h-6 animate-spin shrink-0"
+                        className="w-5 h-5 sm:w-6 sm:h-6 animate-spin shrink-0"
                         style={{ color: isSelected ? "white" : "#2F3C96" }}
                       />
                     ) : (
                       <Icon
-                        className="w-6 h-6 shrink-0"
+                        className="w-5 h-5 sm:w-6 sm:h-6 shrink-0"
                         style={{ color: isSelected ? "white" : "#2F3C96" }}
                       />
                     )}
                   </span>
                   <div className="min-w-0 w-full">
-                    <span className="block text-sm font-bold truncate">
+                    <span className="block text-xs sm:text-sm font-bold truncate">
                       {category.label}
                     </span>
                   </div>
@@ -3309,10 +3309,10 @@ export default function DashboardPatient() {
 
           {/* Main content block - single card for recommendations */}
           <div
-            className="rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm overflow-hidden p-6 sm:p-8"
+            className="rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm overflow-hidden p-4 sm:p-6 md:p-8"
             data-tour="dashboard-recommendations"
           >
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <h2
                 className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
                 style={{
@@ -3329,21 +3329,21 @@ export default function DashboardPatient() {
               </h2>
             </div>
 
-            {/* Mobile only: Medical Conditions as dropdown – block style */}
-            <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-6">
+            {/* Mobile only: Medical Conditions as dropdown – block style (compact) */}
+            <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-4">
               <button
                 type="button"
                 onClick={() =>
                   setIsMedicalConditionsExpanded(!isMedicalConditionsExpanded)
                 }
-                className="w-full flex items-center justify-between gap-3 p-4 text-left"
+                className="w-full flex items-center justify-between gap-2 p-3 text-left"
                 style={{ color: "#2F3C96" }}
               >
                 <div className="space-y-0.5 min-w-0">
-                  <span className="block text-sm font-semibold">
+                  <span className="block text-xs font-semibold">
                     Medical Conditions
                   </span>
-                  <span className="block text-xs text-slate-500">
+                  <span className="block text-[11px] text-slate-500">
                     {isMedicalConditionsExpanded
                       ? "Tap to collapse"
                       : userConditions.length > 0
@@ -3352,9 +3352,9 @@ export default function DashboardPatient() {
                   </span>
                 </div>
                 {isMedicalConditionsExpanded ? (
-                  <ChevronUp className="w-5 h-5 shrink-0" />
+                  <ChevronUp className="w-4 h-4 shrink-0" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 shrink-0" />
+                  <ChevronDown className="w-4 h-4 shrink-0" />
                 )}
               </button>
               <div
@@ -3364,9 +3364,9 @@ export default function DashboardPatient() {
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="px-4 pb-4 pt-0 border-t border-indigo-100/70">
+                <div className="px-3 pb-3 pt-0 border-t border-indigo-100/70">
                   {/* Conditions: vertical stack */}
-                  <div className="flex flex-col gap-2 mb-4 mt-3">
+                  <div className="flex flex-col gap-1.5 mb-3 mt-2">
                     {userConditions.length > 0 ? (
                       userConditions.map((c, i) => {
                         const isSelected =
@@ -3374,7 +3374,7 @@ export default function DashboardPatient() {
                         return (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border w-full min-w-0"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border w-full min-w-0"
                             style={{
                               backgroundColor: isSelected
                                 ? "rgba(47, 60, 150, 0.12)"
@@ -3387,7 +3387,7 @@ export default function DashboardPatient() {
                           >
                             {isSelected && (
                               <CheckCircle2
-                                className="w-4 h-4 shrink-0"
+                                className="w-3.5 h-3.5 shrink-0"
                                 style={{ color: "#2F3C96" }}
                                 aria-label="Used for search"
                               />
@@ -3397,22 +3397,22 @@ export default function DashboardPatient() {
                         );
                       })
                     ) : (
-                      <span className="text-sm text-slate-500 py-1">
+                      <span className="text-xs text-slate-500 py-0.5">
                         {userDisease || "—"}
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <button
                       type="button"
                       onClick={openEditConditionsModal}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium text-white border transition-colors hover:opacity-90"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-white border transition-colors hover:opacity-90"
                       style={{
                         backgroundColor: "#2F3C96",
                         borderColor: "#2F3C96",
                       }}
                     >
-                      <Edit3 className="w-4 h-4 shrink-0" />
+                      <Edit3 className="w-3.5 h-3.5 shrink-0" />
                       Edit conditions
                     </button>
                     <button
@@ -3427,14 +3427,14 @@ export default function DashboardPatient() {
                       disabled={
                         !!refreshingSection || refreshingSectionsBg.size > 0
                       }
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border text-[#2F3C96] bg-white/90 transition-all duration-200 select-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-indigo-50/80 active:scale-[0.99]"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium border text-[#2F3C96] bg-white/90 transition-all duration-200 select-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-indigo-50/80 active:scale-[0.99]"
                       style={{ borderColor: "#2F3C96" }}
                       title="Refresh trials, publications and experts based on your conditions"
                     >
                       {refreshingSection || refreshingSectionsBg.size > 0 ? (
-                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                       ) : (
-                        <RefreshCw className="w-4 h-4 shrink-0" />
+                        <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                       )}
                       <span>Refresh recommendations</span>
                     </button>
@@ -3452,7 +3452,7 @@ export default function DashboardPatient() {
                         }
                         generateFavoritesSummaryReport();
                       }}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-2 transition-all hover:opacity-90 active:scale-[0.99]"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium border-2 transition-all hover:opacity-90 active:scale-[0.99]"
                       style={{
                         backgroundColor: "#D0C4E2",
                         color: "#2F3C96",
@@ -3460,7 +3460,7 @@ export default function DashboardPatient() {
                       }}
                       title="Generate a PDF summary to share with your doctor"
                     >
-                      <FileText className="w-4 h-4 shrink-0" />
+                      <FileText className="w-3.5 h-3.5 shrink-0" />
                       Generate Summary Report
                     </button>
                   </div>
@@ -3470,7 +3470,7 @@ export default function DashboardPatient() {
 
             {/* Grid of Items - block cards within main content block */}
             <div
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
               data-tour="dashboard-content"
             >
               {selectedCategory === "trials" &&
@@ -3495,17 +3495,17 @@ export default function DashboardPatient() {
                           "rgba(208, 196, 226, 0.3)";
                       }}
                     >
-                      <div className="p-5 flex flex-col flex-grow">
+                      <div className="p-4 sm:p-5 flex flex-col flex-grow">
                         {/* Match Progress Bar */}
                         {t.matchPercentage !== undefined && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
+                          <div className="mb-3 sm:mb-4">
+                            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                               <div
                                 className="flex items-center gap-1.5"
                                 title="Match based on your selected conditions and interests."
                               >
                                 <TrendingUp
-                                  className="w-4 h-4"
+                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
                                   style={{ color: "#2F3C96" }}
                                 />
                                 <span
@@ -3803,18 +3803,18 @@ export default function DashboardPatient() {
                             "rgba(208, 196, 226, 0.3)";
                         }}
                       >
-                        <div className="p-5 flex flex-col flex-grow">
+                        <div className="p-4 sm:p-5 flex flex-col flex-grow">
                           {/* Match Progress Bar */}
                           {p.matchPercentage !== undefined && (
-                            <div className="mb-4">
-                              <div className="flex items-center justify-between mb-2">
+                            <div className="mb-3 sm:mb-4">
+                              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                                 <div className="flex items-center gap-2">
                                   <TrendingUp
-                                    className="w-4 h-4"
+                                    className="w-3.5 h-3.5 sm:w-4 sm:h-4"
                                     style={{ color: "#2F3C96" }}
                                   />
                                   <span
-                                    className="text-sm font-bold"
+                                    className="text-xs sm:text-sm font-bold"
                                     style={{ color: "#2F3C96" }}
                                   >
                                     {p.matchPercentage}% Match
@@ -4076,34 +4076,34 @@ export default function DashboardPatient() {
                     const hasGlobalExperts = globalExpertsList.length > 0;
 
                     return hasRecommendedExperts || hasGlobalExperts ? (
-                      <div className="space-y-8">
+                      <div className="space-y-4 sm:space-y-8">
                         {/* On-Platform Experts Section (dropdown, collapsed by default) */}
                         {hasRecommendedExperts && (
-                          <div className="col-span-full rounded-2xl border-2 shadow-lg overflow-hidden">
+                          <div className="col-span-full rounded-xl sm:rounded-2xl border-2 shadow-lg overflow-hidden">
                             <button
                               type="button"
-                              className="w-full flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
                               onClick={() =>
                                 setShowCollabioraExperts((prev) => !prev)
                               }
                             >
-                              <div className="flex items-center gap-3 text-left">
+                              <div className="flex items-center gap-2 sm:gap-3 text-left min-w-0">
                                 <div
-                                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-md"
+                                  className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0"
                                   style={{
                                     background:
                                       "linear-gradient(135deg, #2F3C96, #253075)",
                                   }}
                                 >
-                                  <UserPlus className="w-5 h-5 text-white" />
+                                  <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-base sm:text-lg font-semibold text-slate-900">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                    <span className="text-sm sm:text-base md:text-lg font-semibold text-slate-900">
                                       On-platform {expertsLabel}
                                     </span>
                                     <span
-                                      className="text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full"
+                                      className="text-[10px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0"
                                       style={{
                                         backgroundColor:
                                           "rgba(208, 196, 226, 0.3)",
@@ -4116,7 +4116,7 @@ export default function DashboardPatient() {
                                         : expertsLabel}
                                     </span>
                                   </div>
-                                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                  <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-0.5 sm:mt-1 line-clamp-2">
                                     Connect with {expertsLabel.toLowerCase()}{" "}
                                     who are active on Collabiora and available
                                     for direct collaboration.
@@ -4124,15 +4124,15 @@ export default function DashboardPatient() {
                                 </div>
                               </div>
                               <ChevronDown
-                                className={`w-5 h-5 shrink-0 text-[#2F3C96] transition-transform ${
+                                className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#2F3C96] transition-transform ${
                                   showCollabioraExperts ? "rotate-180" : ""
                                 }`}
                               />
                             </button>
 
                             {showCollabioraExperts && (
-                              <div className="p-4 sm:p-6 bg-white">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="p-3 sm:p-4 md:p-6 bg-white">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                   {collabioraExperts.map((e, idx) => {
                                     const isCuralinkExpert = !!(
                                       e._id || e.userId
@@ -4207,10 +4207,10 @@ export default function DashboardPatient() {
                                             "rgba(208, 196, 226, 0.3)";
                                         }}
                                       >
-                                        <div className="p-4 flex flex-col flex-grow">
+                                        <div className="p-3 sm:p-4 flex flex-col flex-grow">
                                           {/* Match Progress Bar - same as global */}
                                           {e.matchPercentage !== undefined && (
-                                            <div className="mb-3">
+                                            <div className="mb-2 sm:mb-3">
                                               <div className="mb-1">
                                                 <span
                                                   className="text-xs font-bold"
@@ -4255,9 +4255,9 @@ export default function DashboardPatient() {
                                               </div>
                                             )}
 
-                                          <div className="flex items-start gap-3 mb-3">
+                                          <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
                                             <div
-                                              className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
+                                              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0"
                                               style={{
                                                 background:
                                                   "linear-gradient(135deg, #2F3C96, #253075)",
@@ -4590,31 +4590,31 @@ export default function DashboardPatient() {
 
                         {/* Global Experts Section (dropdown, expanded by default) */}
                         {hasGlobalExperts && (
-                          <div className="col-span-full rounded-2xl border-2 shadow-lg overflow-hidden">
+                          <div className="col-span-full rounded-xl sm:rounded-2xl border-2 shadow-lg overflow-hidden">
                             <button
                               type="button"
-                              className="w-full flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+                              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-4 bg-slate-50 hover:bg-slate-100 transition-colors"
                               onClick={() =>
                                 setShowGlobalExperts((prev) => !prev)
                               }
                             >
-                              <div className="flex items-center gap-3 text-left">
+                              <div className="flex items-center gap-2 sm:gap-3 text-left min-w-0">
                                 <div
-                                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-md"
+                                  className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl flex items-center justify-center shadow-md shrink-0"
                                   style={{
                                     background:
                                       "linear-gradient(135deg, #2F3C96, #253075)",
                                   }}
                                 >
-                                  <BookOpen className="w-5 h-5 text-white" />
+                                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-base sm:text-lg font-semibold text-slate-900">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                    <span className="text-sm sm:text-base md:text-lg font-semibold text-slate-900">
                                       Global {expertsLabel}
                                     </span>
                                     <span
-                                      className="text-xs sm:text-sm font-medium px-2 py-0.5 rounded-full"
+                                      className="text-[10px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0"
                                       style={{
                                         backgroundColor:
                                           "rgba(208, 196, 226, 0.3)",
@@ -4627,7 +4627,7 @@ export default function DashboardPatient() {
                                         : "Researchers"}
                                     </span>
                                   </div>
-                                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                  <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-0.5 sm:mt-1 line-clamp-2">
                                     Discover leading{" "}
                                     {expertsLabel.toLowerCase()} and their
                                     published work worldwide.
@@ -4635,15 +4635,15 @@ export default function DashboardPatient() {
                                 </div>
                               </div>
                               <ChevronDown
-                                className={`w-5 h-5 shrink-0 text-[#2F3C96] transition-transform ${
+                                className={`w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#2F3C96] transition-transform ${
                                   showGlobalExperts ? "rotate-180" : ""
                                 }`}
                               />
                             </button>
 
                             {showGlobalExperts && (
-                              <div className="p-4 sm:p-6 bg-white">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="p-3 sm:p-4 md:p-6 bg-white">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                   {globalExpertsList.map((e, idx) => {
                                     const isCuralinkExpert = !!(
                                       e._id || e.userId
@@ -4729,10 +4729,10 @@ export default function DashboardPatient() {
                                           toggleGlobalExpertCard(e)
                                         }
                                       >
-                                        <div className="p-4">
+                                        <div className="p-3 sm:p-4">
                                           {/* Match bar */}
                                           {e.matchPercentage !== undefined && (
-                                            <div className="mb-3">
+                                            <div className="mb-2 sm:mb-3">
                                               <div className="mb-1">
                                                 <span
                                                   className="text-xs font-bold"
@@ -4759,9 +4759,9 @@ export default function DashboardPatient() {
                                               </div>
                                             </div>
                                           )}
-                                          <div className="flex items-start gap-3">
+                                          <div className="flex items-start gap-2 sm:gap-3">
                                             <div
-                                              className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0"
+                                              className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base shrink-0"
                                               style={{
                                                 background:
                                                   "linear-gradient(135deg, #2F3C96, #253075)",
