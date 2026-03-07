@@ -47,6 +47,8 @@ import {
   TrendingDown,
   Activity,
   Download,
+  Menu,
+  X,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
@@ -426,6 +428,7 @@ const SIDEBAR_GROUPS = [
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
@@ -2450,8 +2453,17 @@ export default function AdminDashboard() {
   return (
     <Layout>
       <div className="min-h-screen flex bg-slate-50/80">
-        {/* Sidebar — site colour (light pink/lavender) */}
-        <aside className="w-60 shrink-0 flex flex-col fixed left-0 top-0 bottom-0 z-20 bg-brand-purple-100 border-r border-brand-purple-200 shadow-sm">
+        {/* Mobile overlay when sidebar is open */}
+        <div
+          className={`fixed inset-0 z-20 bg-black/40 transition-opacity md:hidden ${sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          aria-hidden={!sidebarOpen}
+          onClick={() => setSidebarOpen(false)}
+        />
+        {/* Sidebar — site colour (light pink/lavender); drawer on mobile, fixed on md+ */}
+        <aside
+          className={`fixed left-0 top-0 bottom-0 z-30 w-60 shrink-0 flex flex-col bg-brand-purple-100 border-r border-brand-purple-200 shadow-lg transition-transform duration-200 ease-out md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          aria-label="Admin navigation"
+        >
           <div className="shrink-0 px-4 py-3 flex items-center gap-3 border-b border-brand-purple-200">
             <div className="w-9 h-9 rounded-lg bg-brand-royal-blue/10 flex items-center justify-center shrink-0">
               <img
@@ -2488,7 +2500,10 @@ export default function AdminDashboard() {
                       <li key={id}>
                         <button
                           type="button"
-                          onClick={() => setActiveSection(id)}
+                          onClick={() => {
+                            setActiveSection(id);
+                            setSidebarOpen(false);
+                          }}
                           className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm font-medium transition-colors rounded-lg ${
                             isActive
                               ? "bg-brand-royal-blue text-white shadow-sm"
@@ -2518,12 +2533,20 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 ml-60 relative">
-          {/* Top bar — section title (site colour) */}
-          <header className="sticky top-0 z-10 h-14 shrink-0 flex items-center px-6 bg-brand-purple-100/95 backdrop-blur-sm border-b border-brand-purple-200/80 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
-            <h1 className="text-lg font-semibold text-brand-royal-blue">{activeSectionLabel}</h1>
+        <main className="flex-1 min-w-0 ml-0 md:ml-60 relative">
+          {/* Top bar — section title (site colour) + mobile menu button */}
+          <header className="sticky top-0 z-10 h-14 shrink-0 flex items-center gap-3 px-4 md:px-6 bg-brand-purple-100/95 backdrop-blur-sm border-b border-brand-purple-200/80 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((o) => !o)}
+              className="md:hidden p-2 -ml-1 rounded-lg text-brand-royal-blue hover:bg-brand-purple-200/70 transition-colors"
+              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <h1 className="text-base md:text-lg font-semibold text-brand-royal-blue truncate flex-1 min-w-0">{activeSectionLabel}</h1>
           </header>
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {activeSection === "overview" &&
               (() => {
                 const newJoiners =
@@ -3072,7 +3095,7 @@ export default function AdminDashboard() {
               })()}
 
             {activeSection === "search" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
                 <div className="flex items-center justify-end mb-4">
                   <Button
                     onClick={fetchSearchStats}
@@ -3262,47 +3285,46 @@ export default function AdminDashboard() {
             )}
 
             {activeSection === "experts" && (
-              <div className="bg-white rounded-2xl shadow-xl border border-brand-purple-200/50 overflow-hidden">
-                <div className="bg-gradient-to-r from-brand-royal-blue/8 via-brand-purple-50 to-transparent border-b border-brand-purple-200/40 px-6 py-4">
-                  <p className="text-sm text-brand-gray">
+              <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border border-brand-purple-200/50 overflow-hidden">
+                <div className="bg-gradient-to-r from-brand-royal-blue/8 via-brand-purple-50 to-transparent border-b border-brand-purple-200/40 px-4 md:px-6 py-3 md:py-4">
+                  <p className="text-xs md:text-sm text-brand-gray">
                     Review and verify expert profiles
-                    <span className="ml-2 font-semibold text-brand-royal-blue">
-                      · {(overviewStats?.totalResearchers ?? experts.length)}{" "}
-                      total researchers
+                    <span className="ml-1 md:ml-2 font-semibold text-brand-royal-blue">
+                      · {(overviewStats?.totalResearchers ?? experts.length)} researchers
                     </span>
                   </p>
                 </div>
-                <div className="px-6 pt-4 pb-2 border-b border-brand-purple-200/40 flex flex-wrap items-center gap-3">
-                  <span className="text-sm font-medium text-brand-gray flex items-center gap-2">
-                    <Download className="w-4 h-4 text-brand-royal-blue" />
-                    Export list:
+                <div className="px-4 md:px-6 pt-3 pb-2 border-b border-brand-purple-200/40 flex flex-wrap items-center gap-2">
+                  <span className="text-xs md:text-sm font-medium text-brand-gray flex items-center gap-1.5 shrink-0">
+                    <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand-royal-blue" />
+                    Export:
                   </span>
                   <Button
                     onClick={() => exportExpertsAsTxt(experts)}
                     disabled={experts.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                    className="px-2.5 py-1 text-xs md:text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     TXT
                   </Button>
                   <Button
                     onClick={() => exportExpertsAsPdf(experts)}
                     disabled={experts.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                    className="px-2.5 py-1 text-xs md:text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     PDF
                   </Button>
                   <Button
                     onClick={() => exportExpertsAsCsv(experts)}
                     disabled={experts.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
+                    className="px-2.5 py-1 text-xs md:text-sm bg-white border border-brand-purple-200/60 text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     CSV
                   </Button>
                 </div>
-                <div className="p-6">
+                <div className="p-3 md:p-6">
                   {(() => {
                     const expertsNeedingAttention = experts.filter(
                       (e) => e.needsAttention,
@@ -3323,16 +3345,16 @@ export default function AdminDashboard() {
                     const renderExpertCard = (expert) => (
                       <div
                         key={expert.userId}
-                        className="bg-white rounded-xl border border-brand-purple-200/50 p-5 hover:shadow-lg hover:border-brand-purple-300/60 transition-all duration-200"
+                        className="bg-white rounded-lg md:rounded-xl border border-brand-purple-200/50 p-3 md:p-5 hover:shadow-md hover:border-brand-purple-300/60 transition-all duration-200"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                          <div className="flex gap-4 flex-1 min-w-0">
-                            <div className="w-12 h-12 rounded-xl bg-brand-royal-blue/10 flex items-center justify-center text-brand-royal-blue font-bold text-lg shrink-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-3 md:gap-4">
+                          <div className="flex gap-3 md:gap-4 flex-1 min-w-0">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-brand-royal-blue/10 flex items-center justify-center text-brand-royal-blue font-bold text-base md:text-lg shrink-0">
                               {(expert.name || "E").charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <h3 className="text-lg font-semibold text-brand-royal-blue">
+                              <div className="flex flex-wrap items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
+                                <h3 className="text-base md:text-lg font-semibold text-brand-royal-blue">
                                   {expert.name}
                                 </h3>
                                 {expert.isVerified ? (
@@ -3362,18 +3384,17 @@ export default function AdminDashboard() {
                                   </span>
                                 )}
                               </div>
-                              <div className="space-y-1.5 text-sm text-brand-gray">
+                              <div className="space-y-1 text-xs md:text-sm text-brand-gray">
                                 {expert.email && (
-                                  <div className="flex items-center gap-2">
-                                    <Mail className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
-                                    <span>{expert.email}</span>
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <Mail className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
+                                    <span className="truncate">{expert.email}</span>
                                   </div>
                                 )}
                                 {expert.accountCreated && (
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
+                                  <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
                                     <span>
-                                      Account created:{" "}
                                       {new Date(
                                         expert.accountCreated,
                                       ).toLocaleDateString()}
@@ -3381,9 +3402,9 @@ export default function AdminDashboard() {
                                   </div>
                                 )}
                                 {expert.location && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
-                                    <span>
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
+                                    <span className="truncate">
                                       {expert.location.city
                                         ? `${expert.location.city}, ${expert.location.country}`
                                         : expert.location.country}
@@ -3392,15 +3413,13 @@ export default function AdminDashboard() {
                                 )}
                                 {expert.specialties &&
                                   expert.specialties.length > 0 && (
-                                    <div className="flex items-center gap-2">
-                                      <Briefcase className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
-                                      <span>
-                                        {expert.specialties.join(", ")}
-                                      </span>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
+                                      <span className="line-clamp-1">{expert.specialties.join(", ")}</span>
                                     </div>
                                   )}
                                 {expert.bio && (
-                                  <p className="text-xs text-brand-gray mt-2 line-clamp-2">
+                                  <p className="text-xs text-brand-gray mt-1.5 line-clamp-2">
                                     {expert.bio}
                                   </p>
                                 )}
@@ -3410,7 +3429,7 @@ export default function AdminDashboard() {
                                 expert.postCount > 0 ||
                                 expert.commentCount > 0 ||
                                 expert.communityCount > 0) && (
-                                <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-brand-purple-200/40 text-xs">
+                                <div className="flex flex-wrap gap-2 md:gap-3 mt-2 md:mt-3 pt-2 md:pt-3 border-t border-brand-purple-200/40 text-xs">
                                   {(expert.threadCount ?? 0) > 0 && (
                                     <span
                                       className="flex items-center gap-1 text-brand-royal-blue"
@@ -3460,7 +3479,7 @@ export default function AdminDashboard() {
                               )}
                             </div>
                           </div>
-                          <div className="sm:shrink-0 flex flex-row sm:flex-col gap-2 sm:border-l sm:border-brand-purple-200/40 sm:pl-4">
+                          <div className="sm:shrink-0 flex flex-row flex-wrap sm:flex-nowrap sm:flex-col gap-2 sm:border-l sm:border-brand-purple-200/40 sm:pl-4">
                             <button
                               type="button"
                               onClick={() =>
@@ -3468,7 +3487,7 @@ export default function AdminDashboard() {
                                   `/admin/expert/${expert.userId?._id || expert.userId?.id || expert.userId}`,
                                 )
                               }
-                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-brand-royal-blue text-white hover:bg-brand-blue-600 shadow-md hover:shadow-lg transition-all border-0"
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-brand-royal-blue text-white hover:bg-brand-blue-600 shadow-md transition-all border-0"
                             >
                               View profile
                             </button>
@@ -3481,14 +3500,14 @@ export default function AdminDashboard() {
                                 )
                               }
                               disabled={updating[expert.userId]}
-                              className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${
+                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${
                                 expert.isVerified
                                   ? "bg-white text-brand-royal-blue border-2 border-brand-royal-blue hover:bg-brand-purple-50"
-                                  : "bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md hover:shadow-lg"
+                                  : "bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md"
                               }`}
                             >
                               {updating[expert.userId] ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : expert.isVerified ? (
                                 "Unverify"
                               ) : (
@@ -3510,17 +3529,17 @@ export default function AdminDashboard() {
                                   expert.userId?.id ??
                                   expert.userId)
                               }
-                              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {deletingExpertId ===
                               (expert.userId?._id ??
                                 expert.userId?.id ??
                                 expert.userId) ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : (
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
-                              Delete account
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -3529,46 +3548,46 @@ export default function AdminDashboard() {
                     return (
                       <>
                         {expertsWithDocuments.length > 0 && (
-                          <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/50">
-                              <div className="p-1.5 rounded-lg bg-amber-500/10">
-                                <FileCheck className="w-5 h-5 text-amber-600" />
+                          <div className="mb-6 md:mb-8">
+                            <div className="flex items-center gap-2 mb-3 p-2.5 md:p-3 rounded-lg md:rounded-xl bg-amber-50 border border-amber-200/50">
+                              <div className="p-1.5 rounded-lg bg-amber-500/10 shrink-0">
+                                <FileCheck className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
                               </div>
-                              <div>
-                                <h3 className="text-base font-semibold text-amber-700">
-                                  Document Review (Researchers without ORCID)
+                              <div className="min-w-0">
+                                <h3 className="text-sm md:text-base font-semibold text-amber-700">
+                                  Document Review (no ORCID)
                                 </h3>
-                                <p className="text-sm text-amber-600">
+                                <p className="text-xs md:text-sm text-amber-600">
                                   {expertsWithDocuments.length} researcher
                                   {expertsWithDocuments.length !== 1 ? "s" : ""}{" "}
-                                  submitted verification documents for review
+                                  need document review
                                 </p>
                               </div>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-3 md:space-y-4">
                               {expertsWithDocuments.map((expert) => (
                                 <div
                                   key={expert.userId}
-                                  className="bg-white rounded-xl border-2 border-amber-200/60 p-5 hover:shadow-lg hover:border-amber-300/80 transition-all duration-200"
+                                  className="bg-white rounded-lg md:rounded-xl border-2 border-amber-200/60 p-3 md:p-5 hover:shadow-md hover:border-amber-300/80 transition-all duration-200"
                                 >
-                                  <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                                    <div className="flex gap-4 flex-1 min-w-0">
-                                      <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-lg shrink-0">
+                                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 md:gap-4">
+                                    <div className="flex gap-3 md:gap-4 flex-1 min-w-0">
+                                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-base md:text-lg shrink-0">
                                         {(expert.name || "E")
                                           .charAt(0)
                                           .toUpperCase()}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                                          <h3 className="text-lg font-semibold text-brand-royal-blue">
+                                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                          <h3 className="text-base md:text-lg font-semibold text-brand-royal-blue">
                                             {expert.name}
                                           </h3>
-                                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200/60">
-                                            <FileCheck className="w-3 h-3" />{" "}
-                                            Document Review Required
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 md:px-2.5 md:py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] md:text-xs font-semibold border border-amber-200/60">
+                                            <FileCheck className="w-2.5 h-2.5 md:w-3 md:h-3" />{" "}
+                                            Document Review
                                           </span>
                                         </div>
-                                        <div className="space-y-1.5 text-sm text-brand-gray mb-3">
+                                        <div className="space-y-1 text-xs md:text-sm text-brand-gray mb-2 md:mb-3">
                                           {expert.email && (
                                             <div className="flex items-center gap-2">
                                               <Mail className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
@@ -3611,7 +3630,7 @@ export default function AdminDashboard() {
                                         )}
                                       </div>
                                     </div>
-                                    <div className="sm:shrink-0 flex flex-row sm:flex-col gap-2 sm:border-l sm:border-amber-200/40 sm:pl-4">
+                                    <div className="sm:shrink-0 flex flex-row flex-wrap sm:flex-nowrap sm:flex-col gap-2 sm:border-l sm:border-amber-200/40 sm:pl-4">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -3619,7 +3638,7 @@ export default function AdminDashboard() {
                                             `/admin/expert/${expert.userId?._id || expert.userId?.id || expert.userId}`,
                                           )
                                         }
-                                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-brand-royal-blue text-white hover:bg-brand-blue-600 shadow-md hover:shadow-lg transition-all border-0"
+                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-brand-royal-blue text-white hover:bg-brand-blue-600 shadow-md transition-all border-0"
                                       >
                                         View profile
                                       </button>
@@ -3632,14 +3651,14 @@ export default function AdminDashboard() {
                                           )
                                         }
                                         disabled={updating[expert.userId]}
-                                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         {updating[expert.userId] ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                          <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                                         ) : (
                                           <>
-                                            <CheckCircle className="w-4 h-4" />
-                                            Verify Researcher
+                                            <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                            Verify
                                           </>
                                         )}
                                       </button>
@@ -3658,17 +3677,17 @@ export default function AdminDashboard() {
                                             expert.userId?.id ??
                                             expert.userId)
                                         }
-                                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                       >
                                         {deletingExpertId ===
                                         (expert.userId?._id ??
                                           expert.userId?.id ??
                                           expert.userId) ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                          <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                                         ) : (
-                                          <Trash2 className="w-4 h-4" />
+                                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                         )}
-                                        Delete account
+                                        Delete
                                       </button>
                                     </div>
                                   </div>
@@ -3678,22 +3697,21 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         {expertsNeedingAttention.length > 0 && (
-                          <div className="mb-8">
-                            <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-brand-purple-50 border border-brand-purple-200/50">
-                              <div className="p-1.5 rounded-lg bg-brand-royal-blue/10">
-                                <Info className="w-5 h-5 text-brand-royal-blue" />
+                          <div className="mb-6 md:mb-8">
+                            <div className="flex items-center gap-2 mb-3 p-2.5 md:p-3 rounded-lg md:rounded-xl bg-brand-purple-50 border border-brand-purple-200/50">
+                              <div className="p-1.5 rounded-lg bg-brand-royal-blue/10 shrink-0">
+                                <Info className="w-4 h-4 md:w-5 md:h-5 text-brand-royal-blue" />
                               </div>
-                              <div>
-                                <h3 className="text-base font-semibold text-brand-royal-blue">
-                                  Experts that require your attention
+                              <div className="min-w-0">
+                                <h3 className="text-sm md:text-base font-semibold text-brand-royal-blue">
+                                  Need your attention
                                 </h3>
-                                <p className="text-sm text-brand-gray">
-                                  {expertsNeedingAttention.length} pending
-                                  academic profile verification
+                                <p className="text-xs md:text-sm text-brand-gray">
+                                  {expertsNeedingAttention.length} pending verification
                                 </p>
                               </div>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-3 md:space-y-4">
                               {expertsNeedingAttention.map((expert) =>
                                 renderExpertCard(expert),
                               )}
@@ -3702,9 +3720,9 @@ export default function AdminDashboard() {
                         )}
 
                         {experts.length === 0 ? (
-                          <div className="text-center py-12 rounded-xl border border-brand-purple-200/40 bg-brand-purple-50/30">
-                            <User className="w-16 h-16 text-brand-gray mx-auto mb-4 opacity-60" />
-                            <p className="text-brand-gray font-medium">
+                          <div className="text-center py-8 md:py-12 rounded-lg md:rounded-xl border border-brand-purple-200/40 bg-brand-purple-50/30">
+                            <User className="w-12 h-12 md:w-16 md:h-16 text-brand-gray mx-auto mb-3 md:mb-4 opacity-60" />
+                            <p className="text-sm md:text-base text-brand-gray font-medium">
                               No experts found
                             </p>
                           </div>
@@ -3712,13 +3730,13 @@ export default function AdminDashboard() {
                           <div>
                             {otherExperts.length > 0 && (
                               <>
-                                <h3 className="text-base font-semibold text-brand-royal-blue mb-3 flex items-center gap-2">
-                                  <span className="w-1 h-5 rounded-full bg-brand-royal-blue/30" />
+                                <h3 className="text-sm md:text-base font-semibold text-brand-royal-blue mb-2 md:mb-3 flex items-center gap-2">
+                                  <span className="w-1 h-4 md:h-5 rounded-full bg-brand-royal-blue/30" />
                                   {expertsNeedingAttention.length > 0
                                     ? "Other experts"
                                     : "All experts"}
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3 md:space-y-4">
                                   {otherExperts.map((expert) =>
                                     renderExpertCard(expert),
                                   )}
@@ -3735,87 +3753,90 @@ export default function AdminDashboard() {
             )}
 
             {activeSection === "patients" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <p className="text-sm text-brand-gray mb-4">
-                  <span className="font-semibold text-brand-royal-blue">
-                    {(overviewStats?.totalPatients ?? patients.length)} total
-                    patients
-                  </span>
-                </p>
-
-                <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <span className="text-sm font-medium text-brand-gray">
-                    Sort by:
-                  </span>
-                  <select
-                    value={patientSortBy}
-                    onChange={(e) => setPatientSortBy(e.target.value)}
-                    className="px-3 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-sm bg-white"
-                  >
-                    <option value="accountCreated">Account date</option>
-                    <option value="name">Name</option>
-                    <option value="activity">Activity</option>
-                  </select>
-                  <select
-                    value={patientOrder}
-                    onChange={(e) => setPatientOrder(e.target.value)}
-                    className="px-3 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-sm bg-white"
-                  >
-                    <option value="desc">Newest / Z–A / Most first</option>
-                    <option value="asc">Oldest / A–Z / Least first</option>
-                  </select>
-                  <span className="ml-4 text-sm font-medium text-brand-gray flex items-center gap-2">
-                    <Download className="w-4 h-4 text-brand-royal-blue" />
-                    Export:
-                  </span>
-                  <Button
-                    onClick={() => exportPatientsAsTxt(patients)}
-                    disabled={patients.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    TXT
-                  </Button>
-                  <Button
-                    onClick={() => exportPatientsAsPdf(patients)}
-                    disabled={patients.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    PDF
-                  </Button>
-                  <Button
-                    onClick={() => exportPatientsAsCsv(patients)}
-                    disabled={patients.length === 0}
-                    className="px-3 py-1.5 text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    CSV
-                  </Button>
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
+                <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
+                  <p className="text-xs md:text-sm text-brand-gray">
+                    <span className="font-semibold text-brand-royal-blue">
+                      {(overviewStats?.totalPatients ?? patients.length)} patients
+                    </span>
+                  </p>
+                </div>
+                <div className="p-3 md:p-6">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs md:text-sm font-medium text-brand-gray shrink-0">Sort:</span>
+                    <select
+                      value={patientSortBy}
+                      onChange={(e) => setPatientSortBy(e.target.value)}
+                      className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
+                    >
+                      <option value="accountCreated">Date</option>
+                      <option value="name">Name</option>
+                      <option value="activity">Activity</option>
+                    </select>
+                    <select
+                      value={patientOrder}
+                      onChange={(e) => setPatientOrder(e.target.value)}
+                      className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
+                    >
+                      <option value="desc">Newest first</option>
+                      <option value="asc">Oldest first</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-[rgba(208,196,226,0.3)]">
+                    <span className="text-xs md:text-sm font-medium text-brand-gray flex items-center gap-1.5 shrink-0">
+                      <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand-royal-blue" />
+                      Export:
+                    </span>
+                    <Button
+                      onClick={() => exportPatientsAsTxt(patients)}
+                      disabled={patients.length === 0}
+                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      TXT
+                    </Button>
+                    <Button
+                      onClick={() => exportPatientsAsPdf(patients)}
+                      disabled={patients.length === 0}
+                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      PDF
+                    </Button>
+                    <Button
+                      onClick={() => exportPatientsAsCsv(patients)}
+                      disabled={patients.length === 0}
+                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                    >
+                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      CSV
+                    </Button>
+                  </div>
                 </div>
 
                 {loadingPatients ? (
-                  <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                  <div className="flex justify-center py-8 md:py-12">
+                    <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin text-brand-royal-blue" />
                   </div>
                 ) : patients.length === 0 ? (
-                  <div className="text-center py-12">
-                    <UserCircle className="w-16 h-16 text-brand-gray mx-auto mb-4" />
-                    <p className="text-brand-gray">No patients found</p>
+                  <div className="text-center py-8 md:py-12 rounded-lg border border-brand-purple-200/40 bg-brand-purple-50/30">
+                    <UserCircle className="w-12 h-12 md:w-16 md:h-16 text-brand-gray mx-auto mb-3 md:mb-4" />
+                    <p className="text-sm md:text-base text-brand-gray">No patients found</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {patients.map((patient) => (
                       <div
                         key={patient.userId}
-                        className="bg-[#F5F5F5] rounded-lg p-4 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all"
+                        className="bg-slate-50/80 md:bg-[#F5F5F5] rounded-lg p-3 md:p-4 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all"
                       >
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-[#2F3C96] mb-2">
+                            <h3 className="text-base md:text-lg font-semibold text-[#2F3C96] mb-1.5 md:mb-2">
                               {patient.name}
                             </h3>
-                            <div className="space-y-1 text-sm text-brand-gray">
+                            <div className="space-y-1 text-xs md:text-sm text-brand-gray">
                               {patient.email && (
                                 <div className="flex items-center gap-2">
                                   <Mail className="w-4 h-4 shrink-0" />
@@ -3905,20 +3926,20 @@ export default function AdminDashboard() {
                               </div>
                             )}
                           </div>
-                          <div className="shrink-0">
+                          <div className="shrink-0 sm:pt-0 pt-1 border-t sm:border-t-0 border-[rgba(208,196,226,0.3)]">
                             <Button
                               onClick={() =>
                                 handleDeletePatient(patient.userId)
                               }
                               disabled={deletingPatientId === patient.userId}
-                              className="px-3 py-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
+                              className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center justify-center gap-1.5"
                             >
                               {deletingPatientId === patient.userId ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : (
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
-                              Delete account
+                              Delete
                             </Button>
                           </div>
                         </div>
@@ -3926,44 +3947,52 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+                </div>
               </div>
             )}
 
             {activeSection === "forums" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
+                <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
+                  <p className="text-xs md:text-sm text-brand-gray">
+                    <span className="font-semibold text-brand-royal-blue">Forums</span>
+                    {" "}· Categories & threads
+                  </p>
+                </div>
+                <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+                <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-brand-gray">
-                        Forum Categories
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
+                      <h3 className="text-sm md:text-base font-semibold text-brand-gray">
+                        Categories
                       </h3>
                       {forumCategories.length > 0 &&
                         selectedForumCategoryIds.length > 0 && (
                           <Button
                             onClick={handleBulkDeleteForumCategories}
                             disabled={bulkDeletingForums}
-                            className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-2"
+                            className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
                           >
                             {bulkDeletingForums ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             )}
-                            Delete selected ({selectedForumCategoryIds.length})
+                            Delete ({selectedForumCategoryIds.length})
                           </Button>
                         )}
                     </div>
                     {loadingForums ? (
-                      <div className="flex justify-center py-6">
-                        <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                      <div className="flex justify-center py-4 md:py-6">
+                        <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin text-brand-royal-blue" />
                       </div>
                     ) : forumCategories.length === 0 ? (
-                      <p className="text-brand-gray text-sm">
+                      <p className="text-brand-gray text-xs md:text-sm">
                         No forum categories.
                       </p>
                     ) : (
-                      <ul className="space-y-2">
-                        <li className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(208,196,226,0.4)]">
+                      <ul className="space-y-1.5">
+                        <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)]">
                           <button
                             type="button"
                             onClick={() =>
@@ -3996,7 +4025,7 @@ export default function AdminDashboard() {
                         {forumCategories.map((cat) => (
                           <li
                             key={cat._id}
-                            className="flex items-center gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
+                            className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
                           >
                             <button
                               type="button"
@@ -4011,26 +4040,26 @@ export default function AdminDashboard() {
                               title="Toggle selection"
                             >
                               {selectedForumCategoryIds.includes(cat._id) ? (
-                                <CheckSquare className="w-4 h-4" />
+                                <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               ) : (
-                                <Square className="w-4 h-4" />
+                                <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
                             </button>
-                            <span className="font-medium text-[#2F3C96] flex-1 min-w-0 truncate">
+                            <span className="font-medium text-[#2F3C96] text-sm md:text-base flex-1 min-w-0 truncate">
                               {cat.name}
                             </span>
-                            <span className="text-xs text-brand-gray shrink-0">
-                              {cat.threadCount ?? 0} threads
+                            <span className="text-[10px] md:text-xs text-brand-gray shrink-0">
+                              {cat.threadCount ?? 0}
                             </span>
                             <Button
                               onClick={() => handleDeleteForumCategory(cat._id)}
                               disabled={deletingForumId === cat._id}
-                              className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
                             >
                               {deletingForumId === cat._id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : (
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
                             </Button>
                           </li>
@@ -4039,31 +4068,31 @@ export default function AdminDashboard() {
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-brand-gray">
-                        Forum Threads
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
+                      <h3 className="text-sm md:text-base font-semibold text-brand-gray">
+                        Threads
                       </h3>
                       {forumThreads.length > 0 &&
                         selectedForumThreadIds.length > 0 && (
                           <Button
                             onClick={handleBulkDeleteForumThreads}
                             disabled={bulkDeletingThreads}
-                            className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-2"
+                            className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
                           >
                             {bulkDeletingThreads ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             )}
-                            Delete selected ({selectedForumThreadIds.length})
+                            Delete ({selectedForumThreadIds.length})
                           </Button>
                         )}
                     </div>
                     {forumThreads.length === 0 && !loadingForums ? (
-                      <p className="text-brand-gray text-sm">No threads.</p>
+                      <p className="text-brand-gray text-xs md:text-sm">No threads.</p>
                     ) : (
-                      <ul className="space-y-2 max-h-96 overflow-y-auto">
-                        <li className="flex items-center gap-2 px-3 py-2 border-b border-[rgba(208,196,226,0.4)] sticky top-0 bg-white/95 z-10">
+                      <ul className="space-y-1.5 max-h-64 md:max-h-96 overflow-y-auto">
+                        <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)] sticky top-0 bg-white/95 z-10">
                           <button
                             type="button"
                             onClick={() =>
@@ -4096,7 +4125,7 @@ export default function AdminDashboard() {
                         {forumThreads.map((t) => (
                           <li
                             key={t._id}
-                            className="flex items-center gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
+                            className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
                           >
                             <button
                               type="button"
@@ -4111,29 +4140,28 @@ export default function AdminDashboard() {
                               title="Toggle selection"
                             >
                               {selectedForumThreadIds.includes(t._id) ? (
-                                <CheckSquare className="w-4 h-4" />
+                                <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               ) : (
-                                <Square className="w-4 h-4" />
+                                <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
                             </button>
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium text-[#2F3C96] truncate">
+                              <p className="font-medium text-[#2F3C96] text-sm md:text-base truncate">
                                 {t.title}
                               </p>
-                              <p className="text-xs text-brand-gray">
-                                {t.categoryId?.name ?? "—"} ·{" "}
-                                {t.replyCount ?? 0} replies
+                              <p className="text-[10px] md:text-xs text-brand-gray">
+                                {t.categoryId?.name ?? "—"} · {t.replyCount ?? 0}
                               </p>
                             </div>
                             <Button
                               onClick={() => handleDeleteThread(t._id)}
                               disabled={deletingThreadId === t._id}
-                              className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
                             >
                               {deletingThreadId === t._id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : (
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
                             </Button>
                           </li>
@@ -4142,14 +4170,21 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
+                </div>
               </div>
             )}
 
             {activeSection === "posts" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
-                <p className="text-sm text-brand-gray mb-4">
-                  Compact list. Click a row to expand full content. Delete
-                  requires confirmation.
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
+                <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
+                  <p className="text-xs md:text-sm text-brand-gray">
+                    <span className="font-semibold text-brand-royal-blue">Discovery</span>
+                    {" "}· Click row to expand · Delete requires confirmation
+                  </p>
+                </div>
+                <div className="p-3 md:p-6">
+                <p className="text-xs md:text-sm text-brand-gray mb-3 md:mb-4 sr-only md:not-sr-only">
+                  Compact list. Click a row to expand full content.
                 </p>
                 {loadingPosts ? (
                   <div className="flex justify-center py-8">
@@ -4188,7 +4223,7 @@ export default function AdminDashboard() {
                           key={post._id}
                           className="bg-white hover:bg-gray-50/50 transition-colors"
                         >
-                          <div className="flex items-start gap-3 px-4 py-2.5">
+                          <div className="flex items-start gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5">
                             <button
                               type="button"
                               onClick={toggleExpanded}
@@ -4375,35 +4410,43 @@ export default function AdminDashboard() {
                       </Button>
                     </div>
                   )}
+                </div>
               </div>
             )}
 
             {activeSection === "community" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
+                <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
+                  <p className="text-xs md:text-sm text-brand-gray">
+                    <span className="font-semibold text-brand-royal-blue">Community</span>
+                    {" "}· Patient & researcher communities
+                  </p>
+                </div>
+                <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                 {/* Tabs: Patient Communities | Researcher Communities */}
-                <div className="flex gap-0 border-b border-[rgba(208,196,226,0.5)]">
+                <div className="flex gap-0 border-b border-[rgba(208,196,226,0.5)] -mx-3 md:mx-0 px-3 md:px-0">
                   <button
                     type="button"
                     onClick={() => setCommunityManagementTab("patient")}
-                    className={`px-4 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+                    className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px ${
                       communityManagementTab === "patient"
                         ? "text-brand-royal-blue border-brand-royal-blue"
                         : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
                     }`}
                   >
-                    Patient Communities
+                    Patient
                   </button>
                   <button
                     type="button"
                     onClick={() => setCommunityManagementTab("researcher")}
-                    className={`px-4 py-3 font-semibold text-sm transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
+                    className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
                       communityManagementTab === "researcher"
                         ? "text-brand-royal-blue border-brand-royal-blue"
                         : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
                     }`}
                   >
-                    <FlaskConical className="w-4 h-4" />
-                    Researcher Communities
+                    <FlaskConical className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    Researcher
                   </button>
                 </div>
 
@@ -5198,11 +5241,19 @@ export default function AdminDashboard() {
                     </div>
                   </>
                 )}
+                </div>
               </div>
             )}
 
             {activeSection === "work" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
+                <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
+                  <p className="text-xs md:text-sm text-brand-gray">
+                    <span className="font-semibold text-brand-royal-blue">Work Moderation</span>
+                    {" "}· Pending submissions
+                  </p>
+                </div>
+                <div className="p-3 md:p-6 space-y-4 md:space-y-6">
                 {loadingWorkSubmissions ? (
                   <div className="flex justify-center py-6">
                     <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
@@ -5277,6 +5328,7 @@ export default function AdminDashboard() {
                       ))}
                   </ul>
                 )}
+                </div>
               </div>
             )}
 
@@ -6104,8 +6156,8 @@ export default function AdminDashboard() {
                           />
                         </button>
                         {pageFeedbackInsightsOpen && (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                          <div className="overflow-x-auto -mx-2 px-2 md:mx-0 md:px-0">
+                            <table className="w-full min-w-[320px] text-sm">
                               <thead>
                                 <tr className="bg-gray-50/90 text-left">
                                   <th
@@ -6470,7 +6522,7 @@ export default function AdminDashboard() {
               })()}
 
             {activeSection === "onboarding-cleanup" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
                 <p className="text-sm text-brand-gray mb-4">
                   Users who have partially completed onboarding. You can reset
                   their data so they can start fresh, or delete their account
@@ -6746,7 +6798,7 @@ export default function AdminDashboard() {
             )}
 
             {activeSection === "meeting-requests" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
                 <p className="text-sm text-brand-gray mb-4">
                   Cancel individual meeting requests or clear all (including
                   related notifications). Useful for testing.
