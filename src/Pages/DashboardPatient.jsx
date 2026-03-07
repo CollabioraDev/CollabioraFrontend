@@ -91,7 +91,7 @@ export default function DashboardPatient() {
   // Determine if user is a researcher to show "Collaborators" instead of "Experts"
   const isResearcher = user?.role === "researcher";
   const expertLabel = isResearcher ? "Collaborator" : "Expert";
-  const expertsLabel = isResearcher ? "Collaborators" : "Experts";
+  const expertsLabel = isResearcher ? "Collaborators" : "Health Experts";
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Track if this is the first load (cache miss)
   const [summaryModal, setSummaryModal] = useState({
     open: false,
@@ -324,7 +324,7 @@ export default function DashboardPatient() {
         target: "[data-tour='nav-explore']",
         title: "Explore tab in the navbar",
         content:
-          "Use the Explore menu in the navbar to search clinical trials, publications, and experts from one place. It's your gateway to discovering new research.",
+          "Use the Explore menu in the navbar to search new treatments, health library, and health experts from one place. It's your gateway to discovering new research.",
         placement: "bottom",
       },
       {
@@ -338,14 +338,14 @@ export default function DashboardPatient() {
         target: "[data-tour='dashboard-tabs']",
         title: "Dashboard tabs",
         content:
-          "Switch between Library, Trials, Experts, Forums, and Favourites to see recommendations in each category. Your saved items are in Favourites.",
+          "Switch between Health Library, New Treatments, Health Experts, Forums, and Favourites to see recommendations in each category. Your saved items are in Favourites.",
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-tab-favorites']",
         title: "Favourites tab",
         content:
-          "Open Favourites to see your saved trials, publications, and experts. You can generate a summary report from your selection.",
+          "Open Favourites to see your saved new treatments, health library items, and health experts. You can generate a summary report from your selection.",
         placement: "bottom",
       },
       {
@@ -460,7 +460,7 @@ export default function DashboardPatient() {
       )}-${new Date().toISOString().split("T")[0]}.pdf`;
 
       const pdfInstance = pdf(
-        <PDFReportDocument report={favoritesReportModal.report} />,
+        <PDFReportDocument report={favoritesReportModal.report} patientFacingLabels />,
       );
       const blob = await pdfInstance.toBlob();
 
@@ -2923,11 +2923,11 @@ export default function DashboardPatient() {
   const getCategoryLabel = (category) => {
     switch (category) {
       case "publications":
-        return "Library";
+        return "Health Library";
       case "trials":
-        return "Trials";
+        return "New Treatments";
       case "experts":
-        return "Experts";
+        return expertsLabel;
       case "forums":
         return "Forums";
       case "favorites":
@@ -2994,8 +2994,8 @@ export default function DashboardPatient() {
             data-tour="dashboard-tabs"
           >
             {[
-              { key: "publications", label: "Library", icon: FileText },
-              { key: "trials", label: "Trials", icon: Beaker },
+              { key: "publications", label: "Health Library", icon: FileText },
+              { key: "trials", label: "New Treatments", icon: Beaker },
               { key: "experts", label: expertsLabel, icon: Users },
               { key: "forums", label: "Forums", icon: MessageCircle },
               { key: "favorites", label: "Favourites", icon: Star },
@@ -3755,7 +3755,7 @@ export default function DashboardPatient() {
                       className="text-lg font-semibold mb-2"
                       style={{ color: "#2F3C96" }}
                     >
-                      No Clinical Trials Found
+                      No New Treatments Found
                     </h3>
                     <p
                       className="text-sm max-w-md mx-auto"
@@ -4968,7 +4968,7 @@ export default function DashboardPatient() {
                                                         color: "#2F3C96",
                                                       }}
                                                     >
-                                                      Top Publications
+                                                      Top from Health Library
                                                     </h4>
                                                   </div>
                                                   {expertPublications
@@ -5249,7 +5249,7 @@ export default function DashboardPatient() {
                           className="text-lg font-semibold mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          No Experts Found
+                          No Health Experts Found
                         </h3>
                         <p
                           className="text-sm max-w-md mx-auto"
@@ -7791,7 +7791,7 @@ export default function DashboardPatient() {
                             style={{ color: "#2F3C96" }}
                           >
                             <FileText className="w-5 h-5" />
-                            Publications Selected (
+                            Health Library Selected (
                             {favoritesReportModal.report.publications.length})
                           </h3>
                         </div>
@@ -7816,7 +7816,7 @@ export default function DashboardPatient() {
                             style={{ color: "#2F3C96" }}
                           >
                             <Beaker className="w-5 h-5" />
-                            Trials Selected (
+                            New Treatments Selected (
                             {favoritesReportModal.report.trials.length})
                           </h3>
                         </div>
@@ -10565,7 +10565,7 @@ export default function DashboardPatient() {
                           className="w-4 h-4 shrink-0"
                           style={{ color: "#2F3C96" }}
                         />
-                        Publications
+                        From Health Library
                       </h4>
                       {isLoadingPubs && expertPublications.length === 0 && (
                         <div

@@ -10,14 +10,33 @@ const GlobalSearch = () => {
   const [category, setCategory] = useState("trials");
   const [isFocused, setIsFocused] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const inputRef = useRef(null);
   const categoryRef = useRef(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user") || "null");
+    setUser(userData);
+  }, []);
+
+  const isResearcher = user?.role === "researcher";
   const categories = [
-    { id: "trials", label: "Trials", icon: Beaker },
-    { id: "publications", label: "Publications", icon: BookOpen },
-    { id: "experts", label: "Experts", icon: Users },
+    {
+      id: "trials",
+      label: isResearcher ? "Clinical Trials" : "New Treatments",
+      icon: Beaker,
+    },
+    {
+      id: "publications",
+      label: isResearcher ? "Publications" : "Health Library",
+      icon: BookOpen,
+    },
+    {
+      id: "experts",
+      label: isResearcher ? "Experts" : "Health Experts",
+      icon: Users,
+    },
   ];
 
   const selectedCategory = categories.find((c) => c.id === category);
@@ -25,7 +44,11 @@ const GlobalSearch = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
-      navigate(`/${category}?q=${encodeURIComponent(query.trim())}`);
+      const path =
+        category === "publications" && !isResearcher
+          ? "/library"
+          : `/${category}`;
+      navigate(`${path}?q=${encodeURIComponent(query.trim())}`);
       setQuery("");
       setIsFocused(false);
       if (inputRef.current) {

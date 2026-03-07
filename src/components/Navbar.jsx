@@ -150,12 +150,13 @@ export default function Navbar() {
 
   const navItems = getNavItems();
 
-  // When signed in as researcher, show "Collaborators" instead of "Experts" in nav
+  // When signed in as researcher, show "Collaborators" / "Publications" / "Clinical Trials"; for patients use friendlier terms
   const expertsNavLabel =
-    user?.role === "researcher" ? "Collaborators" : "Experts";
-  // For non-researchers, show "Library" instead of "Publications" in nav and use /library route
+    user?.role === "researcher" ? "Collaborators" : "Health Experts";
   const publicationsNavLabel =
-    user?.role === "researcher" ? "Publications" : "Library";
+    user?.role === "researcher" ? "Publications" : "Health Library";
+  const trialsNavLabel =
+    user?.role === "researcher" ? "Clinical Trials" : "New Treatments";
   const publicationsNavRoute =
     user?.role === "researcher" ? "/publications" : "/library";
 
@@ -706,7 +707,7 @@ export default function Navbar() {
                                 ),
                               },
                               {
-                                label: "Trials",
+                                label: trialsNavLabel,
                                 route: "/trials",
                                 icon: (
                                   <svg
@@ -1481,7 +1482,7 @@ export default function Navbar() {
                                 route: publicationsNavRoute,
                               },
                               { label: expertsNavLabel, route: "/experts" },
-                              { label: "Trials", route: "/trials" },
+                              { label: trialsNavLabel, route: "/trials" },
                             ].map((subItem) => (
                               <PrefetchLink
                                 key={subItem.label}

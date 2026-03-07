@@ -2092,22 +2092,23 @@ export default function Publications() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 relative overflow-hidden">
         <AnimatedBackground />
 
-        <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-6xl pb-8">
-          {/* Compact Header */}
+        <div className="relative pt-25 px-4 md:px-8 mx-auto max-w-6xl pb-8">
+          {/* Compact Header - tight so search bar sits higher */}
           <div
-            className="text-center mb-6 animate-fade-in flex flex-col items-center gap-2"
+            className="text-center mb-3 animate-fade-in flex flex-col items-center gap-1"
             data-tour="publications-header"
           >
-            <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-[#2F3C96] via-[#474F97] to-[#D0C4E2] bg-clip-text text-transparent mb-1">
-              <AuroraText
-                speed={2.5}
-                colors={["#2F3C96"]}
-              >
-                Explore Publications
+            <h1
+              className="text-3xl md:text-5xl font-bold mb-1"
+              style={{ color: "#2F3C96" }}
+            >
+              <AuroraText speed={2.5} colors={["#2F3C96"]}>
+                {routeLocation.pathname === "/library"
+                  ? "Health Library"
+                  : "Publications"}
               </AuroraText>
             </h1>
-            <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
-              Search through recent research publications
+            <div className="flex items-center justify-center">
               <button
                 type="button"
                 onClick={async () => {
@@ -2138,14 +2139,14 @@ export default function Publications() {
                 <Info className="w-3.5 h-3.5" />
                 Tutorial
               </button>
-            </p>
+            </div>
             {/* Free Searches Indicator */}
-            <div className="mt-3 flex justify-center items-center w-full">
+            <div className="mt-1 flex justify-center items-center w-full">
               <FreeSearchesIndicator user={user} centered={true} />
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar - prominent, full-width, moved up */}
           <div
             className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in"
             data-tour="publications-search-bar"
@@ -2206,31 +2207,35 @@ export default function Publications() {
                 </div>
               )}
 
-              <div className="flex flex-col md:flex-row gap-2">
-                <SmartSearchInput
-                  value={q}
-                  onChange={setQ}
-                  onSubmit={handleKeywordSubmit}
-                  placeholder="Try being specific to get more accurate search results...."
-                  extraTerms={publicationSuggestionTerms}
-                  className="flex-1"
-                />
-                <div className="flex gap-2">
+              {/* Full-width search row: longer search bar + actions */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <div className="flex-1 min-w-0 w-full">
+                  <SmartSearchInput
+                    value={q}
+                    onChange={setQ}
+                    onSubmit={handleKeywordSubmit}
+                    placeholder="Try being specific to get more accurate search results...."
+                    extraTerms={publicationSuggestionTerms}
+                    className="w-full"
+                    inputClassName="w-full min-w-0 py-2 px-3 text-sm rounded-lg border-slate-200 bg-slate-50/80 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] transition shadow-sm"
+                  />
+                </div>
+                <div className="flex gap-2 shrink-0 sm:flex-nowrap">
                   <Button
                     data-tour="publications-advanced"
                     onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-                    className={`${
+                    className={`bg-white text-slate-700 px-4 py-3 rounded-lg transition-all text-sm font-semibold flex items-center gap-1.5 border ${
                       dateRange.start || dateRange.end || articleType
-                        ? "bg-indigo-600 hover:bg-indigo-700"
-                        : "bg-slate-600 hover:bg-slate-700"
-                    } text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold flex items-center gap-1.5`}
+                        ? "border-[#D0C4E2] shadow-[0_2px_8px_rgba(208,196,226,0.4)] hover:shadow-[0_4px_12px_rgba(208,196,226,0.5)]"
+                        : "border-slate-200 shadow-[0_2px_8px_rgba(208,196,226,0.25)] hover:shadow-[0_4px_12px_rgba(208,196,226,0.35)] hover:border-[#D0C4E2]/60"
+                    }`}
                   >
                     {(dateRange.start || dateRange.end || articleType) && (
                       <Calendar className="w-3.5 h-3.5" />
                     )}
                     {showAdvancedSearch ? "Hide" : "Advanced"}
                     {(dateRange.start || dateRange.end || articleType) && (
-                      <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs">
+                      <span className="bg-[#D0C4E2]/20 text-[#2F3C96] px-1.5 py-0.5 rounded text-xs font-medium">
                         Filters
                       </span>
                     )}
@@ -2238,7 +2243,14 @@ export default function Publications() {
                   <Button
                     data-tour="publications-search-btn"
                     onClick={handleSearch}
-                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold"
+                    className="text-white px-5 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold"
+                    style={{ backgroundColor: "#2F3C96" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#252b73";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#2F3C96";
+                    }}
                   >
                     Search
                   </Button>

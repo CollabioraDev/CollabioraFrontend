@@ -30,7 +30,7 @@ const FREE_SEARCHES_TOTAL = 6;
 const getCategoryCards = (user) => [
   {
     id: "publications",
-    title: user?.role === "researcher" ? "Publications" : "Library",
+    title: user?.role === "researcher" ? "Publications" : "Health Library",
     icon: BookOpen,
     path: user?.role === "researcher" ? "/publications" : "/library",
     color: "#474F97",
@@ -40,7 +40,7 @@ const getCategoryCards = (user) => [
   },
   {
     id: "trials",
-    title: "Clinical Trials",
+    title: user?.role === "researcher" ? "Clinical Trials" : "New Treatments",
     icon: Beaker,
     path: "/trials",
     color: "#2F3C96",
@@ -50,7 +50,7 @@ const getCategoryCards = (user) => [
   },
   {
     id: "experts",
-    title: "Experts",
+    title: user?.role === "researcher" ? "Collaborators" : "Health Experts",
     icon: Users,
     path: "/experts",
     color: "#6B5B95",

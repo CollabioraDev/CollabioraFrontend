@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -133,7 +139,9 @@ export default function Trials() {
     if (saved) {
       try {
         return new Set(JSON.parse(saved));
-      } catch (e) { /* ignore parse errors */ }
+      } catch (e) {
+        /* ignore parse errors */
+      }
     }
     return new Set();
   }); // Set of enabled medical interests
@@ -215,9 +223,18 @@ export default function Trials() {
     if (!hasLatest) return { useRecent: false, cleanedQuery: query };
     let cleaned = query
       .replace(/\b(202[4-9]|20[3-9][0-9])\b/gi, "")
-      .replace(/\b(new|latest|recent)\s+(treatments?|studies|trials?|therapy|therapies)\b/gi, "$2")
-      .replace(/\b(treatments?|studies|trials?|therapy|therapies)\s+(in|for)\s+(.+?)\s+(new|latest|recent)\b/gi, "$3")
-      .replace(/\b(new|latest|recent)\s+(.+?)\s+(treatments?|studies|trials?|therapy|therapies)\b/gi, "$2")
+      .replace(
+        /\b(new|latest|recent)\s+(treatments?|studies|trials?|therapy|therapies)\b/gi,
+        "$2",
+      )
+      .replace(
+        /\b(treatments?|studies|trials?|therapy|therapies)\s+(in|for)\s+(.+?)\s+(new|latest|recent)\b/gi,
+        "$3",
+      )
+      .replace(
+        /\b(new|latest|recent)\s+(.+?)\s+(treatments?|studies|trials?|therapy|therapies)\b/gi,
+        "$2",
+      )
       .replace(/\s+/g, " ")
       .trim();
     return { useRecent: true, cleanedQuery: cleaned || query };
@@ -268,7 +285,9 @@ export default function Trials() {
     (stepIndex) => {
       setTutorialStep(stepIndex);
       if (stepIndex === 2) {
-        setSearchKeywords((prev) => (prev.length === 0 ? ["hypertension"] : prev));
+        setSearchKeywords((prev) =>
+          prev.length === 0 ? ["hypertension"] : prev,
+        );
       }
       if (stepIndex === RESULTS_STEP) {
         if (tutorialSampleResults.length === 0) {
@@ -288,7 +307,7 @@ export default function Trials() {
         }
       }
     },
-    [tutorialSampleResults.length, scrollToResultsOnce]
+    [tutorialSampleResults.length, scrollToResultsOnce],
   );
 
   const quickFilters = [
@@ -384,11 +403,17 @@ export default function Trials() {
 
   // Save medical interest state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("useMedicalInterest", JSON.stringify(useMedicalInterest));
+    localStorage.setItem(
+      "useMedicalInterest",
+      JSON.stringify(useMedicalInterest),
+    );
   }, [useMedicalInterest]);
 
   useEffect(() => {
-    localStorage.setItem("enabledMedicalInterests", JSON.stringify(Array.from(enabledMedicalInterests)));
+    localStorage.setItem(
+      "enabledMedicalInterests",
+      JSON.stringify(Array.from(enabledMedicalInterests)),
+    );
   }, [enabledMedicalInterests]);
 
   const clearAllKeywords = () => {
@@ -639,7 +664,8 @@ export default function Trials() {
       if (response.status === 429) {
         const errorData = await response.json();
         toast.error(
-          errorData.error || "Search limit reached. Sign in to continue searching.",
+          errorData.error ||
+            "Search limit reached. Sign in to continue searching.",
           { duration: 4000 },
         );
         setLoading(false);
@@ -820,7 +846,8 @@ export default function Trials() {
 
     params.set("page", String(page));
     params.set("pageSize", "6");
-    if (savedRecentMonths) params.set("recentMonths", String(savedRecentMonths));
+    if (savedRecentMonths)
+      params.set("recentMonths", String(savedRecentMonths));
     if (savedSortByDate) params.set("sortByDate", "true");
 
     // Add location parameter
@@ -1047,7 +1074,8 @@ export default function Trials() {
           if (r.status === 429) {
             const errorData = await r.json();
             toast.error(
-              errorData.error || "Search limit reached. Sign in to continue searching.",
+              errorData.error ||
+                "Search limit reached. Sign in to continue searching.",
               { duration: 4000 },
             );
             setLoading(false);
@@ -1339,7 +1367,8 @@ export default function Trials() {
           ...prev,
           summary: {
             structured: false,
-            summary: res.error || "Failed to simplify further. Please try again.",
+            summary:
+              res.error || "Failed to simplify further. Please try again.",
           },
           loading: false,
         }));
@@ -1347,11 +1376,12 @@ export default function Trials() {
       }
 
       const summary =
-        res.summary &&
-        typeof res.summary === "object" &&
-        res.summary.structured
+        res.summary && typeof res.summary === "object" && res.summary.structured
           ? res.summary
-          : { structured: false, summary: res.summary?.summary || "Summary unavailable" };
+          : {
+              structured: false,
+              summary: res.summary?.summary || "Summary unavailable",
+            };
 
       setHasSimplifiedFurther(true);
       setSummaryModal((prev) => ({
@@ -2220,7 +2250,7 @@ export default function Trials() {
         spotlightPadding: 18,
       },
     ],
-    [isSignedIn]
+    [isSignedIn],
   );
 
   return (
@@ -2247,15 +2277,13 @@ export default function Trials() {
             data-tour="trials-header"
           >
             <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-1">
-              <AuroraText
-                speed={2.5}
-                colors={["#2F3C96"]}
-              >
-                Explore Clinical Trials
+              <AuroraText speed={2.5} colors={["#2F3C96"]}>
+                {user?.role === "researcher"
+                  ? "Clinical Trials"
+                  : "New Treatments"}
               </AuroraText>
             </h1>
-            <p className="text-sm text-slate-600 flex items-center justify-center gap-2">
-              Discover trials that match your needs
+            <div className="flex items-center justify-center">
               <button
                 type="button"
                 onClick={async () => {
@@ -2284,7 +2312,7 @@ export default function Trials() {
                 <Info className="w-3.5 h-3.5" />
                 Tutorial
               </button>
-            </p>
+            </div>
             {/* Free Searches Indicator */}
             <div className="mt-3 flex justify-center items-center w-full">
               <FreeSearchesIndicator user={user} centered={true} />
@@ -2371,13 +2399,29 @@ export default function Trials() {
                 <div className="flex gap-2">
                   <Button
                     onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-                    className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold"
+                    className={`bg-white text-slate-700 px-4 py-2 rounded-lg transition-all text-sm font-semibold border ${
+                      getActiveAdvancedFilters().length > 0
+                        ? "border-[#D0C4E2] shadow-[0_2px_8px_rgba(208,196,226,0.4)] hover:shadow-[0_4px_12px_rgba(208,196,226,0.5)]"
+                        : "border-slate-200 shadow-[0_2px_8px_rgba(208,196,226,0.25)] hover:shadow-[0_4px_12px_rgba(208,196,226,0.35)] hover:border-[#D0C4E2]/60"
+                    }`}
                   >
                     {showAdvancedSearch ? "Hide" : "Advanced"}
+                    {getActiveAdvancedFilters().length > 0 && (
+                      <span className="ml-1.5 bg-[#D0C4E2]/20 text-[#2F3C96] px-1.5 py-0.5 rounded text-xs font-medium">
+                        Filters
+                      </span>
+                    )}
                   </Button>
                   <Button
                     onClick={handleSearch}
-                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold"
+                    className="text-white px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-sm font-semibold"
+                    style={{ backgroundColor: "#2F3C96" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#252b73";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#2F3C96";
+                    }}
                     data-tour="trials-search-btn"
                   >
                     Search
@@ -2386,10 +2430,7 @@ export default function Trials() {
               </div>
 
               {/* Keyword Chips Section */}
-              <div
-                className="flex flex-col gap-2"
-                data-tour="trials-keywords"
-              >
+              <div className="flex flex-col gap-2" data-tour="trials-keywords">
                 {searchKeywords.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-slate-600">
@@ -2471,28 +2512,12 @@ export default function Trials() {
                 </div>
               )}
 
-              {/* Location Options */}
+              {/* Location Options: Near Me | Global | Custom (same as Experts – site colour) */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-xs font-medium text-slate-700">
                     Location:
                   </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setLocationMode("global");
-                      setLocation("");
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      locationMode === "global"
-                        ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    Global
-                  </button>
                   {userLocation && (
                     <button
                       type="button"
@@ -2504,19 +2529,40 @@ export default function Trials() {
                       }}
                       className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
                         locationMode === "current"
-                          ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
+                          ? "shadow-md border border-[#D0C4E2]"
                           : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                       }`}
+                      style={
+                        locationMode === "current"
+                          ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
+                          : undefined
+                      }
                     >
                       <MapPin className="w-3 h-3" />
-                      My Location
-                      {userLocation.city || userLocation.country
-                        ? ` (${[userLocation.city, userLocation.country]
-                            .filter(Boolean)
-                            .join(", ")})`
-                        : ""}
+                      Near Me
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLocationMode("global");
+                      setLocation("");
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                      locationMode === "global"
+                        ? "shadow-md border border-[#D0C4E2]"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                    style={
+                      locationMode === "global"
+                        ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
+                        : undefined
+                    }
+                  >
+                    Global
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -2526,9 +2572,14 @@ export default function Trials() {
                     }}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                       locationMode === "custom"
-                        ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
+                        ? "shadow-md border border-[#D0C4E2]"
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
+                    style={
+                      locationMode === "custom"
+                        ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
+                        : undefined
+                    }
                   >
                     Custom
                   </button>
@@ -2538,7 +2589,7 @@ export default function Trials() {
                   <LocationInput
                     value={location}
                     onChange={setLocation}
-                    placeholder="Enter city, country, or region"
+                    placeholder="e.g. City, State/Province, Country"
                     className="w-full"
                     inputClassName="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 placeholder-slate-400"
                   />
@@ -2768,373 +2819,393 @@ export default function Trials() {
 
           {/* Results Area - wrapper for tour targeting */}
           <div data-tour="trials-results-area" className="min-h-[200px]">
-          {/* Skeleton Loaders */}
-          {(loading || tutorialSampleLoading) && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white rounded-lg shadow-md border border-slate-200 animate-pulse"
-                >
-                  <div className="p-5">
-                    {/* Header Skeleton */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="h-6 w-24 bg-indigo-200 rounded-full"></div>
-                      <div className="h-6 w-28 bg-slate-200 rounded-full"></div>
-                    </div>
+            {/* Skeleton Loaders */}
+            {(loading || tutorialSampleLoading) && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-lg shadow-md border border-slate-200 animate-pulse"
+                  >
+                    <div className="p-5">
+                      {/* Header Skeleton */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="h-6 w-24 bg-indigo-200 rounded-full"></div>
+                        <div className="h-6 w-28 bg-slate-200 rounded-full"></div>
+                      </div>
 
-                    {/* Title Skeleton */}
-                    <div className="mb-3 space-y-2">
-                      <div className="h-5 bg-slate-200 rounded w-full"></div>
-                      <div className="h-5 bg-slate-200 rounded w-4/5"></div>
-                    </div>
+                      {/* Title Skeleton */}
+                      <div className="mb-3 space-y-2">
+                        <div className="h-5 bg-slate-200 rounded w-full"></div>
+                        <div className="h-5 bg-slate-200 rounded w-4/5"></div>
+                      </div>
 
-                    {/* Info Skeleton */}
-                    <div className="space-y-2 mb-3">
-                      <div className="h-4 bg-slate-100 rounded w-3/4"></div>
-                      <div className="h-4 bg-indigo-100 rounded w-1/2"></div>
-                    </div>
+                      {/* Info Skeleton */}
+                      <div className="space-y-2 mb-3">
+                        <div className="h-4 bg-slate-100 rounded w-3/4"></div>
+                        <div className="h-4 bg-indigo-100 rounded w-1/2"></div>
+                      </div>
 
-                    {/* Description Button Skeleton */}
-                    <div className="mb-3">
-                      <div className="h-12 bg-indigo-50 rounded-lg"></div>
-                    </div>
+                      {/* Description Button Skeleton */}
+                      <div className="mb-3">
+                        <div className="h-12 bg-indigo-50 rounded-lg"></div>
+                      </div>
 
-                    {/* Buttons Skeleton */}
-                    <div className="flex gap-2 mt-4">
-                      <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
-                      <div className="w-10 h-10 bg-slate-200 rounded-lg"></div>
-                    </div>
+                      {/* Buttons Skeleton */}
+                      <div className="flex gap-2 mt-4">
+                        <div className="flex-1 h-10 bg-gray-200 rounded-lg"></div>
+                        <div className="w-10 h-10 bg-slate-200 rounded-lg"></div>
+                      </div>
 
-                    {/* Contact Buttons Skeleton */}
-                    <div className="flex gap-2 mt-3">
-                      <div className="flex-1 h-8 bg-indigo-100 rounded-lg"></div>
-                      <div className="flex-1 h-8 bg-slate-100 rounded-lg"></div>
+                      {/* Contact Buttons Skeleton */}
+                      <div className="flex gap-2 mt-3">
+                        <div className="flex-1 h-8 bg-indigo-100 rounded-lg"></div>
+                        <div className="flex-1 h-8 bg-slate-100 rounded-lg"></div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          {/* Results - show tutorial sample or real results */}
-          {!loading &&
-            (results.length > 0 || tutorialSampleResults.length > 0) && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(tutorialSampleResults.length > 0
-                ? tutorialSampleResults
-                : results
-              )
-                .slice(0, isSignedIn ? (tutorialSampleResults.length > 0 ? tutorialSampleResults.length : results.length) : 6)
-                .map((trial, cardIdx) => {
-                  const itemId = trial.id || trial._id;
-                  const isFirstCard = cardIdx === 0;
-                  return (
-                    <div
-                      key={itemId}
-                      className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full animate-fade-in"
-                      style={{
-                        borderColor: trial.isRead
-                          ? "rgba(147, 51, 234, 0.4)" // Purple for read
-                          : "rgba(59, 130, 246, 0.4)", // Blue for unread
-                        animationDelay: `${cardIdx * 50}ms`,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow =
-                          "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
-                        e.currentTarget.style.borderColor = trial.isRead
-                          ? "rgba(147, 51, 234, 0.6)" // Darker purple on hover
-                          : "rgba(59, 130, 246, 0.6)"; // Darker blue on hover
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.boxShadow =
-                          "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
-                        e.currentTarget.style.borderColor = trial.isRead
-                          ? "rgba(147, 51, 234, 0.4)" // Purple for read
-                          : "rgba(59, 130, 246, 0.4)"; // Blue for unread
-                      }}
-                    >
-                      <div className="p-5 flex flex-col flex-grow">
-                        {/* Match Progress Bar */}
-                        {trial.matchPercentage !== undefined && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <TrendingUp
-                                  className="w-4 h-4"
-                                  style={{ color: "#2F3C96" }}
-                                />
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{ color: "#2F3C96" }}
-                                >
-                                  {trial.matchPercentage}% Match
-                                </span>
-                                {/* Info Icon with Tooltip */}
-                                <div className="relative group">
-                                  <Info
-                                    className="w-4 h-4 cursor-help transition-opacity hover:opacity-70"
-                                    style={{ color: "#2F3C96" }}
-                                  />
-                                  {/* Tooltip */}
-                                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
-                                    <div className="font-semibold mb-1">
-                                      Match Relevance
+            {/* Results - show tutorial sample or real results */}
+            {!loading &&
+              (results.length > 0 || tutorialSampleResults.length > 0) && (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(tutorialSampleResults.length > 0
+                    ? tutorialSampleResults
+                    : results
+                  )
+                    .slice(
+                      0,
+                      isSignedIn
+                        ? tutorialSampleResults.length > 0
+                          ? tutorialSampleResults.length
+                          : results.length
+                        : 6,
+                    )
+                    .map((trial, cardIdx) => {
+                      const itemId = trial.id || trial._id;
+                      const isFirstCard = cardIdx === 0;
+                      return (
+                        <div
+                          key={itemId}
+                          className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full animate-fade-in"
+                          style={{
+                            borderColor: trial.isRead
+                              ? "rgba(147, 51, 234, 0.4)" // Purple for read
+                              : "rgba(59, 130, 246, 0.4)", // Blue for unread
+                            animationDelay: `${cardIdx * 50}ms`,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow =
+                              "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
+                            e.currentTarget.style.borderColor = trial.isRead
+                              ? "rgba(147, 51, 234, 0.6)" // Darker purple on hover
+                              : "rgba(59, 130, 246, 0.6)"; // Darker blue on hover
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow =
+                              "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+                            e.currentTarget.style.borderColor = trial.isRead
+                              ? "rgba(147, 51, 234, 0.4)" // Purple for read
+                              : "rgba(59, 130, 246, 0.4)"; // Blue for unread
+                          }}
+                        >
+                          <div className="p-5 flex flex-col flex-grow">
+                            {/* Match Progress Bar */}
+                            {trial.matchPercentage !== undefined && (
+                              <div className="mb-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <TrendingUp
+                                      className="w-4 h-4"
+                                      style={{ color: "#2F3C96" }}
+                                    />
+                                    <span
+                                      className="text-sm font-bold"
+                                      style={{ color: "#2F3C96" }}
+                                    >
+                                      {trial.matchPercentage}% Match
+                                    </span>
+                                    {/* Info Icon with Tooltip */}
+                                    <div className="relative group">
+                                      <Info
+                                        className="w-4 h-4 cursor-help transition-opacity hover:opacity-70"
+                                        style={{ color: "#2F3C96" }}
+                                      />
+                                      {/* Tooltip */}
+                                      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                                        <div className="font-semibold mb-1">
+                                          Match Relevance
+                                        </div>
+                                        <div className="text-gray-300 leading-relaxed">
+                                          {trial.matchExplanation ||
+                                            `This trial matches ${trial.matchPercentage}% based on your profile, medical conditions, location, and eligibility criteria. The match considers factors like your medical interests, location proximity, age, gender, and trial requirements.`}
+                                        </div>
+                                        {/* Tooltip arrow */}
+                                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
+                                      </div>
                                     </div>
-                                    <div className="text-gray-300 leading-relaxed">
-                                      {trial.matchExplanation ||
-                                        `This trial matches ${trial.matchPercentage}% based on your profile, medical conditions, location, and eligibility criteria. The match considers factors like your medical interests, location proximity, age, gender, and trial requirements.`}
-                                    </div>
-                                    {/* Tooltip arrow */}
-                                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
                                   </div>
+                                  {trial.status && (
+                                    <span
+                                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                                        trial.status,
+                                      )}`}
+                                    >
+                                      {trial.status.replace(/_/g, " ")}
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Progress Bar */}
+                                <div
+                                  className="w-full h-2.5 rounded-full overflow-hidden"
+                                  style={{
+                                    backgroundColor: "rgba(208, 196, 226, 0.3)",
+                                  }}
+                                >
+                                  <div
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${trial.matchPercentage}%`,
+                                      background:
+                                        "linear-gradient(90deg, #2F3C96, #253075)",
+                                    }}
+                                  ></div>
                                 </div>
                               </div>
-                              {trial.status && (
-                                <span
-                                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                                    trial.status,
-                                  )}`}
-                                >
-                                  {trial.status.replace(/_/g, " ")}
-                                </span>
-                              )}
-                            </div>
-                            {/* Progress Bar */}
-                            <div
-                              className="w-full h-2.5 rounded-full overflow-hidden"
-                              style={{
-                                backgroundColor: "rgba(208, 196, 226, 0.3)",
-                              }}
-                            >
-                              <div
-                                className="h-full rounded-full transition-all duration-500"
+                            )}
+
+                            {/* Trial Title */}
+                            <div className="mb-4">
+                              <h3
+                                className="text-lg font-bold mb-0 line-clamp-3 leading-snug flex items-start gap-2"
                                 style={{
-                                  width: `${trial.matchPercentage}%`,
-                                  background:
-                                    "linear-gradient(90deg, #2F3C96, #253075)",
+                                  color: trial.isRead
+                                    ? "#D0C4E2" // Light purple for read
+                                    : "#2F3C96", // Default blue for unread
                                 }}
-                              ></div>
+                              >
+                                {trial.isRead && (
+                                  <CheckCircle
+                                    className="w-4 h-4 mt-1 shrink-0"
+                                    style={{ color: "#D0C4E2" }}
+                                  />
+                                )}
+                                <span className="flex-1">
+                                  {userProfile?.researcher !== undefined
+                                    ? trial.title || "Untitled Trial"
+                                    : (simplifyTitles &&
+                                        simplifiedTrialSummaries.get(
+                                          trial.title,
+                                        )) ||
+                                      trial.simplifiedTitle ||
+                                      trial.title ||
+                                      "Untitled Trial"}
+                                </span>
+                              </h3>
                             </div>
-                          </div>
-                        )}
 
-                        {/* Trial Title */}
-                        <div className="mb-4">
-                          <h3
-                            className="text-lg font-bold mb-0 line-clamp-3 leading-snug flex items-start gap-2"
-                            style={{
-                              color: trial.isRead
-                                ? "#D0C4E2" // Light purple for read
-                                : "#2F3C96", // Default blue for unread
-                            }}
-                          >
-                            {trial.isRead && (
-                              <CheckCircle
-                                className="w-4 h-4 mt-1 shrink-0"
-                                style={{ color: "#D0C4E2" }}
-                              />
-                            )}
-                            <span className="flex-1">
-                              {userProfile?.researcher !== undefined
-                                ? (trial.title || "Untitled Trial")
-                                : (simplifyTitles &&
-                                    simplifiedTrialSummaries.get(trial.title)) ||
-                                  trial.simplifiedTitle ||
-                                  trial.title ||
-                                  "Untitled Trial"}
-                            </span>
-                          </h3>
-                        </div>
-
-                        {/* Description/Details Preview */}
-                        {(trial.description || trial.conditionDescription) && (
-                          <div className="mb-4 flex-grow">
-                            <button
-                              onClick={() => openDetailsModal(trial)}
-                              {...(isFirstCard && { "data-tour": "trials-view-details-btn" })}
-                              className="w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 border group"
-                              style={{
-                                backgroundColor: "rgba(208, 196, 226, 0.2)",
-                                borderColor: "rgba(47, 60, 150, 0.2)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "rgba(208, 196, 226, 0.3)";
-                                e.currentTarget.style.borderColor =
-                                  "rgba(47, 60, 150, 0.3)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "rgba(208, 196, 226, 0.2)";
-                                e.currentTarget.style.borderColor =
-                                  "rgba(47, 60, 150, 0.2)";
-                              }}
-                            >
-                              <div className="flex items-start gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <div
-                                    className="transition-colors duration-200"
-                                    style={{ color: "#787878" }}
-                                  >
-                                    <span className="line-clamp-2">
-                                      {trial.description ||
-                                        trial.conditionDescription ||
-                                        "View details for more information"}
-                                    </span>
-                                  </div>
-                                  <div
-                                    className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
-                                    style={{ color: "#2F3C96" }}
-                                  >
-                                    <span>Read more details</span>
-                                    <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
-                                      →
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Spacer for trials without description */}
-                        {!trial.description && !trial.conditionDescription && (
-                          <div className="flex-grow"></div>
-                        )}
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 mt-auto">
-                          <button
-                            onClick={() => generateSummary(trial)}
-                            {...(isFirstCard && { "data-tour": "trials-understand-btn" })}
-                            className="flex-1 flex items-center justify-center gap-2 py-2 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #2F3C96, #253075)",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!e.target.disabled) {
-                                e.target.style.background =
-                                  "linear-gradient(135deg, #253075, #1C2454)";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!e.target.disabled) {
-                                e.target.style.background =
-                                  "linear-gradient(135deg, #2F3C96, #253075)";
-                              }
-                            }}
-                          >
-                            Understand this trial
-                          </button>
-                          <button
-                            onClick={() => favorite(trial)}
-                            disabled={favoritingItems.has(
-                              getFavoriteKey(trial),
-                            )}
-                            {...(isFirstCard && { "data-tour": "trials-favourites-btn" })}
-                            className={`p-2 rounded-lg border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                              favorites.some(
-                                (fav) =>
-                                  fav.type === "trial" &&
-                                  (fav.item?.id === itemId ||
-                                    fav.item?._id === itemId),
-                              )
-                                ? "bg-red-50 border-red-200 text-red-500"
-                                : ""
-                            }`}
-                            style={
-                              !favorites.some(
-                                (fav) =>
-                                  fav.type === "trial" &&
-                                  (fav.item?.id === itemId ||
-                                    fav.item?._id === itemId),
-                              )
-                                ? {
+                            {/* Description/Details Preview */}
+                            {(trial.description ||
+                              trial.conditionDescription) && (
+                              <div className="mb-4 flex-grow">
+                                <button
+                                  onClick={() => openDetailsModal(trial)}
+                                  {...(isFirstCard && {
+                                    "data-tour": "trials-view-details-btn",
+                                  })}
+                                  className="w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 border group"
+                                  style={{
                                     backgroundColor: "rgba(208, 196, 226, 0.2)",
-                                    borderColor: "rgba(208, 196, 226, 0.3)",
-                                    color: "#787878",
+                                    borderColor: "rgba(47, 60, 150, 0.2)",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                      "rgba(208, 196, 226, 0.3)";
+                                    e.currentTarget.style.borderColor =
+                                      "rgba(47, 60, 150, 0.3)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                      "rgba(208, 196, 226, 0.2)";
+                                    e.currentTarget.style.borderColor =
+                                      "rgba(47, 60, 150, 0.2)";
+                                  }}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div
+                                        className="transition-colors duration-200"
+                                        style={{ color: "#787878" }}
+                                      >
+                                        <span className="line-clamp-2">
+                                          {trial.description ||
+                                            trial.conditionDescription ||
+                                            "View details for more information"}
+                                        </span>
+                                      </div>
+                                      <div
+                                        className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
+                                        style={{ color: "#2F3C96" }}
+                                      >
+                                        <span>Read more details</span>
+                                        <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
+                                          →
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Spacer for trials without description */}
+                            {!trial.description &&
+                              !trial.conditionDescription && (
+                                <div className="flex-grow"></div>
+                              )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2 mt-auto">
+                              <button
+                                onClick={() => generateSummary(trial)}
+                                {...(isFirstCard && {
+                                  "data-tour": "trials-understand-btn",
+                                })}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #2F3C96, #253075)",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!e.target.disabled) {
+                                    e.target.style.background =
+                                      "linear-gradient(135deg, #253075, #1C2454)";
                                   }
-                                : {}
-                            }
-                            onMouseEnter={(e) => {
-                              if (
-                                !favorites.some(
-                                  (fav) =>
-                                    fav.type === "trial" &&
-                                    (fav.item?.id === itemId ||
-                                      fav.item?._id === itemId),
-                                ) &&
-                                !e.currentTarget.disabled
-                              ) {
-                                e.currentTarget.style.backgroundColor =
-                                  "rgba(208, 196, 226, 0.3)";
-                                e.currentTarget.style.color = "#dc2626";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (
-                                !favorites.some(
-                                  (fav) =>
-                                    fav.type === "trial" &&
-                                    (fav.item?.id === itemId ||
-                                      fav.item?._id === itemId),
-                                )
-                              ) {
-                                e.currentTarget.style.backgroundColor =
-                                  "rgba(208, 196, 226, 0.2)";
-                                e.currentTarget.style.color = "#787878";
-                              }
-                            }}
-                          >
-                            {favoritingItems.has(getFavoriteKey(trial)) ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Heart
-                                className={`w-4 h-4 ${
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!e.target.disabled) {
+                                    e.target.style.background =
+                                      "linear-gradient(135deg, #2F3C96, #253075)";
+                                  }
+                                }}
+                              >
+                                Understand this trial
+                              </button>
+                              <button
+                                onClick={() => favorite(trial)}
+                                disabled={favoritingItems.has(
+                                  getFavoriteKey(trial),
+                                )}
+                                {...(isFirstCard && {
+                                  "data-tour": "trials-favourites-btn",
+                                })}
+                                className={`p-2 rounded-lg border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                   favorites.some(
                                     (fav) =>
                                       fav.type === "trial" &&
                                       (fav.item?.id === itemId ||
                                         fav.item?._id === itemId),
                                   )
-                                    ? "fill-current"
+                                    ? "bg-red-50 border-red-200 text-red-500"
                                     : ""
                                 }`}
-                              />
-                            )}
-                          </button>
-                        </div>
+                                style={
+                                  !favorites.some(
+                                    (fav) =>
+                                      fav.type === "trial" &&
+                                      (fav.item?.id === itemId ||
+                                        fav.item?._id === itemId),
+                                  )
+                                    ? {
+                                        backgroundColor:
+                                          "rgba(208, 196, 226, 0.2)",
+                                        borderColor: "rgba(208, 196, 226, 0.3)",
+                                        color: "#787878",
+                                      }
+                                    : {}
+                                }
+                                onMouseEnter={(e) => {
+                                  if (
+                                    !favorites.some(
+                                      (fav) =>
+                                        fav.type === "trial" &&
+                                        (fav.item?.id === itemId ||
+                                          fav.item?._id === itemId),
+                                    ) &&
+                                    !e.currentTarget.disabled
+                                  ) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "rgba(208, 196, 226, 0.3)";
+                                    e.currentTarget.style.color = "#dc2626";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (
+                                    !favorites.some(
+                                      (fav) =>
+                                        fav.type === "trial" &&
+                                        (fav.item?.id === itemId ||
+                                          fav.item?._id === itemId),
+                                    )
+                                  ) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "rgba(208, 196, 226, 0.2)";
+                                    e.currentTarget.style.color = "#787878";
+                                  }
+                                }}
+                              >
+                                {favoritingItems.has(getFavoriteKey(trial)) ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Heart
+                                    className={`w-4 h-4 ${
+                                      favorites.some(
+                                        (fav) =>
+                                          fav.type === "trial" &&
+                                          (fav.item?.id === itemId ||
+                                            fav.item?._id === itemId),
+                                      )
+                                        ? "fill-current"
+                                        : ""
+                                    }`}
+                                  />
+                                )}
+                              </button>
+                            </div>
 
-                        {/* View Contact Information Button */}
-                        <button
-                          onClick={() => openContactInfoModal(trial)}
-                          {...(isFirstCard && { "data-tour": "trials-contact-btn" })}
-                          className="flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg transition-colors mt-3 w-full"
-                          style={{
-                            color: "#2F3C96",
-                            backgroundColor: "rgba(208, 196, 226, 0.2)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor =
-                              "rgba(208, 196, 226, 0.3)";
-                            e.target.style.color = "#253075";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor =
-                              "rgba(208, 196, 226, 0.2)";
-                            e.target.style.color = "#2F3C96";
-                          }}
-                        >
-                          View Contact Information
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+                            {/* View Contact Information Button */}
+                            <button
+                              onClick={() => openContactInfoModal(trial)}
+                              {...(isFirstCard && {
+                                "data-tour": "trials-contact-btn",
+                              })}
+                              className="flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg transition-colors mt-3 w-full"
+                              style={{
+                                color: "#2F3C96",
+                                backgroundColor: "rgba(208, 196, 226, 0.2)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor =
+                                  "rgba(208, 196, 226, 0.3)";
+                                e.target.style.color = "#253075";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor =
+                                  "rgba(208, 196, 226, 0.2)";
+                                e.target.style.color = "#2F3C96";
+                              }}
+                            >
+                              View Contact Information
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
           </div>
 
           {/* Results Count and Pagination */}
@@ -3314,18 +3385,18 @@ export default function Trials() {
                   !summaryModal.loading &&
                   summaryTrial &&
                   !hasSimplifiedFurther && (
-                  <button
-                    type="button"
-                    onClick={simplifyTrialFurther}
-                    className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                    style={{
-                      backgroundColor: "rgba(232, 224, 239, 0.9)",
-                      color: "#2F3C96",
-                    }}
-                  >
-                    Simplify further
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      onClick={simplifyTrialFurther}
+                      className="inline-block px-3 py-1 rounded-full text-xs font-semibold border border-indigo-300 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: "rgba(232, 224, 239, 0.9)",
+                        color: "#2F3C96",
+                      }}
+                    >
+                      Simplify further
+                    </button>
+                  )}
               </div>
             </div>
             {summaryModal.loading ? (

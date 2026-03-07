@@ -322,8 +322,11 @@ function shouldShowExpertContact(expert) {
   return true;
 }
 
-export default function PDFReportDocument({ report }) {
+export default function PDFReportDocument({ report, patientFacingLabels = false }) {
   if (!report) return null;
+  const sectionTitles = patientFacingLabels
+    ? { experts: "Health Experts", publications: "Health Library", trials: "New Treatments" }
+    : { experts: "Medical Experts", publications: "Research Publications", trials: "Clinical Trials" };
 
   // Calculate total pages
   const totalPages =
@@ -406,7 +409,7 @@ export default function PDFReportDocument({ report }) {
           <View style={[styles.section, { marginTop: 20 }]}>
             <SectionHeader
               icon={Icons.Expert}
-              title="Medical Experts"
+              title={sectionTitles.experts}
               count={report.experts.length}
             />
             <View style={styles.sectionContent}>
@@ -476,7 +479,7 @@ export default function PDFReportDocument({ report }) {
           <View style={[styles.section, { marginTop: 20 }]}>
             <SectionHeader
               icon={Icons.Publication}
-              title="Research Publications"
+              title={sectionTitles.publications}
               count={report.publications.length}
             />
             <View style={styles.sectionContent}>
@@ -533,7 +536,7 @@ export default function PDFReportDocument({ report }) {
           <View style={[styles.section, { marginTop: 20 }]}>
             <SectionHeader
               icon={Icons.Trial}
-              title="Clinical Trials"
+              title={sectionTitles.trials}
               count={report.trials.length}
               trialNumbers={report.trials.map(t => t.referenceNumber || t.trialNumber || t.id || t._id).filter(Boolean)}
             />
@@ -656,7 +659,7 @@ export default function PDFReportDocument({ report }) {
           <View style={styles.section}>
             <SectionHeader
               icon={Icons.Expert}
-              title="Medical Experts"
+              title={sectionTitles.experts}
               count={report.experts.length}
             />
             <View style={styles.sectionContent}>
@@ -736,7 +739,7 @@ export default function PDFReportDocument({ report }) {
             <View style={styles.section}>
               <SectionHeader
                 icon={Icons.Publication}
-                title="Research Publications"
+                title={sectionTitles.publications}
                 count={report.publications.length}
               />
               <View style={styles.sectionContent}>
@@ -801,7 +804,7 @@ export default function PDFReportDocument({ report }) {
             <View style={styles.section}>
               <SectionHeader
                 icon={Icons.Trial}
-                title="Clinical Trials"
+                title={sectionTitles.trials}
                 count={report.trials.length}
                 trialNumbers={report.trials.map(t => t.referenceNumber || t.trialNumber || t.id || t._id).filter(Boolean)}
               />
