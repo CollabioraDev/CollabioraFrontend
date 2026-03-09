@@ -79,6 +79,14 @@ const FloatingChatbot = React.lazy(
   () => import("./components/FloatingChatbot.jsx"),
 );
 
+// If the user is already signed in, send them straight to /yori
+function AuthenticatedRedirect({ children }) {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (token && (user._id || user.id)) return <Navigate to="/yori" replace />;
+  return children;
+}
+
 // Redirect /dashboard to the correct dashboard based on user role
 function DashboardRedirect() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -278,7 +286,7 @@ const AppContent = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<AuthenticatedRedirect><Landing /></AuthenticatedRedirect>} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/faq" element={<FAQ />} />
@@ -286,10 +294,10 @@ const AppContent = () => {
           <Route path="/terms" element={<PrivacyPolicyAndTerms />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/explore" element={<Explore />} />
-          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signin" element={<AuthenticatedRedirect><SignIn /></AuthenticatedRedirect>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/onboarding" element={<OnboardingNew />} />
+          <Route path="/onboarding" element={<AuthenticatedRedirect><OnboardingNew /></AuthenticatedRedirect>} />
           <Route
             path="/onboard/patient"
             element={<Navigate to="/onboarding" replace />}
