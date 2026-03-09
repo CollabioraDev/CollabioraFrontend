@@ -606,77 +606,87 @@ export default function OnboardingNew() {
 
   const handleEnterPlatform = async () => {
     setError("");
+    setLoading(true);
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = user._id || user.id;
 
     if (token && userId) {
-      const locationData = getLocationData();
-      const role =
-        user?.role || (isMedicalProfessional ? "researcher" : "patient");
-      const profile =
-        role === "patient"
-          ? {
-              role: "patient",
-              patient: {
-                conditions: getCombinedConditions(conditions, symptomsText),
-                location: locationData,
-              },
-            }
-          : {
-              role: "researcher",
-              researcher: {
-                profession: profession || undefined,
-                academicRank: academicRank || undefined,
-                institutionAffiliation: institutionAffiliation || undefined,
-                specialties: [primarySpecialty, ...subspecialties].filter(
-                  Boolean,
-                ),
-                interests: researchInterests,
-                skills,
-                location: locationData,
-                education:
-                  educationEntries.filter(
-                    (e) => e.institution || e.degree || e.field || e.year,
-                  ).length > 0
-                    ? educationEntries
-                    : undefined,
-                isAcademicResearcher,
-                orcid: orcid || undefined,
-              },
-            };
       try {
-        await fetch(`${base}/api/profile/${userId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(profile),
-        });
+        const locationData = getLocationData();
+        const role =
+          user?.role || (isMedicalProfessional ? "researcher" : "patient");
+        const profile =
+          role === "patient"
+            ? {
+                role: "patient",
+                patient: {
+                  conditions: getCombinedConditions(conditions, symptomsText),
+                  location: locationData,
+                },
+              }
+            : {
+                role: "researcher",
+                researcher: {
+                  profession: profession || undefined,
+                  academicRank: academicRank || undefined,
+                  institutionAffiliation: institutionAffiliation || undefined,
+                  specialties: [primarySpecialty, ...subspecialties].filter(
+                    Boolean,
+                  ),
+                  interests: researchInterests,
+                  skills,
+                  location: locationData,
+                  education:
+                    educationEntries.filter(
+                      (e) => e.institution || e.degree || e.field || e.year,
+                    ).length > 0
+                      ? educationEntries
+                      : undefined,
+                  isAcademicResearcher,
+                  orcid: orcid || undefined,
+                },
+              };
+        try {
+          await fetch(`${base}/api/profile/${userId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(profile),
+          });
+        } catch (e) {
+          console.error("Profile save error:", e);
+        }
+        await markOnboardingComplete(userId, token, isProfileComplete(role));
+        window.dispatchEvent(new Event("login"));
+        navigate("/yori");
       } catch (e) {
-        console.error("Profile save error:", e);
+        console.error(e);
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
       }
-      await markOnboardingComplete(userId, token, isProfileComplete(role));
-      window.dispatchEvent(new Event("login"));
-      navigate("/yori");
       return;
     }
 
     if (!email.trim()) {
       setError("Please enter your email.");
+      setLoading(false);
       return;
     }
     if (!password.trim()) {
       setError("Please choose a password (min 6 characters).");
+      setLoading(false);
       return;
     }
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
       const username =
         `${firstName} ${lastName}`.trim() || email.split("@")[0] || "User";
@@ -1947,6 +1957,7 @@ export default function OnboardingNew() {
                         placeholder="Enter your city or country"
                       />
                     </div>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
@@ -1961,6 +1972,7 @@ export default function OnboardingNew() {
                         Back
                       </Button>
                       <Button
+                        type="button"
                         onClick={() => handleEnterPlatform()}
                         disabled={loading}
                         className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
@@ -2276,6 +2288,7 @@ export default function OnboardingNew() {
                         placeholder="Enter your city or country"
                       />
                     </div>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
@@ -2290,6 +2303,7 @@ export default function OnboardingNew() {
                         Back
                       </Button>
                       <Button
+                        type="button"
                         onClick={() => handleEnterPlatform()}
                         disabled={loading}
                         className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
@@ -2303,22 +2317,12 @@ export default function OnboardingNew() {
               </AnimatePresence>
             </div>
 
-            {/* Below the card: Skip for now (step 4 onwards) */}
-            {step >= 4 && (
+            {/* Below the card: Continue as guest (step 1) */}
+            {step === STEP_MEDICAL && (
               <div className="w-full flex justify-center mt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (isMedicalProfessional === false) {
-                      if (step === 4) goToStep(5);
-                      else if (step === 5) handleEnterPlatform();
-                    } else {
-                      if (step === 4) goToStep(5);
-                      else if (step === 5) goToStep(6);
-                      else if (step === 6) goToStep(7);
-                      else if (step === 7) handleEnterPlatform();
-                    }
-                  }}
+                  onClick={() => navigate("/explore")}
                   className="px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
                   style={{
                     borderColor: "#D0C4E2",
@@ -2326,7 +2330,34 @@ export default function OnboardingNew() {
                     backgroundColor: "rgba(208, 196, 226, 0.15)",
                   }}
                 >
-                  Skip for now
+                  Continue as guest
+                </button>
+              </div>
+            )}
+
+            {/* Below the card: Skip for now (step 4 onwards) */}
+            {step >= 4 && (
+              <div className="w-full flex justify-center mt-4">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    const isPatient = isMedicalProfessional === false;
+                    const lastStep = isPatient ? 5 : 7;
+                    if (step >= lastStep) {
+                      handleEnterPlatform();
+                    } else {
+                      goToStep(step + 1);
+                    }
+                  }}
+                  className="px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  style={{
+                    borderColor: "#D0C4E2",
+                    color: "#2F3C96",
+                    backgroundColor: "rgba(208, 196, 226, 0.15)",
+                  }}
+                >
+                  {loading ? "Setting up…" : "Skip for now"}
                 </button>
               </div>
             )}
