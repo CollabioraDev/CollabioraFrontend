@@ -88,8 +88,8 @@ export default function PageFeedbackWidget() {
         </motion.button>
       )}
 
-      {/* Mobile: round icon button bottom-left */}
-      {isMobile && (
+      {/* Mobile: round icon button bottom-left (hidden on /yori) */}
+      {isMobile && location.pathname !== "/yori" && (
         <motion.button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-4 left-4 z-40 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-white border border-gray-200"

@@ -602,15 +602,7 @@ export default function DashboardResearcher() {
       return;
     }
 
-    // CRITICAL: Redirect to verification if email is not verified
-    if (userData && !userData.emailVerified) {
-      console.log("User email not verified, redirecting to verification step");
-      const isOAuth = !!userData.isOAuthUser || !!userData.auth0Id;
-      const oauthParam = isOAuth ? "&oauth=true" : "";
-      navigate(`/onboarding?step=6${oauthParam}`);
-      return;
-    }
-
+    // Allow unverified users to use dashboard; they can verify from profile / banner
     setUser(userData);
     setImageError(false); // Reset image error when user changes
     setLoading(true);
@@ -837,6 +829,8 @@ export default function DashboardResearcher() {
                 if (profile.researcher?.orcid) {
                   fetchOrcidStats(profile.researcher.orcid, userId);
                 }
+
+                // Profile completeness check is handled by ProfileGuard in App.jsx
               }
             }
           } catch (error) {

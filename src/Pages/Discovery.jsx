@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import {
   Heart,
   MessageCircle,
@@ -366,6 +367,7 @@ export default function Discovery() {
       navigate("/signin");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -433,6 +435,7 @@ export default function Discovery() {
       navigate("/signin");
       return;
     }
+    if (!requireEmailVerification()) return;
     const uid = authorId?.toString?.() || authorId;
     if (!uid || followUserLoading.has(uid)) return;
     const isFollowing = followingUserIds.has(uid);
@@ -565,6 +568,7 @@ export default function Discovery() {
       navigate("/signin");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     const content = commentInputs[postId]?.trim();
     if (!content) {
@@ -628,6 +632,7 @@ export default function Discovery() {
       navigate("/signin");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -905,6 +910,7 @@ export default function Discovery() {
       navigate("/signin");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     if (!composerContent.trim()) {
       toast.error("Please enter some content");

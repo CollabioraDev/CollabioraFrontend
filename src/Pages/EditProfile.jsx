@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import ProfilePictureUpload from "../components/ProfilePictureUpload.jsx";
@@ -23,6 +23,9 @@ import {
   Eye,
   BookOpen,
   FileText,
+  Mail,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import ManageProfilePublications from "../components/ManageProfilePublications.jsx";
 import SubmitWorkModal from "../components/SubmitWorkModal.jsx";
@@ -113,6 +116,14 @@ export default function EditProfile() {
   const [showManagePublications, setShowManagePublications] = useState(false);
   const [showSubmitWorkModal, setShowSubmitWorkModal] = useState(false);
   const [communityPostsCount, setCommunityPostsCount] = useState(0);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpSuccess, setOtpSuccess] = useState(false);
+  const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
 
   // Generate 3 unique username suggestions (numbers used sparingly - only 30% chance)
   const [usernameSuggestions, setUsernameSuggestions] = useState(() =>
@@ -172,6 +183,22 @@ export default function EditProfile() {
     loadProfile(userData._id || userData.id);
     loadFollowedData(userData._id || userData.id);
   }, [navigate]);
+
+  // Listen for email verification (cross-tab or same-tab localStorage update)
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "user") {
+        try {
+          const updated = JSON.parse(e.newValue || "{}");
+          if (updated.emailVerified) {
+            setUser((prev) => ({ ...prev, emailVerified: true }));
+          }
+        } catch { /* ignore */ }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // Common medical conditions
   const commonConditions = [
@@ -912,6 +939,116 @@ export default function EditProfile() {
     );
   }
 
+  const needsEmailVerification = user && !user.emailVerified;
+
+  const handleSendVerificationEmail = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("You need to be logged in to verify your email");
+      return;
+    }
+    setSendingVerification(true);
+    try {
+      const res = await fetch(`${base}/api/auth/send-verification-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setVerificationSent(true);
+        setShowOtpModal(true);
+        setOtp(["", "", "", "", "", ""]);
+        setOtpError("");
+        setOtpSuccess(false);
+        toast.success(`Verification email sent to ${data.email || user.email}`);
+        setTimeout(() => otpRefs[0]?.current?.focus(), 200);
+      } else {
+        toast.error(data.error || "Failed to send verification email");
+      }
+    } catch {
+      toast.error("Failed to send verification email. Please try again.");
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+    setOtpError("");
+    if (value && index < 5) {
+      otpRefs[index + 1]?.current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs[index - 1]?.current?.focus();
+    }
+    if (e.key === "Enter") {
+      const code = otp.join("");
+      if (code.length === 6) handleVerifyOtp(code);
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) {
+      newOtp[i] = pasted[i] || "";
+    }
+    setOtp(newOtp);
+    setOtpError("");
+    const focusIdx = Math.min(pasted.length, 5);
+    otpRefs[focusIdx]?.current?.focus();
+  };
+
+  const handleVerifyOtp = async (code) => {
+    const otpCode = code || otp.join("");
+    if (otpCode.length !== 6) {
+      setOtpError("Please enter the full 6-digit code");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    setVerifyingOtp(true);
+    setOtpError("");
+    try {
+      const res = await fetch(`${base}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ otp: otpCode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOtpSuccess(true);
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        userData.emailVerified = true;
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser((prev) => ({ ...prev, emailVerified: true }));
+        window.dispatchEvent(new Event("login"));
+        toast.success("Email verified successfully!");
+        setTimeout(() => setShowOtpModal(false), 1500);
+      } else {
+        setOtpError(data.error || "Invalid OTP. Please try again.");
+      }
+    } catch {
+      setOtpError("Verification failed. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
   const currentPicture = user?.picture || user?.profilePicture || null;
 
   return (
@@ -930,15 +1067,197 @@ export default function EditProfile() {
             </h1>
           </div>
 
+          {needsEmailVerification && (
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-amber-800">
+                    Email verification pending
+                  </h3>
+                  <p className="mt-0.5 text-sm text-amber-700">
+                    Verify your email ({user.email}) to secure your account and unlock all features.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    {!verificationSent ? (
+                      <button
+                        onClick={handleSendVerificationEmail}
+                        disabled={sendingVerification}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#474F97] disabled:opacity-60"
+                      >
+                        {sendingVerification ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Sending…
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4" />
+                            Send verification email
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowOtpModal(true);
+                            setOtpError("");
+                            setTimeout(() => otpRefs[0]?.current?.focus(), 200);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#474F97]"
+                        >
+                          <Mail className="h-4 w-4" />
+                          Enter verification code
+                        </button>
+                        <button
+                          onClick={() => {
+                            setVerificationSent(false);
+                            handleSendVerificationEmail();
+                          }}
+                          disabled={sendingVerification}
+                          className="text-sm font-medium text-[#2F3C96] underline underline-offset-2 hover:text-[#474F97]"
+                        >
+                          Resend email
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OTP Verification Modal */}
+          {showOtpModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+                <button
+                  onClick={() => setShowOtpModal(false)}
+                  className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                {otpSuccess ? (
+                  <div className="py-4 text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                      <CheckCircle2 className="h-9 w-9 text-green-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-800">Email Verified!</h3>
+                    <p className="mt-1 text-sm text-slate-500">Your email has been verified successfully.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-6 text-center">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8E9F2]">
+                        <Mail className="h-7 w-7 text-[#2F3C96]" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-800">Enter verification code</h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        We sent a 6-digit code to <span className="font-medium text-slate-700">{user.email}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+                      {otp.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={otpRefs[i]}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpChange(i, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                          className={`h-12 w-10 rounded-lg border-2 text-center text-lg font-semibold transition-colors focus:outline-none sm:h-14 sm:w-12 sm:text-xl ${
+                            otpError
+                              ? "border-red-300 bg-red-50 text-red-700 focus:border-red-500"
+                              : "border-slate-200 bg-slate-50 text-slate-800 focus:border-[#2F3C96] focus:bg-white"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {otpError && (
+                      <p className="mt-3 text-center text-sm text-red-600">{otpError}</p>
+                    )}
+
+                    <button
+                      onClick={() => handleVerifyOtp()}
+                      disabled={verifyingOtp || otp.join("").length < 6}
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F3C96] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#474F97] disabled:opacity-50"
+                    >
+                      {verifyingOtp ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Verifying…
+                        </>
+                      ) : (
+                        "Verify email"
+                      )}
+                    </button>
+
+                    <div className="mt-4 text-center">
+                      <p className="text-xs text-slate-400">
+                        Didn't get the code?{" "}
+                        <button
+                          onClick={() => {
+                            setVerificationSent(false);
+                            handleSendVerificationEmail();
+                          }}
+                          disabled={sendingVerification}
+                          className="font-medium text-[#2F3C96] hover:underline disabled:opacity-50"
+                        >
+                          {sendingVerification ? "Sending…" : "Resend"}
+                        </button>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Or click the link in the email to verify directly.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-6">
-            {/* Profile Picture Upload + Researcher name (right-aligned) */}
+            {/* Profile Picture Upload + Email badge + Researcher name */}
             <div className="flex flex-wrap items-start gap-4">
-              <div className="shrink-0">
-                <ProfilePictureUpload
-                  currentPicture={currentPicture}
-                  onUpload={handlePictureUpload}
-                  uploading={uploadingPicture}
-                />
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                <div className="shrink-0">
+                  <ProfilePictureUpload
+                    currentPicture={currentPicture}
+                    onUpload={handlePictureUpload}
+                    uploading={uploadingPicture}
+                  />
+                </div>
+                {user?.emailVerified ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700 whitespace-nowrap">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    Email verified
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (verificationSent) {
+                        setShowOtpModal(true);
+                        setOtpError("");
+                        setTimeout(() => otpRefs[0]?.current?.focus(), 200);
+                      } else {
+                        handleSendVerificationEmail();
+                      }
+                    }}
+                    disabled={sendingVerification}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors whitespace-nowrap"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    Email not verified
+                  </button>
+                )}
               </div>
               {user?.role === "researcher" && (
                 <div className="ml-auto flex flex-col items-end text-right min-w-0">

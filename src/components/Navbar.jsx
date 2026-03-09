@@ -163,11 +163,6 @@ export default function Navbar() {
   useEffect(() => {
     const updateUser = () => {
       const userData = JSON.parse(localStorage.getItem("user") || "null");
-      // Only show user as logged in if email is verified
-      if (userData && !userData.emailVerified) {
-        setUser(null);
-        return;
-      }
       setUser(userData);
       setImageError(false); // Reset image error when user changes
 
@@ -556,7 +551,7 @@ export default function Navbar() {
         }
       >
         {/* Logo */}
-        <PrefetchLink to="/" className="group relative flex items-center">
+        <PrefetchLink to={user ? "/yori" : "/"} className="group relative flex items-center">
           {/* Logo Image */}
           <motion.img
             src={"/logo.png"}
@@ -1088,7 +1083,7 @@ export default function Navbar() {
                       </div>
                     )}
 
-                    {/* Name and username (hide role tag in navbar) */}
+                    {/* Name and @handle (username they chose in onboarding form) */}
                     <div className="flex flex-col items-start min-w-0">
                       <span
                         className="text-xs font-semibold truncate max-w-[100px]"
@@ -1096,14 +1091,14 @@ export default function Navbar() {
                       >
                         {getDisplayName(user, "User")}
                       </span>
-                      {(user?.handle || user?.username) && (
-                        <span
-                          className="text-[10px] truncate max-w-[100px]"
-                          style={{ color: "#787878" }}
-                        >
-                          @{user.handle || user.username}
-                        </span>
-                      )}
+                      {(user?.handle || profile?.handle) && (
+                          <span
+                            className="text-[10px] truncate max-w-[100px] block"
+                            style={{ color: "#787878" }}
+                          >
+                            @{user.handle || profile.handle}
+                          </span>
+                        )}
                     </div>
 
                     {/* Chevron */}
@@ -1143,12 +1138,12 @@ export default function Navbar() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
                           style={{ color: "#2F3C96" }}
                           onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#E8E0EF";
-                            e.target.style.color = "#474F97";
+                            e.currentTarget.style.backgroundColor = "#E8E0EF";
+                            e.currentTarget.style.color = "#474F97";
                           }}
                           onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                            e.target.style.color = "#2F3C96";
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.color = "#2F3C96";
                           }}
                         >
                           <svg

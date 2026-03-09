@@ -17,7 +17,7 @@ export default function LandingNavbar() {
     const updateUser = () => {
       const userData = JSON.parse(localStorage.getItem("user") || "null");
       const token = localStorage.getItem("token");
-      if (userData && token && userData.emailVerified) {
+      if (userData && token) {
         setUser(userData);
       } else {
         setUser(null);
@@ -102,7 +102,7 @@ export default function LandingNavbar() {
         }
       >
         {/* ── Logo (bigger on landing) ── */}
-        <Link to="/" className="flex items-center">
+        <Link to={user ? "/yori" : "/"} className="flex items-center">
           <motion.img
             src="/logo.png"
             alt="Collabiora"

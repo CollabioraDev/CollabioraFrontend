@@ -15,7 +15,7 @@ export default function OrcidCallback() {
       if (error) {
         setError("ORCID authentication was cancelled or failed");
         setTimeout(() => {
-          navigate("/onboarding?step=2");
+          navigate("/onboarding");
         }, 3000);
         return;
       }
@@ -23,7 +23,7 @@ export default function OrcidCallback() {
       if (!code) {
         setError("No authorization code received");
         setTimeout(() => {
-          navigate("/onboarding?step=2");
+          navigate("/onboarding");
         }, 3000);
         return;
       }
@@ -58,12 +58,12 @@ export default function OrcidCallback() {
         localStorage.setItem("orcid_data", JSON.stringify(orcidData));
 
         // Redirect back to onboarding with ORCID data
-        navigate("/onboarding?step=2&orcid_success=true");
+        navigate("/onboarding?orcid_success=true");
       } catch (err) {
         console.error("Error exchanging ORCID code:", err);
         setError(err.message || "Failed to complete ORCID authentication");
         setTimeout(() => {
-          navigate("/onboarding?step=2");
+          navigate("/onboarding");
         }, 3000);
       }
     };

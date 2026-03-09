@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import {
   MessageCircle,
   Users,
@@ -113,6 +114,7 @@ export default function ForumCommunityPage() {
       toast.error("Please sign in to join");
       return;
     }
+    if (!requireEmailVerification()) return;
     if (!community) return;
     setFollowLoading(true);
     try {

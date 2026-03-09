@@ -607,15 +607,7 @@ export default function DashboardPatient() {
       return;
     }
 
-    // CRITICAL: Redirect to verification if email is not verified
-    if (userData && !userData.emailVerified) {
-      console.log("User email not verified, redirecting to verification step");
-      const isOAuth = !!userData.isOAuthUser || !!userData.auth0Id;
-      const oauthParam = isOAuth ? "&oauth=true" : "";
-      navigate(`/onboarding?step=6${oauthParam}`);
-      return;
-    }
-
+    // Allow unverified users to use dashboard; they can verify from profile / banner
     setUser(userData);
     setImageError(false); // Reset image error when user changes
     setLoading(true);
@@ -982,6 +974,8 @@ export default function DashboardPatient() {
                   profile.patient?.location || profile.researcher?.location;
                 updateProfileSignature(conditions, location);
                 markDataFetched(generateProfileSignature(conditions, location));
+
+                // Profile completeness check is handled by ProfileGuard in App.jsx
               }
             }
           } catch (error) {
@@ -3096,8 +3090,8 @@ export default function DashboardPatient() {
                   );
                 })
               ) : (
-                <span className="text-sm text-slate-500">
-                  {userDisease || "—"}
+                <span className="text-sm font-medium" style={{ color: "#2F3C96" }}>
+                  Complete your profile first to see personalized recommendations.
                 </span>
               )}
             </div>
@@ -3348,7 +3342,7 @@ export default function DashboardPatient() {
                       ? "Tap to collapse"
                       : userConditions.length > 0
                         ? `${userConditions.length} condition${userConditions.length !== 1 ? "s" : ""} · Tap to view details`
-                        : "Tap to view details"}
+                        : "Complete your profile first"}
                   </span>
                 </div>
                 {isMedicalConditionsExpanded ? (
@@ -3397,8 +3391,8 @@ export default function DashboardPatient() {
                         );
                       })
                     ) : (
-                      <span className="text-xs text-slate-500 py-0.5">
-                        {userDisease || "—"}
+                      <span className="text-xs font-medium py-0.5" style={{ color: "#2F3C96" }}>
+                        Complete your profile first to see personalized recommendations.
                       </span>
                     )}
                   </div>

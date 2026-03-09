@@ -59,8 +59,7 @@ export default function Landing() {
     const updateUser = () => {
       const userData = JSON.parse(localStorage.getItem("user") || "null");
       const token = localStorage.getItem("token");
-      // Only show user as logged in if email is verified
-      if (userData && token && userData.emailVerified) {
+      if (userData && token) {
         setUser(userData);
       } else {
         setUser(null);

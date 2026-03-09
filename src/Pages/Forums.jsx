@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import {
   MessageCircle,
   ThumbsUp,
@@ -651,6 +652,7 @@ export default function Forums() {
       toast.error("Please sign in to follow");
       return;
     }
+    if (!requireEmailVerification()) return;
     const uid = profileUserId?.toString?.() || profileUserId;
     if (!uid || followUserLoading.has(uid)) return;
     const isFollowing = followingUserIds.has(uid);
@@ -1095,6 +1097,7 @@ export default function Forums() {
       toast.error("Please sign in to follow communities");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     if (followingLoading.has(communityId)) return;
 
@@ -1199,6 +1202,7 @@ export default function Forums() {
       toast.error("Please sign in to propose a community");
       return;
     }
+    if (!requireEmailVerification()) return;
     setProposeSubmitting(true);
     try {
       const res = await fetch(`${base}/api/communities/proposals`, {
@@ -1508,6 +1512,7 @@ export default function Forums() {
       toast.error("Please sign in to post");
       return;
     }
+    if (!requireEmailVerification()) return;
     const communityToUse = modalSelectedCommunity || selectedCommunity;
     if (!communityToUse) {
       toast.error("Please select a community first");
@@ -1706,6 +1711,7 @@ export default function Forums() {
       toast.error("Please sign in to reply");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     const body = replyBody[`${threadId}-${parentReplyId || "root"}`] || "";
     if (!body.trim()) {
@@ -1780,6 +1786,7 @@ export default function Forums() {
       toast.error("Please sign in to vote");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     try {
       // Find thread data to send for dummy thread promotion
@@ -1846,6 +1853,7 @@ export default function Forums() {
       toast.error("Please sign in to vote");
       return;
     }
+    if (!requireEmailVerification()) return;
 
     const replyIdStr = String(replyId);
     const isDummyReply = replyIdStr.startsWith("dummy-reply-");

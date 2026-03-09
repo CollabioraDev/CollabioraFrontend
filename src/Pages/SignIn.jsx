@@ -94,9 +94,7 @@ export default function SignIn() {
       // Dispatch login event to update navbar
       window.dispatchEvent(new Event("login"));
 
-      // Redirect to dashboard - role will be auto-detected from user data
-      const userRole = data.user?.role || "patient";
-      navigate(`/dashboard/${userRole}`);
+      navigate("/yori");
     } catch (e) {
       setError("Failed to sign in. Please try again.");
       setLoading(false);

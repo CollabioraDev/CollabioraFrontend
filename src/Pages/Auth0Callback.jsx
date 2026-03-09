@@ -144,8 +144,8 @@ export default function Auth0Callback() {
               brandNewStep = d.step || 2;
             } catch (e) { /* ignore */ }
           }
-          console.log(`[Auth0Callback] Brand-new user created → onboarding step ${brandNewStep}`);
-          navigate(`/onboarding?step=${brandNewStep}&oauth=true`);
+          console.log("[Auth0Callback] Brand-new user created → onboarding step 4");
+          navigate("/onboarding?step=4&oauth=true");
           return;
         }
 
@@ -193,8 +193,8 @@ export default function Auth0Callback() {
               resumeStep = d.step || 2;
             } catch (e) { /* ignore */ }
           }
-          console.log(`[Auth0Callback] New user → onboarding step ${resumeStep}`);
-          navigate(`/onboarding?step=${resumeStep}&oauth=true`);
+          console.log("[Auth0Callback] New user → onboarding step 4");
+          navigate("/onboarding?step=4&oauth=true");
           return;
         }
 
@@ -213,12 +213,13 @@ export default function Auth0Callback() {
               resumeStep = d.step || 2;
             } catch (e) { /* ignore */ }
           }
-          console.log(`[Auth0Callback] Existing user, onboarding incomplete → step ${resumeStep}`);
-          navigate(`/onboarding?step=${resumeStep}&oauth=true`);
+          console.log("[Auth0Callback] Existing user, onboarding incomplete → step 4");
+          navigate("/onboarding?step=4&oauth=true");
           return;
         }
 
-        // D3: Existing user, completed onboarding, but email not verified → verification
+        // D3: Existing user, completed onboarding — go to dashboard (whether verified or not)
+        const userRole = userObj.role || "patient";
         if (!userObj.emailVerified) {
           try {
             const verifyRes = await fetch(`${base}/api/auth/send-verification-email`, {
@@ -237,20 +238,12 @@ export default function Auth0Callback() {
           } catch (e) {
             console.error("Failed to send verification email:", e);
           }
-
-          const userRole = userObj.role || "patient";
-          console.log("[Auth0Callback] Onboarding done, email unverified → verification step");
-          navigate(`/onboarding?step=6&oauth=true`);
-          return;
+          console.log("[Auth0Callback] Onboarding done, email unverified → dashboard (verify later)");
+        } else {
+          console.log("[Auth0Callback] Fully onboarded + verified → dashboard");
         }
-
-        // D3: Fully onboarded + verified → dashboard
-        if (userObj.emailVerified) {
-          window.dispatchEvent(new Event("login"));
-        }
-        const userRole = userObj.role || "patient";
-        console.log("[Auth0Callback] Fully verified → dashboard");
-        navigate(`/dashboard/${userRole}`);
+        window.dispatchEvent(new Event("login"));
+        navigate("/yori");
       } catch (e) {
         console.error("OAuth sync error:", e);
         setError(e.message || "Failed to complete sign in. Please try again.");
