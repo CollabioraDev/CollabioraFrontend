@@ -23,13 +23,6 @@ export default defineConfig({
           // Auth0 SDK — rarely changes, good cache candidate
           'vendor-auth': ['@auth0/auth0-react'],
           // Radix UI primitives used by ShadCN — large, stable
-          'vendor-radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-          ],
         },
       },
     },
