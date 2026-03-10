@@ -2982,14 +2982,12 @@ export default function DashboardResearcher() {
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor =
                   "rgba(208, 196, 226, 0.35)";
-                e.currentTarget.style.borderColor =
-                  "rgba(47, 60, 150, 0.5)";
+                e.currentTarget.style.borderColor = "rgba(47, 60, 150, 0.5)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor =
                   "rgba(208, 196, 226, 0.2)";
-                e.currentTarget.style.borderColor =
-                  "rgba(47, 60, 150, 0.3)";
+                e.currentTarget.style.borderColor = "rgba(47, 60, 150, 0.3)";
               }}
               title="View / Redo dashboard tutorial"
               aria-label="View dashboard tutorial"
@@ -3092,7 +3090,9 @@ export default function DashboardResearcher() {
                     (selectedFavoriteItems.trials?.length || 0);
                   if (total === 0) {
                     setSelectedCategory("favorites");
-                    toast.error("Select items from Favourites to include in your report, then try again.");
+                    toast.error(
+                      "Select items from Favourites to include in your report, then try again.",
+                    );
                     return;
                   }
                   generateFavoritesSummaryReport();
@@ -4358,7 +4358,8 @@ export default function DashboardResearcher() {
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
                                   style={{
-                                    backgroundColor: "rgba(208, 196, 226, 0.35)",
+                                    backgroundColor:
+                                      "rgba(208, 196, 226, 0.35)",
                                   }}
                                 >
                                   <div
@@ -4664,7 +4665,8 @@ export default function DashboardResearcher() {
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
                                   style={{
-                                    backgroundColor: "rgba(208, 196, 226, 0.35)",
+                                    backgroundColor:
+                                      "rgba(208, 196, 226, 0.35)",
                                   }}
                                 >
                                   <div

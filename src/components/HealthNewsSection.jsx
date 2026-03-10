@@ -105,14 +105,15 @@ function NewsCard({
       )}
 
       <div className="p-4">
-        {/* Meta row — source only */}
+        {/* Meta row — source + category */}
         {!hasImage && (
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="px-2 py-0.5 rounded-full bg-[#2F3C96]/8 text-[10px] font-semibold text-[#2F3C96] border border-[#2F3C96]/20">
               {article.source}
             </span>
           </div>
         )}
+
 
         {/* Title */}
         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-3 group-hover:text-[#2F3C96] transition-colors">
@@ -301,11 +302,10 @@ export default function HealthNewsSection({ user }) {
 
   // ── Search state ─────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState(""); // committed query
+  const [searchQuery, setSearchQuery] = useState(""); // committed query (Enter/button only)
   const [searchResults, setSearchResults] = useState(null); // null = not searching
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
-  const searchDebounceRef = useRef(null);
   const fetchedRef = useRef(false);
 
   // ── Extract user conditions ───────────────────────────────────────────────
@@ -400,19 +400,15 @@ export default function HealthNewsSection({ user }) {
     if (!searchQuery) fetchNews();
   }, [activeCondition, fetchNews, searchQuery]);
 
-  // ── Search handler (debounced) ──────────────────────────────────────────
+  // ── Search input handler — only updates the text, does NOT auto-search ────
   function handleSearchInput(val) {
     setSearchInput(val);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    // If input is cleared, also clear search results
     if (!val.trim()) {
       setSearchQuery("");
       setSearchResults(null);
       setSearchError(null);
-      return;
     }
-    searchDebounceRef.current = setTimeout(() => {
-      commitSearch(val.trim());
-    }, 450);
   }
 
   async function commitSearch(query) {
@@ -535,12 +531,10 @@ export default function HealthNewsSection({ user }) {
             type="text"
             value={searchInput}
             onChange={(e) => handleSearchInput(e.target.value)}
-            placeholder="Search health news and articles…"
+            placeholder="Search health news…"
             className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter" && searchInput.trim()) {
-                if (searchDebounceRef.current)
-                  clearTimeout(searchDebounceRef.current);
                 commitSearch(searchInput.trim());
               }
               if (e.key === "Escape") clearSearch();
@@ -550,11 +544,22 @@ export default function HealthNewsSection({ user }) {
             <button
               onClick={clearSearch}
               className="p-0.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              title="Clear"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
+          {/* Explicit search button */}
+          <button
+            onClick={() => searchInput.trim() && commitSearch(searchInput.trim())}
+            disabled={!searchInput.trim() || searchLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2F3C96] text-white text-xs font-semibold hover:bg-[#253075] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          >
+            {searchLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+            Search
+          </button>
         </div>
+
 
         {/* Search results banner */}
         {isSearchMode && (
@@ -735,10 +740,12 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
             <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Health news is curated from trusted sources and scored by
-              credibility, evidence strength, and relevance to your conditions.
-              AI summaries are for informational purposes only — always consult
-              your healthcare provider before making medical decisions.
+              Health news is aggregated live from trusted RSS feeds — WHO, NIH,
+              CDC, FDA, NEJM, The Lancet, STAT News, and more — ranked by
+              source credibility, evidence strength, and relevance to your
+              conditions. AI summaries are for informational purposes only —
+              always consult your healthcare provider before making medical
+              decisions.
             </p>
           </div>
         )}

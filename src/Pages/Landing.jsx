@@ -53,6 +53,23 @@ export default function Landing() {
   const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
   const navigate = useNavigate();
 
+  // Prefetch the two primary CTA chunks during idle time so they are
+  // already cached by the time the user clicks "Get Started" or "Sign In".
+  useEffect(() => {
+    const prefetch = () => {
+      // These live in the same Pages/ directory as Landing.jsx
+      import("./OnboardingNew.jsx").catch(() => {});
+      import("./SignIn.jsx").catch(() => {});
+    };
+    if (typeof requestIdleCallback !== "undefined") {
+      const id = requestIdleCallback(prefetch, { timeout: 2000 });
+      return () => cancelIdleCallback(id);
+    } else {
+      const t = setTimeout(prefetch, 1500);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
 

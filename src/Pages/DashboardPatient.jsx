@@ -223,6 +223,58 @@ export default function DashboardPatient() {
     return Array.from(termsSet);
   }, []);
 
+  // Filter publications: hide those about death, pregnancy, pediatric/kids unless user's condition explicitly mentions that topic
+  const SENSITIVE_TOPIC_TERMS = [
+    "death",
+    "pregnant",
+    "pregnancy",
+    "pediatric",
+    "pediatrics",
+    "kids",
+    "child",
+    "children",
+  ];
+  const filteredPublications = useMemo(() => {
+    const list = data.publications || [];
+    if (list.length === 0) return list;
+    const userConditionsRaw =
+      userProfile?.patient?.conditions || user?.medicalInterests || [];
+    const userConditionsStr = (Array.isArray(userConditionsRaw)
+      ? userConditionsRaw
+      : [userConditionsRaw]
+    )
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return list.filter((p) => {
+      const titleStr = [p.title, p.simplifiedTitle, p.Title]
+        .filter(Boolean)
+        .join(" ");
+      const title = titleStr.toLowerCase();
+      const conditionsStr = Array.isArray(p.conditions)
+        ? p.conditions.join(" ").toLowerCase()
+        : (p.conditions || (p.condition && [p.condition].join(" ")) || "").toLowerCase();
+      const meshStr = Array.isArray(p.meshTerms)
+        ? p.meshTerms.join(" ").toLowerCase()
+        : (p.meshTerms || "").toLowerCase();
+      const abstractSnippet = (p.abstract || "").slice(0, 500).toLowerCase();
+      const publicationText = `${title} ${conditionsStr} ${meshStr} ${abstractSnippet}`;
+      const sensitiveTermsInPublication = SENSITIVE_TOPIC_TERMS.filter((term) =>
+        publicationText.includes(term),
+      );
+      if (sensitiveTermsInPublication.length === 0) return true;
+      // Only show if user's conditions explicitly mention every sensitive topic in this publication
+      const userAlsoMentionsAll = sensitiveTermsInPublication.every((term) =>
+        userConditionsStr.includes(term),
+      );
+      return userAlsoMentionsAll;
+    });
+  }, [
+    data.publications,
+    userProfile?.patient?.conditions,
+    user?.medicalInterests,
+  ]);
+
   const [refreshingSection, setRefreshingSection] = useState(null); // "trials" | "publications" | "experts" — active section loading
   const [refreshingSectionsBg, setRefreshingSectionsBg] = useState(new Set()); // background sections loading
   const [favoritesReportModal, setFavoritesReportModal] = useState({
@@ -460,7 +512,10 @@ export default function DashboardPatient() {
       )}-${new Date().toISOString().split("T")[0]}.pdf`;
 
       const pdfInstance = pdf(
-        <PDFReportDocument report={favoritesReportModal.report} patientFacingLabels />,
+        <PDFReportDocument
+          report={favoritesReportModal.report}
+          patientFacingLabels
+        />,
       );
       const blob = await pdfInstance.toBlob();
 
@@ -3090,8 +3145,12 @@ export default function DashboardPatient() {
                   );
                 })
               ) : (
-                <span className="text-sm font-medium" style={{ color: "#2F3C96" }}>
-                  Complete your profile first to see personalized recommendations.
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: "#2F3C96" }}
+                >
+                  Complete your profile first to see personalized
+                  recommendations.
                 </span>
               )}
             </div>
@@ -3140,7 +3199,9 @@ export default function DashboardPatient() {
                     (selectedFavoriteItems.trials?.length || 0);
                   if (total === 0) {
                     setSelectedCategory("favorites");
-                    toast.error("Select items from Favourites to include in your report, then try again.");
+                    toast.error(
+                      "Select items from Favourites to include in your report, then try again.",
+                    );
                     return;
                   }
                   generateFavoritesSummaryReport();
@@ -3391,8 +3452,12 @@ export default function DashboardPatient() {
                         );
                       })
                     ) : (
-                      <span className="text-xs font-medium py-0.5" style={{ color: "#2F3C96" }}>
-                        Complete your profile first to see personalized recommendations.
+                      <span
+                        className="text-xs font-medium py-0.5"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        Complete your profile first to see personalized
+                        recommendations.
                       </span>
                     )}
                   </div>
@@ -3441,7 +3506,9 @@ export default function DashboardPatient() {
                           (selectedFavoriteItems.trials?.length || 0);
                         if (total === 0) {
                           setSelectedCategory("favorites");
-                          toast.error("Select items from Favourites to include in your report, then try again.");
+                          toast.error(
+                            "Select items from Favourites to include in your report, then try again.",
+                          );
                           return;
                         }
                         generateFavoritesSummaryReport();
@@ -3762,8 +3829,8 @@ export default function DashboardPatient() {
                 ))}
 
               {selectedCategory === "publications" &&
-                (data.publications.length > 0 ? (
-                  data.publications.map((p, idx) => {
+                (filteredPublications.length > 0 ? (
+                  filteredPublications.map((p, idx) => {
                     const itemId = p.id || p.pmid;
                     const isFavorited = favorites.some(
                       (fav) =>

@@ -7,6 +7,11 @@
     <title>Collabiora | Health Research Made Simple</title>
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#2F3C96" />
+    <!-- Apple PWA: Safari uses these instead of manifest for add-to-home-screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Collabiora" />
+    <link rel="apple-touch-icon" href="/logo1.png" />
     <meta name="description" content="Collabiora is a platform for health research that makes it easy to find and share research findings.">
     <meta name="keywords" content="health research, clinical trials, research publications, healthcare experts, personalized insights">
     <meta name="author" content="Collabiora">
@@ -15,26 +20,39 @@
     <meta name="bingbot" content="index, follow">
     <meta name="yandexbot" content="index, follow">
     <meta name="sitemap" content="https://collabiora.com/sitemap.xml">
-    <link rel="canonical" href="https://www.collabiora.com">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<script id="cookieyes" type="text/javascript" src="https://cdn-cookieyes.com/client_data/191d99be740b9d7bb4dde2b98b448d6b/script.js" defer></script>
+    <!-- Eliminate white-screen flash: show a branded spinner the instant HTML is parsed -->
+    <style>
+      html, body { margin: 0; background: #f5f2f8; }
+      /* Pulse animation for the logo */
+      #cl-initial-loader {
+        display: none; /* hidden by default, shown when #root is empty */
+      }
+      #root:empty ~ #cl-initial-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        inset: 0;
+        background: #f5f2f8;
+        z-index: 9999;
+      }
+      #cl-initial-loader img {
+        width: 120px; /* Adjust based on your logo's ideal initial size */
+        height: auto;
+        animation: _cl-pulse 1.5s ease-in-out infinite alternate;
+      }
+      @keyframes _cl-pulse {
+        0% { transform: scale(0.95); opacity: 0.7; }
+        100% { transform: scale(1.05); opacity: 1; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="cl-initial-loader">
+      <img src="/logo.png" alt="Collabiora Loading..." />
+    </div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      window.addEventListener("load", function() {
-        var s = document.createElement("script");
-        s.id = "cookieyes";
-        s.src = "https://cdn-cookieyes.com/client_data/191d99be740b9d7bb4dde2b98b448d6b/script.js";
-        document.body.appendChild(s);
-
-        (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "vi802mehug");
-      });
-    </script>
   </body>
 </html>

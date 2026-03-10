@@ -11,4 +11,28 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — tiny, changes rarely, always cached
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // framer-motion is large (~100KB gzipped); isolate so it doesn't
+          // bloat the app entry chunk
+          'vendor-framer': ['framer-motion'],
+          // Auth0 SDK — rarely changes, good cache candidate
+          'vendor-auth': ['@auth0/auth0-react'],
+          // Radix UI primitives used by ShadCN — large, stable
+          'vendor-radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+          ],
+        },
+      },
+    },
+  },
 })
+

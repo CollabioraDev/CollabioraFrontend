@@ -9,14 +9,20 @@ import {
 } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import "./App.css";
-import Navbar from "./components/Navbar.jsx";
-import LandingNavbar from "./components/LandingNavbar.jsx";
 import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
 import FeedbackWidget from "./components/FeedbackWidget.jsx";
 import PageFeedbackWidget from "./components/PageFeedbackWidget.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
-import OnboardingNew from "./Pages/OnboardingNew.jsx";
+
+// Eagerly-loaded navbars kept as lazy to shave framer-motion + icons from initial chunk;
+// null fallback means no layout shift — they paint on the same frame as the page content.
+const Navbar = React.lazy(() => import("./components/Navbar.jsx"));
+const LandingNavbar = React.lazy(() => import("./components/LandingNavbar.jsx"));
+
+// OnboardingNew is now lazy — Landing.jsx prefetches it on idle so the chunk is 
+// ready before the user finishes reading and clicks "Get Started".
+const OnboardingNew = React.lazy(() => import("./Pages/OnboardingNew.jsx"));
 
 // Lazy-loaded page components (onboarding is eager — it's the primary CTA on the landing page)
 const Landing = React.lazy(() => import("./Pages/Landing.jsx"));
@@ -205,7 +211,11 @@ const AppContent = () => {
 
   return (
     <div>
-      {showLayout && (isHomePage ? <LandingNavbar /> : <Navbar />)}
+      {showLayout && (
+        <Suspense fallback={null}>
+          {isHomePage ? <LandingNavbar /> : <Navbar />}
+        </Suspense>
+      )}
       {showLayout && showChatbot && !isYoriPage && (
         <Suspense fallback={null}>
           <FloatingChatbot />
