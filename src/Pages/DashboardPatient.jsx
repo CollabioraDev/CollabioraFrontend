@@ -239,9 +239,8 @@ export default function DashboardPatient() {
     if (list.length === 0) return list;
     const userConditionsRaw =
       userProfile?.patient?.conditions || user?.medicalInterests || [];
-    const userConditionsStr = (Array.isArray(userConditionsRaw)
-      ? userConditionsRaw
-      : [userConditionsRaw]
+    const userConditionsStr = (
+      Array.isArray(userConditionsRaw) ? userConditionsRaw : [userConditionsRaw]
     )
       .filter(Boolean)
       .join(" ")
@@ -253,7 +252,11 @@ export default function DashboardPatient() {
       const title = titleStr.toLowerCase();
       const conditionsStr = Array.isArray(p.conditions)
         ? p.conditions.join(" ").toLowerCase()
-        : (p.conditions || (p.condition && [p.condition].join(" ")) || "").toLowerCase();
+        : (
+            p.conditions ||
+            (p.condition && [p.condition].join(" ")) ||
+            ""
+          ).toLowerCase();
       const meshStr = Array.isArray(p.meshTerms)
         ? p.meshTerms.join(" ").toLowerCase()
         : (p.meshTerms || "").toLowerCase();
