@@ -246,6 +246,15 @@ const TrialCard = React.memo(
             Ask about this
           </button>
         )}
+        {trial.nctId && (
+          <Link
+            to={`/trial/${encodeURIComponent(trial.nctId)}`}
+            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+          >
+            <ExternalLink className="w-3 h-3" />
+            View full trial
+          </Link>
+        )}
       </div>
     </div>
   ),
@@ -724,9 +733,9 @@ const TrialDetailsCard = ({
               </section>
             )}
 
-            {/* Save to favourites */}
-            {userId && onSaveToFavourites && (
-              <div className="mt-3">
+            {/* Save to favourites + open full trial */}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {userId && onSaveToFavourites && (
                 <button
                   type="button"
                   onClick={() =>
@@ -742,8 +751,17 @@ const TrialDetailsCard = ({
                   <Heart className="w-3.5 h-3.5" />
                   Save to favourites
                 </button>
-              </div>
-            )}
+              )}
+              {nctId && (
+                <Link
+                  to={`/trial/${encodeURIComponent(nctId)}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  View full trial on Collabiora
+                </Link>
+              )}
+            </div>
 
             {/* Ask more about this trial - follow-up options */}
             {onAskMore && (
@@ -1855,7 +1873,7 @@ const FloatingChatbot = () => {
     <>
       {/* Floating Chat Button - constrained on mobile so it doesn't go off screen */}
       {!isOpen && (
-        <div className="fixed bottom-4 right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        <div className="fixed bottom-24 right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
           {/* Speech Bubble - rotates between "Hi, I'm Yori" and "How can I help you?" */}
           {(() => {
             const phrase = SPEECH_BUBBLE_PHRASES[speechPhraseIndex];
@@ -1910,7 +1928,7 @@ const FloatingChatbot = () => {
       {/* Chat Window - full-width inset on mobile so it stays on screen */}
       {isOpen && (
         <div
-          className={`fixed left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:bottom-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${
+          className={`fixed left-4 right-4 bottom-24 sm:left-auto sm:right-6 sm:bottom-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${
             isMinimized
               ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
               : "w-[calc(100vw-2rem)] sm:w-96 h-[min(600px,calc(100vh-2rem))]"
@@ -2449,13 +2467,13 @@ const FloatingChatbot = () => {
                   </p>
                 </div>
               </>
-                )}
-              </>
-            ))}
-        </div>
-      )}
-    </>
-  );
+            )}
+          </>
+        ))}
+      </div>
+    )}
+  </>
+);
 };
 
 export default FloatingChatbot;

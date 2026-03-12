@@ -195,6 +195,9 @@ export default function DashboardPatient() {
   const [newConditionInput, setNewConditionInput] = useState("");
   const [savingConditions, setSavingConditions] = useState(false);
   const [editConditionsModalOpen, setEditConditionsModalOpen] = useState(false);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [pastAppointments, setPastAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
 
   // ICD-11 suggestion terms for conditions (same dataset as Publications.jsx)
   const icd11SuggestionTerms = useMemo(() => {
@@ -735,6 +738,52 @@ export default function DashboardPatient() {
       }
     };
 
+    const loadAppointments = async () => {
+      try {
+        setLoadingAppointments(true);
+
+        // Upcoming appointments
+        try {
+          const res = await fetch(`${base}/api/appointments/upcoming`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          });
+          if (!res.ok) {
+            console.error("Failed to load upcoming appointments", res.status);
+            setUpcomingAppointments([]);
+          } else {
+            const data = await res.json();
+            setUpcomingAppointments(data.appointments || []);
+          }
+        } catch (err) {
+          console.error("Error loading upcoming appointments:", err);
+          setUpcomingAppointments([]);
+        }
+
+        // Past appointments
+        try {
+          const resPast = await fetch(`${base}/api/appointments/past`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          });
+          if (!resPast.ok) {
+            console.error("Failed to load past appointments", resPast.status);
+            setPastAppointments([]);
+          } else {
+            const dataPast = await resPast.json();
+            setPastAppointments(dataPast.appointments || []);
+          }
+        } catch (err) {
+          console.error("Error loading past appointments:", err);
+          setPastAppointments([]);
+        }
+      } finally {
+        setLoadingAppointments(false);
+      }
+    };
+
     // Check email verification status periodically if not verified
     let emailCheckInterval = null;
     if (userData && !userData.emailVerified) {
@@ -1079,6 +1128,7 @@ export default function DashboardPatient() {
       };
 
       fetchData();
+      loadAppointments();
     } else {
       // No user, don't show multi-step loader
       setIsFirstLoad(false);
@@ -5856,21 +5906,339 @@ export default function DashboardPatient() {
 
               {selectedCategory === "meetings" && (
                 <div className="col-span-full">
-                  <div className="rounded-2xl border-2 border-dashed border-indigo-200/80 bg-indigo-50/30 p-8 sm:p-12 text-center">
-                    <Calendar
-                      className="w-14 h-14 mx-auto mb-4 opacity-60"
-                      style={{ color: "#2F3C96" }}
-                    />
-                    <h3
-                      className="text-lg font-bold mb-2"
-                      style={{ color: "#2F3C96" }}
-                    >
-                      Meetings
-                    </h3>
-                    <p className="text-sm text-slate-600 max-w-sm mx-auto">
-                      Your scheduled meetings will appear here. Schedule and
-                      manage meetings with experts from your dashboard.
-                    </p>
+                  <div className="rounded-2xl border border-indigo-100/80 bg-white/90 backdrop-blur-sm p-6 sm:p-8 shadow-[0_10px_40px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between mb-4 gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                          <Calendar className="w-5 h-5" style={{ color: "#2F3C96" }} />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold" style={{ color: "#2F3C96" }}>
+                            Your meetings
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-600">
+                            Join upcoming expert calls and review past ones.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {loadingAppointments ? (
+                      <div className="flex items-center justify-center py-8 gap-2 text-sm text-slate-600">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#2F3C96]" />
+                        <span>Loading your meetings…</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {(() => {
+                          const now = new Date();
+                          const ongoing = upcomingAppointments.filter((appt) => {
+                            const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                            const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                            return now >= start && now <= end;
+                          });
+                          const upcomingOnly = upcomingAppointments.filter(
+                            (appt) => !ongoing.some((o) => o._id === appt._id),
+                          );
+
+                          return (
+                            <>
+                              {/* Ongoing meeting(s) */}
+                              {ongoing.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                    Ongoing meeting
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {ongoing.map((appt) => {
+                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const canJoin =
+                                        appt.joinOpensAt && appt.joinClosesAt
+                                          ? now >= new Date(appt.joinOpensAt) &&
+                                            now <= new Date(appt.joinClosesAt)
+                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
+                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+
+                                      const expertName =
+                                        appt.researcherId?.name ||
+                                        appt.researcherId?.username ||
+                                        "Expert";
+                                      const withUser = expertName.startsWith("Dr ")
+                                        ? expertName
+                                        : `Dr ${expertName}`;
+                                      const rawStatus = appt.status || "confirmed";
+                                      const status =
+                                        rawStatus === "pending_payment"
+                                          ? "Awaiting payment"
+                                          : rawStatus === "confirmed"
+                                            ? "Confirmed"
+                                            : rawStatus === "cancelled"
+                                              ? "Cancelled"
+                                              : rawStatus;
+                                      const statusClasses =
+                                        rawStatus === "confirmed"
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          : rawStatus === "pending_payment"
+                                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                            : rawStatus === "cancelled"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                              : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                      return (
+                                        <div
+                                          key={appt._id}
+                                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/80 px-4 py-3"
+                                        >
+                                          <div className="flex items-start gap-3">
+                                            <div className="mt-1">
+                                              <CalendarIcon className="w-4 h-4 text-[#2F3C96]" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                Meeting with {withUser}
+                                              </p>
+                                              <p className="text-xs text-slate-600">
+                                                {start.toLocaleString(undefined, {
+                                                  weekday: "short",
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "2-digit",
+                                                })}{" "}
+                                                – in progress
+                                              </p>
+                                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                  {status}
+                                                </span>
+                                              </div>
+                                              {appt.notes && (
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                  Notes: {appt.notes}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                              type="button"
+                                              disabled={!canJoin}
+                                              onClick={() =>
+                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                              }
+                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                canJoin
+                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                  : "bg-slate-300 cursor-not-allowed"
+                                              }`}
+                                            >
+                                              Join now
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Upcoming meetings */}
+                              <div>
+                                <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                  Upcoming meetings
+                                </h4>
+                                {upcomingOnly.length === 0 ? (
+                                  <div className="rounded-xl border border-dashed border-indigo-200/80 bg-indigo-50/40 p-6 text-center">
+                                    <Calendar
+                                      className="w-12 h-12 mx-auto mb-3 opacity-60"
+                                      style={{ color: "#2F3C96" }}
+                                    />
+                                    <h5 className="text-sm sm:text-base font-semibold mb-1" style={{ color: "#2F3C96" }}>
+                                      No upcoming meetings yet
+                                    </h5>
+                                    <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
+                                      When you book with an expert, your confirmed meetings will show up here with a
+                                      join button shortly before start time.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {upcomingOnly.map((appt) => {
+                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const canJoin =
+                                        appt.joinOpensAt && appt.joinClosesAt
+                                          ? now >= new Date(appt.joinOpensAt) &&
+                                            now <= new Date(appt.joinClosesAt)
+                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
+                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+
+                                      const expertName =
+                                        appt.researcherId?.name ||
+                                        appt.researcherId?.username ||
+                                        "Expert";
+                                      const withUser = expertName.startsWith("Dr ")
+                                        ? expertName
+                                        : `Dr ${expertName}`;
+                                      const rawStatus = appt.status || "confirmed";
+                                      const status =
+                                        rawStatus === "pending_payment"
+                                          ? "Awaiting payment"
+                                          : rawStatus === "confirmed"
+                                            ? "Confirmed"
+                                            : rawStatus === "cancelled"
+                                              ? "Cancelled"
+                                              : rawStatus;
+                                      const statusClasses =
+                                        rawStatus === "confirmed"
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          : rawStatus === "pending_payment"
+                                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                            : rawStatus === "cancelled"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                              : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                      return (
+                                        <div
+                                          key={appt._id}
+                                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-white/80 px-4 py-3"
+                                        >
+                                          <div className="flex items-start gap-3">
+                                            <div className="mt-1">
+                                              <CalendarIcon className="w-4 h-4 text-[#2F3C96]" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                Meeting with {withUser}
+                                              </p>
+                                              <p className="text-xs text-slate-600">
+                                                {start.toLocaleString(undefined, {
+                                                  weekday: "short",
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "2-digit",
+                                                })}
+                                              </p>
+                                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                  {status}
+                                                </span>
+                                              </div>
+                                              {appt.notes && (
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                  Notes: {appt.notes}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                              type="button"
+                                              disabled={!canJoin}
+                                              onClick={() =>
+                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                              }
+                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                canJoin
+                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                  : "bg-slate-300 cursor-not-allowed"
+                                              }`}
+                                            >
+                                              Join
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+
+                        {/* Past meetings */}
+                        <div className="pt-4 border-t border-slate-200">
+                          <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                            Past meetings
+                          </h4>
+                          {pastAppointments.length === 0 ? (
+                            <p className="text-xs sm:text-sm text-slate-600">
+                              After you complete calls with experts, they&apos;ll appear here so you can easily remember who you&apos;ve spoken with.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {pastAppointments.map((appt) => {
+                                const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                const expertName =
+                                  appt.researcherId?.name ||
+                                  appt.researcherId?.username ||
+                                  "Expert";
+                                const withUser = expertName.startsWith("Dr ")
+                                  ? expertName
+                                  : `Dr ${expertName}`;
+                                const rawStatus = appt.status || "confirmed";
+                                const status =
+                                  rawStatus === "pending_payment"
+                                    ? "Awaiting payment"
+                                    : rawStatus === "confirmed"
+                                      ? "Confirmed"
+                                      : rawStatus === "cancelled"
+                                        ? "Cancelled"
+                                        : rawStatus;
+                                const statusClasses =
+                                  rawStatus === "confirmed"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : rawStatus === "pending_payment"
+                                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                      : rawStatus === "cancelled"
+                                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                        : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                return (
+                                  <div
+                                    key={appt._id}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="mt-1">
+                                        <CalendarIcon className="w-4 h-4 text-slate-500" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-900">
+                                          Meeting with {withUser}
+                                        </p>
+                                        <p className="text-xs text-slate-600">
+                                          {start.toLocaleString(undefined, {
+                                            weekday: "short",
+                                            month: "short",
+                                            day: "numeric",
+                                            hour: "numeric",
+                                            minute: "2-digit",
+                                          })}
+                                        </p>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                            {status}
+                                          </span>
+                                        </div>
+                                        {appt.notes && (
+                                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                            Notes: {appt.notes}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

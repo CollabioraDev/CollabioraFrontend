@@ -304,27 +304,27 @@ const markdownComponents = {
 
 const PublicationCard = React.memo(
   ({ publication, onAskAbout, onSave, userId }) => (
-    <div className="bg-white border border-[#D1D3E5] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-[#E8E9F2] rounded-lg flex items-center justify-center shrink-0">
-          <BookOpen className="w-5 h-5 text-[#2F3C96]" />
+    <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
+      <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E8E9F2] rounded-lg flex items-center justify-center shrink-0">
+          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F3C96]" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-1">
+          <h4 className="font-semibold text-[13px] sm:text-sm text-slate-800 line-clamp-2 mb-0.5 sm:mb-1">
             {publication.title}
           </h4>
-          <p className="text-xs text-slate-600">
+          <p className="text-[11px] sm:text-xs text-slate-600">
             <span className="font-medium text-slate-700">
               {publication.authors}
             </span>
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-[11px] sm:text-xs text-slate-500">
             {publication.journal} ({publication.year})
           </p>
         </div>
       </div>
       {publication.abstract && (
-        <p className="text-sm text-slate-600 mb-3 line-clamp-4 leading-relaxed">
+        <p className="text-[13px] sm:text-sm text-slate-600 mb-2.5 sm:mb-3 line-clamp-4 leading-relaxed">
           {publication.abstract}
         </p>
       )}
@@ -370,35 +370,35 @@ const PublicationCard = React.memo(
 );
 
 const TrialCard = React.memo(({ trial, onAskAbout, onSave, userId }) => (
-  <div className="bg-white border border-[#D1D3E5] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
-    <div className="flex items-start gap-3 mb-3">
-      <div className="w-10 h-10 bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] rounded-lg flex items-center justify-center shrink-0">
-        <Microscope className="w-5 h-5 text-[#2F3C96]" />
+  <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
+    <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] rounded-lg flex items-center justify-center shrink-0">
+        <Microscope className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F3C96]" />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-2">
+        <h4 className="font-semibold text-[13px] sm:text-sm text-slate-800 line-clamp-2 mb-1.5 sm:mb-2">
           {trial.title}
         </h4>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {trial.status && (
-            <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-medium border border-[#D1D3E5]">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-[11px] sm:text-xs font-medium border border-[#D1D3E5]">
               {trial.status}
             </span>
           )}
           {trial.phase && trial.phase !== "Not specified" && (
-            <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs border border-slate-200">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-100 text-slate-700 rounded-full text-[11px] sm:text-xs border border-slate-200">
               {trial.phase}
             </span>
           )}
           {trial.nctId && (
-            <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-mono border border-[#D1D3E5]">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-[11px] sm:text-xs font-mono border border-[#D1D3E5]">
               {trial.nctId}
             </span>
           )}
         </div>
       </div>
     </div>
-    <div className="text-xs text-slate-600 space-y-1.5 mb-3">
+    <div className="text-[11px] sm:text-xs text-slate-600 space-y-1.5 mb-2.5 sm:mb-3">
       {trial.conditions && trial.conditions !== "Not specified" && (
         <p>
           <span className="font-medium text-slate-700">Conditions:</span>{" "}
@@ -413,11 +413,11 @@ const TrialCard = React.memo(({ trial, onAskAbout, onSave, userId }) => (
       )}
     </div>
     {trial.summary && trial.summary !== "No summary available" && (
-      <p className="text-sm text-slate-600 mb-3 line-clamp-3 leading-relaxed">
+      <p className="text-[13px] sm:text-sm text-slate-600 mb-2.5 sm:mb-3 line-clamp-3 leading-relaxed">
         {trial.summary}
       </p>
     )}
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
       {onAskAbout && (
         <button
           onClick={() => onAskAbout(trial, "trial")}
@@ -425,6 +425,14 @@ const TrialCard = React.memo(({ trial, onAskAbout, onSave, userId }) => (
         >
           <MessageSquare className="w-3 h-3" /> Ask about this
         </button>
+      )}
+      {trial.nctId && (
+        <Link
+          to={`/trial/${encodeURIComponent(trial.nctId)}`}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+        >
+          <ExternalLink className="w-3 h-3" /> View on Collabiora
+        </Link>
       )}
       {userId && onSave && (
         <button
@@ -1772,7 +1780,7 @@ export default function YoriAI() {
   };
 
   return (
-    <div className="relative min-h-screen pt-20 sm:pt-16 yori-page-enter">
+    <div className="relative min-h-screen pt-20 pb-20 sm:pt-16 sm:pb-0 yori-page-enter">
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-b from-[#F5F2F8] via-white to-[#E8E0EF]">
         <div
@@ -1860,7 +1868,7 @@ export default function YoriAI() {
         }}
       />
 
-      <div className="relative mx-auto flex h-[calc(100vh-5rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-2 py-2 sm:px-4 sm:py-4">
+      <div className="relative mx-auto flex h-[calc(100vh-10rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-2 py-2 sm:px-4 sm:py-4">
 
         {/* Mobile backdrop */}
         {isMobile && sidebarOpen && (
@@ -1876,7 +1884,7 @@ export default function YoriAI() {
           className={`
             shrink-0 transition-all duration-300 ease-in-out overflow-hidden
             ${isMobile
-              ? `fixed inset-y-0 left-0 z-50 w-[min(300px,85vw)] pt-[5.5rem] pb-2 px-2 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`
+              ? `fixed left-0 top-0 bottom-16 z-50 w-[min(300px,85vw)] pt-[5.5rem] pb-2 px-2 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`
               : `${sidebarOpen ? "w-[280px] mr-4" : "w-0 mr-0"}`
             }
           `}
@@ -1936,63 +1944,75 @@ export default function YoriAI() {
 
         {/* Main chat area */}
         <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
-          {/* Header */}
-          <div className="flex items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/80 px-3 py-2.5 sm:px-4 sm:py-3">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((prev) => !prev)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D1D3E5] bg-white text-[#2F3C96] hover:bg-[#E8E9F2]/50 transition-colors"
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              <PanelLeft className="h-4 w-4" />
-            </button>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-[#2F3C96]">
+          {/* Header - aligned with global layout */}
+          <div className="flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2F3C96]">
+                <img
+                  src="/yori-face.png"
+                  alt="Yori"
+                  className="h-6 w-6 object-contain"
+                />
+              </div>
+              <p className="truncate text-sm font-semibold text-[#2F3C96] min-w-0">
                 {activeChat?.title || "New chat"}
               </p>
             </div>
-            {isMobile && hasUserMessages && (
-              <button
-                type="button"
-                onClick={createNewChat}
-                disabled={!canCreateNewChat}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#D1D3E5] bg-white text-[#2F3C96] hover:bg-[#E8E9F2]/50 transition-colors disabled:opacity-40"
-                title="New chat"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            )}
+            {/* Placeholder notification icon to mirror navbar */}
+            <button
+              type="button"
+              className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-[#2F3C96] hover:bg-[#E8E9F2]/60 transition-colors"
+              aria-label="Notifications"
+            >
+              <Loader2 className="h-4 w-4 animate-spin opacity-0" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D1D3E5] bg-white text-[#2F3C96] hover:bg-[#E8E9F2]/60 transition-colors"
+              aria-label={sidebarOpen ? "Hide chats" : "Show chats"}
+            >
+              <PanelLeft className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Messages area */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6"
+            className="flex-1 overflow-y-auto px-3 pt-4 sm:px-6 sm:pt-6 sm:pb-6"
           >
             {!hasUserMessages ? (
-              <div className="flex min-h-full flex-col items-center justify-center px-2 pb-6 sm:pb-10">
-                <div className="text-center mb-6 sm:mb-8 yori-section-enter yori-delay-1">
+              <div className="flex min-h-full flex-col items-center justify-center px-2 pb-24 sm:pb-10">
+                {/* Hero */}
+                <div className="text-center mb-4 sm:mb-6 yori-section-enter yori-delay-1">
                   <img
                     src="/bot.png"
                     alt="Yori"
-                    className="mx-auto mb-3 h-12 w-12 sm:mb-4 sm:h-16 sm:w-16 object-contain"
+                    className="mx-auto mb-2 h-10 w-10 sm:mb-3 sm:h-14 sm:w-14 object-contain"
                   />
                   <h1 className="text-xl font-bold text-[#2F3C96] sm:text-3xl">
                     Hey, I'm Yori!
                   </h1>
                 </div>
 
-                <div className="flex max-w-3xl flex-wrap justify-center gap-1.5 sm:gap-2 yori-section-enter yori-delay-3">
-                  {defaultQuestions.map((q) => (
-                    <button
-                      key={q}
-                      type="button"
-                      onClick={() => handleSendMessage(q)}
-                      className="rounded-full border border-[#D0C4E2]/50 bg-white/70 px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm text-[#2F3C96] hover:bg-[#F5F2F8] hover:border-[#D0C4E2] transition-colors"
-                    >
-                      {q}
-                    </button>
-                  ))}
+                {/* Quick actions in 2-column cards */}
+                <div className="w-full max-w-3xl yori-section-enter yori-delay-3">
+                  <div className="grid w-full grid-cols-2 gap-2 sm:gap-3">
+                    {defaultQuestions.map((q, idx) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => handleSendMessage(q)}
+                        className={`flex h-full flex-col items-start justify-between rounded-2xl border border-[#D0C4E2]/60 bg-white px-3 py-2.5 text-left text-xs sm:text-sm text-[#2F3C96] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ${
+                          idx === defaultQuestions.length - 1
+                            ? "col-span-2"
+                            : ""
+                        }`}
+                      >
+                        <span className="line-clamp-2">{q}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (

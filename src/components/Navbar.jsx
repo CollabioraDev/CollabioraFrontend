@@ -1392,166 +1392,59 @@ export default function Navbar() {
               <GlobalSearch />
             </div> */}
 
-            {/* Navigation Links Section */}
-            {navItems.length > 0 && (
-              <div
-                className="space-y-1.5 pb-3 border-b"
-                style={{ borderColor: "#D0C4E2" }}
-              >
-                {navItems.map((item) => {
-                  // Map navigation items to their routes
-                  const routeMap = {
-                    // Landing page routes
-                    "About Us": "/about",
-                    FAQ: "/faq",
-                    Contact: "/contact",
-                    // Regular navigation routes
-                    Dashboard: getDashboardPath(),
-                    // Forums routes based on user role
-                    Forums:
-                      user?.role === "researcher"
-                        ? "/researcher-forums"
-                        : "/forums",
-                    Discovery: "/discovery",
-                  };
-                  const route =
-                    routeMap[item] ||
-                    `/${item.toLowerCase().replace(/\s+/g, "-")}`;
-
-                  // Handle Explore dropdown in mobile
-                  if (item === "Explore") {
-                    return (
-                      <div key={item}>
-                        <button
-                          onClick={() =>
-                            setIsMobileExploreOpen(!isMobileExploreOpen)
-                          }
-                          className="flex items-center justify-between w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
-                          style={{ color: "#2F3C96" }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#E8E0EF";
-                            e.target.style.color = "#474F97";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                            e.target.style.color = "#2F3C96";
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
-                              style={{
-                                backgroundColor: "#E8E0EF",
-                                color: "#2F3C96",
-                              }}
-                            >
-                              {getIcon(item)}
-                            </span>
-                            {item}
-                          </div>
-                          <svg
-                            className="w-4 h-4 transition-transform duration-200"
-                            style={{
-                              color: "#2F3C96",
-                              transform: isMobileExploreOpen
-                                ? "rotate(180deg)"
-                                : "rotate(0deg)",
-                            }}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </button>
-                        {isMobileExploreOpen && (
-                          <div className="pl-6 mt-1 space-y-1">
-                            {[
-                              {
-                                label: publicationsNavLabel,
-                                route: publicationsNavRoute,
-                              },
-                              { label: expertsNavLabel, route: "/experts" },
-                              { label: trialsNavLabel, route: "/trials" },
-                            ].map((subItem) => (
-                              <PrefetchLink
-                                key={subItem.label}
-                                to={subItem.route}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="flex items-center gap-3 w-full text-sm font-medium rounded-lg py-2 px-3 transition-all duration-200"
-                                style={{ color: "#2F3C96" }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.backgroundColor = "#E8E0EF";
-                                  e.target.style.color = "#474F97";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.backgroundColor =
-                                    "transparent";
-                                  e.target.style.color = "#2F3C96";
-                                }}
-                              >
-                                {subItem.label}
-                              </PrefetchLink>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  // Regular navigation items
-                  return (
-                    <PrefetchLink
-                      key={item}
-                      to={route}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
-                      style={{ color: "#2F3C96" }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = "#E8E0EF";
-                        e.target.style.color = "#474F97";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = "transparent";
-                        e.target.style.color = "#2F3C96";
-                      }}
-                    >
-                      <span
-                        className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
-                        style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
-                      >
-                        {getIcon(item)}
-                      </span>
-                      {item}
-                    </PrefetchLink>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* User-Specific Links */}
+            {/* Mobile menu - signed-in users only see account actions */}
             {user ? (
               <div
                 className="space-y-1.5 pb-3 border-b"
                 style={{ borderColor: "#D0C4E2" }}
               >
                 <PrefetchLink
+                  to="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                  style={{ color: "#2F3C96" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E8E0EF";
+                    e.currentTarget.style.color = "#474F97";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#2F3C96";
+                  }}
+                >
+                  <span
+                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                  </span>
+                  My Profile
+                </PrefetchLink>
+
+                <PrefetchLink
                   to="/favorites"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
                   style={{ color: "#2F3C96" }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = "#E8E0EF";
-                    e.target.style.color = "#474F97";
+                    e.currentTarget.style.backgroundColor = "#E8E0EF";
+                    e.currentTarget.style.color = "#474F97";
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = "transparent";
-                    e.target.style.color = "#2F3C96";
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#2F3C96";
                   }}
                 >
                   <span
@@ -1572,7 +1465,7 @@ export default function Navbar() {
                       />
                     </svg>
                   </span>
-                  Favorites
+                  Favourites
                 </PrefetchLink>
               </div>
             ) : null}
@@ -1581,7 +1474,10 @@ export default function Navbar() {
             <div className="pt-1.5">
               {user ? (
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
                   className="w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
                   style={{
                     background: "linear-gradient(135deg, #dc2626, #ef4444)",
@@ -1595,7 +1491,7 @@ export default function Navbar() {
                       "linear-gradient(135deg, #dc2626, #ef4444)";
                   }}
                 >
-                  SignOut
+                  Sign out
                 </button>
               ) : (
                 <PrefetchLink

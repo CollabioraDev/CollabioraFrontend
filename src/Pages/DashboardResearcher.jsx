@@ -258,6 +258,10 @@ export default function DashboardResearcher() {
     "dashboard-researcher",
   );
   const [forceShowTutorial, setForceShowTutorial] = useState(false);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [pastAppointments, setPastAppointments] = useState([]);
+  const [pendingMeetingRequests, setPendingMeetingRequests] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const showDashboardTutorial =
     (forceShowTutorial || !dashboardTutorialCompleted) &&
     !loading &&
@@ -672,6 +676,77 @@ export default function DashboardResearcher() {
       }
     };
 
+    const loadAppointments = async () => {
+      try {
+        setLoadingAppointments(true);
+
+        // Upcoming appointments
+        try {
+          const res = await fetch(`${base}/api/appointments/upcoming`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          });
+          if (!res.ok) {
+            console.error("Failed to load upcoming appointments", res.status);
+            setUpcomingAppointments([]);
+          } else {
+            const data = await res.json();
+            setUpcomingAppointments(data.appointments || []);
+          }
+        } catch (err) {
+          console.error("Error loading upcoming appointments:", err);
+          setUpcomingAppointments([]);
+        }
+
+        // Past appointments
+        try {
+          const resPast = await fetch(`${base}/api/appointments/past`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          });
+          if (!resPast.ok) {
+            console.error("Failed to load past appointments", resPast.status);
+            setPastAppointments([]);
+          } else {
+            const dataPast = await resPast.json();
+            setPastAppointments(dataPast.appointments || []);
+          }
+        } catch (err) {
+          console.error("Error loading past appointments:", err);
+          setPastAppointments([]);
+        }
+
+        // Pending meeting requests that still need your approval
+        try {
+          const currentUserId = userData?._id || userData?.id;
+          if (currentUserId) {
+            const resPending = await fetch(
+              `${base}/api/meeting-requests/${currentUserId}?status=pending`,
+            );
+            if (!resPending.ok) {
+              console.error(
+                "Failed to load pending meeting requests",
+                resPending.status,
+              );
+              setPendingMeetingRequests([]);
+            } else {
+              const pendingData = await resPending.json();
+              setPendingMeetingRequests(pendingData.requests || []);
+            }
+          } else {
+            setPendingMeetingRequests([]);
+          }
+        } catch (err) {
+          console.error("Error loading pending meeting requests:", err);
+          setPendingMeetingRequests([]);
+        }
+      } finally {
+        setLoadingAppointments(false);
+      }
+    };
+
     // Check email verification status periodically if not verified
     let emailCheckInterval = null;
     if (userData && !userData.emailVerified) {
@@ -876,6 +951,7 @@ export default function DashboardResearcher() {
       };
 
       fetchData();
+      loadAppointments();
     } else {
       // No user, don't show multi-step loader
       setIsFirstLoad(false);
@@ -6664,24 +6740,416 @@ export default function DashboardResearcher() {
 
               {selectedCategory === "meetings" && (
                 <div className="col-span-full">
-                  <div
-                    className="rounded-2xl border-2 border-dashed border-[#D0C4E2]/80 p-8 sm:p-12 text-center"
-                    style={{ backgroundColor: "rgba(208, 196, 226, 0.15)" }}
-                  >
-                    <Calendar
-                      className="w-14 h-14 mx-auto mb-4 opacity-60"
-                      style={{ color: "#2F3C96" }}
-                    />
-                    <h3
-                      className="text-lg font-bold mb-2"
-                      style={{ color: "#2F3C96" }}
-                    >
-                      Meetings
-                    </h3>
-                    <p className="text-sm text-slate-600 max-w-sm mx-auto">
-                      Your scheduled meetings will appear here. Schedule and
-                      manage meetings with collaborators from your dashboard.
-                    </p>
+                  <div className="rounded-2xl border border-[#D0C4E2]/80 bg-white/90 backdrop-blur-sm p-6 sm:p-8 shadow-[0_10px_40px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center justify-between mb-4 gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#D0C4E2]/30 flex items-center justify-center">
+                          <Calendar className="w-5 h-5" style={{ color: "#2F3C96" }} />
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-bold" style={{ color: "#2F3C96" }}>
+                            Your meetings
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-600">
+                            See upcoming calls and look back at past conversations.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-5 rounded-xl border border-dashed border-[#D0C4E2]/70 bg-[#F5F0FA] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <p className="text-xs sm:text-sm text-slate-700">
+                        Turn on 1:1 meetings and set your weekly availability from your profile so patients can book time with you.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/profile")}
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-[#2F3C96] hover:bg-[#253075] transition-colors"
+                      >
+                        Set up availability
+                      </button>
+                    </div>
+
+                    {loadingAppointments ? (
+                      <div className="flex items-center justify-center py-8 gap-2 text-sm text-slate-600">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#2F3C96]" />
+                        <span>Loading your meetings…</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Ongoing + Upcoming meetings */}
+                        {(() => {
+                          const now = new Date();
+                          const ongoing = upcomingAppointments.filter((appt) => {
+                            const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                            const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                            return now >= start && now <= end;
+                          });
+                          const upcomingOnly = upcomingAppointments.filter(
+                            (appt) => !ongoing.some((o) => o._id === appt._id),
+                          );
+
+                          return (
+                            <>
+                              {/* Ongoing meeting(s) */}
+                              {ongoing.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                    Ongoing meeting
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {ongoing.map((appt) => {
+                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const canJoin =
+                                        appt.joinOpensAt && appt.joinClosesAt
+                                          ? now >= new Date(appt.joinOpensAt) &&
+                                            now <= new Date(appt.joinClosesAt)
+                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
+                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+
+                                      const withUser =
+                                        appt.patientId?.name ||
+                                        appt.patientId?.username ||
+                                        "Patient";
+                                      const rawStatus = appt.status || "confirmed";
+                                      const status =
+                                        rawStatus === "pending_payment"
+                                          ? "Awaiting payment"
+                                          : rawStatus === "confirmed"
+                                            ? "Confirmed"
+                                            : rawStatus === "cancelled"
+                                              ? "Cancelled"
+                                              : rawStatus;
+                                      const statusClasses =
+                                        rawStatus === "confirmed"
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          : rawStatus === "pending_payment"
+                                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                            : rawStatus === "cancelled"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                              : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                      return (
+                                        <div
+                                          key={appt._id}
+                                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#D0C4E2]/80 bg-[#2F3C96]/5 px-4 py-3"
+                                        >
+                                          <div className="flex items-start gap-3">
+                                            <div className="mt-1">
+                                              <CalendarIcon className="w-4 h-4 text-[#2F3C96]" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                Meeting with {withUser}
+                                              </p>
+                                              <p className="text-xs text-slate-600">
+                                                {start.toLocaleString(undefined, {
+                                                  weekday: "short",
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "2-digit",
+                                                })}{" "}
+                                                – in progress
+                                              </p>
+                                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                  {status}
+                                                </span>
+                                              </div>
+                                              {appt.notes && (
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                  Notes: {appt.notes}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                              type="button"
+                                              disabled={!canJoin}
+                                              onClick={() =>
+                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                              }
+                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                canJoin
+                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                  : "bg-slate-300 cursor-not-allowed"
+                                              }`}
+                                            >
+                                              Join now
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Upcoming meetings (excluding ongoing) */}
+                              <div>
+                                <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                                  Upcoming meetings
+                                </h4>
+                                {upcomingOnly.length === 0 ? (
+                                  <div className="rounded-xl border border-dashed border-[#D0C4E2]/80 bg-[#D0C4E2]/10 p-6 text-center">
+                                    <Calendar
+                                      className="w-12 h-12 mx-auto mb-3 opacity-60"
+                                      style={{ color: "#2F3C96" }}
+                                    />
+                                    <h5 className="text-sm sm:text-base font-semibold mb-1" style={{ color: "#2F3C96" }}>
+                                      No upcoming meetings yet
+                                    </h5>
+                                    <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
+                                      When patients book with you, confirmed meetings will show up here with a
+                                      join button shortly before start time.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {upcomingOnly.map((appt) => {
+                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const canJoin =
+                                        appt.joinOpensAt && appt.joinClosesAt
+                                          ? now >= new Date(appt.joinOpensAt) &&
+                                            now <= new Date(appt.joinClosesAt)
+                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
+                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+
+                                      const withUser =
+                                        appt.patientId?.name ||
+                                        appt.patientId?.username ||
+                                        "Patient";
+                                      const rawStatus = appt.status || "confirmed";
+                                      const status =
+                                        rawStatus === "pending_payment"
+                                          ? "Awaiting payment"
+                                          : rawStatus === "confirmed"
+                                            ? "Confirmed"
+                                            : rawStatus === "cancelled"
+                                              ? "Cancelled"
+                                              : rawStatus;
+                                      const statusClasses =
+                                        rawStatus === "confirmed"
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          : rawStatus === "pending_payment"
+                                            ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                            : rawStatus === "cancelled"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                              : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                      return (
+                                        <div
+                                          key={appt._id}
+                                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#D0C4E2]/80 bg-white/80 px-4 py-3"
+                                        >
+                                          <div className="flex items-start gap-3">
+                                            <div className="mt-1">
+                                              <CalendarIcon className="w-4 h-4 text-[#2F3C96]" />
+                                            </div>
+                                            <div>
+                                              <p className="text-sm font-semibold text-slate-900">
+                                                Meeting with {withUser}
+                                              </p>
+                                              <p className="text-xs text-slate-600">
+                                                {start.toLocaleString(undefined, {
+                                                  weekday: "short",
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "2-digit",
+                                                })}
+                                              </p>
+                                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                  {status}
+                                                </span>
+                                              </div>
+                                              {appt.notes && (
+                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                  Notes: {appt.notes}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-2 justify-end">
+                                            <button
+                                              type="button"
+                                              disabled={!canJoin}
+                                              onClick={() =>
+                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                              }
+                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                canJoin
+                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                  : "bg-slate-300 cursor-not-allowed"
+                                              }`}
+                                            >
+                                              Join
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+
+                        {/* Pending meeting requests needing your approval */}
+                        <div className="pt-4 border-t border-slate-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-semibold text-slate-900">
+                              Meeting requests awaiting approval
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => navigate("/notifications")}
+                              className="text-xs font-medium text-[#2F3C96] hover:text-[#253075]"
+                            >
+                              Review all in Insights
+                            </button>
+                          </div>
+                          {pendingMeetingRequests.length === 0 ? (
+                            <p className="text-xs sm:text-sm text-slate-600">
+                              When patients request new meeting times, they&apos;ll appear here and in your Insights.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {pendingMeetingRequests.slice(0, 3).map((req) => {
+                                const patient = req.patientId;
+                                return (
+                                  <div
+                                    key={req._id}
+                                    className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-xs font-bold">
+                                        {patient?.username?.charAt(0)?.toUpperCase() || "P"}
+                                      </div>
+                                      <div>
+                                        <p className="text-xs font-semibold text-slate-900">
+                                          {patient?.username || "Patient"}
+                                        </p>
+                                        {req.topic && (
+                                          <p className="text-xs font-medium text-slate-900">
+                                            {req.topic}
+                                          </p>
+                                        )}
+                                        {req.shortDescription && (
+                                          <p className="text-[11px] text-slate-700 line-clamp-2">
+                                            {req.shortDescription}
+                                          </p>
+                                        )}
+                                        {req.preferredDate && (
+                                          <p className="text-[11px] text-slate-600 mt-0.5">
+                                            <CalendarIcon className="w-3 h-3 inline mr-1" />
+                                            Requested:{" "}
+                                            {new Date(
+                                              req.preferredTime
+                                                ? `${req.preferredDate}T${req.preferredTime}:00`
+                                                : req.preferredDate,
+                                            ).toLocaleString()}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => navigate("/notifications")}
+                                      className="self-center px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white bg-[#2F3C96] hover:bg-[#253075] transition-colors"
+                                    >
+                                      Review
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Past meetings */}
+                        <div className="pt-4 border-t border-slate-200">
+                          <h4 className="text-sm font-semibold text-slate-900 mb-2">
+                            Past meetings
+                          </h4>
+                          {pastAppointments.length === 0 ? (
+                            <p className="text-xs sm:text-sm text-slate-600">
+                              Once you&apos;ve completed calls with patients, they&apos;ll appear here so you can quickly review who you&apos;ve spoken with.
+                            </p>
+                          ) : (
+                            <div className="space-y-3">
+                              {pastAppointments.map((appt) => {
+                                const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                const withUser =
+                                  appt.patientId?.name ||
+                                  appt.patientId?.username ||
+                                  "Patient";
+                                const rawStatus = appt.status || "confirmed";
+                                const status =
+                                  rawStatus === "pending_payment"
+                                    ? "Awaiting payment"
+                                    : rawStatus === "confirmed"
+                                      ? "Confirmed"
+                                      : rawStatus === "cancelled"
+                                        ? "Cancelled"
+                                        : rawStatus;
+                                const statusClasses =
+                                  rawStatus === "confirmed"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : rawStatus === "pending_payment"
+                                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                      : rawStatus === "cancelled"
+                                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                        : "bg-slate-50 text-slate-700 border border-slate-200";
+
+                                return (
+                                  <div
+                                    key={appt._id}
+                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="mt-1">
+                                        <CalendarIcon className="w-4 h-4 text-slate-500" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-900">
+                                          Meeting with {withUser}
+                                        </p>
+                                        <p className="text-xs text-slate-600">
+                                          {start.toLocaleString(undefined, {
+                                            weekday: "short",
+                                            month: "short",
+                                            day: "numeric",
+                                            hour: "numeric",
+                                            minute: "2-digit",
+                                          })}
+                                        </p>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                            {status}
+                                          </span>
+                                        </div>
+                                        {appt.notes && (
+                                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                            Notes: {appt.notes}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

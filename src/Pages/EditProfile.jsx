@@ -107,6 +107,18 @@ export default function EditProfile() {
   const [specialties, setSpecialties] = useState(""); // For researchers
   const [interests, setInterests] = useState(""); // For researchers
   const [available, setAvailable] = useState(false); // For researchers
+  const [interestedInMeetings, setInterestedInMeetings] = useState(false);
+  const [meetingRate, setMeetingRate] = useState(""); // per 30 min
+  const [meetingTimezone, setMeetingTimezone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  );
+  const [weeklyAvailability, setWeeklyAvailability] = useState(() =>
+    Array.from({ length: 7 }, (_, dayOfWeek) => ({
+      dayOfWeek,
+      enabled: false,
+      windows: [], // [{ startTime: "09:00", endTime: "13:00" }, ...]
+    })),
+  );
   const [gender, setGender] = useState(""); // Optional for both
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [showUsernameSuggestions, setShowUsernameSuggestions] = useState(false);
@@ -180,8 +192,12 @@ export default function EditProfile() {
       setNameHidden(false); // Default to false
     }
 
-    loadProfile(userData._id || userData.id);
-    loadFollowedData(userData._id || userData.id);
+    const uid = userData._id || userData.id;
+    loadProfile(uid);
+    loadFollowedData(uid);
+    if (userData.role === "researcher") {
+      loadAvailability(uid);
+    }
   }, [navigate]);
 
   // Listen for email verification (cross-tab or same-tab localStorage update)
@@ -464,6 +480,15 @@ export default function EditProfile() {
           setAvailable(profileObj.researcher.available || false);
           setGender(profileObj.researcher.gender || "");
           setAge(profileObj.researcher.age?.toString() || "");
+          setInterestedInMeetings(
+            profileObj.researcher.interestedInMeetings || false
+          );
+          if (profileObj.researcher.meetingRate != null) {
+            setMeetingRate(String(profileObj.researcher.meetingRate));
+          }
+          if (profileObj.researcher.meetingTimezone) {
+            setMeetingTimezone(profileObj.researcher.meetingTimezone);
+          }
         }
       }
     } catch (error) {
@@ -471,6 +496,45 @@ export default function EditProfile() {
       toast.error("Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAvailability(userId) {
+    try {
+      const res = await fetch(`${base}/api/researchers/${userId}/availability`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const availability = data.availability;
+      if (!availability) return;
+
+      const rules = Array.isArray(availability.weeklyRules)
+        ? availability.weeklyRules
+        : [];
+
+      setWeeklyAvailability((prev) =>
+        prev.map((day) => {
+          const dayRules = rules.filter(
+            (r) => r.dayOfWeek === day.dayOfWeek,
+          );
+          return {
+            ...day,
+            enabled: dayRules.length > 0,
+            windows: dayRules.map((r) => ({
+              startTime: r.startTime || "",
+              endTime: r.endTime || "",
+            })),
+          };
+        }),
+      );
+
+      if (availability.timezone) {
+        setMeetingTimezone(availability.timezone);
+      }
+      if (typeof availability.isActive === "boolean") {
+        setInterestedInMeetings(availability.isActive);
+      }
+    } catch (err) {
+      console.error("Error loading availability:", err);
     }
   }
 
@@ -784,8 +848,11 @@ export default function EditProfile() {
         };
       }
 
-      // If no changes detected, show message and return
-      if (!hasUserChanges && !hasProfileChanges) {
+      // If no profile/user changes detected:
+      // - For patients, we can safely exit.
+      // - For researchers, we still want to persist meeting settings + availability,
+      //   so we do NOT return early here.
+      if (!hasUserChanges && !hasProfileChanges && user.role !== "researcher") {
         toast.success("All changes are up to date!");
         setSaving(false);
         return;
@@ -911,6 +978,73 @@ export default function EditProfile() {
         };
         localStorage.setItem("user", JSON.stringify(updatedUserData));
         setUser(updatedUserData);
+      }
+
+      // For researchers, also persist meeting settings and weekly availability
+      if (currentUser.role === "researcher") {
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const rateNumber =
+              meetingRate && !Number.isNaN(Number(meetingRate))
+                ? Number(meetingRate)
+                : undefined;
+
+            // Derive whether there is any actual availability configured
+            const weeklyRules = weeklyAvailability.flatMap((d) => {
+              if (!d.enabled || !Array.isArray(d.windows)) return [];
+              return d.windows
+                .filter(
+                  (w) =>
+                    w.startTime &&
+                    w.endTime &&
+                    w.startTime !== w.endTime,
+                )
+                .map((w) => ({
+                  dayOfWeek: d.dayOfWeek,
+                  startTime: w.startTime,
+                  endTime: w.endTime,
+                }));
+            });
+
+            const hasAnyAvailability = weeklyRules.length > 0;
+
+            await fetch(`${base}/api/researchers/${userId}/meeting-settings`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                meetingRate: rateNumber,
+                // If they have set any availability at all, automatically
+                // mark that they accept meetings so patients can see slots.
+                interestedInMeetings: hasAnyAvailability ? true : interestedInMeetings,
+                meetingTimezone: meetingTimezone || undefined,
+                meetingDurationMinutes: 30,
+              }),
+            });
+
+            await fetch(`${base}/api/researchers/${userId}/availability`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                timezone: meetingTimezone || "UTC",
+                weeklyRules,
+                dateOverrides: [],
+                // Back-end slot generation checks isActive, so tie that
+                // directly to whether there is any availability configured.
+                isActive: hasAnyAvailability,
+              }),
+            });
+          } catch (err) {
+            console.error("Error saving meeting availability:", err);
+            // Do not throw; profile update already succeeded
+          }
+        }
       }
 
       // Trigger login event to update Navbar and other components
@@ -1850,6 +1984,367 @@ export default function EditProfile() {
                   <label htmlFor="available" className="text-sm text-slate-700">
                     Available for collaboration
                   </label>
+                </div>
+
+                {/* Meetings configuration */}
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">
+                        1:1 Meetings with patients
+                      </h3>
+                      <p className="text-xs text-slate-600">
+                        Turn on meetings, set your rate, and choose your weekly availability.
+                      </p>
+                    </div>
+                    <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={interestedInMeetings}
+                        onChange={(e) => setInterestedInMeetings(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      />
+                      Accept patient meeting requests
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Rate per 30 min (USD)
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm text-slate-500">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={meetingRate}
+                          onChange={(e) => setMeetingRate(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="e.g. 75"
+                        />
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Patients will see this on your public expert profile.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                        Timezone
+                      </label>
+                      <select
+                        value={meetingTimezone}
+                        onChange={(e) => setMeetingTimezone(e.target.value)}
+                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {/* Recommended readable timezones */}
+                        <option value="UTC">UTC</option>
+                        <option value="America/Los_Angeles">Los Angeles (Pacific Time)</option>
+                        <option value="America/New_York">New York (Eastern Time)</option>
+                        <option value="Europe/London">London (GMT)</option>
+                        <option value="Europe/Berlin">Berlin (Central European Time)</option>
+                        <option value="Asia/Kolkata">Kolkata (India Standard Time)</option>
+                        <option value="Asia/Singapore">Singapore (Singapore Time)</option>
+                        <option value="Australia/Sydney">Sydney (Australian Eastern Time)</option>
+                        {/* Preserve any previously-saved custom timezone */}
+                        {!["UTC","America/Los_Angeles","America/New_York","Europe/London","Europe/Berlin","Asia/Kolkata","Asia/Singapore","Australia/Sydney"].includes(meetingTimezone) && (
+                          <option value={meetingTimezone}>{meetingTimezone}</option>
+                        )}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMeetingTimezone(
+                            Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+                          )
+                        }
+                        className="mt-1 text-[11px] font-medium text-blue-600 hover:text-blue-700"
+                      >
+                        Use my current timezone (detected)
+                      </button>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Slots are generated using this timezone. Patients will always see times in their own local timezone.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Availability UX */}
+                  <div className="mt-2 space-y-4">
+                    {/* Select days & quick presets */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="block text-xs font-semibold text-slate-700">
+                          Select days
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Weekdays 9–5
+                              const preset = [1, 2, 3, 4, 5];
+                              setWeeklyAvailability((prev) =>
+                                prev.map((day) => {
+                                  if (preset.includes(day.dayOfWeek)) {
+                                    return {
+                                      ...day,
+                                      enabled: true,
+                                      windows: [
+                                        { startTime: "09:00", endTime: "17:00" },
+                                      ],
+                                    };
+                                  }
+                                  return { ...day, enabled: false, windows: [] };
+                                }),
+                              );
+                            }}
+                            className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                          >
+                            Weekdays 9–5
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Evenings every day 18–21
+                              setWeeklyAvailability((prev) =>
+                                prev.map((day) => ({
+                                  ...day,
+                                  enabled: true,
+                                  windows: [
+                                    { startTime: "18:00", endTime: "21:00" },
+                                  ],
+                                })),
+                              );
+                            }}
+                            className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                          >
+                            Evenings
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Custom = clear, let user choose
+                              setWeeklyAvailability((prev) =>
+                                prev.map((day) => ({
+                                  ...day,
+                                  enabled: false,
+                                  windows: [],
+                                })),
+                              );
+                            }}
+                            className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                          >
+                            Custom
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="inline-flex flex-wrap gap-1.5 rounded-lg bg-white px-2.5 py-2 border border-slate-200">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                          (label, idx) => {
+                            const day = weeklyAvailability[idx];
+                            const active = day?.enabled;
+                            return (
+                              <button
+                                key={label}
+                                type="button"
+                                onClick={() =>
+                                  setWeeklyAvailability((prev) =>
+                                    prev.map((d, i) =>
+                                      i === idx
+                                        ? {
+                                            ...d,
+                                            enabled: !d.enabled,
+                                            windows:
+                                              !d.enabled && d.windows.length === 0
+                                                ? [{ startTime: "09:00", endTime: "13:00" }]
+                                                : d.windows,
+                                          }
+                                        : d,
+                                    ),
+                                  )
+                                }
+                                className={`min-w-[2.25rem] px-2 py-1 rounded-full text-xs font-medium border transition-colors ${
+                                  active
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Time windows */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        Time windows
+                      </label>
+                      <p className="text-[11px] text-slate-500 mb-1">
+                        Choose the time ranges when you&apos;re available. You can add more than one window per day.
+                      </p>
+                      <div className="space-y-2">
+                        {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map(
+                          (label, idx) => {
+                            const day = weeklyAvailability[idx];
+                            if (!day.enabled) return null;
+                            return (
+                              <div
+                                key={label}
+                                className="rounded-lg border border-slate-200 bg-white px-3 py-2 space-y-1.5"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-xs font-medium text-slate-800">
+                                    {label}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setWeeklyAvailability((prev) =>
+                                        prev.map((d, i) =>
+                                          i === idx
+                                            ? {
+                                                ...d,
+                                                windows: [
+                                                  ...d.windows,
+                                                  { startTime: "09:00", endTime: "13:00" },
+                                                ],
+                                              }
+                                            : d,
+                                        ),
+                                      )
+                                    }
+                                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                                  >
+                                    + Add window
+                                  </button>
+                                </div>
+                                {(day.windows.length > 0
+                                  ? day.windows
+                                  : [{ startTime: "09:00", endTime: "13:00" }]
+                                ).map((window, wIdx) => (
+                                  <div
+                                    key={wIdx}
+                                    className="flex items-center gap-2 justify-between"
+                                  >
+                                    <span className="text-[11px] text-slate-500">
+                                      {day.windows.length > 1 ? `Window ${wIdx + 1}` : "Window"}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <select
+                                        value={window.startTime || "09:00"}
+                                        onChange={(e) =>
+                                          setWeeklyAvailability((prev) =>
+                                            prev.map((d, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...d,
+                                                    windows: d.windows.map((w, j) =>
+                                                      j === wIdx
+                                                        ? {
+                                                            ...w,
+                                                            startTime: e.target.value,
+                                                          }
+                                                        : w,
+                                                    ),
+                                                  }
+                                                : d,
+                                            ),
+                                          )
+                                        }
+                                        className="w-22 px-1.5 py-1 border border-slate-300 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                      >
+                                        {Array.from({ length: 48 }).map((_, i) => {
+                                          const hours = Math.floor(i / 2)
+                                            .toString()
+                                            .padStart(2, "0");
+                                          const minutes = i % 2 === 0 ? "00" : "30";
+                                          const value = `${hours}:${minutes}`;
+                                          return (
+                                            <option key={value} value={value}>
+                                              {value}
+                                            </option>
+                                          );
+                                        })}
+                                      </select>
+                                      <span className="text-[10px] text-slate-500">
+                                        to
+                                      </span>
+                                      <select
+                                        value={window.endTime || "13:00"}
+                                        onChange={(e) =>
+                                          setWeeklyAvailability((prev) =>
+                                            prev.map((d, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...d,
+                                                    windows: d.windows.map((w, j) =>
+                                                      j === wIdx
+                                                        ? {
+                                                            ...w,
+                                                            endTime: e.target.value,
+                                                          }
+                                                        : w,
+                                                    ),
+                                                  }
+                                                : d,
+                                            ),
+                                          )
+                                        }
+                                        className="w-22 px-1.5 py-1 border border-slate-300 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                      >
+                                        {Array.from({ length: 48 }).map((_, i) => {
+                                          const hours = Math.floor(i / 2)
+                                            .toString()
+                                            .padStart(2, "0");
+                                          const minutes = i % 2 === 0 ? "00" : "30";
+                                          const value = `${hours}:${minutes}`;
+                                          return (
+                                            <option key={value} value={value}>
+                                              {value}
+                                            </option>
+                                          );
+                                        })}
+                                      </select>
+                                    </div>
+                                    {day.windows.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setWeeklyAvailability((prev) =>
+                                            prev.map((d, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...d,
+                                                    windows: d.windows.filter(
+                                                      (_, j) => j !== wIdx,
+                                                    ),
+                                                  }
+                                                : d,
+                                            ),
+                                          )
+                                        }
+                                        className="text-[11px] text-slate-500 hover:text-rose-600"
+                                      >
+                                        Remove
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          },
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Patients will see bookable 30-minute slots inside your available windows, only where you&apos;re not already booked.
+                    </p>
+                  </div>
                 </div>
               </>
             )}

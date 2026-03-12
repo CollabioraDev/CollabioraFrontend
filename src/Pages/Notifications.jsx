@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import Layout from "../components/Layout.jsx";
-import AnimatedBackgroundDiff from "../components/ui/AnimatedBackgroundDiff.jsx";
+import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { AuroraText } from "@/components/ui/aurora-text";
 
@@ -48,6 +48,7 @@ export default function Notifications() {
   // Meeting requests for researchers and patients
   const [meetingRequests, setMeetingRequests] = useState([]);
   const [upcomingMeetings, setUpcomingMeetings] = useState([]);
+  const [researcherAppointments, setResearcherAppointments] = useState([]);
   // Modal states
   const [acceptMeetingModal, setAcceptMeetingModal] = useState({
     open: false,
@@ -322,6 +323,24 @@ export default function Notifications() {
         return meetingDate > now;
       });
       setUpcomingMeetings(upcoming);
+
+      // Also load concrete appointment objects for conflict checks in scheduling UI
+      try {
+        const apptRes = await fetch(`${base}/api/appointments/upcoming`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        });
+        if (apptRes.ok) {
+          const apptData = await apptRes.json();
+          setResearcherAppointments(apptData.appointments || []);
+        } else {
+          setResearcherAppointments([]);
+        }
+      } catch (err) {
+        console.error("Error loading researcher appointments:", err);
+        setResearcherAppointments([]);
+      }
     } catch (error) {
       console.error("Error loading researcher upcoming meetings:", error);
     }
@@ -396,13 +415,12 @@ export default function Notifications() {
     }
   }
 
-  async function acceptMeetingRequest(requestId, meetingDate, meetingNotes) {
+  async function acceptMeetingRequest(requestId, meetingNotes) {
     try {
       const response = await fetch(`${base}/api/meeting-requests/${requestId}/accept-time`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          meetingDate,
           meetingNotes: meetingNotes || null,
         }),
       });
@@ -679,6 +697,22 @@ export default function Notifications() {
     return str;
   }
 
+  /** Build a Date for the requested meeting time from preferredDate + preferredTime */
+  function getRequestedDateTime(request) {
+    if (!request || !request.preferredDate) return null;
+    const base = new Date(request.preferredDate);
+    if (Number.isNaN(base.getTime())) return null;
+    if (request.preferredTime) {
+      const [hStr, mStr] = String(request.preferredTime).split(":");
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr || "0", 10);
+      if (!Number.isNaN(h) && !Number.isNaN(m)) {
+        base.setHours(h, m, 0, 0);
+      }
+    }
+    return base;
+  }
+
   /** Build datetime-local value (YYYY-MM-DDTHH:mm) in local time from date + time string */
   function toLocalDatetimeLocalValue(dateStr, timeStr) {
     if (!dateStr || !timeStr) return "";
@@ -751,7 +785,7 @@ export default function Notifications() {
     return (
       <Layout>
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 relative overflow-hidden">
-          <AnimatedBackgroundDiff />
+          <AnimatedBackground/>
           <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-6xl pb-8">
             <div className="text-center py-16">
               <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -775,7 +809,7 @@ export default function Notifications() {
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 relative overflow-hidden">
-        <AnimatedBackgroundDiff />
+        <AnimatedBackground/>
         <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-7xl pb-12">
           {/* Header */}
           <div className="mb-8 animate-fade-in">
@@ -1462,6 +1496,16 @@ export default function Notifications() {
                             <h4 className="font-semibold text-slate-900 mb-1">
                               {patient?.username || "Unknown Patient"}
                             </h4>
+                            {request.topic && (
+                              <p className="text-sm font-medium text-slate-900 mb-1">
+                                {request.topic}
+                              </p>
+                            )}
+                            {request.shortDescription && (
+                              <p className="text-sm text-slate-700 mb-1">
+                                {request.shortDescription}
+                              </p>
+                            )}
                             <p className="text-sm text-slate-700 mb-2">
                               {request.message}
                             </p>
@@ -1469,12 +1513,10 @@ export default function Notifications() {
                               <p className="text-xs text-slate-600 mb-1">
                                 <Calendar className="w-3 h-3 inline mr-1" />
                                 <span className="font-medium text-slate-700">Requested time (your time):</span>{" "}
-                                {formatInUserTime(
-                                  request.preferredTime
-                                    ? `${request.preferredDate}T${request.preferredTime}:00`
-                                    : request.preferredDate,
-                                  { includeTz: true }
-                                )}
+                                {(() => {
+                                  const dt = getRequestedDateTime(request);
+                                  return dt ? formatInUserTime(dt, { includeTz: true }) : "—";
+                                })()}
                               </p>
                             )}
                             {request.patientQuestions && (
@@ -1857,6 +1899,16 @@ export default function Notifications() {
                   <p className="text-sm font-semibold text-slate-800">
                     {acceptMeetingModal.request.patientId?.username || "Patient"}
                   </p>
+                  {acceptMeetingModal.request.topic && (
+                    <p className="text-sm font-medium text-slate-900">
+                      {acceptMeetingModal.request.topic}
+                    </p>
+                  )}
+                  {acceptMeetingModal.request.shortDescription && (
+                    <p className="text-sm text-slate-700">
+                      {acceptMeetingModal.request.shortDescription}
+                    </p>
+                  )}
                   <p className="text-sm text-slate-700 whitespace-pre-wrap">
                     {acceptMeetingModal.request.message}
                   </p>
@@ -1864,12 +1916,10 @@ export default function Notifications() {
                     <p className="text-xs text-slate-600">
                       <Calendar className="w-3.5 h-3.5 inline mr-1 align-middle" />
                       <span className="font-medium">Requested time (your time):</span>{" "}
-                      {formatInUserTime(
-                        acceptMeetingModal.request.preferredTime
-                          ? `${acceptMeetingModal.request.preferredDate}T${acceptMeetingModal.request.preferredTime}:00`
-                          : acceptMeetingModal.request.preferredDate,
-                        { includeTz: true }
-                      )}
+                      {(() => {
+                        const dt = getRequestedDateTime(acceptMeetingModal.request);
+                        return dt ? formatInUserTime(dt, { includeTz: true }) : "—";
+                      })()}
                     </p>
                   )}
                   {acceptMeetingModal.request.patientQuestions && (
@@ -1884,23 +1934,6 @@ export default function Notifications() {
               )}
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">
-                    Meeting date & time (your time) *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={acceptMeetingModal.meetingDate}
-                    onChange={(e) =>
-                      setAcceptMeetingModal({
-                        ...acceptMeetingModal,
-                        meetingDate: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-900 mb-2">
                     Reply to patient (optional)
@@ -1924,14 +1957,12 @@ export default function Notifications() {
                     onClick={() =>
                       acceptMeetingRequest(
                         acceptMeetingModal.requestId,
-                        acceptMeetingModal.meetingDate,
                         acceptMeetingModal.meetingNotes
                       )
                     }
-                    disabled={!acceptMeetingModal.meetingDate}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Schedule meeting
+                    Accept & schedule
                   </button>
                   <button
                     onClick={() =>

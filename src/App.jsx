@@ -13,6 +13,7 @@ import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
 import FeedbackWidget from "./components/FeedbackWidget.jsx";
 import PageFeedbackWidget from "./components/PageFeedbackWidget.jsx";
+import MobileBottomNav from "./components/MobileBottomNav.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
 
 // Eagerly-loaded navbars kept as lazy to shave framer-motion + icons from initial chunk;
@@ -84,6 +85,7 @@ const YoriAI = React.lazy(() => import("./Pages/Chatbot.jsx"));
 const FloatingChatbot = React.lazy(
   () => import("./components/FloatingChatbot.jsx"),
 );
+const MeetingRoom = React.lazy(() => import("./Pages/MeetingRoom.jsx"));
 
 // If the user is already signed in, send them straight to /yori
 function AuthenticatedRedirect({ children }) {
@@ -199,7 +201,48 @@ const AppContent = () => {
   const isErrorPage = location.pathname === "/404";
   const isHomePage = location.pathname === "/";
   const isYoriPage = location.pathname === "/yori";
+  const isMeetingPage = location.pathname.startsWith("/meeting/");
   const showLayout = !isVerifyEmailPage && !isAdminPage && !isErrorPage;
+
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
+  const [userRole, setUserRole] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "null");
+      return stored?.role || "patient";
+    } catch {
+      return "patient";
+    }
+  });
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    const syncUserRole = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem("user") || "null");
+        setUserRole(stored?.role || "patient");
+      } catch {
+        setUserRole("patient");
+      }
+    };
+    syncUserRole();
+    window.addEventListener("login", syncUserRole);
+    window.addEventListener("userUpdated", syncUserRole);
+    window.addEventListener("storage", syncUserRole);
+    return () => {
+      window.removeEventListener("login", syncUserRole);
+      window.removeEventListener("userUpdated", syncUserRole);
+      window.removeEventListener("storage", syncUserRole);
+    };
+  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -209,6 +252,8 @@ const AppContent = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
+  const isPatient = userRole === "patient";
+
   return (
     <div>
       {showLayout && (
@@ -216,7 +261,7 @@ const AppContent = () => {
           {isHomePage ? <LandingNavbar /> : <Navbar />}
         </Suspense>
       )}
-      {showLayout && showChatbot && !isYoriPage && (
+      {showLayout && showChatbot && !isYoriPage && !isMeetingPage && (
         <Suspense fallback={null}>
           <FloatingChatbot />
         </Suspense>
@@ -349,6 +394,10 @@ const AppContent = () => {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/manage-trials" element={<ManageTrials />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route
+            path="/meeting/:appointmentId"
+            element={<ProfileGuard><MeetingRoom /></ProfileGuard>}
+          />
           <Route path="/profile" element={<EditProfile />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -367,7 +416,7 @@ const AppContent = () => {
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Suspense>
-      {/* Nav is provided by Navbar in Layout */}
+      {showLayout && isMobile && <MobileBottomNav isPatient={isPatient} />}
     </div>
   );
 };
