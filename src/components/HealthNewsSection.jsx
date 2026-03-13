@@ -114,7 +114,6 @@ function NewsCard({
           </div>
         )}
 
-
         {/* Title */}
         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-3 group-hover:text-[#2F3C96] transition-colors">
           {highlight(article.title)}
@@ -551,15 +550,20 @@ export default function HealthNewsSection({ user }) {
           )}
           {/* Explicit search button */}
           <button
-            onClick={() => searchInput.trim() && commitSearch(searchInput.trim())}
+            onClick={() =>
+              searchInput.trim() && commitSearch(searchInput.trim())
+            }
             disabled={!searchInput.trim() || searchLoading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2F3C96] text-white text-xs font-semibold hover:bg-[#253075] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
           >
-            {searchLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+            {searchLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Search className="w-3 h-3" />
+            )}
             Search
           </button>
         </div>
-
 
         {/* Search results banner */}
         {isSearchMode && (
@@ -740,12 +744,13 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
             <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Health news is aggregated live from trusted RSS feeds — WHO, NIH,
-              CDC, FDA, NEJM, The Lancet, STAT News, and more — ranked by
-              source credibility, evidence strength, and relevance to your
-              conditions. AI summaries are for informational purposes only —
-              always consult your healthcare provider before making medical
-              decisions.
+              Health news is aggregated live from a curated set of public RSS
+              feeds, including WHO, CDC, FDA, Stanford Medicine, KFF Health
+              News, Commonwealth Fund, ECDC, MSF, Health Policy Watch, and PBS.
+              Articles are ranked by source credibility, evidence strength, and
+              relevance to your conditions. AI summaries are for informational
+              purposes only — always consult your healthcare provider before
+              making medical decisions.
             </p>
           </div>
         )}

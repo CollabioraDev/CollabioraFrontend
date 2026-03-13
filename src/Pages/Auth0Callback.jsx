@@ -13,8 +13,7 @@ import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
  */
 export default function Auth0Callback() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading, getAccessTokenSilently } =
-    useAuth0();
+  const { user, isAuthenticated, isLoading } = useAuth0();
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
 
@@ -43,7 +42,7 @@ export default function Auth0Callback() {
             if (oldAccount.auth0Id !== user.sub) {
               localStorage.removeItem("auth0_pending_account");
             }
-          } catch (e) {
+          } catch {
             // If parsing fails, clear it anyway
             localStorage.removeItem("auth0_pending_account");
           }
@@ -82,6 +81,14 @@ export default function Auth0Callback() {
               conditions: onboardingData.conditions,
               location: onboardingData.location,
               gender: onboardingData.gender,
+              profession: onboardingData.profession,
+              academicRank: onboardingData.academicRank,
+              primarySpecialty: onboardingData.primarySpecialty,
+              subspecialties: onboardingData.subspecialties,
+              researchInterests: onboardingData.researchInterests,
+              educationHistory: onboardingData.educationEntries,
+              skills: onboardingData.skills,
+              orcid: onboardingData.orcid,
             }),
           }),
         });
@@ -107,7 +114,7 @@ export default function Auth0Callback() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              role: "patient",
+              role: onboardingData?.role || "patient",
               auth0Id: pendingAuth0Data.auth0Id,
               email: pendingAuth0Data.email,
               name: pendingAuth0Data.name,
@@ -133,19 +140,8 @@ export default function Auth0Callback() {
             localStorage.setItem("user", JSON.stringify(userData));
           }
 
-          // Check if user had a form draft (filled form before OAuth)
-          const brandNewDraft = sessionStorage.getItem("onboard_form_draft");
-          let brandNewStep = 2;
-          if (brandNewDraft) {
-            try {
-              const d = JSON.parse(brandNewDraft);
-              // Pass the draft step — OnboardPatient will decide how to handle it
-              // (auto-complete if step >= 5, or resume at the step otherwise)
-              brandNewStep = d.step || 2;
-            } catch (e) { /* ignore */ }
-          }
           console.log("[Auth0Callback] Brand-new user created → onboarding step 4");
-          navigate("/onboarding?step=4&oauth=true");
+          navigate("/onboarding?oauth=true");
           return;
         }
 
@@ -181,20 +177,9 @@ export default function Auth0Callback() {
         });
 
         // D1: NEW user → always go to onboarding
-        // Even if oauth-sync stored some partial data, a new user has NOT completed
-        // the full onboarding flow. OnboardPatient will restore form draft and
-        // auto-complete if the user was on step 5 (Account).
         if (data.isNewUser) {
-          const formDraft = sessionStorage.getItem("onboard_form_draft");
-          let resumeStep = 2;
-          if (formDraft) {
-            try {
-              const d = JSON.parse(formDraft);
-              resumeStep = d.step || 2;
-            } catch (e) { /* ignore */ }
-          }
           console.log("[Auth0Callback] New user → onboarding step 4");
-          navigate("/onboarding?step=4&oauth=true");
+          navigate("/onboarding?oauth=true");
           return;
         }
 
@@ -205,21 +190,12 @@ export default function Auth0Callback() {
           (userObj.specialties && userObj.specialties.length > 0);
 
         if (!hasCompletedOnboarding) {
-          const formDraft = sessionStorage.getItem("onboard_form_draft");
-          let resumeStep = 2;
-          if (formDraft) {
-            try {
-              const d = JSON.parse(formDraft);
-              resumeStep = d.step || 2;
-            } catch (e) { /* ignore */ }
-          }
           console.log("[Auth0Callback] Existing user, onboarding incomplete → step 4");
-          navigate("/onboarding?step=4&oauth=true");
+          navigate("/onboarding?oauth=true");
           return;
         }
 
         // D3: Existing user, completed onboarding — go to dashboard (whether verified or not)
-        const userRole = userObj.role || "patient";
         if (!userObj.emailVerified) {
           try {
             const verifyRes = await fetch(`${base}/api/auth/send-verification-email`, {

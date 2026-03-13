@@ -87,11 +87,24 @@ const FloatingChatbot = React.lazy(
 );
 const MeetingRoom = React.lazy(() => import("./Pages/MeetingRoom.jsx"));
 
-// If the user is already signed in, send them straight to /yori
-function AuthenticatedRedirect({ children }) {
+// If the user is already signed in, send them straight to /yori,
+// unless this route is explicitly allowed for incomplete onboarding.
+function AuthenticatedRedirect({ children, allowIncomplete = false }) {
+  const location = useLocation();
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  if (token && (user._id || user.id)) return <Navigate to="/yori" replace />;
+  const isAuthenticated = token && (user._id || user.id);
+
+  if (
+    isAuthenticated &&
+    allowIncomplete &&
+    location.pathname === "/onboarding" &&
+    user.onboardingComplete !== true
+  ) {
+    return children;
+  }
+
+  if (isAuthenticated) return <Navigate to="/yori" replace />;
   return children;
 }
 
@@ -200,6 +213,8 @@ const AppContent = () => {
   const isAdminPage = location.pathname.startsWith("/admin");
   const isErrorPage = location.pathname === "/404";
   const isHomePage = location.pathname === "/";
+  const isOnboardingPage = location.pathname === "/onboarding";
+  const isEditProfilePage = location.pathname === "/profile";
   const isYoriPage = location.pathname === "/yori";
   const isMeetingPage = location.pathname.startsWith("/meeting/");
   const showLayout = !isVerifyEmailPage && !isAdminPage && !isErrorPage;
@@ -273,7 +288,12 @@ const AppContent = () => {
           {isHomePage ? <LandingNavbar /> : <Navbar />}
         </Suspense>
       )}
-      {showLayout && showChatbot && !isYoriPage && !isMeetingPage && (
+      {showLayout &&
+        showChatbot &&
+        !isYoriPage &&
+        !isMeetingPage &&
+        !isOnboardingPage &&
+        !(isMobile && isEditProfilePage) && (
         <Suspense fallback={null}>
           <FloatingChatbot />
         </Suspense>
@@ -364,7 +384,14 @@ const AppContent = () => {
           <Route path="/signin" element={<AuthenticatedRedirect><SignIn /></AuthenticatedRedirect>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/onboarding" element={<AuthenticatedRedirect><OnboardingNew /></AuthenticatedRedirect>} />
+          <Route
+            path="/onboarding"
+            element={
+              <AuthenticatedRedirect allowIncomplete>
+                <OnboardingNew />
+              </AuthenticatedRedirect>
+            }
+          />
           <Route
             path="/onboard/patient"
             element={<Navigate to="/onboarding" replace />}

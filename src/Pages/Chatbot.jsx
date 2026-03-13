@@ -29,9 +29,10 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-const YORI_STORAGE_KEY = "collabiora_yori_chat_sessions_v1";
+const YORI_STORAGE_KEY_PREFIX = "collabiora_yori_chat_sessions_v1";
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CHAT_SESSIONS = 5;
+const MAX_MESSAGES_PER_SESSION = 80;
 
 const createChatId = () => {
   if (
@@ -48,8 +49,26 @@ const createChatSession = (title = "New chat") => ({
   title,
   createdAt: Date.now(),
   updatedAt: Date.now(),
+  preview: "No messages yet",
+  messageCount: 0,
+  isFull: false,
   messages: [],
+  loaded: true,
 });
+
+const loadStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+};
+
+const getChatStorageKey = (user) => {
+  const identity =
+    user?._id || user?.id || user?.email || user?.username || "guest";
+  return `${YORI_STORAGE_KEY_PREFIX}_${identity}`;
+};
 
 const getChatPreview = (messages) => {
   if (!Array.isArray(messages) || messages.length === 0)
@@ -84,18 +103,29 @@ const normalizeSession = (session) => {
   const messages = Array.isArray(session?.messages) ? session.messages : [];
   const createdAt = Number(session?.createdAt) || Date.now();
   const updatedAt = Number(session?.updatedAt) || createdAt;
+  const messageCount =
+    Number.isFinite(Number(session?.messageCount))
+      ? Number(session.messageCount)
+      : messages.length;
   return {
     id: session?.id || createChatId(),
     title: session?.title || deriveChatTitle(messages),
     createdAt,
     updatedAt,
+    preview: session?.preview || getChatPreview(messages),
+    messageCount,
+    isFull:
+      typeof session?.isFull === "boolean"
+        ? session.isFull
+        : messageCount >= MAX_MESSAGES_PER_SESSION,
     messages,
+    loaded: session?.loaded ?? Array.isArray(session?.messages),
   };
 };
 
-const loadSavedChatSessions = () => {
+const loadSavedChatSessions = (storageKey) => {
   try {
-    const saved = localStorage.getItem(YORI_STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
     if (!saved) return [createChatSession()];
     const parsed = JSON.parse(saved);
     if (!Array.isArray(parsed)) return [createChatSession()];
@@ -108,6 +138,14 @@ const loadSavedChatSessions = () => {
     return validSessions.length > 0 ? validSessions : [createChatSession()];
   } catch {
     return [createChatSession()];
+  }
+};
+
+const getAuthToken = () => {
+  try {
+    return localStorage.getItem("token") || "";
+  } catch {
+    return "";
   }
 };
 
@@ -165,6 +203,13 @@ const getAskContext = (type, item) => {
     };
   }
   return null;
+};
+
+const getPublicationRoute = (publication) => {
+  const publicationId = publication?.pmid || publication?.id;
+  return publicationId
+    ? `/publication/${encodeURIComponent(publicationId)}`
+    : null;
 };
 
 const ASK_ABOUT_OPTIONS = {
@@ -262,6 +307,7 @@ const markdownComponents = {
     const isInternal = href && href.startsWith("/") && !href.startsWith("//");
     const isPubMed = href && /pubmed\.ncbi\.nlm\.nih\.gov/i.test(href);
     const isClinicalTrials = href && /clinicaltrials\.gov/i.test(href);
+    const isPublicationRoute = href && /^\/publication\//i.test(href);
     const isExpertProfile =
       href &&
       (/^\/expert\/profile/i.test(href) ||
@@ -272,6 +318,8 @@ const markdownComponents = {
       ? "View on PubMed"
       : isClinicalTrials
         ? "View on ClinicalTrials.gov"
+        : isPublicationRoute
+          ? "View on Collabiora"
         : isExpertProfile
           ? "View profile"
           : children || href;
@@ -303,8 +351,11 @@ const markdownComponents = {
 // --- Card Components (full-page variants) ---
 
 const PublicationCard = React.memo(
-  ({ publication, onAskAbout, onSave, userId }) => (
-    <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
+  ({ publication, onAskAbout, onSave, userId }) => {
+    const publicationRoute = getPublicationRoute(publication);
+
+    return (
+      <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
       <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E8E9F2] rounded-lg flex items-center justify-center shrink-0">
           <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F3C96]" />
@@ -329,14 +380,23 @@ const PublicationCard = React.memo(
         </p>
       )}
       <div className="flex items-center gap-3 flex-wrap">
-        <a
-          href={publication.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] bg-[#E8E9F2] px-3 py-1.5 rounded-lg border border-[#D1D3E5] hover:bg-[#D1D3E5] transition-colors"
-        >
-          View on PubMed <ExternalLink className="w-3 h-3" />
-        </a>
+        {publicationRoute ? (
+          <Link
+            to={publicationRoute}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] bg-[#E8E9F2] px-3 py-1.5 rounded-lg border border-[#D1D3E5] hover:bg-[#D1D3E5] transition-colors"
+          >
+            View on Collabiora <ExternalLink className="w-3 h-3" />
+          </Link>
+        ) : publication.url ? (
+          <a
+            href={publication.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] bg-[#E8E9F2] px-3 py-1.5 rounded-lg border border-[#D1D3E5] hover:bg-[#D1D3E5] transition-colors"
+          >
+            View on PubMed <ExternalLink className="w-3 h-3" />
+          </a>
+        ) : null}
         {onAskAbout && (
           <button
             onClick={() => onAskAbout(publication, "publication")}
@@ -366,7 +426,8 @@ const PublicationCard = React.memo(
         )}
       </div>
     </div>
-  ),
+    );
+  },
 );
 
 const TrialCard = React.memo(({ trial, onAskAbout, onSave, userId }) => (
@@ -803,6 +864,7 @@ const PublicationDetailsCard = ({
     keywords,
     publicationTypes,
   } = publicationDetails;
+  const publicationRoute = getPublicationRoute({ pmid });
   return (
     <div className="w-full max-w-2xl">
       <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden">
@@ -857,7 +919,14 @@ const PublicationDetailsCard = ({
             </section>
           )}
           <div className="flex items-center gap-3 flex-wrap">
-            {url && (
+            {publicationRoute ? (
+              <Link
+                to={publicationRoute}
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+              >
+                View on Collabiora <ExternalLink className="w-4 h-4" />
+              </Link>
+            ) : url ? (
               <a
                 href={url}
                 target="_blank"
@@ -866,7 +935,7 @@ const PublicationDetailsCard = ({
               >
                 View on PubMed <ExternalLink className="w-4 h-4" />
               </a>
-            )}
+            ) : null}
             {userId && onSave && (
               <button
                 type="button"
@@ -1207,7 +1276,7 @@ function downloadChatAsPdf(session) {
   </header>
   ${rows}
   <footer>Generated by Yori &mdash; Collabiora Health Research Assistant</footer>
-  <script>window.onload = function() { window.print(); }<\/script>
+  <script>window.onload = function() { window.print(); }</script>
 </body>
 </html>`;
 
@@ -1260,7 +1329,7 @@ const ChatHistoryItem = ({ session, isActive, onSelect, onDelete }) => {
             {session.title || "New chat"}
           </p>
           <p className="mt-1 line-clamp-2 text-xs text-slate-500">
-            {getChatPreview(session.messages)}
+            {session.preview || getChatPreview(session.messages)}
           </p>
           <p className="mt-2 text-[11px] text-slate-400">
             {formatRelativeTime(session.updatedAt)}
@@ -1312,20 +1381,20 @@ const ChatHistoryItem = ({ session, isActive, onSelect, onDelete }) => {
 };
 
 export default function YoriAI() {
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
-    }
+  const [user, setUser] = useState(loadStoredUser);
+  const [chatSessions, setChatSessions] = useState(() => {
+    const initialUser = loadStoredUser();
+    return initialUser && getAuthToken()
+      ? []
+      : loadSavedChatSessions(getChatStorageKey(initialUser));
   });
-  const [chatSessions, setChatSessions] = useState(() =>
-    loadSavedChatSessions(),
-  );
   const [activeChatId, setActiveChatId] = useState(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
+  const [isHydratingChats, setIsHydratingChats] = useState(() =>
+    Boolean(loadStoredUser() && getAuthToken()),
+  );
+  const [, setSuggestions] = useState([]);
   const [userConditions, setUserConditions] = useState([]);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
@@ -1339,6 +1408,13 @@ export default function YoriAI() {
   const userId = user?._id || user?.id;
   const userRole = user?.role || "patient";
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const authToken = getAuthToken();
+  const isRemoteChatUser = Boolean(userId && authToken);
+  const chatStorageKey = useMemo(() => getChatStorageKey(user), [user]);
+  const authHeaders = useMemo(
+    () => (authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    [authToken],
+  );
 
   useEffect(() => {
     if (!activeChatId && chatSessions.length > 0) {
@@ -1356,8 +1432,9 @@ export default function YoriAI() {
   }, [activeChatId, chatSessions]);
 
   useEffect(() => {
-    localStorage.setItem(YORI_STORAGE_KEY, JSON.stringify(chatSessions));
-  }, [chatSessions]);
+    if (isRemoteChatUser) return;
+    localStorage.setItem(chatStorageKey, JSON.stringify(chatSessions));
+  }, [chatSessions, chatStorageKey, isRemoteChatUser]);
 
   useLayoutEffect(() => {
     const onResize = () => {
@@ -1371,11 +1448,7 @@ export default function YoriAI() {
 
   useEffect(() => {
     const handler = () => {
-      try {
-        setUser(JSON.parse(localStorage.getItem("user") || "null"));
-      } catch {
-        setUser(null);
-      }
+      setUser(loadStoredUser());
     };
     window.addEventListener("login", handler);
     window.addEventListener("storage", handler);
@@ -1384,6 +1457,80 @@ export default function YoriAI() {
       window.removeEventListener("storage", handler);
     };
   }, []);
+
+  useEffect(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setInput("");
+    setSessionLimitNotice("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+    let cancelled = false;
+
+    const hydrateChats = async () => {
+      if (!isRemoteChatUser) {
+        const nextSessions = loadSavedChatSessions(chatStorageKey);
+        if (cancelled) return;
+        setChatSessions(nextSessions);
+        setActiveChatId(nextSessions[0]?.id || null);
+        setIsHydratingChats(false);
+        return;
+      }
+
+      setIsHydratingChats(true);
+
+      try {
+        const response = await fetch(`${apiBase}/api/chatbot/sessions`, {
+          headers: authHeaders,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load chat sessions");
+        }
+
+        let nextSessions = Array.isArray(data.sessions)
+          ? data.sessions.map(normalizeSession)
+          : [];
+
+        if (nextSessions.length === 0) {
+          const createRes = await fetch(`${apiBase}/api/chatbot/sessions`, {
+            method: "POST",
+            headers: authHeaders,
+          });
+          const createData = await createRes.json();
+          if (!createRes.ok) {
+            throw new Error(createData.error || "Failed to create chat session");
+          }
+          nextSessions = [normalizeSession(createData.session)];
+        }
+
+        if (cancelled) return;
+
+        setChatSessions(nextSessions);
+        setActiveChatId(nextSessions[0]?.id || null);
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to hydrate synced chats:", error);
+        const fallback = [createChatSession()];
+        setChatSessions(fallback);
+        setActiveChatId(fallback[0].id);
+        setSessionLimitNotice(
+          "Couldn't load synced chats right now. Please try again.",
+        );
+      } finally {
+        if (!cancelled) {
+          setIsHydratingChats(false);
+        }
+      }
+    };
+
+    hydrateChats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase, authHeaders, chatStorageKey, isRemoteChatUser]);
 
   useEffect(() => {
     const loadProfileAndSuggestions = async () => {
@@ -1451,9 +1598,21 @@ export default function YoriAI() {
     );
     return questions;
   }, [userConditions, trialWord]);
-  const messages = activeChat?.messages || [];
+  const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
+  const activeChatLoaded = activeChat?.loaded !== false;
   const hasUserMessages = messages.some((message) => message.role === "user");
   const canCreateNewChat = chatSessions.length < MAX_CHAT_SESSIONS;
+  const activeChatMessageCount =
+    Number.isFinite(Number(activeChat?.messageCount))
+      ? Number(activeChat.messageCount)
+      : messages.length;
+  const activeChatIsFull =
+    activeChat?.isFull || activeChatMessageCount >= MAX_MESSAGES_PER_SESSION;
+  const chatInteractionDisabled =
+    isLoading ||
+    isHydratingChats ||
+    (isRemoteChatUser && activeChatId && !activeChatLoaded) ||
+    activeChatIsFull;
 
   const updateSessionMessages = useCallback(
     (sessionId, nextMessagesOrUpdater) => {
@@ -1469,6 +1628,10 @@ export default function YoriAI() {
               ...session,
               messages: nextMessages,
               title: deriveChatTitle(nextMessages),
+              preview: getChatPreview(nextMessages),
+              messageCount: nextMessages.length,
+              isFull: nextMessages.length >= MAX_MESSAGES_PER_SESSION,
+              loaded: true,
               updatedAt: Date.now(),
             };
           })
@@ -1477,6 +1640,59 @@ export default function YoriAI() {
     },
     [],
   );
+
+  const mergeRemoteSession = useCallback((sessionData) => {
+    const normalized = normalizeSession({ ...sessionData, loaded: true });
+    setChatSessions((prev) => {
+      const exists = prev.some((session) => session.id === normalized.id);
+      const next = exists
+        ? prev.map((session) =>
+            session.id === normalized.id ? { ...session, ...normalized } : session,
+          )
+        : [normalized, ...prev];
+      return next.sort((a, b) => b.updatedAt - a.updatedAt);
+    });
+    return normalized;
+  }, []);
+
+  useEffect(() => {
+    if (!isRemoteChatUser || !activeChatId) return;
+    const selectedSession = chatSessions.find(
+      (session) => session.id === activeChatId,
+    );
+    if (!selectedSession || selectedSession.loaded) return;
+
+    let cancelled = false;
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch(
+          `${apiBase}/api/chatbot/sessions/${activeChatId}`,
+          {
+            headers: authHeaders,
+          },
+        );
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load chat history");
+        }
+        if (!cancelled) {
+          mergeRemoteSession(data.session);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to load remote chat:", error);
+          setSessionLimitNotice("Couldn't load this chat. Please try again.");
+        }
+      }
+    };
+
+    loadSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChatId, apiBase, authHeaders, chatSessions, isRemoteChatUser, mergeRemoteSession]);
 
   const appendAssistantNotice = useCallback(
     (content) => {
@@ -1516,39 +1732,88 @@ export default function YoriAI() {
     ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
   }, []);
 
-  const createNewChat = useCallback(() => {
+  const createNewChat = useCallback(async () => {
     if (!canCreateNewChat) {
       setSessionLimitNotice(
         "You can keep up to 5 chats. Delete one to start a new chat.",
       );
       return;
     }
-    const newChat = createChatSession();
-    setChatSessions((prev) =>
-      [newChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
-    );
-    setActiveChatId(newChat.id);
-    setInput("");
-    setSidebarOpen(false);
-    setSessionLimitNotice("");
-  }, [canCreateNewChat]);
+
+    try {
+      let newChat;
+      if (isRemoteChatUser) {
+        const response = await fetch(`${apiBase}/api/chatbot/sessions`, {
+          method: "POST",
+          headers: authHeaders,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create chat session");
+        }
+        newChat = mergeRemoteSession(data.session);
+      } else {
+        newChat = createChatSession();
+        setChatSessions((prev) =>
+          [newChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
+        );
+      }
+
+      setActiveChatId(newChat.id);
+      setInput("");
+      setSidebarOpen(false);
+      setSessionLimitNotice("");
+    } catch (error) {
+      setSessionLimitNotice(
+        error.message || "Couldn't create a new chat right now.",
+      );
+    }
+  }, [apiBase, authHeaders, canCreateNewChat, isRemoteChatUser, mergeRemoteSession]);
 
   const deleteChat = useCallback(
-    (sessionId) => {
+    async (sessionId) => {
       if (abortControllerRef.current && sessionId === activeChat?.id) {
         abortControllerRef.current.abort();
       }
-      setChatSessions((prev) => {
-        const remaining = prev.filter((session) => session.id !== sessionId);
-        if (remaining.length > 0) return remaining;
-        return [createChatSession()];
-      });
-      setActiveChatId((prevActiveId) =>
-        prevActiveId === sessionId ? null : prevActiveId,
-      );
-      setSessionLimitNotice("");
+
+      try {
+        if (isRemoteChatUser) {
+          const response = await fetch(
+            `${apiBase}/api/chatbot/sessions/${sessionId}`,
+            {
+              method: "DELETE",
+              headers: authHeaders,
+            },
+          );
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || "Failed to delete chat");
+          }
+        }
+
+        const remaining =
+          chatSessions.filter((session) => session.id !== sessionId);
+        if (remaining.length > 0) {
+          setChatSessions(remaining);
+          setActiveChatId((prevActiveId) =>
+            prevActiveId === sessionId ? remaining[0]?.id || null : prevActiveId,
+          );
+        } else if (isRemoteChatUser) {
+          setChatSessions([]);
+          setActiveChatId(null);
+          await createNewChat();
+        } else {
+          const fallback = createChatSession();
+          setChatSessions([fallback]);
+          setActiveChatId(fallback.id);
+        }
+
+        setSessionLimitNotice("");
+      } catch (error) {
+        setSessionLimitNotice(error.message || "Couldn't delete this chat.");
+      }
     },
-    [activeChat?.id],
+    [activeChat?.id, apiBase, authHeaders, chatSessions, createNewChat, isRemoteChatUser],
   );
 
   const handleSelectChat = useCallback((sessionId) => {
@@ -1565,7 +1830,13 @@ export default function YoriAI() {
       const text = (
         typeof messageText === "string" ? messageText : input
       ).trim();
-      if (!text || isLoading) return;
+      if (!text || chatInteractionDisabled) return;
+      if (activeChatIsFull || activeChatMessageCount + 2 > MAX_MESSAGES_PER_SESSION) {
+        setSessionLimitNotice(
+          "This chat reached its limit. Download it if needed, then start a new chat.",
+        );
+        return;
+      }
 
       const currentMessages = activeChat.messages || [];
       const userMessage = {
@@ -1593,35 +1864,47 @@ export default function YoriAI() {
 
       try {
         abortControllerRef.current = new AbortController();
-        const requestMessages = newMessages.map((message) => {
-          let content = message.content != null && message.content !== ""
-            ? message.content
-            : " ";
-          // Enrich assistant messages that had search results with an inline topic hint.
-          // This keeps the conversation topic alive for the backend even when the user
-          // asks generic follow-ups like "what are the symptoms?" or "tell me more".
-          if (
-            message.role === "assistant" &&
-            message.searchResults?.items?.length > 0
-          ) {
-            const topicHint = message.searchResults.query
-              ? `[Previous search topic: "${message.searchResults.query}"]`
-              : "";
-            if (topicHint) {
-              content = content + "\n" + topicHint;
+
+        const requestHeaders = {
+          "Content-Type": "application/json",
+          ...(isRemoteChatUser ? authHeaders : {}),
+        };
+
+        const requestBody = isRemoteChatUser
+          ? {
+              sessionId,
+              message: text,
+              ...(context ? { context } : {}),
+              ...(userId ? { userId } : {}),
             }
-          }
-          return { ...message, content };
-        });
+          : {
+              messages: newMessages.map((message) => {
+                let content =
+                  message.content != null && message.content !== ""
+                    ? message.content
+                    : " ";
+                if (
+                  message.role === "assistant" &&
+                  message.searchResults?.items?.length > 0
+                ) {
+                  const topicHint = message.searchResults.query
+                    ? `[Previous search topic: "${message.searchResults.query}"]`
+                    : "";
+                  if (topicHint) {
+                    content = content + "\n" + topicHint;
+                  }
+                }
+                return { ...message, content };
+              }),
+              ...(context ? { context } : {}),
+              ...(userId ? { userId } : {}),
+            };
+
         const response = await fetch(`${apiBase}/api/chatbot/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: requestHeaders,
           credentials: "include",
-          body: JSON.stringify({
-            messages: requestMessages,
-            ...(context ? { context } : {}),
-            ...(userId ? { userId } : {}),
-          }),
+          body: JSON.stringify(requestBody),
           signal: abortControllerRef.current.signal,
         });
 
@@ -1632,6 +1915,9 @@ export default function YoriAI() {
             if (errBody?.error) errMsg = errBody.error;
           } catch {
             // noop
+          }
+          if (response.status === 409) {
+            setSessionLimitNotice(errMsg);
           }
           throw new Error(errMsg);
         }
@@ -1707,7 +1993,18 @@ export default function YoriAI() {
         abortControllerRef.current = null;
       }
     },
-    [activeChat, apiBase, input, isLoading, updateSessionMessages],
+    [
+      activeChat,
+      activeChatIsFull,
+      activeChatMessageCount,
+      apiBase,
+      authHeaders,
+      chatInteractionDisabled,
+      input,
+      isRemoteChatUser,
+      updateSessionMessages,
+      userId,
+    ],
   );
 
   const handleAskAbout = useCallback(
@@ -1935,8 +2232,8 @@ export default function YoriAI() {
 
             <div className="border-t border-[#D1D3E5] px-3 py-2.5 text-center">
               <p className="text-[11px] text-slate-400">
-                {chatSessions.length}/{MAX_CHAT_SESSIONS} chats &middot; kept 7
-                days
+                {chatSessions.length}/{MAX_CHAT_SESSIONS} chats &middot;{" "}
+                {isRemoteChatUser ? "synced to your account" : "kept 7 days"}
               </p>
             </div>
           </div>
@@ -1981,7 +2278,14 @@ export default function YoriAI() {
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto px-3 pt-4 sm:px-6 sm:pt-6 sm:pb-6"
           >
-            {!hasUserMessages ? (
+            {isHydratingChats || (isRemoteChatUser && activeChatId && !activeChatLoaded) ? (
+              <div className="flex min-h-full items-center justify-center">
+                <div className="flex items-center gap-3 text-sm text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#2F3C96]" />
+                  Loading chat history...
+                </div>
+              </div>
+            ) : !hasUserMessages ? (
               <div className="flex min-h-full flex-col items-center justify-center px-2 pb-24 sm:pb-10">
                 {/* Hero */}
                 <div className="text-center mb-4 sm:mb-6 yori-section-enter yori-delay-1">
@@ -2207,6 +2511,12 @@ export default function YoriAI() {
 
           {/* Input */}
           <div className="px-2 pb-2 pt-1 sm:px-6 sm:pb-3">
+            {activeChatIsFull && (
+              <p className="mx-auto mb-2 w-full max-w-4xl text-center text-xs text-amber-600">
+                This chat reached its limit. Download it if needed, then start a
+                new chat.
+              </p>
+            )}
             <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
               <div className="flex items-end gap-2">
                 <textarea
@@ -2217,15 +2527,24 @@ export default function YoriAI() {
                     resizeTextarea();
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask Yori anything..."
+                  placeholder={
+                    activeChatIsFull
+                      ? "This chat is full. Start a new chat to continue."
+                      : isHydratingChats ||
+                          (isRemoteChatUser &&
+                            activeChatId &&
+                            !activeChatLoaded)
+                        ? "Loading chat history..."
+                      : "Ask Yori anything..."
+                  }
                   className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
                   rows={1}
-                  disabled={isLoading}
+                  disabled={chatInteractionDisabled}
                 />
                 <button
                   type="button"
                   onClick={() => handleSendMessage()}
-                  disabled={!input.trim() || isLoading}
+                  disabled={!input.trim() || chatInteractionDisabled}
                   className="mb-1 flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[#2F3C96] transition-colors hover:bg-[#D0C4E2]/30 disabled:opacity-30"
                 >
                   {isLoading ? (

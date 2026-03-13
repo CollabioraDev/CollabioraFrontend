@@ -72,7 +72,7 @@ export default function OrcidCallback() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-50">
       <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
         {error ? (
           <>

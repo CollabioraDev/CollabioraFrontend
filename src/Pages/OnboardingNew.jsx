@@ -77,6 +77,7 @@ const AppleLogo = () => (
 const STEP_MEDICAL = 1;
 const STEP_EMAIL = 2;
 const STEP_NAME = 3;
+const ONBOARDING_DRAFT_KEY = "onboard_new_draft";
 // Patient: 4=Conditions, 5=Location, 6=Enter Platform
 // Researcher: 4=Professional Info, 5=Specialty, 6=Location, 7=Enter Platform
 
@@ -218,6 +219,7 @@ export default function OnboardingNew() {
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
   // Researcher
   const [profession, setProfession] = useState("");
@@ -278,6 +280,227 @@ export default function OnboardingNew() {
   };
   const steps = getSteps();
   const lastStepId = steps[steps.length - 1].id; // 5 for patient, 6 for researcher
+  const onboardingRole =
+    isMedicalProfessional === null
+      ? null
+      : isMedicalProfessional
+        ? "researcher"
+        : "patient";
+
+  const buildOnboardingDraft = () => ({
+    step,
+    maxStepReached,
+    isMedicalProfessional,
+    isAcademicResearcher,
+    firstName,
+    lastName,
+    handle,
+    email,
+    acceptedTerms,
+    conditions,
+    symptomsText,
+    profession,
+    academicRank,
+    institutionAffiliation,
+    educationEntries,
+    primarySpecialty,
+    subspecialties,
+    researchInterests,
+    skills,
+    location,
+    orcid,
+  });
+
+  const persistOnboardingDraft = () => {
+    sessionStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify(buildOnboardingDraft()),
+    );
+  };
+
+  const clearStoredOnboardingState = () => {
+    sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    localStorage.removeItem("auth0_pending_onboarding");
+    localStorage.removeItem("orcid_data");
+  };
+
+  const restoreOnboardingDraft = (draft) => {
+    if (!draft || typeof draft !== "object") return;
+    if (draft.isMedicalProfessional != null)
+      setIsMedicalProfessional(draft.isMedicalProfessional);
+    if (draft.isAcademicResearcher != null)
+      setIsAcademicResearcher(draft.isAcademicResearcher);
+    if (typeof draft.firstName === "string") setFirstName(draft.firstName);
+    if (typeof draft.lastName === "string") setLastName(draft.lastName);
+    if (typeof draft.handle === "string") setHandle(draft.handle);
+    if (typeof draft.email === "string") setEmail(draft.email);
+    if (typeof draft.acceptedTerms === "boolean")
+      setAcceptedTerms(draft.acceptedTerms);
+    if (Array.isArray(draft.conditions)) setConditions(draft.conditions);
+    if (typeof draft.symptomsText === "string")
+      setSymptomsText(draft.symptomsText);
+    if (typeof draft.profession === "string") setProfession(draft.profession);
+    if (typeof draft.academicRank === "string")
+      setAcademicRank(draft.academicRank);
+    if (typeof draft.institutionAffiliation === "string")
+      setInstitutionAffiliation(draft.institutionAffiliation);
+    if (Array.isArray(draft.educationEntries))
+      setEducationEntries(draft.educationEntries);
+    if (typeof draft.primarySpecialty === "string")
+      setPrimarySpecialty(draft.primarySpecialty);
+    if (Array.isArray(draft.subspecialties))
+      setSubspecialties(draft.subspecialties);
+    if (Array.isArray(draft.researchInterests))
+      setResearchInterests(draft.researchInterests);
+    if (Array.isArray(draft.skills)) setSkills(draft.skills);
+    if (typeof draft.location === "string") setLocation(draft.location);
+    if (typeof draft.orcid === "string") setOrcid(draft.orcid);
+    if (draft.step) setStep(draft.step);
+    if (draft.maxStepReached) setMaxStepReached(draft.maxStepReached);
+  };
+
+  const buildAuth0OnboardingData = () => ({
+    role: onboardingRole || "patient",
+    conditions: getCombinedConditions(conditions, symptomsText),
+    location: location.trim() ? getLocationData() : undefined,
+    profession: profession || undefined,
+    academicRank: academicRank || undefined,
+    institutionAffiliation: institutionAffiliation || undefined,
+    primarySpecialty: primarySpecialty || undefined,
+    subspecialties,
+    researchInterests,
+    educationEntries,
+    skills,
+    isAcademicResearcher,
+    orcid: orcid || undefined,
+  });
+
+  const getExistingEmailMessage = (availability) => {
+    if (availability?.isOAuthUser) {
+      return "This email already has an account created with social sign-in. Please use that sign-in method instead.";
+    }
+    return "This email already has an account. Please sign in instead.";
+  };
+
+  const checkEmailAvailability = async () => {
+    if (!isValidEmail(email.trim()) || !onboardingRole) {
+      return { exists: false };
+    }
+
+    const params = new URLSearchParams({
+      email: email.trim().toLowerCase(),
+      role: onboardingRole,
+    });
+    const response = await fetch(
+      `${base}/api/auth/check-email-availability?${params.toString()}`,
+    );
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not verify this email right now.");
+    }
+
+    return data;
+  };
+
+  const ensureResearcherAccountForOrcid = async () => {
+    const existingToken = localStorage.getItem("token");
+    const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+    if (existingToken && (existingUser._id || existingUser.id)) {
+      return { token: existingToken, user: existingUser };
+    }
+
+    if (!email.trim()) {
+      throw new Error("Please enter your email before connecting ORCID.");
+    }
+    if (!password.trim()) {
+      throw new Error("Please choose a password before connecting ORCID.");
+    }
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+
+    const username =
+      `${firstName} ${lastName}`.trim() || email.split("@")[0] || "User";
+    const handleValue =
+      handle.trim() ||
+      (username.replace(/\s+/g, "").toLowerCase() || "user") +
+        "_" +
+        Math.random().toString(36).slice(2, 8);
+    const medicalInterests = [
+      primarySpecialty,
+      ...subspecialties,
+      ...researchInterests,
+    ].filter(Boolean);
+
+    const registerRes = await fetch(`${base}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        email: email.trim(),
+        password,
+        role: "researcher",
+        medicalInterests,
+        handle: handleValue,
+      }),
+    });
+    const registerData = await registerRes.json().catch(() => ({}));
+
+    if (!registerRes.ok) {
+      const alreadyExists =
+        registerRes.status === 409 ||
+        /already exists/i.test(registerData.error || "");
+
+      if (!alreadyExists) {
+        throw new Error(
+          registerData.error ||
+            "Could not save your account before ORCID connection.",
+        );
+      }
+
+      const loginRes = await fetch(`${base}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          role: "researcher",
+        }),
+      });
+      const loginData = await loginRes.json().catch(() => ({}));
+
+      if (!loginRes.ok) {
+        throw new Error(
+          loginData.error ||
+            registerData.error ||
+            "Could not resume your researcher account for ORCID connection.",
+        );
+      }
+
+      const resumedUser = {
+        ...loginData.user,
+        username: loginData.user?.username || username,
+        handle: loginData.user?.handle || handleValue,
+        role: "researcher",
+      };
+      if (resumedUser.emailVerified !== false) resumedUser.emailVerified = false;
+      localStorage.setItem("token", loginData.token);
+      localStorage.setItem("user", JSON.stringify(resumedUser));
+      return { token: loginData.token, user: resumedUser };
+    }
+
+    const newUser = {
+      ...registerData.user,
+      username,
+      handle: handleValue,
+      role: "researcher",
+    };
+    if (newUser.emailVerified !== false) newUser.emailVerified = false;
+    localStorage.setItem("token", registerData.token);
+    localStorage.setItem("user", JSON.stringify(newUser));
+    return { token: registerData.token, user: newUser };
+  };
 
   const goToStep = (nextStep) => {
     startTransition(() => setStep(nextStep));
@@ -411,31 +634,15 @@ export default function OnboardingNew() {
     setOrcidConnecting(true);
     setError("");
     try {
+      if (onboardingRole === "researcher") {
+        await ensureResearcherAccountForOrcid();
+      }
+
+      persistOnboardingDraft();
       const response = await fetch(`${base}/api/orcid/auth`);
       const data = await response.json();
       if (data.authUrl) {
         localStorage.setItem("orcid_state", data.state);
-        sessionStorage.setItem(
-          "onboard_new_draft",
-          JSON.stringify({
-            step,
-            isMedicalProfessional,
-            isAcademicResearcher,
-            firstName,
-            lastName,
-            handle,
-            email,
-            profession,
-            academicRank,
-            institutionAffiliation,
-            educationEntries,
-            primarySpecialty,
-            subspecialties,
-            researchInterests,
-            skills,
-            location,
-          }),
-        );
         window.location.href = data.authUrl;
       } else {
         throw new Error("Failed to get ORCID authorization URL");
@@ -453,34 +660,13 @@ export default function OnboardingNew() {
     if (orcidSuccess !== "true") return;
     try {
       const orcidRaw = localStorage.getItem("orcid_data");
-      const draftRaw = sessionStorage.getItem("onboard_new_draft");
+      const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
       const draft = draftRaw ? JSON.parse(draftRaw) : null;
       if (orcidRaw) {
         const { orcid: orcidId, profile } = JSON.parse(orcidRaw);
         setOrcid(orcidId);
         if (draft) {
-          if (draft.isMedicalProfessional != null)
-            setIsMedicalProfessional(draft.isMedicalProfessional);
-          if (draft.isAcademicResearcher != null)
-            setIsAcademicResearcher(draft.isAcademicResearcher);
-          if (draft.firstName) setFirstName(draft.firstName);
-          if (draft.lastName) setLastName(draft.lastName);
-          if (draft.handle) setHandle(draft.handle);
-          if (draft.email) setEmail(draft.email);
-          if (draft.profession) setProfession(draft.profession);
-          if (draft.academicRank) setAcademicRank(draft.academicRank);
-          if (draft.institutionAffiliation)
-            setInstitutionAffiliation(draft.institutionAffiliation);
-          if (draft.educationEntries?.length)
-            setEducationEntries(draft.educationEntries);
-          if (draft.primarySpecialty)
-            setPrimarySpecialty(draft.primarySpecialty);
-          if (draft.subspecialties?.length)
-            setSubspecialties(draft.subspecialties);
-          if (draft.researchInterests?.length)
-            setResearchInterests(draft.researchInterests);
-          if (draft.skills?.length) setSkills(draft.skills);
-          if (draft.location) setLocation(draft.location);
+          restoreOnboardingDraft(draft);
           setStep(draft.step || 5);
           setMaxStepReached(Math.max(draft.step || 5, 5));
         } else {
@@ -512,7 +698,6 @@ export default function OnboardingNew() {
           }
         }
         localStorage.removeItem("orcid_data");
-        sessionStorage.removeItem("onboard_new_draft");
       }
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("orcid_success");
@@ -589,21 +774,23 @@ export default function OnboardingNew() {
   };
 
   const markOnboardingComplete = async (userId, token, complete) => {
-    try {
-      await fetch(`${base}/api/profile/${userId}/onboarding-complete`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ complete }),
-      });
-      const stored = JSON.parse(localStorage.getItem("user") || "{}");
-      stored.onboardingComplete = complete;
-      localStorage.setItem("user", JSON.stringify(stored));
-    } catch (e) {
-      /* best-effort */
+    const response = await fetch(`${base}/api/profile/${userId}/onboarding-complete`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ complete }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to finish onboarding.");
     }
+
+    const stored = JSON.parse(localStorage.getItem("user") || "{}");
+    stored.onboardingComplete = complete;
+    localStorage.setItem("user", JSON.stringify(stored));
   };
 
   const handleEnterPlatform = async () => {
@@ -616,8 +803,12 @@ export default function OnboardingNew() {
     if (token && userId) {
       try {
         const locationData = getLocationData();
+        const selectedRole =
+          onboardingRole || user?.role || "patient";
         const role =
-          user?.role || (isMedicalProfessional ? "researcher" : "patient");
+          user?.onboardingComplete === true
+            ? user?.role || selectedRole
+            : selectedRole;
         const profile =
           role === "patient"
             ? {
@@ -649,24 +840,33 @@ export default function OnboardingNew() {
                   orcid: orcid || undefined,
                 },
               };
-        try {
-          await fetch(`${base}/api/profile/${userId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(profile),
-          });
-        } catch (e) {
-          console.error("Profile save error:", e);
+        const profileRes = await fetch(`${base}/api/profile/${userId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profile),
+        });
+        if (!profileRes.ok) {
+          const profileData = await profileRes.json().catch(() => ({}));
+          throw new Error(profileData.error || "Failed to save your profile.");
         }
         await markOnboardingComplete(userId, token, isProfileComplete(role));
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...user,
+            role,
+            onboardingComplete: isProfileComplete(role),
+          }),
+        );
+        clearStoredOnboardingState();
         window.dispatchEvent(new Event("login"));
         navigate("/yori");
       } catch (e) {
         console.error(e);
-        setError("Something went wrong. Please try again.");
+        setError(e.message || "Something went wrong. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -720,6 +920,16 @@ export default function OnboardingNew() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (
+          /already exists/i.test(data.error || "") ||
+          /email already exists/i.test(data.error || "")
+        ) {
+          setStep(STEP_EMAIL);
+          setMaxStepReached(Math.max(maxStepReached, STEP_EMAIL));
+          setError("This email already has an account. Please sign in instead.");
+          setLoading(false);
+          return;
+        }
         setError(data.error || "Registration failed.");
         setLoading(false);
         return;
@@ -763,7 +973,7 @@ export default function OnboardingNew() {
                 orcid: orcid || undefined,
               },
             };
-      await fetch(`${base}/api/profile/${newUser._id || newUser.id}`, {
+      const profileRes = await fetch(`${base}/api/profile/${newUser._id || newUser.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -771,17 +981,22 @@ export default function OnboardingNew() {
         },
         body: JSON.stringify(profile),
       });
+      if (!profileRes.ok) {
+        const profileData = await profileRes.json().catch(() => ({}));
+        throw new Error(profileData.error || "Failed to save your profile.");
+      }
 
       await markOnboardingComplete(
         newUser._id || newUser.id,
         data.token,
         isProfileComplete(role),
       );
+      clearStoredOnboardingState();
       window.dispatchEvent(new Event("login"));
       navigate("/yori");
     } catch (e) {
       console.error(e);
-      setError("Something went wrong. Please try again.");
+      setError(e.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -790,15 +1005,8 @@ export default function OnboardingNew() {
   const handleSocialSignUp = async (provider) => {
     setError("");
     setSocialLoading(provider);
-    sessionStorage.setItem(
-      "onboarding_oauth_medical",
-      JSON.stringify(isMedicalProfessional),
-    );
-    const onboardingData = {
-      role: isMedicalProfessional ? "researcher" : "patient",
-      conditions,
-      location: location.trim() ? getLocationData() : undefined,
-    };
+    persistOnboardingDraft();
+    const onboardingData = buildAuth0OnboardingData();
     try {
       if (provider === "google")
         await loginWithGoogle({ onboardingData, screenHint: "signup" });
@@ -839,23 +1047,31 @@ export default function OnboardingNew() {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (token && (user._id || user.id)) {
-      const savedMedical = sessionStorage.getItem("onboarding_oauth_medical");
-      let restored = false;
-      if (savedMedical !== null) {
-        try {
-          const parsed = JSON.parse(savedMedical);
-          if (parsed === true || parsed === false) {
-            setIsMedicalProfessional(parsed);
-            restored = true;
-          }
-        } catch (e) {
-          /* ignore */
+      try {
+        const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
+        const draft = draftRaw ? JSON.parse(draftRaw) : null;
+
+        if (draft) {
+          restoreOnboardingDraft(draft);
+          setStep(Math.max(draft.step || STEP_NAME, STEP_NAME));
+          setMaxStepReached(
+            Math.max(draft.maxStepReached || STEP_NAME, STEP_NAME),
+          );
+        } else {
+          if (user.role === "researcher") setIsMedicalProfessional(true);
+          else if (user.role === "patient") setIsMedicalProfessional(false);
+          if (user.email) setEmail(user.email);
+          setStep(STEP_NAME);
+          setMaxStepReached(STEP_NAME);
         }
-        sessionStorage.removeItem("onboarding_oauth_medical");
+      } catch (e) {
+        console.error("Failed to restore OAuth onboarding draft:", e);
+        if (user.role === "researcher") setIsMedicalProfessional(true);
+        else setIsMedicalProfessional(false);
+        if (user.email) setEmail(user.email);
+        setStep(STEP_NAME);
+        setMaxStepReached(STEP_NAME);
       }
-      if (!restored) setIsMedicalProfessional(false);
-      setStep(STEP_NAME);
-      setMaxStepReached(STEP_NAME);
     }
   }, [isOAuth]);
 
@@ -1243,13 +1459,37 @@ export default function OnboardingNew() {
                             toast.error("Please agree to the Terms & Conditions and Privacy Policy first");
                             return;
                           }
-                          if (canGoNextFromEmail) goToStep(STEP_NAME);
+                          if (!canGoNextFromEmail) return;
+
+                          setCheckingEmail(true);
+                          setError("");
+                          checkEmailAvailability()
+                            .then((availability) => {
+                              if (availability.exists) {
+                                setError(getExistingEmailMessage(availability));
+                                return;
+                              }
+                              goToStep(STEP_NAME);
+                            })
+                            .catch((e) => {
+                              setError(
+                                e.message ||
+                                  "Could not verify this email right now.",
+                              );
+                            })
+                            .finally(() => {
+                              setCheckingEmail(false);
+                            });
                         }}
-                        disabled={!isValidEmail(email.trim()) || password.length < 6}
+                        disabled={
+                          !isValidEmail(email.trim()) ||
+                          password.length < 6 ||
+                          checkingEmail
+                        }
                         className="flex-1 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
                       >
-                        Continue
+                        {checkingEmail ? "Checking..." : "Continue"}
                       </Button>
                     </div>
                   </motion.div>
