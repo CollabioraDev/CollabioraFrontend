@@ -661,7 +661,6 @@ export default function OnboardingNew() {
       const draft = draftRaw ? JSON.parse(draftRaw) : null;
       if (orcidRaw) {
         const { orcid: orcidId, profile } = JSON.parse(orcidRaw);
-        setOrcid(orcidId);
         if (draft) {
           restoreOnboardingDraft(draft);
           setStep(draft.step || 5);
@@ -670,10 +669,14 @@ export default function OnboardingNew() {
           setStep(5);
           setMaxStepReached(5);
         }
+        // Apply the ORCID returned from OAuth after draft restore so a stale
+        // pre-auth draft value cannot overwrite the connected ORCID.
+        setOrcid(orcidId);
         if (profile) {
           if (
             profile.affiliation?.trim() &&
-            profile.affiliation.trim() !== institutionAffiliation
+            profile.affiliation.trim() !==
+              (draft?.institutionAffiliation || institutionAffiliation)
           ) {
             setOrcidSuggestedInstitution(profile.affiliation.trim());
           }

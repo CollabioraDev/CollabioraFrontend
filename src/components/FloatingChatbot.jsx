@@ -27,6 +27,8 @@ import { getDisplayName } from "../utils/researcherDisplayName.js";
 
 // Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
 const IORA_STORAGE_KEY = "collabiora_iora_chat";
+const YORI_MOBILE_TEASER_STORAGE_KEY =
+  "collabiora_yori_mobile_teaser_collapsed";
 
 const DEFAULT_GREETING = {
   role: "assistant",
@@ -1165,7 +1167,17 @@ const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isSideCollapsed, setIsSideCollapsed] = useState(false);
-  const [isClosedTeaserCollapsed, setIsClosedTeaserCollapsed] = useState(false);
+  const [isClosedTeaserCollapsed, setIsClosedTeaserCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return (
+        localStorage.getItem(YORI_MOBILE_TEASER_STORAGE_KEY) === "true"
+      );
+    } catch (e) {
+      console.warn("yori: could not load teaser state", e);
+      return false;
+    }
+  });
   const [isMobileView, setIsMobileView] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 640 : false,
   );
@@ -1249,6 +1261,18 @@ const FloatingChatbot = () => {
     mediaQuery.addListener(handleViewportChange);
     return () => mediaQuery.removeListener(handleViewportChange);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(
+        YORI_MOBILE_TEASER_STORAGE_KEY,
+        String(isClosedTeaserCollapsed),
+      );
+    } catch (e) {
+      console.warn("yori: could not save teaser state", e);
+    }
+  }, [isClosedTeaserCollapsed]);
 
   // Listen for context events from detail pages
   useEffect(() => {
@@ -1882,6 +1906,9 @@ const FloatingChatbot = () => {
     setIsOpen(false);
     setIsMinimized(false);
     setIsSideCollapsed(false);
+    if (isMobileView) {
+      setIsClosedTeaserCollapsed(true);
+    }
   };
 
   const handleMinimize = () => {
@@ -1905,12 +1932,15 @@ const FloatingChatbot = () => {
   }
 
   const isGuest = !user;
-  const closedBotPositionClass = isLandingPage
-    ? "bottom-4 sm:bottom-6"
-    : "bottom-24 sm:bottom-10";
-  const openChatPositionClass = isLandingPage
-    ? "bottom-4 sm:bottom-6"
-    : "bottom-24 sm:bottom-10";
+  const isGuestBrowsePage =
+    location.pathname === "/explore" ||
+    location.pathname === "/library" ||
+    location.pathname === "/experts" ||
+    location.pathname === "/trials";
+  const mobileBottomOffsetClass =
+    isLandingPage || (isGuest && isGuestBrowsePage) ? "bottom-4" : "bottom-24";
+  const closedBotPositionClass = `${mobileBottomOffsetClass} sm:bottom-10`;
+  const openChatPositionClass = `${mobileBottomOffsetClass} sm:bottom-10`;
   const showMobileCollapsedDock = isOpen && isMobileView && isSideCollapsed;
   const showClosedMobileCollapsedDock =
     !isOpen && isMobileView && isClosedTeaserCollapsed;
@@ -1929,16 +1959,6 @@ const FloatingChatbot = () => {
             const primary = phrase?.primary ?? "";
             return (
               <div className="relative mr-3 max-w-[calc(100vw-7rem)] sm:max-w-[calc(100%-4rem)] bg-[#E8D5FF] border-2 border-[#2F3C96] rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg min-h-[2.25rem] sm:min-h-[3rem] flex items-center justify-center pointer-events-auto shrink-0">
-                {isMobileView && !isTrialPage && !isPublicationPage && !context && (
-                  <button
-                    type="button"
-                    onClick={() => setIsClosedTeaserCollapsed(true)}
-                    className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full border border-[#2F3C96] bg-white text-[#2F3C96] shadow-sm"
-                    aria-label="Collapse Yori teaser"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
                 <p className="text-[10px] sm:text-xs font-semibold text-[#2F3C96] leading-tight text-center">
                   {isTrialPage || isPublicationPage || context ? (
                     "I'm here to help explain this"
