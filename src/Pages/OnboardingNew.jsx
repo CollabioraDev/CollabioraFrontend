@@ -480,7 +480,8 @@ export default function OnboardingNew() {
         handle: loginData.user?.handle || handleValue,
         role: "researcher",
       };
-      if (resumedUser.emailVerified !== false) resumedUser.emailVerified = false;
+      if (resumedUser.emailVerified !== false)
+        resumedUser.emailVerified = false;
       localStorage.setItem("token", loginData.token);
       localStorage.setItem("user", JSON.stringify(resumedUser));
       return { token: loginData.token, user: resumedUser };
@@ -770,14 +771,17 @@ export default function OnboardingNew() {
   };
 
   const markOnboardingComplete = async (userId, token, complete) => {
-    const response = await fetch(`${base}/api/profile/${userId}/onboarding-complete`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(
+      `${base}/api/profile/${userId}/onboarding-complete`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ complete }),
       },
-      body: JSON.stringify({ complete }),
-    });
+    );
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -799,8 +803,7 @@ export default function OnboardingNew() {
     if (token && userId) {
       try {
         const locationData = getLocationData();
-        const selectedRole =
-          onboardingRole || user?.role || "patient";
+        const selectedRole = onboardingRole || user?.role || "patient";
         const role =
           user?.onboardingComplete === true
             ? user?.role || selectedRole
@@ -922,7 +925,9 @@ export default function OnboardingNew() {
         ) {
           setStep(STEP_EMAIL);
           setMaxStepReached(Math.max(maxStepReached, STEP_EMAIL));
-          setError("This email already has an account. Please sign in instead.");
+          setError(
+            "This email already has an account. Please sign in instead.",
+          );
           setLoading(false);
           return;
         }
@@ -969,14 +974,17 @@ export default function OnboardingNew() {
                 orcid: orcid || undefined,
               },
             };
-      const profileRes = await fetch(`${base}/api/profile/${newUser._id || newUser.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.token}`,
+      const profileRes = await fetch(
+        `${base}/api/profile/${newUser._id || newUser.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+          body: JSON.stringify(profile),
         },
-        body: JSON.stringify(profile),
-      });
+      );
       if (!profileRes.ok) {
         const profileData = await profileRes.json().catch(() => ({}));
         throw new Error(profileData.error || "Failed to save your profile.");
@@ -1035,8 +1043,7 @@ export default function OnboardingNew() {
     return { level: 4, label: "Strong", color: "#2F3C96" };
   };
   const passwordStrength = getPasswordStrength(password);
-  const canGoNextFromEmail =
-    isValidEmail(email.trim()) && password.length >= 6;
+  const canGoNextFromEmail = isValidEmail(email.trim()) && password.length >= 6;
 
   // When returning from OAuth: restore medical choice and land on Name step so user fills in their details first
   useEffect(() => {
@@ -1163,13 +1170,22 @@ export default function OnboardingNew() {
                         }}
                         className="relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         style={{
-                          borderColor: isMedicalProfessional === true ? "#2F3C96" : "#D0C4E2",
-                          backgroundColor: isMedicalProfessional === true ? "rgba(47, 60, 150, 0.10)" : "rgba(47, 60, 150, 0.03)",
+                          borderColor:
+                            isMedicalProfessional === true
+                              ? "#2F3C96"
+                              : "#D0C4E2",
+                          backgroundColor:
+                            isMedicalProfessional === true
+                              ? "rgba(47, 60, 150, 0.10)"
+                              : "rgba(47, 60, 150, 0.03)",
                           color: "#2F3C96",
                         }}
                       >
                         {isMedicalProfessional === true && (
-                          <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#2F3C96" }}>
+                          <span
+                            className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "#2F3C96" }}
+                          >
                             <CheckCircle className="w-3.5 h-3.5 text-white" />
                           </span>
                         )}
@@ -1189,13 +1205,22 @@ export default function OnboardingNew() {
                         }}
                         className="relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         style={{
-                          borderColor: isMedicalProfessional === false ? "#2F3C96" : "#D0C4E2",
-                          backgroundColor: isMedicalProfessional === false ? "rgba(47, 60, 150, 0.10)" : "rgba(47, 60, 150, 0.03)",
+                          borderColor:
+                            isMedicalProfessional === false
+                              ? "#2F3C96"
+                              : "#D0C4E2",
+                          backgroundColor:
+                            isMedicalProfessional === false
+                              ? "rgba(47, 60, 150, 0.10)"
+                              : "rgba(47, 60, 150, 0.03)",
                           color: "#2F3C96",
                         }}
                       >
                         {isMedicalProfessional === false && (
-                          <span className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "#2F3C96" }}>
+                          <span
+                            className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "#2F3C96" }}
+                          >
                             <CheckCircle className="w-3.5 h-3.5 text-white" />
                           </span>
                         )}
@@ -1399,7 +1424,10 @@ export default function OnboardingNew() {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: "#787878" }}>
+                    <p
+                      className="text-xs leading-relaxed"
+                      style={{ color: "#787878" }}
+                    >
                       By signing up, you agree to our{" "}
                       <a
                         href="/terms"

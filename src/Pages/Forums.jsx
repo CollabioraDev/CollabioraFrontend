@@ -2299,11 +2299,11 @@ export default function Forums() {
       <div
         key={reply._id}
         className="mt-3"
-        style={{ marginLeft: `${depth * 16}px` }}
+        style={{ marginLeft: `${depth * 12}px` }}
       >
-        <div className="bg-[#F5F5F5] rounded-lg border border-[#E8E8E8] p-4 hover:border-[#E8E8E8] transition-all">
-          <div className="flex items-start justify-between mb-2 gap-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="bg-[#F5F5F5] rounded-lg border border-[#E8E8E8] p-3 sm:p-4 hover:border-[#E8E8E8] transition-all">
+          <div className="flex flex-col gap-3 mb-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
               <button
                 type="button"
                 onClick={() => {
@@ -2384,8 +2384,8 @@ export default function Forums() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-[#787878]">
+            <div className="flex items-center justify-between gap-2 shrink-0 w-full sm:w-auto sm:justify-end">
+              <span className="text-xs text-[#787878] whitespace-nowrap">
                 {new Date(reply.createdAt).toLocaleDateString()}
               </span>
               {isOwner && (
@@ -2440,7 +2440,7 @@ export default function Forums() {
                 rows="3"
                 autoFocus
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -2454,7 +2454,7 @@ export default function Forums() {
                     isUpdating ||
                     !(editReplyBody[reply._id] ?? reply.body)?.trim()
                   }
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-all disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 px-3 py-2 sm:py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-all disabled:opacity-50"
                 >
                   {isUpdating ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2471,7 +2471,7 @@ export default function Forums() {
                     }));
                   }}
                   disabled={isUpdating}
-                  className="px-3 py-1.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all disabled:opacity-50"
+                  className="px-3 py-2 sm:py-1.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -2561,17 +2561,17 @@ export default function Forums() {
                 className="w-full rounded-lg border border-[#E8E8E8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] resize-none text-[#484848] placeholder-[#787878]"
                 rows="3"
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-2">
                 <button
                   onClick={() => postReply(threadId, reply._id)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-all"
+                  className="flex items-center justify-center gap-2 px-3 py-2 sm:py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-all"
                 >
                   <Send className="w-3.5 h-3.5" />
                   Reply
                 </button>
                 <button
                   onClick={() => setReplyingTo(null)}
-                  className="px-3 py-1.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all"
+                  className="px-3 py-2 sm:py-1.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all"
                 >
                   Cancel
                 </button>
@@ -2645,27 +2645,27 @@ export default function Forums() {
         <div className="min-h-screen bg-[#F5F5F5] relative">
           <AnimatedBackground />
 
-          <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-7xl pb-12 overflow-x-hidden">
+          <div className="relative pt-20 px-3 sm:px-4 md:px-8 mx-auto max-w-7xl pb-10 sm:pb-12 overflow-x-hidden">
             {/* Compact Header */}
-            <div className="text-center mb-6 animate-fade-in">
-              <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-1">
+            <div className="text-center mb-5 sm:mb-6 animate-fade-in">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-2">
                 <AuroraText speed={2.5} colors={["#2F3C96"]}>
                   Health Forums
                 </AuroraText>
               </h1>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
                 Join communities, ask questions and share experiences
               </p>
             </div>
 
             {/* Communities/Posts Tabs — Communities first, open by default */}
-            <div className="max-w-7xl mx-auto mb-6">
-              <div className="flex items-center gap-0 border-b border-[#E8E8E8]">
+            <div className="max-w-7xl mx-auto mb-5 sm:mb-6">
+              <div className="flex items-center gap-2 border-b border-[#E8E8E8] overflow-x-auto hide-scrollbar pb-1">
                 <button
                   onClick={() => setViewMode("communities")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                  className={`flex-1 sm:flex-none min-w-[140px] px-4 sm:px-6 py-3 font-semibold text-sm transition-all relative rounded-t-lg ${
                     viewMode === "communities"
-                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
+                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96] bg-white/70"
                       : "text-[#787878] hover:text-[#484848]"
                   }`}
                 >
@@ -2673,9 +2673,9 @@ export default function Forums() {
                 </button>
                 <button
                   onClick={() => setViewMode("posts")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                  className={`flex-1 sm:flex-none min-w-[140px] px-4 sm:px-6 py-3 font-semibold text-sm transition-all relative rounded-t-lg ${
                     viewMode === "posts"
-                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
+                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96] bg-white/70"
                       : "text-[#787878] hover:text-[#484848]"
                   }`}
                 >
@@ -2687,7 +2687,40 @@ export default function Forums() {
             {/* Unified Control Bar - HealthUnlocked Style - Mobile Friendly */}
             {viewMode === "posts" && (
               <div className="max-w-7xl mx-auto mb-6 overflow-x-hidden">
-                <div className="bg-white rounded-lg border border-[#E8E8E8] p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 shadow-sm">
+                <div className="bg-white rounded-xl border border-[#E8E8E8] p-3 sm:p-4 flex flex-col gap-3 md:gap-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#2F3C96]">
+                        Browse discussions
+                      </p>
+                      <p className="text-xs text-[#787878] leading-relaxed">
+                        Search posts, refine the feed, or jump into a community.
+                      </p>
+                    </div>
+                    {user && (
+                      <button
+                        onClick={() => {
+                          setModalSelectedCommunity(selectedCommunity);
+                          if (
+                            selectedConditionTag !== "All" &&
+                            FORUM_SUBCATEGORY_TAGS.includes(
+                              selectedConditionTag,
+                            )
+                          ) {
+                            setNewThreadTags([selectedConditionTag]);
+                          } else {
+                            setNewThreadTags([]);
+                          }
+                          setNewThreadConditions([]);
+                          setNewThreadModal(true);
+                        }}
+                        className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#2F3C96] text-white rounded-md font-semibold text-sm hover:bg-[#253075] transition-all shrink-0"
+                      >
+                        <Plus className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">Create Post</span>
+                      </button>
+                    )}
+                  </div>
                   {/* Search Bar - Full width on mobile */}
                   <div className="relative flex-1 min-w-0 w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#787878]" />
@@ -2721,9 +2754,9 @@ export default function Forums() {
                   </div>
 
                   {/* Filter Options - Wraps on mobile, dropdown on small screens */}
-                  <div className="flex flex-wrap items-center gap-2 md:gap-3 shrink-0 min-w-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex items-stretch sm:items-center gap-2 md:gap-3 shrink-0 min-w-0">
                     {/* Filter Dropdown */}
-                    <div className="w-28 sm:w-36 shrink-0">
+                    <div className="w-full sm:w-36 shrink-0">
                       <CustomSelect
                         value={activeTab}
                         onChange={(value) => {
@@ -2748,12 +2781,12 @@ export default function Forums() {
                     </div>
 
                     {/* Sort Options */}
-                    <div className="flex items-center gap-0 bg-[#F5F5F5] rounded-md p-0.5 shrink-0 border border-[#E8E8E8]">
+                    <div className="grid grid-cols-2 items-center gap-0 bg-[#F5F5F5] rounded-md p-0.5 shrink-0 border border-[#E8E8E8] w-full sm:w-auto">
                       {["recent", "popular"].map((sort) => (
                         <button
                           key={sort}
                           onClick={() => setSortBy(sort)}
-                          className={`px-2.5 sm:px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                          className={`px-2.5 sm:px-3 py-2 sm:py-1.5 rounded text-xs font-medium transition-all ${
                             sortBy === sort
                               ? "bg-white text-[#2F3C96] shadow-sm"
                               : "text-[#787878] hover:text-[#484848]"
@@ -2762,6 +2795,21 @@ export default function Forums() {
                           {sort.charAt(0).toUpperCase() + sort.slice(1)}
                         </button>
                       ))}
+                    </div>
+
+                    {/* Mobile Community Dropdown - Full width on mobile when visible */}
+                    <div className="lg:hidden w-full min-w-0 sm:col-span-2">
+                      <CustomSelect
+                        value={mobileCommunityId}
+                        onChange={handleMobileCommunityChange}
+                        options={mobileCommunityOptions}
+                        placeholder="All communities"
+                        disabled={
+                          loadingCommunities ||
+                          sortedDisplayedCommunities.length === 0
+                        }
+                        className="w-full text-sm min-w-0"
+                      />
                     </div>
 
                     {/* Create Post Button */}
@@ -2782,27 +2830,12 @@ export default function Forums() {
                           setNewThreadConditions([]);
                           setNewThreadModal(true);
                         }}
-                        className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#2F3C96] text-white rounded-md font-semibold text-sm hover:bg-[#253075] transition-all shrink-0"
+                        className="md:hidden flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 bg-[#2F3C96] text-white rounded-md font-semibold text-sm hover:bg-[#253075] transition-all shrink-0 w-full sm:col-span-2"
                       >
                         <Plus className="w-4 h-4 shrink-0" />
                         <span className="whitespace-nowrap">Create Post</span>
                       </button>
                     )}
-
-                    {/* Mobile Community Dropdown - Full width on mobile when visible */}
-                    <div className="lg:hidden w-full min-w-0 sm:w-56 md:w-64">
-                      <CustomSelect
-                        value={mobileCommunityId}
-                        onChange={handleMobileCommunityChange}
-                        options={mobileCommunityOptions}
-                        placeholder="All communities"
-                        disabled={
-                          loadingCommunities ||
-                          sortedDisplayedCommunities.length === 0
-                        }
-                        className="w-full text-sm min-w-0"
-                      />
-                    </div>
                   </div>
                 </div>
               </div>
@@ -2811,7 +2844,7 @@ export default function Forums() {
             {/* Communities Search Bar + Propose a Community */}
             {viewMode === "communities" && (
               <div className="max-w-7xl mx-auto mb-6">
-                <div className="bg-white rounded-lg border border-[#E8E8E8] p-4 shadow-sm">
+                <div className="bg-white rounded-xl border border-[#E8E8E8] p-4 shadow-sm">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#787878]" />
@@ -2847,7 +2880,7 @@ export default function Forums() {
                         setProposeThumbnailUrl("");
                         setProposeCommunityModal(true);
                       }}
-                      className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-md border border-[#2F3C96] bg-[#2F3C96] text-white text-sm font-semibold hover:bg-[#253075] hover:border-[#253075] transition-all"
+                      className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-[#2F3C96] bg-[#2F3C96] text-white text-sm font-semibold hover:bg-[#253075] hover:border-[#253075] transition-all w-full sm:w-auto"
                     >
                       <Plus className="w-4 h-4" />
                       Propose a Community
@@ -2901,14 +2934,14 @@ export default function Forums() {
                                   [category._id]: !prev[category._id],
                                 }))
                               }
-                              className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left transition-colors"
+                              className="w-full flex flex-col gap-3 px-4 sm:px-5 py-4 text-left transition-colors sm:flex-row sm:items-center sm:justify-between"
                             >
-                              <div className="flex items-center gap-3 min-w-0">
+                              <div className="flex items-start gap-3 min-w-0 w-full">
                                 <ChevronRight
                                   className={`w-5 h-5 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}
                                   style={{ color: headingColor }}
                                 />
-                                <h3 className="text-lg md:text-xl font-bold text-[#484848]">
+                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#484848] leading-snug">
                                   {category.name}
                                   <span className="text-[#787878] font-normal ml-1.5">
                                     ({count})
@@ -2916,14 +2949,14 @@ export default function Forums() {
                                 </h3>
                               </div>
                               <span
-                                className={`text-xs px-2 py-1 rounded-full shrink-0 ${colorClasses.badge}`}
+                                className={`text-xs px-2 py-1 rounded-full shrink-0 self-start sm:self-auto ${colorClasses.badge}`}
                               >
                                 {count}{" "}
                                 {count === 1 ? "community" : "communities"}
                               </span>
                             </button>
                             {isOpen && (
-                              <div className="p-6 border-t border-[#E8E8E8]">
+                              <div className="p-4 sm:p-6 border-t border-[#E8E8E8]">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                   {filteredCommunities.map((community) => {
                                     const itemColor =
@@ -2935,7 +2968,7 @@ export default function Forums() {
                                     return (
                                       <div
                                         key={community._id}
-                                        className="bg-white rounded-lg border border-[#E8E8E8] overflow-hidden hover:shadow-md hover:-translate-y-0.5 hover:border-[#2F3C96]/25 transition-all duration-200 cursor-pointer group flex items-center gap-4 p-4"
+                                        className="bg-white rounded-xl border border-[#E8E8E8] overflow-hidden hover:shadow-md hover:-translate-y-0.5 hover:border-[#2F3C96]/25 transition-all duration-200 cursor-pointer group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4"
                                         onClick={() => {
                                           if (
                                             followingIds.has(community._id) ||
@@ -2970,11 +3003,11 @@ export default function Forums() {
                                             />
                                           )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
+                                        <div className="flex-1 min-w-0 w-full">
                                           <h4 className="font-semibold text-[#484848] line-clamp-1 group-hover:text-[#2F3C96] transition-colors">
                                             {community.name}
                                           </h4>
-                                          <div className="flex items-center justify-between gap-2 mt-1">
+                                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">
                                             <span className="text-sm text-[#787878] flex items-center gap-1">
                                               <Users className="w-3.5 h-3.5" />
                                               {community.memberCount?.toLocaleString() ||
@@ -2984,7 +3017,7 @@ export default function Forums() {
                                             {followingIds.has(community._id) ||
                                             community.isFollowing ? (
                                               <span
-                                                className={`px-2 py-1 rounded-lg text-xs font-medium shrink-0 flex items-center gap-1 ${colorClasses.badge}`}
+                                                className={`px-2 py-1 rounded-lg text-xs font-medium shrink-0 flex items-center gap-1 self-start sm:self-auto ${colorClasses.badge}`}
                                               >
                                                 <UserCheck className="w-3.5 h-3.5" />
                                                 Joined
@@ -2997,7 +3030,7 @@ export default function Forums() {
                                                     `/forums/community/${community._id}`,
                                                   );
                                                 }}
-                                                className={`rounded-lg px-4 py-1.5 text-sm font-medium border shrink-0 transition-all duration-200 ${colorClasses.join}`}
+                                                className={`rounded-lg px-4 py-2 sm:py-1.5 text-sm font-medium border shrink-0 transition-all duration-200 w-full sm:w-auto ${colorClasses.join}`}
                                               >
                                                 Join
                                               </button>
@@ -3046,8 +3079,8 @@ export default function Forums() {
               <div className="max-w-7xl mx-auto min-w-0 overflow-hidden">
                 {/* Selected Community Header - Simplified */}
                 {selectedCommunity && (
-                  <div className="bg-white rounded-xl border border-[#E8E8E8] p-4 mb-6 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 flex-wrap mb-4 min-w-0">
+                  <div className="bg-white rounded-xl border border-[#E8E8E8] p-4 sm:p-5 mb-6 shadow-sm overflow-hidden">
+                    <div className="flex flex-col gap-4 mb-4 min-w-0 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center gap-2 mb-1">
                           <h2 className="text-lg font-bold text-[#2F3C96]">
@@ -3057,17 +3090,17 @@ export default function Forums() {
                             <CheckCircle2 className="w-4 h-4 text-[#2F3C96]" />
                           )}
                         </div>
-                        <p className="text-sm text-[#787878] line-clamp-1">
+                        <p className="text-sm text-[#787878] line-clamp-2 leading-relaxed">
                           {selectedCommunity.description}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => {
                             setSelectedCommunity(null);
                             setSelectedSubcategory(null);
                           }}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium bg-[#F5F5F5] text-[#787878] hover:bg-[#E8E8E8] transition-all"
+                          className="px-3 py-2 sm:py-1.5 rounded-lg text-sm font-medium bg-[#F5F5F5] text-[#787878] hover:bg-[#E8E8E8] transition-all w-full sm:w-auto"
                         >
                           Clear
                         </button>
@@ -3082,7 +3115,7 @@ export default function Forums() {
                             }
                           }}
                           disabled={followingLoading.has(selectedCommunity._id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all w-full sm:w-auto ${
                             followingIds.has(selectedCommunity._id)
                               ? "bg-[#2F3C96]/10 text-[#2F3C96] hover:bg-[#2F3C96]/20"
                               : "bg-[#2F3C96] text-white hover:bg-[#253075]"
@@ -3332,10 +3365,10 @@ export default function Forums() {
                           } focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96]/40 focus-visible:ring-offset-2`}
                           aria-label={`Open thread: ${thread.title}`}
                         >
-                          <div className="p-6">
-                            <div className="flex items-start gap-4">
+                          <div className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4">
                               {/* Vote Controls - Like / Dislike */}
-                              <div className="flex flex-col items-center gap-1 shrink-0">
+                              <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-start gap-1 shrink-0 rounded-xl border border-[#E8E8E8] bg-[#F8F8F8] px-2.5 py-1.5 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 w-full sm:w-auto">
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -3525,12 +3558,12 @@ export default function Forums() {
                                 </div>
 
                                 {/* 3. Preview — max 2 lines, ellipsis */}
-                                <p className="text-sm text-[#787878] leading-relaxed mb-3 line-clamp-2 text-ellipsis overflow-hidden">
+                                <p className="text-sm text-[#787878] leading-relaxed mb-3 line-clamp-3 sm:line-clamp-2 text-ellipsis overflow-hidden">
                                   {thread.body}
                                 </p>
 
                                 {/* 4. Meta row — muted, single line: tag · date · views */}
-                                <div className="flex items-center gap-2 text-[11px] text-[#9ca3af] mb-3 flex-wrap min-w-0 overflow-hidden">
+                                <div className="flex items-center gap-x-2 gap-y-1 text-[11px] text-[#9ca3af] mb-3 flex-wrap min-w-0 overflow-hidden">
                                   {firstTag && (
                                     <>
                                       <span className="flex items-center gap-1 shrink-0">
@@ -3561,7 +3594,7 @@ export default function Forums() {
                                 </div>
 
                                 {/* 5. Actions row — reply count (left, clickable) + researcher status + Save (right) */}
-                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                   <div className="flex items-center gap-3 min-w-0">
                                     <span className="sr-only">
                                       {thread.hasResearcherReply
@@ -3622,7 +3655,7 @@ export default function Forums() {
                                       )}
                                     </button>
                                   </div>
-                                  <div className="flex items-center gap-2 shrink-0">
+                                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                     {user && (
                                       <>
                                         {/* Share button - only show for thread author */}
@@ -3650,7 +3683,7 @@ export default function Forums() {
                                                 e.stopPropagation();
                                                 openShareModal(thread);
                                               }}
-                                              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-[#2F3C96] hover:bg-[#2F3C96]/5"
+                                              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-[#2F3C96] hover:bg-[#2F3C96]/5"
                                               title="Add to Discovery"
                                               aria-label="Add to Discovery"
                                             >
@@ -3684,7 +3717,7 @@ export default function Forums() {
                                                 deleteThread(thread._id);
                                               }}
                                               disabled={isDeleting}
-                                              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                                              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
                                               title="Delete thread"
                                               aria-label="Delete thread"
                                             >
@@ -3718,7 +3751,7 @@ export default function Forums() {
                                           disabled={favoritingItems.has(
                                             thread._id,
                                           )}
-                                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all shrink-0 ${
+                                          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 ${
                                             favorites.some(
                                               (fav) =>
                                                 fav.itemId === thread._id &&
@@ -3778,7 +3811,7 @@ export default function Forums() {
                                     className="thread-expandable expanded border-t border-[#E8E8E8] pt-4 mt-4"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
                                       <h4 className="flex items-center gap-2 font-semibold text-sm text-[#484848]">
                                         <MessageCircle className="w-4 h-4 text-[#2F3C96]" />
                                         <span>
@@ -3852,12 +3885,12 @@ export default function Forums() {
                                               className="w-full rounded-md border border-[#E8E8E8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] resize-none text-[#484848] placeholder-[#787878]"
                                               rows="3"
                                             />
-                                            <div className="flex gap-2 mt-3">
+                                            <div className="flex flex-col sm:flex-row gap-2 mt-3">
                                               <button
                                                 onClick={() =>
                                                   postReply(thread._id)
                                                 }
-                                                className="flex items-center gap-2 px-4 py-2 bg-[#2F3C96] text-white rounded-md text-sm font-semibold hover:bg-[#253075] transition-all"
+                                                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#2F3C96] text-white rounded-md text-sm font-semibold hover:bg-[#253075] transition-all"
                                               >
                                                 <Send className="w-3.5 h-3.5" />
                                                 Reply

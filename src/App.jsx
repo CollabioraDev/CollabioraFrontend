@@ -19,9 +19,11 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
 // Eagerly-loaded navbars kept as lazy to shave framer-motion + icons from initial chunk;
 // null fallback means no layout shift — they paint on the same frame as the page content.
 const Navbar = React.lazy(() => import("./components/Navbar.jsx"));
-const LandingNavbar = React.lazy(() => import("./components/LandingNavbar.jsx"));
+const LandingNavbar = React.lazy(
+  () => import("./components/LandingNavbar.jsx"),
+);
 
-// OnboardingNew is now lazy — Landing.jsx prefetches it on idle so the chunk is 
+// OnboardingNew is now lazy — Landing.jsx prefetches it on idle so the chunk is
 // ready before the user finishes reading and clicks "Get Started".
 const OnboardingNew = React.lazy(() => import("./Pages/OnboardingNew.jsx"));
 
@@ -171,17 +173,20 @@ function ProfileGuard({ children }) {
 
         if (isIncomplete) {
           setStatus("redirecting");
-          toast("Add your medical conditions or research interests to personalise your dashboard", {
-            duration: 5000,
-            icon: null,
-            style: {
-              background: "#2F3C96",
-              color: "#fff",
-              fontWeight: 500,
-              borderRadius: "12px",
-              padding: "12px 20px",
+          toast(
+            "Add your medical conditions or research interests to personalise your dashboard",
+            {
+              duration: 5000,
+              icon: null,
+              style: {
+                background: "#2F3C96",
+                color: "#fff",
+                fontWeight: 500,
+                borderRadius: "12px",
+                padding: "12px 20px",
+              },
             },
-          });
+          );
           navigate("/profile", { replace: true });
         } else {
           setStatus("complete");
@@ -191,12 +196,17 @@ function ProfileGuard({ children }) {
         if (!cancelled) setStatus("complete");
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   if (status === "checking") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center" aria-hidden="true">
+      <div
+        className="flex min-h-[60vh] items-center justify-center"
+        aria-hidden="true"
+      >
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2F3C96] border-t-transparent" />
       </div>
     );
@@ -213,10 +223,14 @@ const AppContent = () => {
   const isAdminPage = location.pathname.startsWith("/admin");
   const isErrorPage = location.pathname === "/404";
   const isHomePage = location.pathname === "/";
+  const isSignInPage = location.pathname === "/signin";
   const isOnboardingPage = location.pathname === "/onboarding";
   const isEditProfilePage = location.pathname === "/profile";
   const isYoriPage = location.pathname === "/yori";
   const isMeetingPage = location.pathname.startsWith("/meeting/");
+  const isAuthCallbackPage =
+    location.pathname === "/auth/callback" ||
+    location.pathname === "/auth/orcid/callback";
   const showLayout = !isVerifyEmailPage && !isAdminPage && !isErrorPage;
 
   const [isMobile, setIsMobile] = useState(
@@ -290,14 +304,16 @@ const AppContent = () => {
       )}
       {showLayout &&
         showChatbot &&
+        !isSignInPage &&
         !isYoriPage &&
         !isMeetingPage &&
         !isOnboardingPage &&
+        !isAuthCallbackPage &&
         !(isMobile && isEditProfilePage) && (
-        <Suspense fallback={null}>
-          <FloatingChatbot />
-        </Suspense>
-      )}
+          <Suspense fallback={null}>
+            <FloatingChatbot />
+          </Suspense>
+        )}
       <PWAInstallPrompt />
       {showLayout && isHomePage && <FeedbackWidget />}
       {showLayout && <PageFeedbackWidget />}
@@ -373,7 +389,14 @@ const AppContent = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
-          <Route path="/" element={<AuthenticatedRedirect><Landing /></AuthenticatedRedirect>} />
+          <Route
+            path="/"
+            element={
+              <AuthenticatedRedirect>
+                <Landing />
+              </AuthenticatedRedirect>
+            }
+          />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/faq" element={<FAQ />} />
@@ -381,7 +404,14 @@ const AppContent = () => {
           <Route path="/terms" element={<PrivacyPolicyAndTerms />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/explore" element={<Explore />} />
-          <Route path="/signin" element={<AuthenticatedRedirect><SignIn /></AuthenticatedRedirect>} />
+          <Route
+            path="/signin"
+            element={
+              <AuthenticatedRedirect>
+                <SignIn />
+              </AuthenticatedRedirect>
+            }
+          />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route
@@ -402,10 +432,21 @@ const AppContent = () => {
           />
           <Route path="/yori" element={<YoriAI />} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
-          <Route path="/dashboard/patient" element={<ProfileGuard><DashboardPatient /></ProfileGuard>} />
+          <Route
+            path="/dashboard/patient"
+            element={
+              <ProfileGuard>
+                <DashboardPatient />
+              </ProfileGuard>
+            }
+          />
           <Route
             path="/dashboard/researcher"
-            element={<ProfileGuard><DashboardResearcher /></ProfileGuard>}
+            element={
+              <ProfileGuard>
+                <DashboardResearcher />
+              </ProfileGuard>
+            }
           />
           <Route path="/trials" element={<Trials />} />
           <Route path="/trial/:nctId" element={<TrialDetails />} />
@@ -435,7 +476,11 @@ const AppContent = () => {
           <Route path="/notifications" element={<Notifications />} />
           <Route
             path="/meeting/:appointmentId"
-            element={<ProfileGuard><MeetingRoom /></ProfileGuard>}
+            element={
+              <ProfileGuard>
+                <MeetingRoom />
+              </ProfileGuard>
+            }
           />
           <Route path="/profile" element={<EditProfile />} />
           <Route path="/admin/login" element={<AdminLogin />} />

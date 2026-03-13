@@ -5,6 +5,7 @@ import {
   Send,
   Loader2,
   Minimize2,
+  ChevronRight,
   ExternalLink,
   BookOpen,
   Microscope,
@@ -1163,7 +1164,11 @@ const FloatingChatbot = () => {
   const isLandingPage = location.pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isSideCollapsed, setIsSideCollapsed] = useState(false);
+  const [isClosedTeaserCollapsed, setIsClosedTeaserCollapsed] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 640 : false,
+  );
   const [messages, setMessages] = useState([DEFAULT_GREETING]);
   const [speechPhraseIndex, setSpeechPhraseIndex] = useState(0);
   const [input, setInput] = useState("");
@@ -1221,6 +1226,29 @@ const FloatingChatbot = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [isOpen, isTrialPage, isPublicationPage, context]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const handleViewportChange = (event) => {
+      setIsMobileView(event.matches);
+      if (!event.matches) {
+        setIsSideCollapsed(false);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleViewportChange);
+      return () =>
+        mediaQuery.removeEventListener("change", handleViewportChange);
+    }
+
+    mediaQuery.addListener(handleViewportChange);
+    return () => mediaQuery.removeListener(handleViewportChange);
+  }, []);
 
   // Listen for context events from detail pages
   useEffect(() => {
@@ -1851,16 +1879,24 @@ const FloatingChatbot = () => {
   };
 
   const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsOpen(false);
-      setIsMinimized(false);
-      setIsClosing(false);
-    }, 250); // Match animation duration
+    setIsOpen(false);
+    setIsMinimized(false);
+    setIsSideCollapsed(false);
   };
 
   const handleMinimize = () => {
+    if (isMobileView) {
+      setIsMinimized(false);
+      setIsSideCollapsed(true);
+      return;
+    }
     setIsMinimized(!isMinimized);
+  };
+
+  const handleOpen = () => {
+    setIsMinimized(false);
+    setIsSideCollapsed(false);
+    setIsOpen(true);
   };
 
   // Don't render only when multi-step loader is showing (show bot for everyone, including guests)
@@ -1875,11 +1911,14 @@ const FloatingChatbot = () => {
   const openChatPositionClass = isLandingPage
     ? "bottom-4 sm:bottom-6"
     : "bottom-24 sm:bottom-10";
+  const showMobileCollapsedDock = isOpen && isMobileView && isSideCollapsed;
+  const showClosedMobileCollapsedDock =
+    !isOpen && isMobileView && isClosedTeaserCollapsed;
 
   return (
     <>
       {/* Floating Chat Button - constrained on mobile so it doesn't go off screen */}
-      {!isOpen && (
+      {!isOpen && !showClosedMobileCollapsedDock && (
         <div
           className={`fixed right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto ${closedBotPositionClass}`}
         >
@@ -1889,7 +1928,17 @@ const FloatingChatbot = () => {
             const hasSecondary = !!phrase?.secondary;
             const primary = phrase?.primary ?? "";
             return (
-              <div className="relative mr-3 max-w-[calc(100vw-7rem)] sm:max-w-[calc(100%-4rem)] bg-[#E8D5FF] border-2 border-[#2F3C96] rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg animate-fade-in min-h-[2.25rem] sm:min-h-[3rem] flex items-center justify-center pointer-events-none sm:pointer-events-auto shrink-0">
+              <div className="relative mr-3 max-w-[calc(100vw-7rem)] sm:max-w-[calc(100%-4rem)] bg-[#E8D5FF] border-2 border-[#2F3C96] rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg min-h-[2.25rem] sm:min-h-[3rem] flex items-center justify-center pointer-events-auto shrink-0">
+                {isMobileView && !isTrialPage && !isPublicationPage && !context && (
+                  <button
+                    type="button"
+                    onClick={() => setIsClosedTeaserCollapsed(true)}
+                    className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full border border-[#2F3C96] bg-white text-[#2F3C96] shadow-sm"
+                    aria-label="Collapse Yori teaser"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
                 <p className="text-[10px] sm:text-xs font-semibold text-[#2F3C96] leading-tight text-center">
                   {isTrialPage || isPublicationPage || context ? (
                     "I'm here to help explain this"
@@ -1914,11 +1963,8 @@ const FloatingChatbot = () => {
             );
           })()}
           <button
-            onClick={() => {
-              setIsClosing(false);
-              setIsOpen(true);
-            }}
-            className="duration-300 flex items-center justify-center group bg-cover bg-center rounded-lg overflow-hidden"
+            onClick={handleOpen}
+            className="flex items-center justify-center group bg-cover bg-center rounded-lg overflow-hidden"
             style={{
               backgroundImage: "url(/bot.png)",
               width: "80px",
@@ -1934,14 +1980,56 @@ const FloatingChatbot = () => {
         </div>
       )}
 
-      {/* Chat Window - full-width inset on mobile so it stays on screen */}
-      {isOpen && (
+      {showClosedMobileCollapsedDock && (
         <div
-          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${openChatPositionClass} ${
+          className={`fixed right-0 left-auto z-50 ${closedBotPositionClass}`}
+        >
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="flex items-center"
+            aria-label="Open Yori chat"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-l-full rounded-r-none border-2 border-r-0 border-[#2F3C96] bg-[#2F3C96] p-1 shadow-lg overflow-hidden">
+              <img
+                src="/Yori's Face Outline.png"
+                alt="Yori"
+                className="h-full w-full object-contain"
+              />
+            </span>
+          </button>
+        </div>
+      )}
+
+      {showMobileCollapsedDock && (
+        <div
+          className={`fixed right-0 left-auto z-50 ${openChatPositionClass}`}
+        >
+          <button
+            type="button"
+            onClick={() => setIsSideCollapsed(false)}
+            className="flex items-center"
+            aria-label="Expand Yori chat"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-l-full rounded-r-none border-2 border-r-0 border-[#2F3C96] bg-[#2F3C96] p-1 shadow-lg overflow-hidden">
+              <img
+                src="/Yori's Face Outline.png"
+                alt="Yori"
+                className="h-full w-full object-contain"
+              />
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Chat Window - reduced on mobile so it clears the bottom navigation */}
+      {isOpen && !showMobileCollapsedDock && (
+        <div
+          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col overflow-hidden ${openChatPositionClass} ${
             isMinimized
               ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
-              : "w-[calc(100vw-2rem)] sm:w-96 h-[min(600px,calc(100vh-2rem))]"
-          } ${isClosing ? "animate-chat-close" : "animate-chat-open"}`}
+              : "w-[calc(100vw-2rem)] sm:w-96 h-[min(460px,calc(100vh-8.5rem))] sm:h-[min(600px,calc(100vh-2rem))]"
+          }`}
           style={{
             maxWidth: "calc(100vw - 2rem)",
             boxShadow:
@@ -1950,20 +2038,20 @@ const FloatingChatbot = () => {
         >
           {/* Header - site theme (royal blue) */}
           <div
-            className="text-white px-4 py-3 rounded-t-2xl flex items-center justify-between border-b border-white/20"
+            className="text-white px-3 py-2.5 sm:px-4 sm:py-3 rounded-t-2xl flex items-center justify-between border-b border-white/20"
             style={{ background: "linear-gradient(135deg, #2F3C96, #474F97)" }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/30 overflow-hidden">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/30 overflow-hidden">
                 <img
                   src="/Yori's Face Outline.png"
                   alt="Yori"
-                  className="w-6 h-6 object-contain"
+                  className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
                 />
               </div>
               <div>
                 <h3 className="font-bold text-sm">Yori</h3>
-                <p className="text-xs text-white/80">
+                <p className="text-[11px] sm:text-xs text-white/80">
                   Your personal AI assistant
                 </p>
               </div>
@@ -1994,9 +2082,13 @@ const FloatingChatbot = () => {
               <button
                 onClick={handleMinimize}
                 className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
-                aria-label="Minimize"
+                aria-label={isMobileView ? "Collapse to side" : "Minimize"}
               >
-                <Minimize2 className="w-4 h-4" />
+                {isMobileView ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <Minimize2 className="w-4 h-4" />
+                )}
               </button>
               <button
                 onClick={handleClose}
@@ -2014,7 +2106,7 @@ const FloatingChatbot = () => {
               <button
                 type="button"
                 onClick={() => setChatTab("yori")}
-                className={`flex-1 px-3 py-2.5 text-xs font-semibold transition-colors ${
+                className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${
                   chatTab === "yori"
                     ? "text-[#2F3C96] bg-white border-b-2 border-[#2F3C96]"
                     : "text-slate-600 hover:text-[#2F3C96]"
@@ -2025,7 +2117,7 @@ const FloatingChatbot = () => {
               <button
                 type="button"
                 onClick={() => setChatTab("meetings")}
-                className={`flex-1 px-3 py-2.5 text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
+                className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1 ${
                   chatTab === "meetings"
                     ? "text-[#2F3C96] bg-white border-b-2 border-[#2F3C96]"
                     : "text-slate-600 hover:text-[#2F3C96]"
@@ -2086,13 +2178,19 @@ const FloatingChatbot = () => {
                       </p>
                       <div className="space-y-3">
                         {meetingRequests.map((req) => {
-                          const other = user?.role === "patient" ? req.expertId : req.patientId;
+                          const other =
+                            user?.role === "patient"
+                              ? req.expertId
+                              : req.patientId;
                           // When viewer is patient, "other" is the researcher — pass role so getDisplayName shows "Dr. Name"
                           const otherForDisplay =
                             user?.role === "patient" && other
                               ? { ...other, role: "researcher" }
                               : other;
-                          const name = getDisplayName(otherForDisplay, user?.role === "patient" ? "Researcher" : "Patient");
+                          const name = getDisplayName(
+                            otherForDisplay,
+                            user?.role === "patient" ? "Researcher" : "Patient",
+                          );
                           const profileUrl =
                             user?.role === "patient" && other?._id
                               ? `/collabiora-expert/profile/${other._id}`
@@ -2112,7 +2210,10 @@ const FloatingChatbot = () => {
                             >
                               <div className="flex items-center justify-between gap-2 mb-2">
                                 <span className="font-semibold text-sm text-slate-800 truncate">
-                                  {user?.role === "patient" ? "Request to " : ""}{name}
+                                  {user?.role === "patient"
+                                    ? "Request to "
+                                    : ""}
+                                  {name}
                                 </span>
                                 <span
                                   className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -2129,24 +2230,34 @@ const FloatingChatbot = () => {
                               {req.message && (
                                 <p className="text-xs text-slate-600 mb-1">
                                   <span className="font-medium text-slate-500">
-                                    {user?.role === "patient" ? "Your message: " : "Their message: "}
+                                    {user?.role === "patient"
+                                      ? "Your message: "
+                                      : "Their message: "}
                                   </span>
-                                  <span className="text-slate-700">&ldquo;{req.message}&rdquo;</span>
+                                  <span className="text-slate-700">
+                                    &ldquo;{req.message}&rdquo;
+                                  </span>
                                 </p>
                               )}
-                              {req.patientQuestions && user?.role === "researcher" && (
-                                <p className="text-xs text-amber-800 italic mb-1 mt-1">
-                                  <span className="font-medium">Their questions: </span>
-                                  {req.patientQuestions}
-                                </p>
-                              )}
+                              {req.patientQuestions &&
+                                user?.role === "researcher" && (
+                                  <p className="text-xs text-amber-800 italic mb-1 mt-1">
+                                    <span className="font-medium">
+                                      Their questions:{" "}
+                                    </span>
+                                    {req.patientQuestions}
+                                  </p>
+                                )}
                               <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-100">
                                 {profileUrl && (
                                   <Link
                                     to={profileUrl}
                                     className="text-xs font-medium text-[#2F3C96] hover:underline"
                                   >
-                                    View {user?.role === "patient" ? "their profile" : "profile"}
+                                    View{" "}
+                                    {user?.role === "patient"
+                                      ? "their profile"
+                                      : "profile"}
                                   </Link>
                                 )}
                                 <button
@@ -2165,324 +2276,327 @@ const FloatingChatbot = () => {
                   </div>
                 ) : (
                   <>
-                {/* Messages Container */}
-                <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80">
-                  {messages.map((message, index) => (
-                    <React.Fragment key={index}>
-                      {/* Skip assistant text when: empty placeholder OR full publication card (trials now show AI + compact bar) */}
-                      {!(
-                        message.role === "assistant" &&
-                        (!message.content ||
-                          (message.publicationDetails &&
-                            message.publicationDetails.showFullCard !== false))
-                      ) && (
-                        <MessageBubble
-                          message={message}
-                          isUser={message.role === "user"}
-                        />
-                      )}
-                      {/* Sample questions - collapsible "Show sample questions" dropdown */}
-                      {/* Show when first message (greeting) and chat is fresh */}
-                      {index === 0 &&
-                        message.role === "assistant" &&
-                        suggestions.length > 0 && (
-                          <div className="mt-2 mb-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSampleQuestionsOpen((prev) => !prev)
-                              }
-                              className="flex items-center gap-1.5 text-sm font-medium text-[#2F3C96] hover:text-[#1e266d] transition-colors"
-                            >
-                              {sampleQuestionsOpen ? (
-                                <ChevronUp className="h-4 w-4 shrink-0" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4 shrink-0" />
-                              )}
-                              {sampleQuestionsOpen
-                                ? "Hide sample questions"
-                                : "Show sample questions"}
-                            </button>
-                            {sampleQuestionsOpen && (
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {suggestions.map((s, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => {
-                                      const activeContext =
-                                        context ||
-                                        (isTrialPage || isPublicationPage
-                                          ? {
-                                              type: isTrialPage
-                                                ? "trial"
-                                                : "publication",
-                                            }
-                                          : null);
-                                      if (activeContext) {
-                                        handleSendMessage(s, activeContext);
-                                      } else {
-                                        handleSendMessage(s);
-                                      }
-                                    }}
-                                    disabled={isLoading}
-                                    className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors disabled:opacity-50"
-                                  >
-                                    {s}
-                                  </button>
-                                ))}
+                    {/* Messages Container */}
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80">
+                      {messages.map((message, index) => (
+                        <React.Fragment key={index}>
+                          {/* Skip assistant text when: empty placeholder OR full publication card (trials now show AI + compact bar) */}
+                          {!(
+                            message.role === "assistant" &&
+                            (!message.content ||
+                              (message.publicationDetails &&
+                                message.publicationDetails.showFullCard !==
+                                  false))
+                          ) && (
+                            <MessageBubble
+                              message={message}
+                              isUser={message.role === "user"}
+                            />
+                          )}
+                          {/* Sample questions - collapsible "Show sample questions" dropdown */}
+                          {/* Show when first message (greeting) and chat is fresh */}
+                          {index === 0 &&
+                            message.role === "assistant" &&
+                            suggestions.length > 0 && (
+                              <div className="mt-2 mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSampleQuestionsOpen((prev) => !prev)
+                                  }
+                                  className="flex items-center gap-1.5 text-sm font-medium text-[#2F3C96] hover:text-[#1e266d] transition-colors"
+                                >
+                                  {sampleQuestionsOpen ? (
+                                    <ChevronUp className="h-4 w-4 shrink-0" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4 shrink-0" />
+                                  )}
+                                  {sampleQuestionsOpen
+                                    ? "Hide sample questions"
+                                    : "Show sample questions"}
+                                </button>
+                                {sampleQuestionsOpen && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {suggestions.map((s, i) => (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => {
+                                          const activeContext =
+                                            context ||
+                                            (isTrialPage || isPublicationPage
+                                              ? {
+                                                  type: isTrialPage
+                                                    ? "trial"
+                                                    : "publication",
+                                                }
+                                              : null);
+                                          if (activeContext) {
+                                            handleSendMessage(s, activeContext);
+                                          } else {
+                                            handleSendMessage(s);
+                                          }
+                                        }}
+                                        disabled={isLoading}
+                                        className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors disabled:opacity-50"
+                                      >
+                                        {s}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        )}
-                      {/* Trial details card - only when showCard is true (legacy); otherwise use AI + TrialAskMoreBar */}
-                      {message.role === "assistant" &&
-                        message.trialDetails &&
-                        message.trialDetails.showCard !== false && (
-                          <TrialDetailsCard
-                            trialDetails={message.trialDetails}
-                            onAskMore={(question) => {
-                              const td = message.trialDetails;
-                              const item = {
-                                nctId: td.nctId,
-                                id: td.nctId,
-                                title: td.title,
-                                url: td.url,
-                              };
-                              handleSendMessage(question, {
-                                type: "trial",
-                                item,
-                              });
-                            }}
-                            onSaveToFavourites={handleSaveToFavourites}
-                            userId={user?._id || user?.id}
-                          />
-                        )}
-                      {/* Compact Ask more bar for trials (shown below AI response, only after response is complete) */}
-                      {message.role === "assistant" &&
-                        message.trialDetails &&
-                        message.trialDetails.showCard === false &&
-                        (!isLoading || index < messages.length - 1) && (
-                          <TrialAskMoreBar
-                            trialDetails={message.trialDetails}
-                            onAskMore={(question) => {
-                              const td = message.trialDetails;
-                              const item = {
-                                nctId: td.nctId,
-                                id: td.nctId,
-                                title: td.title,
-                                url: td.url,
-                              };
-                              handleSendMessage(question, {
-                                type: "trial",
-                                item,
-                              });
-                            }}
-                            onSaveToFavourites={handleSaveToFavourites}
-                            userId={user?._id || user?.id}
-                          />
-                        )}
-                      {/* Formatted publication details (full card for summarize) */}
-                      {message.role === "assistant" &&
-                        message.publicationDetails &&
-                        message.publicationDetails.showFullCard !== false && (
-                          <PublicationDetailsCard
-                            publicationDetails={message.publicationDetails}
-                            onAskMore={(question) => {
-                              const pd = message.publicationDetails;
-                              const item = {
-                                pmid: pd.pmid,
-                                id: pd.pmid,
-                                title: pd.title,
-                                authors: pd.authors,
-                                journal: pd.journal,
-                                year: pd.year,
-                                abstract: pd.abstract,
-                                fullAbstract: pd.abstract,
-                                url: pd.url,
-                              };
-                              handleSendMessage(question, {
-                                type: "publication",
-                                item,
-                              });
-                            }}
-                            onSaveToFavourites={handleSaveToFavourites}
-                            userId={user?._id || user?.id}
-                          />
-                        )}
-                      {/* Compact Ask more bar (for methods/takeaways - shown below AI response, only after response is complete) */}
-                      {message.role === "assistant" &&
-                        message.publicationDetails &&
-                        message.publicationDetails.showFullCard === false &&
-                        (!isLoading || index < messages.length - 1) && (
-                          <PublicationAskMoreBar
-                            publicationDetails={message.publicationDetails}
-                            onAskMore={(question) => {
-                              const pd = message.publicationDetails;
-                              const item = {
-                                pmid: pd.pmid,
-                                id: pd.pmid,
-                                title: pd.title,
-                                authors: pd.authors,
-                                journal: pd.journal,
-                                year: pd.year,
-                                abstract: pd.abstract,
-                                fullAbstract: pd.abstract,
-                                url: pd.url,
-                              };
-                              handleSendMessage(question, {
-                                type: "publication",
-                                item,
-                              });
-                            }}
-                            onSaveToFavourites={handleSaveToFavourites}
-                            userId={user?._id || user?.id}
-                          />
-                        )}
-                      {/* Render search results as separate cards after the message */}
-                      {message.role === "assistant" &&
-                        message.searchResults && (
-                          <SearchResultsCards
-                            searchResults={message.searchResults}
-                            onAskAbout={handleOpenAskMenu}
-                            onSaveToFavourites={handleSaveToFavourites}
-                            userId={user?._id || user?.id}
-                          />
-                        )}
-                      {/* Sources from grounded responses - publications to support claims */}
-                      {message.role === "assistant" &&
-                        message.groundingSources &&
-                        Array.isArray(message.groundingSources) &&
-                        message.groundingSources.length > 0 && (
-                          <div className="flex justify-start mb-3">
-                            <div className="max-w-[85%] w-full">
-                              <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
-                                <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                  <BookOpen className="w-3.5 h-3.5" />
-                                  Sources for further reading
-                                </p>
-                                <ul className="space-y-1.5">
-                                  {message.groundingSources.map((src) => (
-                                    <li key={src.index}>
-                                      <a
-                                        href={src.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-sm text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1.5"
-                                      >
-                                        [{src.index}]{" "}
-                                        {src.title || `Source ${src.index}`}
-                                        <ExternalLink className="w-3 h-3 shrink-0" />
-                                      </a>
-                                    </li>
-                                  ))}
-                                </ul>
+                          {/* Trial details card - only when showCard is true (legacy); otherwise use AI + TrialAskMoreBar */}
+                          {message.role === "assistant" &&
+                            message.trialDetails &&
+                            message.trialDetails.showCard !== false && (
+                              <TrialDetailsCard
+                                trialDetails={message.trialDetails}
+                                onAskMore={(question) => {
+                                  const td = message.trialDetails;
+                                  const item = {
+                                    nctId: td.nctId,
+                                    id: td.nctId,
+                                    title: td.title,
+                                    url: td.url,
+                                  };
+                                  handleSendMessage(question, {
+                                    type: "trial",
+                                    item,
+                                  });
+                                }}
+                                onSaveToFavourites={handleSaveToFavourites}
+                                userId={user?._id || user?.id}
+                              />
+                            )}
+                          {/* Compact Ask more bar for trials (shown below AI response, only after response is complete) */}
+                          {message.role === "assistant" &&
+                            message.trialDetails &&
+                            message.trialDetails.showCard === false &&
+                            (!isLoading || index < messages.length - 1) && (
+                              <TrialAskMoreBar
+                                trialDetails={message.trialDetails}
+                                onAskMore={(question) => {
+                                  const td = message.trialDetails;
+                                  const item = {
+                                    nctId: td.nctId,
+                                    id: td.nctId,
+                                    title: td.title,
+                                    url: td.url,
+                                  };
+                                  handleSendMessage(question, {
+                                    type: "trial",
+                                    item,
+                                  });
+                                }}
+                                onSaveToFavourites={handleSaveToFavourites}
+                                userId={user?._id || user?.id}
+                              />
+                            )}
+                          {/* Formatted publication details (full card for summarize) */}
+                          {message.role === "assistant" &&
+                            message.publicationDetails &&
+                            message.publicationDetails.showFullCard !==
+                              false && (
+                              <PublicationDetailsCard
+                                publicationDetails={message.publicationDetails}
+                                onAskMore={(question) => {
+                                  const pd = message.publicationDetails;
+                                  const item = {
+                                    pmid: pd.pmid,
+                                    id: pd.pmid,
+                                    title: pd.title,
+                                    authors: pd.authors,
+                                    journal: pd.journal,
+                                    year: pd.year,
+                                    abstract: pd.abstract,
+                                    fullAbstract: pd.abstract,
+                                    url: pd.url,
+                                  };
+                                  handleSendMessage(question, {
+                                    type: "publication",
+                                    item,
+                                  });
+                                }}
+                                onSaveToFavourites={handleSaveToFavourites}
+                                userId={user?._id || user?.id}
+                              />
+                            )}
+                          {/* Compact Ask more bar (for methods/takeaways - shown below AI response, only after response is complete) */}
+                          {message.role === "assistant" &&
+                            message.publicationDetails &&
+                            message.publicationDetails.showFullCard === false &&
+                            (!isLoading || index < messages.length - 1) && (
+                              <PublicationAskMoreBar
+                                publicationDetails={message.publicationDetails}
+                                onAskMore={(question) => {
+                                  const pd = message.publicationDetails;
+                                  const item = {
+                                    pmid: pd.pmid,
+                                    id: pd.pmid,
+                                    title: pd.title,
+                                    authors: pd.authors,
+                                    journal: pd.journal,
+                                    year: pd.year,
+                                    abstract: pd.abstract,
+                                    fullAbstract: pd.abstract,
+                                    url: pd.url,
+                                  };
+                                  handleSendMessage(question, {
+                                    type: "publication",
+                                    item,
+                                  });
+                                }}
+                                onSaveToFavourites={handleSaveToFavourites}
+                                userId={user?._id || user?.id}
+                              />
+                            )}
+                          {/* Render search results as separate cards after the message */}
+                          {message.role === "assistant" &&
+                            message.searchResults && (
+                              <SearchResultsCards
+                                searchResults={message.searchResults}
+                                onAskAbout={handleOpenAskMenu}
+                                onSaveToFavourites={handleSaveToFavourites}
+                                userId={user?._id || user?.id}
+                              />
+                            )}
+                          {/* Sources from grounded responses - publications to support claims */}
+                          {message.role === "assistant" &&
+                            message.groundingSources &&
+                            Array.isArray(message.groundingSources) &&
+                            message.groundingSources.length > 0 && (
+                              <div className="flex justify-start mb-3">
+                                <div className="max-w-[85%] w-full">
+                                  <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
+                                    <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                      <BookOpen className="w-3.5 h-3.5" />
+                                      Sources for further reading
+                                    </p>
+                                    <ul className="space-y-1.5">
+                                      {message.groundingSources.map((src) => (
+                                        <li key={src.index}>
+                                          <a
+                                            href={src.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1.5"
+                                          >
+                                            [{src.index}]{" "}
+                                            {src.title || `Source ${src.index}`}
+                                            <ExternalLink className="w-3 h-3 shrink-0" />
+                                          </a>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </div>
                               </div>
+                            )}
+                        </React.Fragment>
+                      ))}
+                      {isLoading && (
+                        <div className="flex justify-start mb-3">
+                          <div className="bg-white border border-[#D1D3E5] rounded-2xl px-4 py-2.5 shadow-sm">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 text-[#2F3C96] animate-spin" />
+                              <span className="text-sm text-slate-600">
+                                Thinking...
+                              </span>
                             </div>
                           </div>
-                        )}
-                    </React.Fragment>
-                  ))}
-                  {isLoading && (
-                    <div className="flex justify-start mb-3">
-                      <div className="bg-white border border-[#D1D3E5] rounded-2xl px-4 py-2.5 shadow-sm">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 text-[#2F3C96] animate-spin" />
-                          <span className="text-sm text-slate-600">
-                            Thinking...
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Ask about options panel - appears above the input when user clicks "Ask about this" */}
+                    {askAboutTarget && (
+                      <div className="px-4 pt-2 pb-2 border-t border-[#D1D3E5] bg-[#E8E9F2]/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium text-slate-700">
+                            Ask about this{" "}
+                            {askAboutTarget.type === "trial"
+                              ? "trial"
+                              : askAboutTarget.type === "publication"
+                                ? "publication"
+                                : "expert"}
+                            :
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => setAskAboutTarget(null)}
+                            className="text-slate-500 hover:text-slate-700 p-0.5 rounded"
+                            aria-label="Close options"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(ASK_ABOUT_OPTIONS[askAboutTarget.type] || []).map(
+                            (opt, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() =>
+                                  handleSelectAskOption(
+                                    opt.question,
+                                    askAboutTarget.item,
+                                    askAboutTarget.type,
+                                  )
+                                }
+                                className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
+                              >
+                                {opt.label}
+                              </button>
+                            ),
+                          )}
                         </div>
                       </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
+                    )}
 
-                {/* Ask about options panel - appears above the input when user clicks "Ask about this" */}
-                {askAboutTarget && (
-                  <div className="px-4 pt-2 pb-2 border-t border-[#D1D3E5] bg-[#E8E9F2]/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-slate-700">
-                        Ask about this{" "}
-                        {askAboutTarget.type === "trial"
-                          ? "trial"
-                          : askAboutTarget.type === "publication"
-                            ? "publication"
-                            : "expert"}
-                        :
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setAskAboutTarget(null)}
-                        className="text-slate-500 hover:text-slate-700 p-0.5 rounded"
-                        aria-label="Close options"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    {/* Input Area - site theme */}
+                    <div className="p-3 sm:p-4 border-t border-[#D1D3E5] bg-white rounded-b-2xl">
+                      <div className="flex gap-2 items-end">
+                        <textarea
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Ask about publications, trials..."
+                          className="flex-1 resize-none rounded-xl border border-[#D1D3E5] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent transition-[colors,shadow] max-h-24"
+                          rows={1}
+                          disabled={isLoading}
+                        />
+                        <button
+                          onClick={() => handleSendMessage()}
+                          disabled={!input.trim() || isLoading}
+                          className="text-white rounded-xl p-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,shadow] duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #2F3C96, #474F97)",
+                          }}
+                          aria-label="Send message"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Send className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2 text-center">
+                        Yori can make mistakes. Verify important information.
+                      </p>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(ASK_ABOUT_OPTIONS[askAboutTarget.type] || []).map(
-                        (opt, i) => (
-                          <button
-                            key={i}
-                            type="button"
-                            onClick={() =>
-                              handleSelectAskOption(
-                                opt.question,
-                                askAboutTarget.item,
-                                askAboutTarget.type,
-                              )
-                            }
-                            className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors"
-                          >
-                            {opt.label}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  </div>
+                  </>
                 )}
-
-                {/* Input Area - site theme */}
-                <div className="p-4 border-t border-[#D1D3E5] bg-white rounded-b-2xl">
-                  <div className="flex gap-2 items-end">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask about publications, trials..."
-                      className="flex-1 resize-none rounded-xl border border-[#D1D3E5] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent transition-[colors,shadow] max-h-24"
-                      rows={1}
-                      disabled={isLoading}
-                    />
-                    <button
-                      onClick={() => handleSendMessage()}
-                      disabled={!input.trim() || isLoading}
-                      className="text-white rounded-xl p-2.5 disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,shadow] duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
-                      style={{
-                        background: "linear-gradient(135deg, #2F3C96, #474F97)",
-                      }}
-                      aria-label="Send message"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Send className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-2 text-center">
-                    Yori can make mistakes. Verify important information.
-                  </p>
-                </div>
               </>
-            )}
-          </>
-        ))}
-      </div>
-    )}
-  </>
-);
+            ))}
+        </div>
+      )}
+    </>
+  );
 };
 
 export default FloatingChatbot;

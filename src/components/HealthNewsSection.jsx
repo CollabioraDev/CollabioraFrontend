@@ -744,13 +744,9 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
             <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Health news is aggregated live from a curated set of public RSS
-              feeds, including WHO, CDC, FDA, Stanford Medicine, KFF Health
-              News, Commonwealth Fund, ECDC, MSF, Health Policy Watch, and PBS.
-              Articles are ranked by source credibility, evidence strength, and
-              relevance to your conditions. AI summaries are for informational
-              purposes only — always consult your healthcare provider before
-              making medical decisions.
+              Trusted Sources: WHO • CDC • FDA • Stanford Medicine • KFF Health
+              News • MSF. Summaries are informational only and not medical
+              advice.
             </p>
           </div>
         )}

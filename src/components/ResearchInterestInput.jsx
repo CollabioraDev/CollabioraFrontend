@@ -27,19 +27,19 @@ export default function ResearchInterestInput({
   // Filter suggestions based on input value
   const suggestions = useMemo(() => {
     if (!value || !value.trim()) return [];
-    
+
     const searchTerm = value.toLowerCase().trim();
     const filtered = researchInterestDataset.filter((item) => {
       const termLower = item.term.toLowerCase();
       const scopeNoteLower = (item.scopeNote || "").toLowerCase();
-      
+
       // Check if search term matches term, synonyms, or scope note
       const matchesTerm = termLower.includes(searchTerm);
       const matchesScopeNote = scopeNoteLower.includes(searchTerm);
-      const matchesSynonym = item.synonyms?.some(syn => 
-        syn.toLowerCase().includes(searchTerm)
-      ) || false;
-      
+      const matchesSynonym =
+        item.synonyms?.some((syn) => syn.toLowerCase().includes(searchTerm)) ||
+        false;
+
       return matchesTerm || matchesScopeNote || matchesSynonym;
     });
 
@@ -50,29 +50,29 @@ export default function ResearchInterestInput({
         const bTerm = b.term.toLowerCase();
         const aStarts = aTerm.startsWith(searchTerm);
         const bStarts = bTerm.startsWith(searchTerm);
-        
+
         // Both start with search term
         if (aStarts && bStarts) {
           // Check if next character after search term is a letter (alphabetical) or hyphen/number (code-like)
           const aNextChar = aTerm[searchTerm.length];
           const bNextChar = bTerm[searchTerm.length];
-          
+
           // Check if next character is alphabetical (letter) or code-like (hyphen, number, etc.)
           const aIsAlphabetical = aNextChar && /[a-z]/.test(aNextChar);
           const bIsAlphabetical = bNextChar && /[a-z]/.test(bNextChar);
-          
+
           // Prioritize alphabetical terms over code-like terms
           if (aIsAlphabetical && !bIsAlphabetical) return -1;
           if (!aIsAlphabetical && bIsAlphabetical) return 1;
-          
+
           // Both same type, sort alphabetically
           return aTerm.localeCompare(bTerm);
         }
-        
+
         // One starts with search term, prioritize it
         if (aStarts && !bStarts) return -1;
         if (!aStarts && bStarts) return 1;
-        
+
         // Neither starts with search term, sort alphabetically
         return aTerm.localeCompare(bTerm);
       })
@@ -89,7 +89,8 @@ export default function ResearchInterestInput({
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = 240;
-      const positionBelow = spaceBelow > dropdownHeight || spaceBelow > spaceAbove;
+      const positionBelow =
+        spaceBelow > dropdownHeight || spaceBelow > spaceAbove;
 
       setDropdownPosition({
         top: positionBelow ? rect.bottom + 4 : rect.top - dropdownHeight - 4,
@@ -102,10 +103,10 @@ export default function ResearchInterestInput({
   useEffect(() => {
     if (showDropdown) {
       updateDropdownPosition();
-      
+
       let rafId;
       let ticking = false;
-      
+
       const handleScroll = () => {
         if (!ticking) {
           ticking = true;
@@ -115,14 +116,20 @@ export default function ResearchInterestInput({
           });
         }
       };
-      
+
       const handleResize = () => {
         if (rafId) cancelAnimationFrame(rafId);
         updateDropdownPosition();
       };
 
-      window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
-      document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+      window.addEventListener("scroll", handleScroll, {
+        passive: true,
+        capture: true,
+      });
+      document.addEventListener("scroll", handleScroll, {
+        passive: true,
+        capture: true,
+      });
       window.addEventListener("resize", handleResize, { passive: true });
 
       const intervalId = setInterval(updateDropdownPosition, 100);
@@ -144,7 +151,6 @@ export default function ResearchInterestInput({
       }
     };
   }, []);
-
 
   const closeDropdown = (delay = 0) => {
     if (blurTimeoutRef.current) {
@@ -177,12 +183,14 @@ export default function ResearchInterestInput({
 
   const handleBlur = (event) => {
     const relatedTarget = event.relatedTarget || document.activeElement;
-    const dropdown = document.querySelector('[data-research-interest-dropdown]');
-    
+    const dropdown = document.querySelector(
+      "[data-research-interest-dropdown]",
+    );
+
     if (dropdown && relatedTarget && dropdown.contains(relatedTarget)) {
       return;
     }
-    
+
     closeDropdown(150);
   };
 
@@ -268,7 +276,7 @@ export default function ResearchInterestInput({
             }}
             onMouseEnter={() => setActiveIndex(index)}
             className={clsx(
-              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer"
+              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer",
             )}
             style={
               index === activeIndex
@@ -303,14 +311,14 @@ export default function ResearchInterestInput({
           disabled={disabled}
           className={clsx(
             "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-            inputClassName
+            inputClassName,
           )}
           autoComplete="off"
           {...rest}
         />
       </div>
-      {typeof document !== "undefined" && createPortal(dropdownContent, document.body)}
+      {typeof document !== "undefined" &&
+        createPortal(dropdownContent, document.body)}
     </>
   );
 }
-

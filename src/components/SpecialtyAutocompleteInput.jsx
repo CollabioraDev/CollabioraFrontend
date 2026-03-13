@@ -31,7 +31,7 @@ export default function SpecialtyAutocompleteInput({
     }
     const searchTerm = value.toLowerCase().trim();
     const filtered = options.filter((opt) =>
-      opt.toLowerCase().includes(searchTerm)
+      opt.toLowerCase().includes(searchTerm),
     );
     return filtered
       .sort((a, b) => {
@@ -46,8 +46,7 @@ export default function SpecialtyAutocompleteInput({
       .slice(0, maxSuggestions);
   }, [value, options, maxSuggestions]);
 
-  const showDropdown =
-    isDropdownOpen && suggestions.length > 0;
+  const showDropdown = isDropdownOpen && suggestions.length > 0;
 
   const updateDropdownPosition = () => {
     if (inputRef.current) {
@@ -84,7 +83,10 @@ export default function SpecialtyAutocompleteInput({
         if (rafId) cancelAnimationFrame(rafId);
         updateDropdownPosition();
       };
-      window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+      window.addEventListener("scroll", handleScroll, {
+        passive: true,
+        capture: true,
+      });
       document.addEventListener("scroll", handleScroll, { passive: true });
       window.addEventListener("resize", handleResize, { passive: true });
       const intervalId = setInterval(updateDropdownPosition, 100);
@@ -129,7 +131,9 @@ export default function SpecialtyAutocompleteInput({
 
   const handleBlur = (event) => {
     const relatedTarget = event.relatedTarget || document.activeElement;
-    const dropdown = document.querySelector("[data-specialty-autocomplete-dropdown]");
+    const dropdown = document.querySelector(
+      "[data-specialty-autocomplete-dropdown]",
+    );
     if (dropdown && relatedTarget && dropdown.contains(relatedTarget)) return;
     closeDropdown(150);
     if (onBlur) onBlur(event);
@@ -201,11 +205,14 @@ export default function SpecialtyAutocompleteInput({
             }}
             onMouseEnter={() => setActiveIndex(index)}
             className={clsx(
-              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer"
+              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer",
             )}
             style={
               index === activeIndex
-                ? { backgroundColor: "rgba(245, 242, 248, 1)", color: "#2F3C96" }
+                ? {
+                    backgroundColor: "rgba(245, 242, 248, 1)",
+                    color: "#2F3C96",
+                  }
                 : { color: "#787878" }
             }
           >
@@ -231,7 +238,7 @@ export default function SpecialtyAutocompleteInput({
           disabled={disabled}
           className={clsx(
             "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-            inputClassName
+            inputClassName,
           )}
           autoComplete="off"
           {...rest}

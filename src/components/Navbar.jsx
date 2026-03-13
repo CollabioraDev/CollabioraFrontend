@@ -551,7 +551,10 @@ export default function Navbar() {
         }
       >
         {/* Logo */}
-        <PrefetchLink to={user ? "/yori" : "/"} className="group relative flex items-center">
+        <PrefetchLink
+          to={user ? "/yori" : "/"}
+          className="group relative flex items-center"
+        >
           {/* Logo Image */}
           <motion.img
             src={"/logo.png"}
@@ -1092,13 +1095,13 @@ export default function Navbar() {
                         {getDisplayName(user, "User")}
                       </span>
                       {(user?.handle || profile?.handle) && (
-                          <span
-                            className="text-[10px] truncate max-w-[100px] block"
-                            style={{ color: "#787878" }}
-                          >
-                            @{user.handle || profile.handle}
-                          </span>
-                        )}
+                        <span
+                          className="text-[10px] truncate max-w-[100px] block"
+                          style={{ color: "#787878" }}
+                        >
+                          @{user.handle || profile.handle}
+                        </span>
+                      )}
                     </div>
 
                     {/* Chevron */}
@@ -1142,7 +1145,8 @@ export default function Navbar() {
                             e.currentTarget.style.color = "#474F97";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.backgroundColor =
+                              "transparent";
                             e.currentTarget.style.color = "#2F3C96";
                           }}
                         >
@@ -1327,23 +1331,18 @@ export default function Navbar() {
               </motion.button>
             )}
 
-            <motion.button
+            <button
               ref={mobileMenuButtonRef}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMobileMenuOpen((prev) => !prev);
               }}
-              className="w-10 h-10 rounded-full transition-all duration-300 flex items-center justify-center shadow-md hover:shadow-lg border-2"
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-md"
               style={{
                 background: "linear-gradient(135deg, #F5F2F8, #E8E0EF)",
                 borderColor: "#D0C4E2",
                 color: "#2F3C96",
               }}
-              whileHover={{
-                scale: 1.1,
-                background: "linear-gradient(135deg, #E8E0EF, #F5F2F8)",
-              }}
-              whileTap={{ scale: 0.95 }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1367,10 +1366,9 @@ export default function Navbar() {
                   />
                 )}
               </svg>
-            </motion.button>
+            </button>
           </div>
         )}
-
       </motion.div>
 
       <AnimatePresence>

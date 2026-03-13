@@ -40,30 +40,103 @@ function cacheSet(key, data) {
 // ── Country name → ISO 3166-1 alpha-2 code ────────────────────────────────
 
 const COUNTRY_CODES = {
-  "united states": "US", "united states of america": "US", usa: "US", us: "US",
-  "united kingdom": "GB", uk: "GB", "great britain": "GB", gb: "GB",
-  canada: "CA", australia: "AU", india: "IN", germany: "DE", france: "FR",
-  japan: "JP", china: "CN", brazil: "BR", mexico: "MX", italy: "IT",
-  spain: "ES", netherlands: "NL", switzerland: "CH", sweden: "SE",
-  norway: "NO", denmark: "DK", finland: "FI", belgium: "BE", austria: "AT",
-  "south korea": "KR", korea: "KR", "republic of korea": "KR",
-  singapore: "SG", "new zealand": "NZ", ireland: "IE",
-  portugal: "PT", poland: "PL", czechia: "CZ", "czech republic": "CZ",
-  hungary: "HU", romania: "RO", greece: "GR", turkey: "TR", "türkiye": "TR",
-  israel: "IL", "saudi arabia": "SA", "united arab emirates": "AE", uae: "AE",
-  egypt: "EG", "south africa": "ZA", nigeria: "NG", kenya: "KE",
-  pakistan: "PK", bangladesh: "BD", "sri lanka": "LK",
-  thailand: "TH", vietnam: "VN", malaysia: "MY", indonesia: "ID",
-  philippines: "PH", taiwan: "TW", "hong kong": "HK",
-  russia: "RU", "russian federation": "RU", ukraine: "UA",
-  argentina: "AR", chile: "CL", colombia: "CO", peru: "PE",
-  nepal: "NP", myanmar: "MM", cambodia: "KH", jordan: "JO",
-  lebanon: "LB", qatar: "QA", kuwait: "KW", bahrain: "BH", oman: "OM",
-  iraq: "IQ", iran: "IR", morocco: "MA", tunisia: "TN", algeria: "DZ",
-  ghana: "GH", ethiopia: "ET", tanzania: "TZ", uganda: "UG",
-  luxembourg: "LU", iceland: "IS", croatia: "HR", serbia: "RS",
-  bulgaria: "BG", slovakia: "SK", slovenia: "SI", lithuania: "LT",
-  latvia: "LV", estonia: "EE", malta: "MT", cyprus: "CY",
+  "united states": "US",
+  "united states of america": "US",
+  usa: "US",
+  us: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  "great britain": "GB",
+  gb: "GB",
+  canada: "CA",
+  australia: "AU",
+  india: "IN",
+  germany: "DE",
+  france: "FR",
+  japan: "JP",
+  china: "CN",
+  brazil: "BR",
+  mexico: "MX",
+  italy: "IT",
+  spain: "ES",
+  netherlands: "NL",
+  switzerland: "CH",
+  sweden: "SE",
+  norway: "NO",
+  denmark: "DK",
+  finland: "FI",
+  belgium: "BE",
+  austria: "AT",
+  "south korea": "KR",
+  korea: "KR",
+  "republic of korea": "KR",
+  singapore: "SG",
+  "new zealand": "NZ",
+  ireland: "IE",
+  portugal: "PT",
+  poland: "PL",
+  czechia: "CZ",
+  "czech republic": "CZ",
+  hungary: "HU",
+  romania: "RO",
+  greece: "GR",
+  turkey: "TR",
+  türkiye: "TR",
+  israel: "IL",
+  "saudi arabia": "SA",
+  "united arab emirates": "AE",
+  uae: "AE",
+  egypt: "EG",
+  "south africa": "ZA",
+  nigeria: "NG",
+  kenya: "KE",
+  pakistan: "PK",
+  bangladesh: "BD",
+  "sri lanka": "LK",
+  thailand: "TH",
+  vietnam: "VN",
+  malaysia: "MY",
+  indonesia: "ID",
+  philippines: "PH",
+  taiwan: "TW",
+  "hong kong": "HK",
+  russia: "RU",
+  "russian federation": "RU",
+  ukraine: "UA",
+  argentina: "AR",
+  chile: "CL",
+  colombia: "CO",
+  peru: "PE",
+  nepal: "NP",
+  myanmar: "MM",
+  cambodia: "KH",
+  jordan: "JO",
+  lebanon: "LB",
+  qatar: "QA",
+  kuwait: "KW",
+  bahrain: "BH",
+  oman: "OM",
+  iraq: "IQ",
+  iran: "IR",
+  morocco: "MA",
+  tunisia: "TN",
+  algeria: "DZ",
+  ghana: "GH",
+  ethiopia: "ET",
+  tanzania: "TZ",
+  uganda: "UG",
+  luxembourg: "LU",
+  iceland: "IS",
+  croatia: "HR",
+  serbia: "RS",
+  bulgaria: "BG",
+  slovakia: "SK",
+  slovenia: "SI",
+  lithuania: "LT",
+  latvia: "LV",
+  estonia: "EE",
+  malta: "MT",
+  cyprus: "CY",
 };
 
 function toCountryCode(name) {
@@ -182,9 +255,7 @@ export default function UniversityInput({
     [priorityLocation?.country],
   );
 
-  const hasLocation = !!(
-    priorityLocation?.city || priorityLocation?.country
-  );
+  const hasLocation = !!(priorityLocation?.city || priorityLocation?.country);
 
   // ── Debounced search ───────────────────────────────────────────────────
 
@@ -346,9 +417,7 @@ export default function UniversityInput({
 
   const handleBlurEvent = (event) => {
     const relatedTarget = event.relatedTarget || document.activeElement;
-    const dropdown = document.querySelector(
-      "[data-university-input-dropdown]",
-    );
+    const dropdown = document.querySelector("[data-university-input-dropdown]");
 
     if (dropdown && relatedTarget && dropdown.contains(relatedTarget)) {
       return;
@@ -374,9 +443,7 @@ export default function UniversityInput({
     if (event.key === "ArrowDown" && suggestions.length > 0) {
       event.preventDefault();
       setIsDropdownOpen(true);
-      setActiveIndex((prev) =>
-        prev + 1 >= suggestions.length ? 0 : prev + 1,
-      );
+      setActiveIndex((prev) => (prev + 1 >= suggestions.length ? 0 : prev + 1));
       return;
     }
 

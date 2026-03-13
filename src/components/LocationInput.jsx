@@ -49,39 +49,202 @@ const POPULAR_CITIES = [
 
 // Comprehensive list of countries for instant country suggestions
 const COUNTRIES = [
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
-  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
-  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
-  "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
-  "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada",
-  "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros",
-  "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
-  "Democratic Republic of the Congo", "Denmark", "Djibouti", "Dominica",
-  "Dominican Republic", "East Timor", "Ecuador", "Egypt", "El Salvador",
-  "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji",
-  "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece",
-  "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras",
-  "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel",
-  "Italy", "Ivory Coast", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya",
-  "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho",
-  "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar",
-  "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands",
-  "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco",
-  "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru",
-  "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
-  "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau",
-  "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines",
-  "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda",
-  "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines",
-  "Samoa", "San Marino", "São Tomé and Príncipe", "Saudi Arabia", "Senegal",
-  "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia",
-  "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan",
-  "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
-  "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tonga",
-  "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda",
-  "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay",
-  "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen",
-  "Zambia", "Zimbabwe",
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Democratic Republic of the Congo",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "East Timor",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Ivory Coast",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Korea",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "São Tomé and Príncipe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Korea",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
 ];
 
 // Legacy combined locations (kept for backward compatibility)
@@ -182,9 +345,9 @@ export default function LocationInput({
   const localSuggestions = useMemo(() => {
     if (!value || value.trim().length < 1) return [];
     const query = value.toLowerCase().trim();
-    return popularList.filter((loc) =>
-      loc.toLowerCase().includes(query)
-    ).slice(0, 6);
+    return popularList
+      .filter((loc) => loc.toLowerCase().includes(query))
+      .slice(0, 6);
   }, [value, popularList]);
 
   // Combined suggestions: local first, then API results (deduplicated)
@@ -194,7 +357,7 @@ export default function LocationInput({
     // Add API suggestions that aren't already in local
     apiSuggestions.forEach((apiSug) => {
       const isDuplicate = combined.some(
-        (local) => local.toLowerCase() === apiSug.toLowerCase()
+        (local) => local.toLowerCase() === apiSug.toLowerCase(),
       );
       if (!isDuplicate) {
         combined.push(apiSug);
@@ -216,7 +379,9 @@ export default function LocationInput({
     // Only hit the API if we don't have enough local matches
     if (mode === "country") {
       const q = query.toLowerCase().trim();
-      const staticMatches = COUNTRIES.filter((c) => c.toLowerCase().includes(q));
+      const staticMatches = COUNTRIES.filter((c) =>
+        c.toLowerCase().includes(q),
+      );
       if (staticMatches.length >= 3) {
         setApiSuggestions([]);
         setIsLoading(false);
@@ -348,13 +513,13 @@ export default function LocationInput({
     // This prevents setting selectedLocation while user is actively typing
     else if (trimmedValue && !selectedLocation) {
       const matchesPopular = popularList.some(
-        (loc) => loc.toLowerCase() === trimmedValue.toLowerCase()
+        (loc) => loc.toLowerCase() === trimmedValue.toLowerCase(),
       );
       const looksComplete =
         mode === "country" || mode === "city"
           ? matchesPopular
           : trimmedValue.includes(",");
-      
+
       if (matchesPopular || looksComplete) {
         setSelectedLocation(trimmedValue);
       }
@@ -500,7 +665,7 @@ export default function LocationInput({
 
       const scrollParents = getScrollParents(inputRef.current);
       scrollParents.forEach((parent) =>
-        parent.addEventListener("scroll", handleScroll, { passive: true })
+        parent.addEventListener("scroll", handleScroll, { passive: true }),
       );
 
       const intervalId = setInterval(updateDropdownPosition, 100);
@@ -513,7 +678,7 @@ export default function LocationInput({
         document.removeEventListener("scroll", handleScroll, { capture: true });
         window.removeEventListener("resize", handleResize);
         scrollParents.forEach((parent) =>
-          parent.removeEventListener("scroll", handleScroll)
+          parent.removeEventListener("scroll", handleScroll),
         );
       };
     }
@@ -526,14 +691,16 @@ export default function LocationInput({
       const target = e.target;
       const inputEl = inputRef.current;
       const dropdown = document.querySelector("[data-location-dropdown]");
-      const clickedInput = inputEl && (target === inputEl || inputEl.contains(target));
+      const clickedInput =
+        inputEl && (target === inputEl || inputEl.contains(target));
       const clickedDropdown = dropdown && dropdown.contains(target);
       if (!clickedInput && !clickedDropdown) {
         closeDropdown(0);
       }
     };
     document.addEventListener("mousedown", handleMouseDown, true);
-    return () => document.removeEventListener("mousedown", handleMouseDown, true);
+    return () =>
+      document.removeEventListener("mousedown", handleMouseDown, true);
   }, [showDropdown]);
 
   useEffect(() => {
@@ -632,32 +799,38 @@ export default function LocationInput({
     }
 
     const trimmedValue = value.trim();
-    
+
     // If we have a selected location and the value matches it, keep it selected
     if (selectedLocation && trimmedValue === selectedLocation.trim()) {
       // Value matches selected location - keep it selected
       return;
     }
-    
+
     // Auto-complete: If user typed something that matches the first suggestion, auto-complete it
     if (trimmedValue.length > 0 && suggestions.length > 0) {
       const firstSuggestion = suggestions[0];
       const valueLower = trimmedValue.toLowerCase();
       const suggestionLower = firstSuggestion.toLowerCase();
-      
+
       // Check if the typed value matches the beginning of the first suggestion
       // This handles cases like "New York" -> "New York, United States"
-      if (suggestionLower.startsWith(valueLower) && suggestionLower !== valueLower) {
+      if (
+        suggestionLower.startsWith(valueLower) &&
+        suggestionLower !== valueLower
+      ) {
         // Auto-complete to the full suggestion
         setSelectedLocation(firstSuggestion);
         onChange?.(firstSuggestion);
         return;
       }
     }
-    
+
     // If user has entered a value (not empty) and it doesn't match selected location,
     // treat it as a manually entered location and persist it
-    if (trimmedValue.length > 0 && (!selectedLocation || trimmedValue !== selectedLocation.trim())) {
+    if (
+      trimmedValue.length > 0 &&
+      (!selectedLocation || trimmedValue !== selectedLocation.trim())
+    ) {
       // User manually entered a location - persist it
       setSelectedLocation(trimmedValue);
     } else if (trimmedValue.length === 0) {
@@ -764,7 +937,7 @@ export default function LocationInput({
               }}
               onMouseEnter={() => setActiveIndex(index)}
               className={clsx(
-                "flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors cursor-pointer"
+                "flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors cursor-pointer",
               )}
               style={
                 index === activeIndex
@@ -845,7 +1018,7 @@ export default function LocationInput({
             className={clsx(
               "w-full rounded-xl border bg-white pl-9 py-2.5 text-sm transition-all focus:outline-none focus:ring-2",
               isLoading ? "pr-9" : "pr-3",
-              inputClassName
+              inputClassName,
             )}
             style={{
               borderColor: "#E8E8E8",

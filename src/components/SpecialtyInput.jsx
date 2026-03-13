@@ -27,13 +27,13 @@ export default function SpecialtyInput({
   // Filter suggestions based on input value
   const suggestions = useMemo(() => {
     if (!value || !value.trim()) return [];
-    
+
     const searchTerm = value.toLowerCase().trim();
     const filtered = specialtyDataset.filter((item) => {
       const displayLower = item.displayText.toLowerCase();
       const classificationLower = item.classification.toLowerCase();
       const specializationLower = item.specialization.toLowerCase();
-      
+
       return (
         displayLower.includes(searchTerm) ||
         classificationLower.includes(searchTerm) ||
@@ -48,10 +48,10 @@ export default function SpecialtyInput({
         const bDisplay = b.displayText.toLowerCase();
         const aStarts = aDisplay.startsWith(searchTerm);
         const bStarts = bDisplay.startsWith(searchTerm);
-        
+
         if (aStarts && !bStarts) return -1;
         if (!aStarts && bStarts) return 1;
-        
+
         return aDisplay.localeCompare(bDisplay);
       })
       .slice(0, maxSuggestions);
@@ -67,7 +67,8 @@ export default function SpecialtyInput({
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
       const dropdownHeight = 240;
-      const positionBelow = spaceBelow > dropdownHeight || spaceBelow > spaceAbove;
+      const positionBelow =
+        spaceBelow > dropdownHeight || spaceBelow > spaceAbove;
 
       setDropdownPosition({
         top: positionBelow ? rect.bottom + 4 : rect.top - dropdownHeight - 4,
@@ -80,10 +81,10 @@ export default function SpecialtyInput({
   useEffect(() => {
     if (showDropdown) {
       updateDropdownPosition();
-      
+
       let rafId;
       let ticking = false;
-      
+
       const handleScroll = () => {
         if (!ticking) {
           ticking = true;
@@ -93,14 +94,20 @@ export default function SpecialtyInput({
           });
         }
       };
-      
+
       const handleResize = () => {
         if (rafId) cancelAnimationFrame(rafId);
         updateDropdownPosition();
       };
 
-      window.addEventListener("scroll", handleScroll, { passive: true, capture: true });
-      document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+      window.addEventListener("scroll", handleScroll, {
+        passive: true,
+        capture: true,
+      });
+      document.addEventListener("scroll", handleScroll, {
+        passive: true,
+        capture: true,
+      });
       window.addEventListener("resize", handleResize, { passive: true });
 
       const intervalId = setInterval(updateDropdownPosition, 100);
@@ -122,7 +129,6 @@ export default function SpecialtyInput({
       }
     };
   }, []);
-
 
   const closeDropdown = (delay = 0) => {
     if (blurTimeoutRef.current) {
@@ -155,14 +161,14 @@ export default function SpecialtyInput({
 
   const handleBlur = (event) => {
     const relatedTarget = event.relatedTarget || document.activeElement;
-    const dropdown = document.querySelector('[data-specialty-dropdown]');
-    
+    const dropdown = document.querySelector("[data-specialty-dropdown]");
+
     if (dropdown && relatedTarget && dropdown.contains(relatedTarget)) {
       return;
     }
-    
+
     closeDropdown(150);
-    
+
     // Call parent's onBlur handler if provided
     if (onBlur) {
       onBlur(event);
@@ -247,7 +253,7 @@ export default function SpecialtyInput({
             }}
             onMouseEnter={() => setActiveIndex(index)}
             className={clsx(
-              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer"
+              "flex items-center px-3 py-2 text-sm transition-colors cursor-pointer",
             )}
             style={
               index === activeIndex
@@ -282,14 +288,14 @@ export default function SpecialtyInput({
           disabled={disabled}
           className={clsx(
             "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-            inputClassName
+            inputClassName,
           )}
           autoComplete="off"
           {...rest}
         />
       </div>
-      {typeof document !== "undefined" && createPortal(dropdownContent, document.body)}
+      {typeof document !== "undefined" &&
+        createPortal(dropdownContent, document.body)}
     </>
   );
 }
-
