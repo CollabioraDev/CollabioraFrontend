@@ -207,6 +207,14 @@ const AppContent = () => {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
   );
+  const [isSignedIn, setIsSignedIn] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("user") || "null");
+      return Boolean(stored?._id || stored?.id);
+    } catch {
+      return false;
+    }
+  });
   const [userRole, setUserRole] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
@@ -225,22 +233,26 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    const syncUserRole = () => {
+    const syncUserState = () => {
       try {
         const stored = JSON.parse(localStorage.getItem("user") || "null");
+        setIsSignedIn(Boolean(stored?._id || stored?.id));
         setUserRole(stored?.role || "patient");
       } catch {
+        setIsSignedIn(false);
         setUserRole("patient");
       }
     };
-    syncUserRole();
-    window.addEventListener("login", syncUserRole);
-    window.addEventListener("userUpdated", syncUserRole);
-    window.addEventListener("storage", syncUserRole);
+    syncUserState();
+    window.addEventListener("login", syncUserState);
+    window.addEventListener("logout", syncUserState);
+    window.addEventListener("userUpdated", syncUserState);
+    window.addEventListener("storage", syncUserState);
     return () => {
-      window.removeEventListener("login", syncUserRole);
-      window.removeEventListener("userUpdated", syncUserRole);
-      window.removeEventListener("storage", syncUserRole);
+      window.removeEventListener("login", syncUserState);
+      window.removeEventListener("logout", syncUserState);
+      window.removeEventListener("userUpdated", syncUserState);
+      window.removeEventListener("storage", syncUserState);
     };
   }, []);
 
@@ -416,7 +428,9 @@ const AppContent = () => {
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </Suspense>
-      {showLayout && isMobile && <MobileBottomNav isPatient={isPatient} />}
+      {showLayout && isMobile && isSignedIn && (
+        <MobileBottomNav isPatient={isPatient} />
+      )}
     </div>
   );
 };

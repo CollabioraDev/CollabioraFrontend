@@ -697,9 +697,14 @@ export default function Notifications() {
     return str;
   }
 
-  /** Build a Date for the requested meeting time from preferredDate + preferredTime */
+  /** Build a Date for the requested meeting time from the saved UTC slot when available. */
   function getRequestedDateTime(request) {
-    if (!request || !request.preferredDate) return null;
+    if (!request) return null;
+    if (request.preferredSlotStartUtc) {
+      const slotStart = new Date(request.preferredSlotStartUtc);
+      return Number.isNaN(slotStart.getTime()) ? null : slotStart;
+    }
+    if (!request.preferredDate) return null;
     const base = new Date(request.preferredDate);
     if (Number.isNaN(base.getTime())) return null;
     if (request.preferredTime) {
@@ -1509,7 +1514,7 @@ export default function Notifications() {
                             <p className="text-sm text-slate-700 mb-2">
                               {request.message}
                             </p>
-                            {request.preferredDate && (
+                            {(request.preferredSlotStartUtc || request.preferredDate) && (
                               <p className="text-xs text-slate-600 mb-1">
                                 <Calendar className="w-3 h-3 inline mr-1" />
                                 <span className="font-medium text-slate-700">Requested time (your time):</span>{" "}

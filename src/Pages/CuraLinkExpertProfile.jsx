@@ -50,6 +50,17 @@ export default function CollabioraExpertProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const getInitialMeetingRequestModal = () => ({
+    open: false,
+    topic: "",
+    shortDescription: "",
+    message: "",
+    preferredDate: "",
+    preferredTime: "",
+    preferredSlotStartUtc: "",
+    preferredSlotEndUtc: "",
+    calendarMonth: new Date().toISOString().slice(0, 7),
+  });
 
   // Get URL search params for name, location, and bio
   const searchParams = new URLSearchParams(window.location.search);
@@ -97,15 +108,9 @@ export default function CollabioraExpertProfile() {
     open: false,
     trial: null,
   });
-  const [meetingRequestModal, setMeetingRequestModal] = useState({
-    open: false,
-    topic: "",
-    shortDescription: "",
-    message: "",
-    preferredDate: "",
-    preferredTime: "",
-    calendarMonth: new Date().toISOString().slice(0, 7), // YYYY-MM for calendar view
-  });
+  const [meetingRequestModal, setMeetingRequestModal] = useState(
+    getInitialMeetingRequestModal,
+  );
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [connectionRequestModal, setConnectionRequestModal] = useState({
@@ -486,7 +491,12 @@ export default function CollabioraExpertProfile() {
       return;
     }
 
-    if (!meetingRequestModal.preferredDate || !meetingRequestModal.preferredTime) {
+    if (
+      !meetingRequestModal.preferredDate ||
+      !meetingRequestModal.preferredTime ||
+      !meetingRequestModal.preferredSlotStartUtc ||
+      !meetingRequestModal.preferredSlotEndUtc
+    ) {
       toast.error("Please select a date and time");
       return;
     }
@@ -512,9 +522,11 @@ export default function CollabioraExpertProfile() {
           shortDescription: meetingRequestModal.shortDescription,
           message: meetingRequestModal.message,
           preferredDate: meetingRequestModal.preferredDate || null,
-          // For now we continue sending a human-readable time placeholder alongside the
-          // new backend-driven UTC slot, so legacy flows keep working.
           preferredTime: meetingRequestModal.preferredTime || null,
+          preferredSlotStartUtc:
+            meetingRequestModal.preferredSlotStartUtc || null,
+          preferredSlotEndUtc:
+            meetingRequestModal.preferredSlotEndUtc || null,
         }),
       });
 
@@ -524,15 +536,7 @@ export default function CollabioraExpertProfile() {
       }
 
       toast.success("Meeting request sent successfully!");
-      setMeetingRequestModal({
-        open: false,
-        topic: "",
-        shortDescription: "",
-        message: "",
-        preferredDate: "",
-        preferredTime: "",
-        calendarMonth: new Date().toISOString().slice(0, 7),
-      });
+      setMeetingRequestModal(getInitialMeetingRequestModal());
       setMeetingRequestStatus({
         hasRequest: true,
         status: "pending",
@@ -1123,13 +1127,8 @@ export default function CollabioraExpertProfile() {
                           <button
                             onClick={() =>
                               setMeetingRequestModal({
+                                ...getInitialMeetingRequestModal(),
                                 open: true,
-                                topic: "",
-                                shortDescription: "",
-                                message: "",
-                                preferredDate: "",
-                                preferredTime: "",
-                                calendarMonth: new Date().toISOString().slice(0, 7),
                               })
                             }
                             className="px-4 py-2 bg-white text-[#2F3C96] rounded-lg text-sm font-semibold hover:bg-white/95 transition-all flex items-center gap-2 shadow-sm"
@@ -1200,7 +1199,7 @@ export default function CollabioraExpertProfile() {
                 )}
                 <p className="text-xs text-slate-600 border-t border-slate-100 pt-2 mt-2">
                   <Clock className="w-3.5 h-3.5 inline mr-1 align-middle" />
-                  Available: Mon–Fri 2–5 PM (your time). Some slots are blocked and will appear as unavailable in the calendar.
+                  Available times are shown in your local timezone after you pick a date.
                 </p>
               </div>
             </div>
@@ -2064,15 +2063,7 @@ export default function CollabioraExpertProfile() {
       {/* Meeting Request Modal (for patients) — Cal.com-style */}
       <Modal
         isOpen={meetingRequestModal.open}
-        onClose={() =>
-          setMeetingRequestModal({
-            open: false,
-            message: "",
-            preferredDate: "",
-            preferredTime: "",
-            calendarMonth: new Date().toISOString().slice(0, 7),
-          })
-        }
+        onClose={() => setMeetingRequestModal(getInitialMeetingRequestModal())}
         title="Book a meeting"
       >
         <div className="space-y-5 max-h-[70vh] overflow-y-auto">
@@ -2149,7 +2140,9 @@ export default function CollabioraExpertProfile() {
                               setMeetingRequestModal((prev) => ({
                                 ...prev,
                                 preferredDate: dateStr,
-                                preferredTime: isSelected && prev.preferredTime ? prev.preferredTime : "",
+                                preferredTime: "",
+                                preferredSlotStartUtc: "",
+                                preferredSlotEndUtc: "",
                               }))
                             }
                             className={`aspect-square flex items-center justify-center text-sm rounded-lg transition-colors ${
@@ -2197,7 +2190,8 @@ export default function CollabioraExpertProfile() {
                     {!loadingSlots &&
                       availableSlots.map((slot) => {
                         const isSelected =
-                          meetingRequestModal.preferredTime === slot.time24;
+                          meetingRequestModal.preferredSlotStartUtc ===
+                          slot.startUtc;
                         return (
                           <button
                             key={slot.startUtc}
@@ -2206,6 +2200,8 @@ export default function CollabioraExpertProfile() {
                               setMeetingRequestModal((prev) => ({
                                 ...prev,
                                 preferredTime: slot.time24,
+                                preferredSlotStartUtc: slot.startUtc,
+                                preferredSlotEndUtc: slot.endUtc,
                               }))
                             }
                             className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-colors ${
@@ -2284,13 +2280,7 @@ export default function CollabioraExpertProfile() {
             </button>
             <button
               onClick={() =>
-                setMeetingRequestModal({
-                  open: false,
-                  message: "",
-                  preferredDate: "",
-                  preferredTime: "",
-                  calendarMonth: new Date().toISOString().slice(0, 7),
-                })
+                setMeetingRequestModal(getInitialMeetingRequestModal())
               }
               className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-colors"
             >

@@ -1160,6 +1160,7 @@ const SPEECH_BUBBLE_PHRASES = [
 const FloatingChatbot = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isLandingPage = location.pathname === "/";
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -1868,12 +1869,20 @@ const FloatingChatbot = () => {
   }
 
   const isGuest = !user;
+  const closedBotPositionClass = isLandingPage
+    ? "bottom-4 sm:bottom-6"
+    : "bottom-24 sm:bottom-10";
+  const openChatPositionClass = isLandingPage
+    ? "bottom-4 sm:bottom-6"
+    : "bottom-24 sm:bottom-10";
 
   return (
     <>
       {/* Floating Chat Button - constrained on mobile so it doesn't go off screen */}
       {!isOpen && (
-        <div className="fixed bottom-24 right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto">
+        <div
+          className={`fixed right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto ${closedBotPositionClass}`}
+        >
           {/* Speech Bubble - rotates between "Hi, I'm Yori" and "How can I help you?" */}
           {(() => {
             const phrase = SPEECH_BUBBLE_PHRASES[speechPhraseIndex];
@@ -1928,7 +1937,7 @@ const FloatingChatbot = () => {
       {/* Chat Window - full-width inset on mobile so it stays on screen */}
       {isOpen && (
         <div
-          className={`fixed left-4 right-4 bottom-24 sm:left-auto sm:right-6 sm:bottom-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${
+          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col transition-width transition-height duration-300 ${openChatPositionClass} ${
             isMinimized
               ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
               : "w-[calc(100vw-2rem)] sm:w-96 h-[min(600px,calc(100vh-2rem))]"

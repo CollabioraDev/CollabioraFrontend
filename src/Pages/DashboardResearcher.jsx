@@ -7046,14 +7046,15 @@ export default function DashboardResearcher() {
                                             {req.shortDescription}
                                           </p>
                                         )}
-                                        {req.preferredDate && (
+                                        {(req.preferredSlotStartUtc || req.preferredDate) && (
                                           <p className="text-[11px] text-slate-600 mt-0.5">
                                             <CalendarIcon className="w-3 h-3 inline mr-1" />
                                             Requested:{" "}
                                             {new Date(
-                                              req.preferredTime
+                                              req.preferredSlotStartUtc ||
+                                              (req.preferredTime
                                                 ? `${req.preferredDate}T${req.preferredTime}:00`
-                                                : req.preferredDate,
+                                                : req.preferredDate),
                                             ).toLocaleString()}
                                           </p>
                                         )}
