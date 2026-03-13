@@ -3990,7 +3990,7 @@ export default function Forums() {
 
             {/* New Condition & Topic Modal */}
             {newSubcategoryModal && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
                   <div className="p-5 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
@@ -4179,7 +4179,7 @@ export default function Forums() {
 
             {/* New Thread Modal */}
             {newThreadModal && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
                   <div className="p-5 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
@@ -4545,7 +4545,7 @@ export default function Forums() {
 
             {/* Propose a Community Modal */}
             {proposeCommunityModal && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
                   <div className="p-5 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
@@ -4669,7 +4669,7 @@ export default function Forums() {
 
             {/* Join Community Guidelines Modal */}
             {joinGuidelinesModalCommunity && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
                   <div className="p-6 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
@@ -4825,7 +4825,7 @@ export default function Forums() {
 
             {/* "Want to follow them too?" popup after favoriting a thread */}
             {showFollowAfterFavorite && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 border border-[#E8E8E8]">
                   <p className="text-[#484848] font-medium mb-4">
                     Want to follow{" "}
@@ -4862,7 +4862,7 @@ export default function Forums() {
 
             {/* User Profile Modal — first name, username, forums posted, communities joined, Follow */}
             {userProfileModalUserId && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
                   <div className="p-6 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">

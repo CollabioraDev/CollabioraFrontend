@@ -1266,7 +1266,7 @@ export default function EditProfile() {
 
           {/* OTP Verification Modal */}
           {showOtpModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl sm:p-8">
                 <button
                   onClick={() => setShowOtpModal(false)}

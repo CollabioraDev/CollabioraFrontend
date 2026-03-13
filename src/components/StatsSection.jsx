@@ -43,22 +43,16 @@ const StatsSection = () => {
             return (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: "-50px" }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true, margin: "-25px" }}
                 transition={{
-                  duration: 0.6,
+                  duration: 0.5,
                   delay: stat.delay,
-                  type: "spring",
-                  stiffness: 100,
                 }}
                 className="relative group"
               >
-                <motion.div
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative h-full"
-                >
+                <div className="relative h-full">
                   <div
                     className="rounded-xl p-4 sm:p-5 border bg-white h-full flex flex-col items-center justify-center text-center shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden"
                     style={{
@@ -70,17 +64,7 @@ const StatsSection = () => {
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#2F3C96] via-[#D0C4E2] to-[#2F3C96] opacity-60 group-hover:opacity-100 transition-opacity" />
 
                     {/* Icon with background */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.5,
-                        delay: stat.delay + 0.1,
-                      }}
-                      whileHover={{ scale: 1.15, rotate: 5 }}
-                      className="mb-3 sm:mb-4"
-                    >
+                    <div className="mb-3 sm:mb-4">
                       <div
                         className="p-2 sm:p-2.5 rounded-lg"
                         style={{
@@ -93,7 +77,7 @@ const StatsSection = () => {
                           style={{ color: "#2F3C96" }}
                         />
                       </div>
-                    </motion.div>
+                    </div>
 
                     {/* Value (static, no count-up animation) */}
                     <div className="mb-1.5 sm:mb-2">
@@ -124,7 +108,7 @@ const StatsSection = () => {
                       {stat.label}
                     </motion.p>
                   </div>
-                </motion.div>
+                </div>
               </motion.div>
             );
           })}

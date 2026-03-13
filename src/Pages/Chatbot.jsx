@@ -2170,7 +2170,7 @@ export default function YoriAI() {
         {/* Mobile backdrop */}
         {isMobile && sidebarOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-200"
+            className="fixed inset-0 z-40 bg-black/30 transition-opacity duration-200"
             onClick={() => setSidebarOpen(false)}
             aria-hidden="true"
           />
@@ -2187,7 +2187,7 @@ export default function YoriAI() {
           `}
           style={isMobile ? { transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1)" } : undefined}
         >
-          <div className={`flex flex-col rounded-2xl border border-[#D1D3E5] bg-white/95 backdrop-blur shadow-sm overflow-hidden yori-sidebar-enter ${isMobile ? "h-full" : "h-full w-[280px]"}`}>
+          <div className={`flex flex-col rounded-2xl border border-[#D1D3E5] bg-white/95 shadow-sm overflow-hidden yori-sidebar-enter ${isMobile ? "h-full" : "h-full w-[280px]"}`}>
             <div className="flex items-center gap-2 p-3">
               <button
                 type="button"

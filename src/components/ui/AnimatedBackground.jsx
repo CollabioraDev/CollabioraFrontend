@@ -71,9 +71,9 @@ export default function AnimatedBackground({ isMobile = false }) {
     <>
       <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-b from-[#F5F2F8] via-white to-[#E8E0EF] ">
         {/* Optimized Gradient Blobs - Reduced from 6 to 3 for better performance */}
-        {/* Large primary blob - top right */}
+        {/* Large primary blob - top right (reduced blur for performance) */}
         <div
-          className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br rounded-full blur-2xl animate-blob-float"
+          className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br rounded-full blur-xl animate-blob-float"
           style={{
             background: `linear-gradient(to bottom right, rgba(208, 196, 226, ${
               0.3 * blobOpacity
@@ -85,9 +85,9 @@ export default function AnimatedBackground({ isMobile = false }) {
           }}
         />
 
-        {/* Medium blob - bottom left */}
+        {/* Medium blob - bottom left (reduced blur) */}
         <div
-          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr rounded-full blur-2xl animate-blob-float-reverse"
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr rounded-full blur-xl animate-blob-float-reverse"
           style={{
             animationDelay: "1s",
             background: `linear-gradient(to top right, rgba(47, 60, 150, ${
@@ -100,9 +100,9 @@ export default function AnimatedBackground({ isMobile = false }) {
           }}
         />
 
-        {/* Small accent blob - top center */}
+        {/* Small accent blob - top center (reduced blur) */}
         <div
-          className="absolute top-1/4 left-1/2 w-[300px] h-[300px] bg-gradient-to-br rounded-full blur-2xl animate-blob-pulse"
+          className="absolute top-1/4 left-1/2 w-[300px] h-[300px] bg-gradient-to-br rounded-full blur-xl animate-blob-pulse"
           style={{
             animationDelay: "0.5s",
             background: `linear-gradient(to bottom right, rgba(208, 196, 226, ${

@@ -47,16 +47,16 @@ const GetStartedSection = () => {
 
   const PatientCard = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: 0.1 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
       className="group relative"
     >
       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div
-        className="relative rounded-xl overflow-hidden backdrop-blur-sm border h-full flex flex-col transition-all duration-500 group-hover:shadow-xl"
+        className="relative rounded-xl overflow-hidden border h-full flex flex-col transition-all duration-300 group-hover:shadow-md"
         style={{
           backgroundColor: "#FFFFFF",
           borderColor: "#D0C4E2",
@@ -83,25 +83,13 @@ const GetStartedSection = () => {
         />
 
         <div className="relative p-6 sm:p-8">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="flex items-center gap-3 mb-4"
-          >
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: 5 }}
+          <div className="flex items-center gap-3 mb-4">
+            <div
               className="p-2.5 rounded-lg relative"
               style={{ backgroundColor: "#D0C4E2" }}
             >
               <Stethoscope className="w-5 h-5" style={{ color: "#2F3C96" }} />
-              {/* Light purple glow */}
-              <div
-                className="absolute inset-0 rounded-lg opacity-30 blur-sm"
-                style={{ backgroundColor: "#D0C4E2" }}
-              />
-            </motion.div>
+            </div>
             <div>
               <h3
                 className="text-lg sm:text-xl font-bold"
@@ -110,7 +98,7 @@ const GetStartedSection = () => {
                 For You
               </h3>
             </div>
-          </motion.div>
+          </div>
 
           <p
             className="text-xs mb-5 leading-relaxed"
@@ -155,9 +143,7 @@ const GetStartedSection = () => {
             })}
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => (window.location.href = "/signin")}
             className="w-full py-2.5 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all duration-300 text-white shadow-lg hover:shadow-xl"
             style={{
@@ -165,10 +151,8 @@ const GetStartedSection = () => {
             }}
           >
             Get Started
-            <motion.div whileHover={{ x: 4 }}>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </motion.div>
-          </motion.button>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </motion.div>
@@ -176,16 +160,16 @@ const GetStartedSection = () => {
 
   const ResearcherCard = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: 0.2 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
       className="group relative"
     >
       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div
-        className="relative rounded-xl overflow-hidden border h-full flex flex-col transition-all duration-500 group-hover:shadow-xl"
+        className="relative rounded-xl overflow-hidden border h-full flex flex-col transition-all duration-300 group-hover:shadow-md"
         style={{
           backgroundColor: "#FFFFFF",
           borderColor: "#D0C4E2",
@@ -212,25 +196,13 @@ const GetStartedSection = () => {
         />
 
         <div className="relative p-6 sm:p-8">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="flex items-center gap-3 mb-4"
-          >
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: -5 }}
+          <div className="flex items-center gap-3 mb-4">
+            <div
               className="p-2.5 rounded-lg relative"
               style={{ backgroundColor: "#D0C4E2" }}
             >
               <Sparkles className="w-5 h-5" style={{ color: "#2F3C96" }} />
-              {/* Light purple glow */}
-              <div
-                className="absolute inset-0 rounded-lg opacity-30 blur-sm"
-                style={{ backgroundColor: "#D0C4E2" }}
-              />
-            </motion.div>
+            </div>
             <div>
               <h3
                 className="text-lg sm:text-xl font-bold"
@@ -239,7 +211,7 @@ const GetStartedSection = () => {
                 For Researchers
               </h3>
             </div>
-          </motion.div>
+          </div>
 
           <p
             className="text-xs mb-5 leading-relaxed"
@@ -284,9 +256,7 @@ const GetStartedSection = () => {
             })}
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => (window.location.href = "/signin")}
             className="w-full py-2.5 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl text-white"
             style={{
@@ -294,10 +264,8 @@ const GetStartedSection = () => {
             }}
           >
             Get Started
-            <motion.div whileHover={{ x: 4 }}>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </motion.div>
-          </motion.button>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </motion.div>
