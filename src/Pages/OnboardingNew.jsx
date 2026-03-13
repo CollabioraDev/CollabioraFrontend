@@ -208,7 +208,6 @@ export default function OnboardingNew() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [conditions, setConditions] = useState([]);
   const [conditionInput, setConditionInput] = useState("");
   const [identifiedConditions, setIdentifiedConditions] = useState([]);
@@ -296,7 +295,6 @@ export default function OnboardingNew() {
     lastName,
     handle,
     email,
-    acceptedTerms,
     conditions,
     symptomsText,
     profession,
@@ -334,8 +332,6 @@ export default function OnboardingNew() {
     if (typeof draft.lastName === "string") setLastName(draft.lastName);
     if (typeof draft.handle === "string") setHandle(draft.handle);
     if (typeof draft.email === "string") setEmail(draft.email);
-    if (typeof draft.acceptedTerms === "boolean")
-      setAcceptedTerms(draft.acceptedTerms);
     if (Array.isArray(draft.conditions)) setConditions(draft.conditions);
     if (typeof draft.symptomsText === "string")
       setSymptomsText(draft.symptomsText);
@@ -1039,7 +1035,8 @@ export default function OnboardingNew() {
     return { level: 4, label: "Strong", color: "#2F3C96" };
   };
   const passwordStrength = getPasswordStrength(password);
-  const canGoNextFromEmail = isValidEmail(email.trim()) && password.length >= 6 && acceptedTerms;
+  const canGoNextFromEmail =
+    isValidEmail(email.trim()) && password.length >= 6;
 
   // When returning from OAuth: restore medical choice and land on Name step so user fills in their details first
   useEffect(() => {
@@ -1266,13 +1263,7 @@ export default function OnboardingNew() {
                               key={id}
                               type="button"
                               disabled={!!socialLoading}
-                              onClick={() => {
-                                if (!acceptedTerms) {
-                                  toast.error("Please agree to the Terms & Conditions and Privacy Policy first");
-                                  return;
-                                }
-                                handleSocialSignUp(id);
-                              }}
+                              onClick={() => handleSocialSignUp(id)}
                               className="py-3 rounded-lg border flex flex-col items-center justify-center gap-1.5 transition hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed bg-white"
                               style={{
                                 borderColor: "#D0C4E2",
@@ -1408,37 +1399,29 @@ export default function OnboardingNew() {
                         )}
                       </div>
                     </div>
-                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        className="mt-0.5 w-4 h-4 rounded border-2 accent-[#2F3C96] cursor-pointer shrink-0"
-                        style={{ borderColor: "#D0C4E2" }}
-                      />
-                      <span className="text-xs leading-relaxed" style={{ color: "#787878" }}>
-                        I agree to the{" "}
-                        <a
-                          href="/terms"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-semibold underline hover:opacity-80"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          Terms &amp; Conditions
-                        </a>{" "}
-                        and{" "}
-                        <a
-                          href="/privacy"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-semibold underline hover:opacity-80"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          Privacy Policy
-                        </a>
-                      </span>
-                    </label>
+                    <p className="text-xs leading-relaxed" style={{ color: "#787878" }}>
+                      By signing up, you agree to our{" "}
+                      <a
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold underline hover:opacity-80"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        Terms &amp; Conditions
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold underline hover:opacity-80"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        Privacy Policy
+                      </a>
+                      .
+                    </p>
                     {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-3 pt-2">
                       <Button
@@ -1455,10 +1438,6 @@ export default function OnboardingNew() {
                       </Button>
                       <Button
                         onClick={() => {
-                          if (!acceptedTerms) {
-                            toast.error("Please agree to the Terms & Conditions and Privacy Policy first");
-                            return;
-                          }
                           if (!canGoNextFromEmail) return;
 
                           setCheckingEmail(true);

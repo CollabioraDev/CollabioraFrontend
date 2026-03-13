@@ -2077,7 +2077,7 @@ export default function YoriAI() {
   };
 
   return (
-    <div className="relative min-h-screen pt-20 pb-20 sm:pt-16 sm:pb-0 yori-page-enter">
+    <div className="relative min-h-screen pt-18 pb-19 sm:pt-16 sm:pb-0 yori-page-enter">
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-b from-[#F5F2F8] via-white to-[#E8E0EF]">
         <div
@@ -2165,7 +2165,7 @@ export default function YoriAI() {
         }}
       />
 
-      <div className="relative mx-auto flex h-[calc(100vh-10rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-2 py-2 sm:px-4 sm:py-4">
+      <div className="relative mx-auto flex h-[calc(100dvh-9.25rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-1.5 py-1.5 sm:px-4 sm:py-4">
 
         {/* Mobile backdrop */}
         {isMobile && sidebarOpen && (
@@ -2276,7 +2276,7 @@ export default function YoriAI() {
           {/* Messages area */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto px-3 pt-4 sm:px-6 sm:pt-6 sm:pb-6"
+            className="flex-1 overflow-y-auto px-2 pt-3 pb-3 sm:px-6 sm:pt-6 sm:pb-6"
           >
             {isHydratingChats || (isRemoteChatUser && activeChatId && !activeChatLoaded) ? (
               <div className="flex min-h-full items-center justify-center">
@@ -2286,28 +2286,28 @@ export default function YoriAI() {
                 </div>
               </div>
             ) : !hasUserMessages ? (
-              <div className="flex min-h-full flex-col items-center justify-center px-2 pb-24 sm:pb-10">
+              <div className="flex min-h-full flex-col items-center justify-start px-1 pt-8 pb-14 sm:justify-center sm:px-2 sm:pt-0 sm:pb-10">
                 {/* Hero */}
-                <div className="text-center mb-4 sm:mb-6 yori-section-enter yori-delay-1">
+                <div className="mb-3 text-center sm:mb-6 yori-section-enter yori-delay-1">
                   <img
                     src="/bot.png"
                     alt="Yori"
-                    className="mx-auto mb-2 h-10 w-10 sm:mb-3 sm:h-14 sm:w-14 object-contain"
+                    className="mx-auto mb-2 h-8 w-8 sm:mb-3 sm:h-14 sm:w-14 object-contain"
                   />
-                  <h1 className="text-xl font-bold text-[#2F3C96] sm:text-3xl">
+                  <h1 className="text-lg font-bold text-[#2F3C96] sm:text-3xl">
                     Hey, I'm Yori!
                   </h1>
                 </div>
 
                 {/* Quick actions in 2-column cards */}
-                <div className="w-full max-w-3xl yori-section-enter yori-delay-3">
-                  <div className="grid w-full grid-cols-2 gap-2 sm:gap-3">
+                <div className="w-full max-w-2xl yori-section-enter yori-delay-3">
+                  <div className="grid w-full grid-cols-2 gap-1.5 sm:gap-3">
                     {defaultQuestions.map((q, idx) => (
                       <button
                         key={q}
                         type="button"
                         onClick={() => handleSendMessage(q)}
-                        className={`flex h-full flex-col items-start justify-between rounded-2xl border border-[#D0C4E2]/60 bg-white px-3 py-2.5 text-left text-xs sm:text-sm text-[#2F3C96] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ${
+                        className={`flex h-full flex-col items-start justify-between rounded-xl border border-[#D0C4E2]/60 bg-white px-3 py-2 text-left text-[11px] leading-snug sm:rounded-2xl sm:px-3 sm:py-2.5 sm:text-sm sm:leading-normal text-[#2F3C96] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ${
                           idx === defaultQuestions.length - 1
                             ? "col-span-2"
                             : ""
