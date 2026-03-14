@@ -99,59 +99,43 @@ const ASK_ABOUT_OPTIONS = {
   ],
 };
 
-// Publication Card Component - site theme (royal blue #2F3C96)
+const getPublicationRoute = (publication) => {
+  const publicationId = publication?.pmid || publication?.id;
+  return publicationId
+    ? `/publication/${encodeURIComponent(publicationId)}`
+    : null;
+};
+
+// Publication Card - compact; simplified title/summary for patients, full for researchers
 const PublicationCard = React.memo(
-  ({ publication, onAskAbout, onSaveToFavourites, userId }) => (
-    <div className="bg-gradient-to-br from-white to-[#E8E9F2]/50 border border-[#D1D3E5] rounded-xl p-4 mb-3 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-[shadow,colors] duration-200">
-      <div className="flex items-start gap-2 mb-3">
-        <div className="w-8 h-8 bg-[#E8E9F2] rounded-lg flex items-center justify-center flex-shrink-0">
-          <BookOpen className="w-4 h-4 text-[#2F3C96]" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-1">
-            {publication.title}
-          </h4>
-          <div className="text-xs text-slate-600 space-y-0.5">
-            <p>
-              <span className="font-medium text-slate-700">Authors:</span>{" "}
-              <span className="text-slate-600">{publication.authors}</span>
-            </p>
-            <p>
-              <span className="font-medium text-slate-700">Journal:</span>{" "}
-              <span className="text-slate-600">{publication.journal}</span>{" "}
-              <span className="text-slate-500">({publication.year})</span>
-            </p>
-          </div>
-        </div>
-      </div>
-      <p className="text-xs text-slate-600 mb-3 line-clamp-3 leading-relaxed">
-        {publication.abstract}
-      </p>
-      <div className="flex items-center gap-2 flex-wrap">
-        <a
-          href={publication.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-        >
-          View on PubMed <ExternalLink className="w-3 h-3" />
-        </a>
-        {onAskAbout && (
-          <button
-            onClick={() => onAskAbout(publication)}
-            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Ask about this
-          </button>
-        )}
+  ({ publication, onAskAbout, onSaveToFavourites, userId, useSimplified }) => {
+    const publicationRoute = getPublicationRoute(publication);
+    const displayTitle =
+      useSimplified && publication.simplifiedTitle
+        ? publication.simplifiedTitle
+        : publication.title;
+    const summary =
+      useSimplified && publication.simplifiedSummary
+        ? publication.simplifiedSummary
+        : publication.fullAbstract || publication.abstract || "";
+
+    return (
+      <div
+        className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md mb-3"
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.98)",
+          borderColor: "rgba(47, 60, 150, 0.2)",
+        }}
+      >
         {userId && onSaveToFavourites && (
           <button
+            type="button"
             onClick={() =>
               onSaveToFavourites("publication", {
                 id: publication.pmid,
                 pmid: publication.pmid,
                 title: publication.title,
+                simplifiedTitle: publication.simplifiedTitle,
                 authors: publication.authors,
                 journal: publication.journal,
                 year: publication.year,
@@ -159,208 +143,230 @@ const PublicationCard = React.memo(
                 url: publication.url,
               })
             }
-            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+            className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
+            style={{ color: "#2F3C96" }}
+            aria-label="Save publication"
           >
-            <Heart className="w-3 h-3" />
-            Save to favourites
+            <Heart className="w-4 h-4" />
           </button>
         )}
+        <div className="p-4">
+          <div className="flex items-start gap-2.5 mb-2">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(208, 196, 226, 0.35)" }}>
+              <BookOpen className="w-4 h-4" style={{ color: "#2F3C96" }} />
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <h4 className="font-bold text-sm leading-snug line-clamp-2" style={{ color: "#2F3C96" }}>
+                {displayTitle}
+              </h4>
+            </div>
+          </div>
+          <div className="text-xs text-slate-600 space-y-0.5 mb-2">
+            <p className="line-clamp-1">{publication.authors}</p>
+            <p className="text-slate-500">{publication.journal} ({publication.year})</p>
+          </div>
+          {summary && (
+            <p
+              className={`text-xs leading-relaxed text-slate-600 mb-3 ${useSimplified ? "line-clamp-2" : "line-clamp-3"}`}
+              style={{ WebkitLineClamp: useSimplified ? 2 : 3, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}
+            >
+              {summary}
+            </p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {publicationRoute ? (
+              <Link to={publicationRoute} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+                View full Publication <ExternalLink className="w-3 h-3" />
+              </Link>
+            ) : publication.url ? (
+              <a href={publication.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+                View full Publication <ExternalLink className="w-3 h-3" />
+              </a>
+            ) : null}
+            {onAskAbout && (
+              <button type="button" onClick={() => onAskAbout(publication, "publication")} className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: "#2F3C96" }}>
+                <MessageSquare className="w-3 h-3" /> Ask about this
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  ),
+    );
+  },
 );
 
-// Trial Card Component - site theme
+// Trial Card - compact; simplified title/summary for patients, full for researchers
 const TrialCard = React.memo(
-  ({ trial, onAskAbout, onSaveToFavourites, userId }) => (
-    <div className="bg-gradient-to-br from-white to-[#E8E9F2]/50 border border-[#D1D3E5] rounded-xl p-4 mb-3 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-[shadow,colors] duration-200">
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-          <Microscope className="w-5 h-5 text-[#2F3C96]" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 mb-2 leading-snug">
-            {trial.title}
-          </h4>
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            {trial.status && (
-              <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-medium border border-[#D1D3E5]">
-                {trial.status}
-              </span>
-            )}
-            {trial.phase && trial.phase !== "Not specified" && (
-              <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs border border-slate-200">
-                {trial.phase}
-              </span>
-            )}
-            {trial.nctId && (
-              <span className="px-2.5 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-xs font-mono border border-[#D1D3E5]">
-                {trial.nctId}
-              </span>
-            )}
-          </div>
-          <div className="text-xs text-slate-600 space-y-1.5 mb-2">
-            {trial.conditions && trial.conditions !== "Not specified" && (
-              <p>
-                <span className="font-medium text-slate-700">Conditions:</span>{" "}
-                <span className="text-slate-600">{trial.conditions}</span>
-              </p>
-            )}
-            {trial.locations && trial.locations !== "Multiple locations" && (
-              <p className="flex items-start gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0" />
-                <span>
-                  <span className="font-medium text-slate-700">Locations:</span>{" "}
-                  <span className="text-slate-600">{trial.locations}</span>
-                </span>
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-      {trial.summary && trial.summary !== "No summary available" && (
-        <p className="text-xs text-slate-600 mb-3 line-clamp-3 leading-relaxed pl-13">
-          {trial.summary}
-        </p>
-      )}
-      <div className="flex items-center gap-2 flex-wrap pl-13">
+  ({ trial, onAskAbout, onSaveToFavourites, userId, useSimplified }) => {
+    const displayTitle =
+      useSimplified && trial.simplifiedTitle
+        ? trial.simplifiedTitle
+        : trial.title;
+    const summary =
+      useSimplified && trial.simplifiedSummary
+        ? trial.simplifiedSummary
+        : trial.summary || "";
+
+    return (
+      <div
+        className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md mb-3"
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.98)",
+          borderColor: "rgba(47, 60, 150, 0.2)",
+        }}
+      >
         {userId && onSaveToFavourites && (
           <button
+            type="button"
             onClick={() =>
               onSaveToFavourites("trial", {
                 id: trial.nctId || trial.id,
                 nctId: trial.nctId || trial.id,
                 title: trial.title,
+                simplifiedTitle: trial.simplifiedTitle,
                 url: trial.url,
               })
             }
-            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+            className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
+            style={{ color: "#2F3C96" }}
+            aria-label="Save trial"
           >
-            <Heart className="w-3 h-3" />
-            Save to favourites
+            <Heart className="w-4 h-4" />
           </button>
         )}
-        {onAskAbout && (
-          <button
-            onClick={() => onAskAbout(trial)}
-            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-          >
-            <MessageSquare className="w-3 h-3" />
-            Ask about this
-          </button>
-        )}
-        {trial.nctId && (
-          <Link
-            to={`/trial/${encodeURIComponent(trial.nctId)}`}
-            className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-          >
-            <ExternalLink className="w-3 h-3" />
-            View full trial
-          </Link>
-        )}
+        <div className="p-4">
+          <div className="flex items-start gap-2.5 mb-2">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))" }}>
+              <Microscope className="w-4 h-4" style={{ color: "#2F3C96" }} />
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <h4 className="font-bold text-sm leading-snug line-clamp-2" style={{ color: "#2F3C96" }}>
+                {displayTitle}
+              </h4>
+            </div>
+          </div>
+          {trial.conditions && trial.conditions !== "Not specified" && (
+            <p className="text-xs text-slate-600 line-clamp-1 mb-1"><span className="font-medium text-slate-700">Condition:</span> {trial.conditions}</p>
+          )}
+          {(trial.status || (trial.phase && trial.phase !== "Not specified")) && (
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              {trial.status && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: "rgba(208, 196, 226, 0.35)", color: "#2F3C96", border: "1px solid rgba(47, 60, 150, 0.2)" }}>
+                  {trial.status}
+                </span>
+              )}
+              {trial.phase && trial.phase !== "Not specified" && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                  {trial.phase}
+                </span>
+              )}
+            </div>
+          )}
+          {trial.locations && trial.locations !== "Not specified" && (
+            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
+              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#2F3C96" }} />
+              <span><span className="font-medium text-slate-700">Location:</span> {trial.locations}</span>
+            </p>
+          )}
+          {summary && summary !== "No summary available" && (
+            <p
+              className="text-xs leading-relaxed text-slate-600 mb-3 line-clamp-3"
+              style={{ WebkitLineClamp: 3, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}
+            >
+              {summary}
+            </p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {trial.nctId && (
+              <Link to={`/trial/${encodeURIComponent(trial.nctId)}`} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+                View full Trial <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+            {onAskAbout && (
+              <button type="button" onClick={() => onAskAbout(trial, "trial")} className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: "#2F3C96" }}>
+                <MessageSquare className="w-3 h-3" /> Ask about this
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  ),
+    );
+  },
 );
 
-// Expert Card Component - formatted like TrialDetailsCard/PublicationDetailsCard
+// Expert Card - aligned with Chatbot.jsx (User icon in circle, View profile, Ask about this expert)
 const ExpertCard = React.memo(({ expert, onAskAbout }) => {
   const profileUrl =
     expert.userId || expert.id || expert._id
       ? `/collabiora-expert/profile/${expert.userId || expert.id || expert._id}`
       : `/expert/profile?name=${encodeURIComponent(expert.name || "")}`;
   return (
-    <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden mb-3">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] px-4 py-3 border-b border-[#D1D3E5]">
-        <div className="flex items-start gap-2">
-          <Users className="w-5 h-5 text-[#2F3C96] shrink-0 mt-0.5" />
+    <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden mb-3 hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
+      <div className="bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] px-5 py-3 border-b border-[#D1D3E5]">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-white/80 rounded-full flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 text-[#2F3C96]" />
+          </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-semibold text-sm text-slate-800 leading-snug">
+            <h4 className="font-semibold text-sm text-slate-800">
               {expert.name}
             </h4>
             {expert.affiliation && (
-              <p className="text-xs text-slate-600 mt-1">
+              <p className="text-xs text-slate-600 mt-0.5">
                 {expert.affiliation}
               </p>
             )}
           </div>
         </div>
       </div>
-
-      <div className="p-4 space-y-3">
-        {/* Location */}
+      <div className="p-5 space-y-3">
         {expert.location && (
-          <section>
-            <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
-              Location
-            </h5>
-            <p className="text-sm text-slate-700 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#2F3C96] shrink-0" />
-              {expert.location}
-            </p>
-          </section>
+          <p className="text-sm text-slate-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-[#2F3C96] shrink-0" />
+            {expert.location}
+          </p>
         )}
-
-        {/* Research Interests */}
         {expert.researchInterests &&
           expert.researchInterests !== "Not specified" && (
-            <section>
+            <div>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
                 Research Interests
               </h5>
               <p className="text-sm text-slate-700">
                 {expert.researchInterests}
               </p>
-            </section>
+            </div>
           )}
-
-        {/* Metrics (from OpenAlex) */}
         {expert.metrics &&
           (expert.metrics.totalPublications ||
             expert.metrics.totalCitations) && (
-            <section>
-              <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
-                Metrics
-              </h5>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-600">
-                {expert.metrics.totalPublications > 0 && (
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-3.5 h-3.5 text-[#2F3C96]" />
-                    {expert.metrics.totalPublications.toLocaleString()}{" "}
-                    publications
-                  </span>
-                )}
-                {expert.metrics.totalCitations > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Microscope className="w-3.5 h-3.5 text-[#2F3C96]" />
-                    {expert.metrics.totalCitations.toLocaleString()} citations
-                  </span>
-                )}
-              </div>
-            </section>
+            <div className="flex flex-wrap gap-4 text-xs text-slate-600">
+              {expert.metrics.totalPublications > 0 && (
+                <span className="flex items-center gap-1">
+                  <BookOpen className="w-3.5 h-3.5 text-[#2F3C96]" />
+                  {expert.metrics.totalPublications.toLocaleString()}{" "}
+                  publications
+                </span>
+              )}
+              {expert.metrics.totalCitations > 0 && (
+                <span className="flex items-center gap-1">
+                  <Microscope className="w-3.5 h-3.5 text-[#2F3C96]" />
+                  {expert.metrics.totalCitations.toLocaleString()} citations
+                </span>
+              )}
+            </div>
           )}
-
-        {/* Bio */}
         {expert.bio && (
-          <section>
-            <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
-              About
-            </h5>
-            <p className="text-sm text-slate-700 leading-relaxed">
-              {expert.bio}
-            </p>
-          </section>
+          <p className="text-sm text-slate-700 leading-relaxed line-clamp-3">
+            {expert.bio}
+          </p>
         )}
-
-        {/* Actions */}
         <div className="flex items-center gap-2 flex-wrap pt-1">
           <Link
             to={profileUrl}
             className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
           >
-            <User className="w-3.5 h-3.5" />
-            View profile
+            <User className="w-3.5 h-3.5" /> View profile
           </Link>
           {expert.orcidUrl && (
             <a
@@ -369,17 +375,15 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              ORCID
+              <ExternalLink className="w-3.5 h-3.5" /> ORCID
             </a>
           )}
           {onAskAbout && (
             <button
-              onClick={() => onAskAbout(expert)}
-              className="inline-flex items-center gap-1.5 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
+              onClick={() => onAskAbout(expert, "expert")}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Ask about this expert
+              <MessageSquare className="w-3.5 h-3.5" /> Ask about this expert
             </button>
           )}
         </div>
@@ -1047,7 +1051,9 @@ const SearchResultsCards = ({
   onAskAbout,
   onSaveToFavourites,
   userId,
+  userRole,
 }) => {
+  const useSimplified = userRole === "patient";
   if (
     !searchResults ||
     !searchResults.items ||
@@ -1057,44 +1063,83 @@ const SearchResultsCards = ({
   }
 
   const { type, items } = searchResults;
+  const meta = {
+    publications: {
+      title: "Publications",
+      subtitle: "Research papers and evidence-backed reading.",
+      Icon: BookOpen,
+    },
+    trials: {
+      title: "Clinical trials",
+      subtitle: "Structured trial matches with status and key details.",
+      Icon: Microscope,
+    },
+    experts: {
+      title: "Experts",
+      subtitle: "Researchers and collaborators relevant to your query.",
+      Icon: Users,
+    },
+  }[type];
+
+  if (!meta) return null;
+
+  const cardWrap = (child) => (
+    <div className="flex justify-start mb-3">
+      <div className="max-w-[85%] w-full">{child}</div>
+    </div>
+  );
 
   return (
-    <>
-      {type === "publications" &&
-        items.map((pub, idx) => (
-          <div key={idx} className="flex justify-start mb-3">
-            <div className="max-w-[85%]">
-              <PublicationCard
-                publication={pub}
-                onAskAbout={onAskAbout}
-                onSaveToFavourites={onSaveToFavourites}
-                userId={userId}
-              />
+    <div className="w-full">
+      <div className="rounded-2xl border border-[#D1D3E5] bg-white/95 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[#D1D3E5] bg-[#E8E9F2]/60 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-[#D1D3E5]">
+              <meta.Icon className="h-4 w-4 text-[#2F3C96]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#2F3C96]">{meta.title}</p>
+              <p className="text-xs text-slate-500">{meta.subtitle}</p>
             </div>
           </div>
-        ))}
-      {type === "trials" &&
-        items.map((trial, idx) => (
-          <div key={idx} className="flex justify-start mb-3">
-            <div className="max-w-[85%]">
-              <TrialCard
-                trial={trial}
-                onAskAbout={onAskAbout}
-                onSaveToFavourites={onSaveToFavourites}
-                userId={userId}
-              />
-            </div>
-          </div>
-        ))}
-      {type === "experts" &&
-        items.map((expert, idx) => (
-          <div key={idx} className="flex justify-start mb-3">
-            <div className="max-w-[85%]">
-              <ExpertCard expert={expert} onAskAbout={onAskAbout} />
-            </div>
-          </div>
-        ))}
-    </>
+          <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-[#2F3C96] border border-[#D1D3E5]">
+            {items.length} result{items.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="p-3 space-y-2">
+          {type === "publications" &&
+            items.map((pub, idx) =>
+              cardWrap(
+                <PublicationCard
+                  key={idx}
+                  publication={pub}
+                  onAskAbout={onAskAbout}
+                  onSaveToFavourites={onSaveToFavourites}
+                  userId={userId}
+                  useSimplified={useSimplified}
+                />
+              )
+            )}
+          {type === "trials" &&
+            items.map((trial, idx) =>
+              cardWrap(
+                <TrialCard
+                  key={idx}
+                  trial={trial}
+                  onAskAbout={onAskAbout}
+                  onSaveToFavourites={onSaveToFavourites}
+                  userId={userId}
+                  useSimplified={useSimplified}
+                />
+              )
+            )}
+          {type === "experts" &&
+            items.map((expert, idx) =>
+              cardWrap(<ExpertCard key={idx} expert={expert} onAskAbout={onAskAbout} />)
+            )}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1839,11 +1884,13 @@ const FloatingChatbot = () => {
     }
   };
 
-  const handleOpenAskMenu = (item) => {
-    let itemType = "";
-    if (item.title) itemType = item.pmid ? "publication" : "trial";
-    else if (item.name) itemType = "expert";
-    setAskAboutTarget({ item, type: itemType });
+  const handleOpenAskMenu = (item, type) => {
+    let itemType = type;
+    if (itemType === undefined || itemType === "") {
+      if (item?.title) itemType = item.pmid ? "publication" : "trial";
+      else if (item?.name) itemType = "expert";
+    }
+    setAskAboutTarget({ item, type: itemType || "" });
   };
 
   const handleSelectAskOption = (question, item, type) => {
@@ -2480,6 +2527,7 @@ const FloatingChatbot = () => {
                                 onAskAbout={handleOpenAskMenu}
                                 onSaveToFavourites={handleSaveToFavourites}
                                 userId={user?._id || user?.id}
+                                userRole={user?.role}
                               />
                             )}
                           {/* Sources from grounded responses - publications to support claims */}

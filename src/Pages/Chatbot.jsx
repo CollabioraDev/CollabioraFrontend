@@ -26,8 +26,11 @@ import {
   PanelLeft,
   MoreHorizontal,
   Download,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { buildChatExportHtml } from "../components/ChatExportPdf.js";
 
 const YORI_STORAGE_KEY_PREFIX = "collabiora_yori_chat_sessions_v1";
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -103,10 +106,9 @@ const normalizeSession = (session) => {
   const messages = Array.isArray(session?.messages) ? session.messages : [];
   const createdAt = Number(session?.createdAt) || Date.now();
   const updatedAt = Number(session?.updatedAt) || createdAt;
-  const messageCount =
-    Number.isFinite(Number(session?.messageCount))
-      ? Number(session.messageCount)
-      : messages.length;
+  const messageCount = Number.isFinite(Number(session?.messageCount))
+    ? Number(session.messageCount)
+    : messages.length;
   return {
     id: session?.id || createChatId(),
     title: session?.title || deriveChatTitle(messages),
@@ -320,9 +322,9 @@ const markdownComponents = {
         ? "View on ClinicalTrials.gov"
         : isPublicationRoute
           ? "View on Collabiora"
-        : isExpertProfile
-          ? "View profile"
-          : children || href;
+          : isExpertProfile
+            ? "View profile"
+            : children || href;
     const linkClass = isSpecialLink
       ? "inline-flex items-center gap-2 mt-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
       : "text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1";
@@ -348,70 +350,37 @@ const markdownComponents = {
   },
 };
 
-// --- Card Components (full-page variants) ---
+// --- Compact chatbot cards (simplified title, short summary, CTAs) ---
 
 const PublicationCard = React.memo(
-  ({ publication, onAskAbout, onSave, userId }) => {
+  ({ publication, onAskAbout, onSave, userId, useSimplified }) => {
     const publicationRoute = getPublicationRoute(publication);
+    const displayTitle =
+      useSimplified && publication.simplifiedTitle
+        ? publication.simplifiedTitle
+        : publication.title;
+    const summary =
+      useSimplified && publication.simplifiedSummary
+        ? publication.simplifiedSummary
+        : publication.fullAbstract || publication.abstract || "";
 
     return (
-      <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
-      <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#E8E9F2] rounded-lg flex items-center justify-center shrink-0">
-          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F3C96]" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-[13px] sm:text-sm text-slate-800 line-clamp-2 mb-0.5 sm:mb-1">
-            {publication.title}
-          </h4>
-          <p className="text-[11px] sm:text-xs text-slate-600">
-            <span className="font-medium text-slate-700">
-              {publication.authors}
-            </span>
-          </p>
-          <p className="text-[11px] sm:text-xs text-slate-500">
-            {publication.journal} ({publication.year})
-          </p>
-        </div>
-      </div>
-      {publication.abstract && (
-        <p className="text-[13px] sm:text-sm text-slate-600 mb-2.5 sm:mb-3 line-clamp-4 leading-relaxed">
-          {publication.abstract}
-        </p>
-      )}
-      <div className="flex items-center gap-3 flex-wrap">
-        {publicationRoute ? (
-          <Link
-            to={publicationRoute}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] bg-[#E8E9F2] px-3 py-1.5 rounded-lg border border-[#D1D3E5] hover:bg-[#D1D3E5] transition-colors"
-          >
-            View on Collabiora <ExternalLink className="w-3 h-3" />
-          </Link>
-        ) : publication.url ? (
-          <a
-            href={publication.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] bg-[#E8E9F2] px-3 py-1.5 rounded-lg border border-[#D1D3E5] hover:bg-[#D1D3E5] transition-colors"
-          >
-            View on PubMed <ExternalLink className="w-3 h-3" />
-          </a>
-        ) : null}
-        {onAskAbout && (
-          <button
-            onClick={() => onAskAbout(publication, "publication")}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
-          >
-            <MessageSquare className="w-3 h-3" /> Ask about this
-          </button>
-        )}
+      <div
+        className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.98)",
+          borderColor: "rgba(47, 60, 150, 0.2)",
+        }}
+      >
         {userId && onSave && (
           <button
+            type="button"
             onClick={() =>
               onSave("publication", {
                 id: publication.pmid,
                 pmid: publication.pmid,
                 title: publication.title,
+                simplifiedTitle: publication.simplifiedTitle,
                 authors: publication.authors,
                 journal: publication.journal,
                 year: publication.year,
@@ -419,100 +388,233 @@ const PublicationCard = React.memo(
                 url: publication.url,
               })
             }
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+            className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
+            style={{ color: "#2F3C96" }}
+            aria-label="Save publication"
           >
-            <Heart className="w-3 h-3" /> Save
+            <Heart className="w-4 h-4" />
           </button>
         )}
+        <div className="p-4">
+          <div className="flex items-start gap-2.5 mb-2">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "rgba(208, 196, 226, 0.35)" }}
+            >
+              <BookOpen className="w-4 h-4" style={{ color: "#2F3C96" }} />
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <h4
+                className="font-bold text-sm leading-snug line-clamp-2"
+                style={{ color: "#2F3C96" }}
+              >
+                {displayTitle}
+              </h4>
+            </div>
+          </div>
+          <div className="text-xs text-slate-600 space-y-0.5 mb-2">
+            <p className="line-clamp-1">{publication.authors}</p>
+            <p className="text-slate-500">
+              {publication.journal} ({publication.year})
+            </p>
+          </div>
+          {summary && (
+            <p
+              className={`text-xs leading-relaxed text-slate-600 mb-3 ${useSimplified ? "line-clamp-2" : "line-clamp-3"}`}
+              style={{
+                WebkitLineClamp: useSimplified ? 2 : 3,
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {summary}
+            </p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {publicationRoute ? (
+              <Link
+                to={publicationRoute}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
+                View full Publication <ExternalLink className="w-3 h-3" />
+              </Link>
+            ) : publication.url ? (
+              <a
+                href={publication.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
+                View full Publication <ExternalLink className="w-3 h-3" />
+              </a>
+            ) : null}
+            {onAskAbout && (
+              <button
+                type="button"
+                onClick={() => onAskAbout(publication, "publication")}
+                className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                style={{ color: "#2F3C96" }}
+              >
+                <MessageSquare className="w-3 h-3" /> Ask about this
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
     );
   },
 );
 
-const TrialCard = React.memo(({ trial, onAskAbout, onSave, userId }) => (
-  <div className="bg-white border border-[#D1D3E5] rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-[#A3A7CB] transition-all duration-200">
-    <div className="flex items-start gap-2.5 sm:gap-3 mb-2.5 sm:mb-3">
-      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[#E8E9F2] to-[#D1D3E5] rounded-lg flex items-center justify-center shrink-0">
-        <Microscope className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F3C96]" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-[13px] sm:text-sm text-slate-800 line-clamp-2 mb-1.5 sm:mb-2">
-          {trial.title}
-        </h4>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          {trial.status && (
-            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-[11px] sm:text-xs font-medium border border-[#D1D3E5]">
-              {trial.status}
-            </span>
-          )}
-          {trial.phase && trial.phase !== "Not specified" && (
-            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-100 text-slate-700 rounded-full text-[11px] sm:text-xs border border-slate-200">
-              {trial.phase}
-            </span>
-          )}
-          {trial.nctId && (
-            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E8E9F2] text-[#2F3C96] rounded-full text-[11px] sm:text-xs font-mono border border-[#D1D3E5]">
-              {trial.nctId}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-    <div className="text-[11px] sm:text-xs text-slate-600 space-y-1.5 mb-2.5 sm:mb-3">
-      {trial.conditions && trial.conditions !== "Not specified" && (
-        <p>
-          <span className="font-medium text-slate-700">Conditions:</span>{" "}
-          {trial.conditions}
-        </p>
-      )}
-      {trial.locations && trial.locations !== "Multiple locations" && (
-        <p className="flex items-start gap-1.5">
-          <MapPin className="w-3.5 h-3.5 text-slate-500 mt-0.5 shrink-0" />
-          <span>{trial.locations}</span>
-        </p>
-      )}
-    </div>
-    {trial.summary && trial.summary !== "No summary available" && (
-      <p className="text-[13px] sm:text-sm text-slate-600 mb-2.5 sm:mb-3 line-clamp-3 leading-relaxed">
-        {trial.summary}
-      </p>
-    )}
-    <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-      {onAskAbout && (
-        <button
-          onClick={() => onAskAbout(trial, "trial")}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
-        >
-          <MessageSquare className="w-3 h-3" /> Ask about this
-        </button>
-      )}
-      {trial.nctId && (
-        <Link
-          to={`/trial/${encodeURIComponent(trial.nctId)}`}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
-        >
-          <ExternalLink className="w-3 h-3" /> View on Collabiora
-        </Link>
-      )}
+const TrialCard = React.memo(
+  ({ trial, onAskAbout, onSave, userId, useSimplified }) => {
+    const displayTitle =
+      useSimplified && trial.simplifiedTitle
+        ? trial.simplifiedTitle
+        : trial.title;
+    const summary =
+      useSimplified && trial.simplifiedSummary
+        ? trial.simplifiedSummary
+        : trial.summary || "";
+
+  return (
+    <div
+      className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
+      style={{
+        backgroundColor: "rgba(255, 255, 255, 0.98)",
+        borderColor: "rgba(47, 60, 150, 0.2)",
+      }}
+    >
       {userId && onSave && (
         <button
+          type="button"
           onClick={() =>
             onSave("trial", {
               id: trial.nctId || trial.id,
               nctId: trial.nctId || trial.id,
               title: trial.title,
+              simplifiedTitle: trial.simplifiedTitle,
               url: trial.url,
             })
           }
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
+          className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
+          style={{ color: "#2F3C96" }}
+          aria-label="Save trial"
         >
-          <Heart className="w-3 h-3" /> Save
+          <Heart className="w-4 h-4" />
         </button>
       )}
+      <div className="p-4">
+        <div className="flex items-start gap-2.5 mb-2">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))",
+            }}
+          >
+            <Microscope className="w-4 h-4" style={{ color: "#2F3C96" }} />
+          </div>
+          <div className="flex-1 min-w-0 pr-8">
+            <h4
+              className="font-bold text-sm leading-snug line-clamp-2"
+              style={{ color: "#2F3C96" }}
+            >
+              {displayTitle}
+            </h4>
+          </div>
+        </div>
+        {trial.conditions && trial.conditions !== "Not specified" && (
+          <p className="text-xs text-slate-600 line-clamp-1 mb-1">
+            <span className="font-medium text-slate-700">Condition:</span>{" "}
+            {trial.conditions}
+          </p>
+        )}
+        {(trial.status || (trial.phase && trial.phase !== "Not specified")) && (
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+            {trial.status && (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                style={{
+                  backgroundColor: "rgba(208, 196, 226, 0.35)",
+                  color: "#2F3C96",
+                  border: "1px solid rgba(47, 60, 150, 0.2)",
+                }}
+              >
+                {trial.status}
+              </span>
+            )}
+            {trial.phase && trial.phase !== "Not specified" && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                {trial.phase}
+              </span>
+            )}
+          </div>
+        )}
+        {trial.locations && trial.locations !== "Not specified" && (
+          <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
+            <MapPin
+              className="w-3.5 h-3.5 shrink-0 mt-0.5"
+              style={{ color: "#2F3C96" }}
+            />
+            <span>
+              <span className="font-medium text-slate-700">Location:</span>{" "}
+              {trial.locations}
+            </span>
+          </p>
+        )}
+        {summary && summary !== "No summary available" && (
+          <p
+            className="text-xs leading-relaxed text-slate-600 mb-3 line-clamp-3"
+            style={{
+              WebkitLineClamp: 3,
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {summary}
+          </p>
+        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {trial.nctId && (
+            <Link
+              to={`/trial/${encodeURIComponent(trial.nctId)}`}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+              style={{
+                color: "#2F3C96",
+                backgroundColor: "rgba(208, 196, 226, 0.25)",
+                borderColor: "rgba(47, 60, 150, 0.25)",
+              }}
+            >
+              View full Trial <ExternalLink className="w-3 h-3" />
+            </Link>
+          )}
+          {onAskAbout && (
+            <button
+              type="button"
+              onClick={() => onAskAbout(trial, "trial")}
+              className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+              style={{ color: "#2F3C96" }}
+            >
+              <MessageSquare className="w-3 h-3" /> Ask about this
+            </button>
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 const ExpertCard = React.memo(({ expert, onAskAbout }) => {
   const profileUrl =
@@ -1036,7 +1138,14 @@ const AskMoreBar = ({ type, details, onAskMore, onSave, userId }) => {
   );
 };
 
-const SearchResultsCards = ({ searchResults, onAskAbout, onSave, userId }) => {
+const SearchResultsCards = ({
+  searchResults,
+  onAskAbout,
+  onSave,
+  userId,
+  userRole,
+}) => {
+  const useSimplified = userRole === "patient";
   if (!searchResults?.items?.length) return null;
   const { type, items } = searchResults;
   const meta = {
@@ -1087,6 +1196,7 @@ const SearchResultsCards = ({ searchResults, onAskAbout, onSave, userId }) => {
                 onAskAbout={onAskAbout}
                 onSave={onSave}
                 userId={userId}
+                useSimplified={useSimplified}
               />
             ))}
           {type === "trials" &&
@@ -1097,6 +1207,7 @@ const SearchResultsCards = ({ searchResults, onAskAbout, onSave, userId }) => {
                 onAskAbout={onAskAbout}
                 onSave={onSave}
                 userId={userId}
+                useSimplified={useSimplified}
               />
             ))}
           {type === "experts" &&
@@ -1217,68 +1328,11 @@ const CommunityCards = ({ communities }) => {
 
 /**
  * Generate and open a print-ready PDF of the chat session in a new tab.
- * Messages are labelled "You" (user) and "Yori" (assistant).
+ * Uses ChatExportPdf component for structured message and card layout (including DOI, PMID, NCT ID).
  */
 function downloadChatAsPdf(session) {
-  const messages = (session.messages || []).filter(
-    (m) => m.role === "user" || (m.role === "assistant" && m.content?.trim())
-  );
-  if (messages.length === 0) return;
-
-  const escapeHtml = (str) =>
-    String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-
-  const rows = messages
-    .map((m) => {
-      const isUser = m.role === "user";
-      const label = isUser ? "You" : "Yori";
-      const bg = isUser ? "#EEF0FB" : "#FFFFFF";
-      const labelColor = isUser ? "#2F3C96" : "#6B7280";
-      // Strip [Previous search topic: ...] hints from assistant messages
-      const text = (m.content || "").replace(/\[Previous search topic:.*?\]/gi, "").trim();
-      return `
-        <div style="margin-bottom:18px; background:${bg}; border-radius:10px; padding:14px 18px; border:1px solid #E5E7EB;">
-          <div style="font-size:11px; font-weight:700; color:${labelColor}; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">${label}</div>
-          <div style="font-size:14px; color:#1F2937; line-height:1.65; white-space:pre-wrap;">${escapeHtml(text)}</div>
-        </div>`;
-    })
-    .join("");
-
-  const title = escapeHtml(session.title || "Chat with Yori");
-  const date = new Date(session.updatedAt || Date.now()).toLocaleString("en-IN", {
-    dateStyle: "long",
-    timeStyle: "short",
-  });
-
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>${title}</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F9FAFB; padding: 32px; max-width: 780px; margin: 0 auto; }
-    header { margin-bottom: 28px; border-bottom: 2px solid #E5E7EB; padding-bottom: 16px; }
-    header h1 { font-size: 20px; color: #2F3C96; font-weight: 700; }
-    header p { font-size: 12px; color: #9CA3AF; margin-top: 4px; }
-    footer { margin-top: 28px; border-top: 1px solid #E5E7EB; padding-top: 12px; font-size: 11px; color: #D1D5DB; text-align: center; }
-    @media print { body { background: white; } }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>${title}</h1>
-    <p>Exported from Collabiora &middot; ${date}</p>
-  </header>
-  ${rows}
-  <footer>Generated by Yori &mdash; Collabiora Health Research Assistant</footer>
-  <script>window.onload = function() { window.print(); }</script>
-</body>
-</html>`;
+  const html = buildChatExportHtml(session);
+  if (!html) return;
 
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
@@ -1286,7 +1340,6 @@ function downloadChatAsPdf(session) {
   if (win) {
     win.addEventListener("afterprint", () => URL.revokeObjectURL(url));
   } else {
-    // Fallback: trigger download as .html (user can open and print)
     const a = document.createElement("a");
     a.href = url;
     a.download = `${(session.title || "chat").replace(/[^a-z0-9]/gi, "_").slice(0, 40)}.html`;
@@ -1295,7 +1348,13 @@ function downloadChatAsPdf(session) {
   }
 }
 
-const ChatHistoryItem = ({ session, isActive, onSelect, onDelete }) => {
+const ChatHistoryItem = ({
+  session,
+  isActive,
+  onSelect,
+  onDelete,
+  isDeleting,
+}) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef(null);
 
@@ -1364,13 +1423,19 @@ const ChatHistoryItem = ({ session, isActive, onSelect, onDelete }) => {
               <button
                 type="button"
                 onClick={() => {
+                  if (isDeleting) return;
                   setMenuOpen(false);
                   onDelete(session.id);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                disabled={isDeleting}
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Trash2 className="h-3.5 w-3.5 shrink-0" />
-                Delete chat
+                {isDeleting ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                )}
+                {isDeleting ? "Deleting…" : "Delete chat"}
               </button>
             </div>
           )}
@@ -1397,9 +1462,16 @@ export default function YoriAI() {
   const [, setSuggestions] = useState([]);
   const [userConditions, setUserConditions] = useState([]);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
-  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 768,
+  );
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
   const [sessionLimitNotice, setSessionLimitNotice] = useState("");
+  const [isCreatingNewChat, setIsCreatingNewChat] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
+  const [sampleQuestionsOpen, setSampleQuestionsOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -1500,7 +1572,9 @@ export default function YoriAI() {
           });
           const createData = await createRes.json();
           if (!createRes.ok) {
-            throw new Error(createData.error || "Failed to create chat session");
+            throw new Error(
+              createData.error || "Failed to create chat session",
+            );
           }
           nextSessions = [normalizeSession(createData.session)];
         }
@@ -1575,37 +1649,31 @@ export default function YoriAI() {
     [activeChatId, chatSessions],
   );
 
-  const isPatient = userRole === "patient";
-  const trialWord = isPatient ? "treatments" : "clinical trials";
-
-  const defaultQuestions = useMemo(() => {
-    const questions = [];
-    if (userConditions.length > 0) {
-      userConditions.slice(0, 2).forEach((c) => {
-        questions.push(`Find ${trialWord} for ${c}`);
-      });
-    } else {
-      questions.push(`Find ${trialWord} for my condition`);
-    }
-    if (userConditions.length > 0) {
-      questions.push(`Find experts in ${userConditions[0]}`);
-    } else {
-      questions.push("Find experts in my area of interest");
-    }
-    questions.push(
-      "Help me understand a medical term",
+  const suggestionOptions = useMemo(() => {
+    const first = userConditions[0];
+    const second = userConditions[1];
+    const diseaseLabel = (c) => c || "my condition";
+    return [
+      `Find treatments for ${diseaseLabel(first)}`,
+      `Find treatments for ${diseaseLabel(second || first)}`,
+      first
+        ? `Find experts in ${first}`
+        : "Find experts in my area of interest",
+      first
+        ? `Latest research on ${first}`
+        : "Latest research on my condition",
       "What communities can I join on Collabiora?",
-    );
-    return questions;
-  }, [userConditions, trialWord]);
+    ];
+  }, [userConditions]);
   const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
   const activeChatLoaded = activeChat?.loaded !== false;
   const hasUserMessages = messages.some((message) => message.role === "user");
   const canCreateNewChat = chatSessions.length < MAX_CHAT_SESSIONS;
-  const activeChatMessageCount =
-    Number.isFinite(Number(activeChat?.messageCount))
-      ? Number(activeChat.messageCount)
-      : messages.length;
+  const activeChatMessageCount = Number.isFinite(
+    Number(activeChat?.messageCount),
+  )
+    ? Number(activeChat.messageCount)
+    : messages.length;
   const activeChatIsFull =
     activeChat?.isFull || activeChatMessageCount >= MAX_MESSAGES_PER_SESSION;
   const chatInteractionDisabled =
@@ -1647,7 +1715,9 @@ export default function YoriAI() {
       const exists = prev.some((session) => session.id === normalized.id);
       const next = exists
         ? prev.map((session) =>
-            session.id === normalized.id ? { ...session, ...normalized } : session,
+            session.id === normalized.id
+              ? { ...session, ...normalized }
+              : session,
           )
         : [normalized, ...prev];
       return next.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -1692,7 +1762,14 @@ export default function YoriAI() {
     return () => {
       cancelled = true;
     };
-  }, [activeChatId, apiBase, authHeaders, chatSessions, isRemoteChatUser, mergeRemoteSession]);
+  }, [
+    activeChatId,
+    apiBase,
+    authHeaders,
+    chatSessions,
+    isRemoteChatUser,
+    mergeRemoteSession,
+  ]);
 
   const appendAssistantNotice = useCallback(
     (content) => {
@@ -1739,10 +1816,22 @@ export default function YoriAI() {
       );
       return;
     }
+    setIsCreatingNewChat(true);
+    setSessionLimitNotice("");
+    let tempChatId = null;
 
     try {
       let newChat;
       if (isRemoteChatUser) {
+        const tempChat = createChatSession("New chat");
+        tempChatId = tempChat.id;
+        setChatSessions((prev) =>
+          [tempChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
+        );
+        setActiveChatId(tempChat.id);
+        setInput("");
+        setSidebarOpen(false);
+
         const response = await fetch(`${apiBase}/api/chatbot/sessions`, {
           method: "POST",
           headers: authHeaders,
@@ -1752,68 +1841,104 @@ export default function YoriAI() {
           throw new Error(data.error || "Failed to create chat session");
         }
         newChat = mergeRemoteSession(data.session);
+        setChatSessions((prev) =>
+          prev.map((s) => (s.id === tempChatId ? newChat : s)),
+        );
+        setActiveChatId(newChat.id);
       } else {
         newChat = createChatSession();
         setChatSessions((prev) =>
           [newChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
         );
+        setActiveChatId(newChat.id);
+        setInput("");
+        setSidebarOpen(false);
       }
-
-      setActiveChatId(newChat.id);
-      setInput("");
-      setSidebarOpen(false);
-      setSessionLimitNotice("");
     } catch (error) {
       setSessionLimitNotice(
         error.message || "Couldn't create a new chat right now.",
       );
+      if (tempChatId) {
+        setChatSessions((prev) => prev.filter((s) => s.id !== tempChatId));
+        setActiveChatId((prev) =>
+          prev === tempChatId ? (chatSessions[0]?.id ?? null) : prev,
+        );
+      }
+    } finally {
+      setIsCreatingNewChat(false);
     }
-  }, [apiBase, authHeaders, canCreateNewChat, isRemoteChatUser, mergeRemoteSession]);
+  }, [
+    apiBase,
+    authHeaders,
+    canCreateNewChat,
+    chatSessions,
+    isRemoteChatUser,
+    mergeRemoteSession,
+  ]);
 
   const deleteChat = useCallback(
     async (sessionId) => {
       if (abortControllerRef.current && sessionId === activeChat?.id) {
         abortControllerRef.current.abort();
       }
+      setDeletingSessionId(sessionId);
+
+      const previousSessions = chatSessions;
+      const remaining = previousSessions.filter((s) => s.id !== sessionId);
+      const nextActiveId =
+        activeChatId === sessionId
+          ? (remaining[0]?.id ?? (remaining.length === 0 ? null : null))
+          : activeChatId;
+
+      // Optimistic update: remove from UI immediately
+      if (remaining.length > 0) {
+        setChatSessions(remaining);
+        setActiveChatId(nextActiveId);
+      } else if (isRemoteChatUser) {
+        setChatSessions([]);
+        setActiveChatId(null);
+      } else {
+        const fallback = createChatSession();
+        setChatSessions([fallback]);
+        setActiveChatId(fallback.id);
+      }
+      setSessionLimitNotice("");
 
       try {
         if (isRemoteChatUser) {
           const response = await fetch(
             `${apiBase}/api/chatbot/sessions/${sessionId}`,
-            {
-              method: "DELETE",
-              headers: authHeaders,
-            },
+            { method: "DELETE", headers: authHeaders },
           );
           if (!response.ok) {
             const data = await response.json().catch(() => ({}));
             throw new Error(data.error || "Failed to delete chat");
           }
+          if (remaining.length === 0) {
+            createNewChat();
+          }
         }
-
-        const remaining =
-          chatSessions.filter((session) => session.id !== sessionId);
-        if (remaining.length > 0) {
-          setChatSessions(remaining);
-          setActiveChatId((prevActiveId) =>
-            prevActiveId === sessionId ? remaining[0]?.id || null : prevActiveId,
-          );
-        } else if (isRemoteChatUser) {
-          setChatSessions([]);
-          setActiveChatId(null);
-          await createNewChat();
-        } else {
-          const fallback = createChatSession();
-          setChatSessions([fallback]);
-          setActiveChatId(fallback.id);
-        }
-
-        setSessionLimitNotice("");
       } catch (error) {
         setSessionLimitNotice(error.message || "Couldn't delete this chat.");
+        setChatSessions(previousSessions);
+        setActiveChatId(
+          activeChatId === sessionId
+            ? (previousSessions[0]?.id ?? null)
+            : activeChatId,
+        );
+      } finally {
+        setDeletingSessionId(null);
       }
     },
-    [activeChat?.id, apiBase, authHeaders, chatSessions, createNewChat, isRemoteChatUser],
+    [
+      activeChatId,
+      activeChat?.id,
+      apiBase,
+      authHeaders,
+      chatSessions,
+      createNewChat,
+      isRemoteChatUser,
+    ],
   );
 
   const handleSelectChat = useCallback((sessionId) => {
@@ -1831,7 +1956,10 @@ export default function YoriAI() {
         typeof messageText === "string" ? messageText : input
       ).trim();
       if (!text || chatInteractionDisabled) return;
-      if (activeChatIsFull || activeChatMessageCount + 2 > MAX_MESSAGES_PER_SESSION) {
+      if (
+        activeChatIsFull ||
+        activeChatMessageCount + 2 > MAX_MESSAGES_PER_SESSION
+      ) {
         setSessionLimitNotice(
           "This chat reached its limit. Download it if needed, then start a new chat.",
         );
@@ -1930,17 +2058,36 @@ export default function YoriAI() {
         let publicationDetails = null;
         let groundingSources = null;
         let communityResults = null;
+        let buffer = "";
+
+        const applyUpdate = () => {
+          updateSessionMessages(sessionId, (prevMessages) => {
+            const updated = [...prevMessages];
+            updated[assistantMessageIndex] = {
+              role: "assistant",
+              content: assistantContent,
+              searchResults,
+              trialDetails,
+              publicationDetails,
+              groundingSources,
+              communityResults,
+            };
+            return updated;
+          });
+        };
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
+          if (value) buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? ""; // keep incomplete line in buffer
+          if (done && buffer.trim()) lines.push(buffer); // process remainder at end
 
           for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data: ")) continue;
             try {
-              const data = JSON.parse(line.slice(6));
+              const data = JSON.parse(trimmed.slice(6));
               if (data.error) throw new Error(data.error);
               if (data.trialDetails) trialDetails = data.trialDetails;
               if (data.publicationDetails)
@@ -1952,26 +2099,18 @@ export default function YoriAI() {
               if (data.communityResults)
                 communityResults = data.communityResults;
 
-              updateSessionMessages(sessionId, (prevMessages) => {
-                const updated = [...prevMessages];
-                updated[assistantMessageIndex] = {
-                  role: "assistant",
-                  content: assistantContent,
-                  searchResults,
-                  trialDetails,
-                  publicationDetails,
-                  groundingSources,
-                  communityResults,
-                };
-                return updated;
-              });
+              applyUpdate();
 
               if (data.done) break;
             } catch (error) {
               if (error.message && !error.message.includes("JSON")) throw error;
             }
           }
+          if (done) break;
         }
+
+        // Final update so we never miss searchResults/trialDetails/etc. from last chunk
+        applyUpdate();
       } catch (error) {
         if (error.name === "AbortError") return;
         updateSessionMessages(sessionId, (prevMessages) => {
@@ -2166,7 +2305,6 @@ export default function YoriAI() {
       />
 
       <div className="relative mx-auto flex h-[calc(100dvh-9.25rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-1.5 py-1.5 sm:px-4 sm:py-4">
-
         {/* Mobile backdrop */}
         {isMobile && sidebarOpen && (
           <div
@@ -2180,26 +2318,37 @@ export default function YoriAI() {
         <aside
           className={`
             shrink-0 transition-all duration-300 ease-in-out overflow-hidden
-            ${isMobile
-              ? `fixed left-0 top-0 bottom-16 z-50 w-[min(300px,85vw)] pt-[5.5rem] pb-2 px-2 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`
-              : `${sidebarOpen ? "w-[280px] mr-4" : "w-0 mr-0"}`
+            ${
+              isMobile
+                ? `fixed left-0 top-0 bottom-16 z-50 w-[min(300px,85vw)] pt-[5.5rem] pb-2 px-2 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`
+                : `${sidebarOpen ? "w-[280px] mr-4" : "w-0 mr-0"}`
             }
           `}
-          style={isMobile ? { transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1)" } : undefined}
+          style={
+            isMobile
+              ? { transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1)" }
+              : undefined
+          }
         >
-          <div className={`flex flex-col rounded-2xl border border-[#D1D3E5] bg-white/95 shadow-sm overflow-hidden yori-sidebar-enter ${isMobile ? "h-full" : "h-full w-[280px]"}`}>
+          <div
+            className={`flex flex-col rounded-2xl border border-[#D1D3E5] bg-white/95 shadow-sm overflow-hidden yori-sidebar-enter ${isMobile ? "h-full" : "h-full w-[280px]"}`}
+          >
             <div className="flex items-center gap-2 p-3">
               <button
                 type="button"
                 onClick={createNewChat}
-                disabled={!canCreateNewChat}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!canCreateNewChat || isCreatingNewChat}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 transition-opacity"
                 style={{
                   background: "linear-gradient(135deg, #2F3C96, #474F97)",
                 }}
               >
-                <Plus className="h-4 w-4" />
-                New chat
+                {isCreatingNewChat ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isCreatingNewChat ? "Creating…" : "New chat"}
               </button>
               {isMobile && (
                 <button
@@ -2212,9 +2361,13 @@ export default function YoriAI() {
                 </button>
               )}
             </div>
-            {sessionLimitNotice && (
-              <p className="px-3 text-xs text-amber-600 text-center">
-                {sessionLimitNotice}
+            {(sessionLimitNotice || deletingSessionId) && (
+              <p className="px-3 text-xs text-center min-h-[1.25rem]">
+                {deletingSessionId ? (
+                  <span className="text-slate-500">Deleting chat…</span>
+                ) : (
+                  <span className="text-amber-600">{sessionLimitNotice}</span>
+                )}
               </p>
             )}
 
@@ -2226,6 +2379,7 @@ export default function YoriAI() {
                   isActive={session.id === activeChat?.id}
                   onSelect={handleSelectChat}
                   onDelete={deleteChat}
+                  isDeleting={deletingSessionId === session.id}
                 />
               ))}
             </div>
@@ -2278,7 +2432,8 @@ export default function YoriAI() {
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto px-2 pt-3 pb-3 sm:px-6 sm:pt-6 sm:pb-6"
           >
-            {isHydratingChats || (isRemoteChatUser && activeChatId && !activeChatLoaded) ? (
+            {isHydratingChats ||
+            (isRemoteChatUser && activeChatId && !activeChatLoaded) ? (
               <div className="flex min-h-full items-center justify-center">
                 <div className="flex items-center gap-3 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin text-[#2F3C96]" />
@@ -2292,31 +2447,44 @@ export default function YoriAI() {
                   <img
                     src="/bot.png"
                     alt="Yori"
-                    className="mx-auto mb-2 h-8 w-8 sm:mb-3 sm:h-14 sm:w-14 object-contain"
+                    className="mx-auto mb-2 h-14 w-14 sm:mb-3 sm:h-24 sm:w-24 object-contain"
                   />
                   <h1 className="text-lg font-bold text-[#2F3C96] sm:text-3xl">
                     Hey, I'm Yori!
                   </h1>
                 </div>
 
-                {/* Quick actions in 2-column cards */}
-                <div className="w-full max-w-2xl yori-section-enter yori-delay-3">
-                  <div className="grid w-full grid-cols-2 gap-1.5 sm:gap-3">
-                    {defaultQuestions.map((q, idx) => (
-                      <button
-                        key={q}
-                        type="button"
-                        onClick={() => handleSendMessage(q)}
-                        className={`flex h-full flex-col items-start justify-between rounded-xl border border-[#D0C4E2]/60 bg-white px-3 py-2 text-left text-[11px] leading-snug sm:rounded-2xl sm:px-3 sm:py-2.5 sm:text-sm sm:leading-normal text-[#2F3C96] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ${
-                          idx === defaultQuestions.length - 1
-                            ? "col-span-2"
-                            : ""
-                        }`}
-                      >
-                        <span className="line-clamp-2">{q}</span>
-                      </button>
-                    ))}
-                  </div>
+                {/* Suggested questions - collapsible like FloatingChatbot */}
+                <div className="w-full max-w-2xl mx-auto yori-section-enter yori-delay-3">
+                  <button
+                    type="button"
+                    onClick={() => setSampleQuestionsOpen((prev) => !prev)}
+                    className="flex items-center justify-center gap-1.5 w-full text-sm font-medium text-[#2F3C96] hover:text-[#1e266d] transition-colors"
+                  >
+                    {sampleQuestionsOpen ? (
+                      <ChevronUp className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    )}
+                    {sampleQuestionsOpen
+                      ? "Hide questions"
+                      : "What you can ask?"}
+                  </button>
+                  {sampleQuestionsOpen && (
+                    <div className="flex flex-wrap gap-2 mt-2 justify-center">
+                      {suggestionOptions.map((q, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handleSendMessage(q)}
+                          disabled={chatInteractionDisabled}
+                          className="px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-white border border-[#D1D3E5] rounded-lg hover:bg-[#E8E9F2] hover:border-[#A3A7CB] shadow-sm transition-colors disabled:opacity-50"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -2440,6 +2608,7 @@ export default function YoriAI() {
                               onAskAbout={handleAskAbout}
                               onSave={handleSaveToFavourites}
                               userId={userId}
+                              userRole={userRole}
                             />
                           )}
 
@@ -2535,7 +2704,7 @@ export default function YoriAI() {
                             activeChatId &&
                             !activeChatLoaded)
                         ? "Loading chat history..."
-                      : "Ask Yori anything..."
+                        : "Ask Yori anything..."
                   }
                   className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
                   rows={1}
