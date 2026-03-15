@@ -127,6 +127,85 @@ function linkify(text) {
   );
 }
 
+function isResearcherAuthor(author, authorRole) {
+  return (authorRole || author?.role) === "researcher";
+}
+
+function normalizeHandle(handle) {
+  return String(handle || "").replace(/^@+/, "").trim();
+}
+
+function getUserId(userLike) {
+  return (
+    userLike?._id?.toString?.() ||
+    userLike?.id?.toString?.() ||
+    userLike?.toString?.() ||
+    ""
+  );
+}
+
+function applyCurrentUserHandleToAuthor(
+  author,
+  authorRole,
+  currentUser,
+  authorId = author?._id || author?.id || author,
+) {
+  if (!author) return author;
+
+  const currentUserId = getUserId(currentUser);
+  const currentUserHandle = normalizeHandle(currentUser?.handle);
+  const resolvedAuthorId = getUserId(authorId);
+
+  if (!currentUserId || !currentUserHandle || resolvedAuthorId !== currentUserId) {
+    return author;
+  }
+
+  if (isResearcherAuthor(author, authorRole || currentUser?.role)) {
+    return author;
+  }
+
+  return {
+    ...author,
+    handle: currentUserHandle,
+    role: author?.role || authorRole || currentUser?.role || "patient",
+  };
+}
+
+function hydratePostsWithCurrentUserHandle(posts, currentUser) {
+  return (posts || []).map((post) => ({
+    ...post,
+    authorUserId: applyCurrentUserHandleToAuthor(
+      post.authorUserId,
+      post.authorRole,
+      currentUser,
+      post.authorUserId?._id || post.authorUserId,
+    ),
+  }));
+}
+
+function hydrateCommentsWithCurrentUserHandle(items, currentUser) {
+  return (items || []).map((comment) => ({
+    ...comment,
+    authorUserId: applyCurrentUserHandleToAuthor(
+      comment.authorUserId,
+      comment.authorRole,
+      currentUser,
+      comment.authorUserId?._id || comment.authorUserId,
+    ),
+    children: hydrateCommentsWithCurrentUserHandle(comment.children, currentUser),
+  }));
+}
+
+function getDiscoveryAuthorName(author, fallback = "Anonymous", authorRole) {
+  if (!author) return fallback;
+  if (isResearcherAuthor(author, authorRole)) {
+    return getDisplayName(author, fallback);
+  }
+  const patientHandle = normalizeHandle(author.handle);
+  if (patientHandle) return `@${patientHandle}`;
+  return (author.username || author.name || fallback).trim() || fallback;
+}
+
 export default function Discovery() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -191,6 +270,40 @@ export default function Discovery() {
       .then((data) => setFollowingUserIds(new Set(data.followingIds || [])))
       .catch(() => setFollowingUserIds(new Set()));
   }, [user?._id, user?.id, base]);
+
+  useEffect(() => {
+    const userId = user?._id || user?.id;
+    const userHandle = normalizeHandle(user?.handle);
+
+    if (!userId || !userHandle || user?.role === "researcher") return;
+
+    const syncKey = `discovery-handle-sync:${userId}:${userHandle}`;
+    if (sessionStorage.getItem(syncKey) === "done") return;
+
+    fetch(`${base}/api/auth/update-user/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ handle: userHandle }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to sync user handle");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const updatedUser = { ...user, ...data.user };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        sessionStorage.setItem(syncKey, "done");
+        window.dispatchEvent(new Event("userUpdated"));
+        loadPosts(true);
+      })
+      .catch((error) => {
+        console.error("Error syncing patient handle for Discovery:", error);
+      });
+  }, [base, user]);
 
   // Listen for storage changes to update user profile picture
   useEffect(() => {
@@ -334,7 +447,10 @@ export default function Discovery() {
       if (!response.ok) throw new Error("Failed to fetch posts");
       const data = await response.json();
 
-      const newPosts = data.posts || [];
+      const newPosts = hydratePostsWithCurrentUserHandle(
+        data.posts || [],
+        userData,
+      );
 
       if (reset) {
         setPosts(newPosts);
@@ -525,7 +641,10 @@ export default function Discovery() {
 
       setComments((prev) => ({
         ...prev,
-        [postId]: data.comments || [],
+        [postId]: hydrateCommentsWithCurrentUserHandle(
+          data.comments || [],
+          userData,
+        ),
       }));
 
       // Update reply count in post
@@ -598,7 +717,10 @@ export default function Discovery() {
       // Add comment to state
       setComments((prev) => ({
         ...prev,
-        [postId]: [...(prev[postId] || []), data.comment],
+        [postId]: [
+          ...(prev[postId] || []),
+          ...hydrateCommentsWithCurrentUserHandle([data.comment], user),
+        ],
       }));
 
       // Clear input
@@ -1182,9 +1304,10 @@ export default function Discovery() {
                               <div className="flex flex-col flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="font-semibold text-[#2F3C96]">
-                                    {getDisplayName(
+                                    {getDiscoveryAuthorName(
                                       post.authorUserId,
                                       "Anonymous",
+                                      post.authorRole,
                                     )}
                                   </h3>
                                   {post.isOfficial && (
@@ -1194,7 +1317,11 @@ export default function Discovery() {
                                     · {formatTimeAgo(post.createdAt)}
                                   </span>
                                 </div>
-                                {post.authorUserId?.username && (
+                                {isResearcherAuthor(
+                                  post.authorUserId,
+                                  post.authorRole,
+                                ) &&
+                                  post.authorUserId?.username && (
                                   <span className="text-xs text-gray-500">
                                     @{post.authorUserId.username}
                                   </span>
@@ -1476,9 +1603,10 @@ export default function Discovery() {
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 mb-1">
                                         <span className="text-sm font-semibold text-[#2F3C96]">
-                                          {getDisplayName(
+                                          {getDiscoveryAuthorName(
                                             comment.authorUserId,
                                             "Anonymous",
+                                            comment.authorRole,
                                           )}
                                         </span>
                                         <span className="text-xs text-gray-500">
@@ -1529,9 +1657,10 @@ export default function Discovery() {
                                                   <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
                                                       <span className="text-xs font-semibold text-[#2F3C96]">
-                                                        {getDisplayName(
+                                                        {getDiscoveryAuthorName(
                                                           childComment.authorUserId,
                                                           "Anonymous",
+                                                          childComment.authorRole,
                                                         )}
                                                       </span>
                                                       <span className="text-[10px] text-gray-500">

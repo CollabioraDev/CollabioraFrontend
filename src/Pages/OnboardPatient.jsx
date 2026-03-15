@@ -14,6 +14,12 @@ import EmailVerificationStep from "../components/EmailVerificationStep.jsx";
 import { SMART_SUGGESTION_KEYWORDS } from "../utils/smartSuggestions.js";
 import { useAuth0Social } from "../hooks/useAuth0Social.js";
 import icd11Dataset from "../data/icd11Dataset.json";
+import {
+  buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
+  buildNormalizedKey,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
 import { generateUniqueUsernames } from "../utils/usernameSuggestions.js";
 import { capitalizeText } from "../utils/textCorrection.js";
 import { getCityAndCountryFromLocation } from "../utils/geolocation.js";
@@ -677,31 +683,17 @@ export default function OnboardPatient() {
     return Array.from(termsSet);
   }, []);
 
-  function capitalizeMedicalCondition(condition) {
-    if (!condition || typeof condition !== "string") return condition;
-    condition = condition.trim();
-    if (!condition) return condition;
-
-    const words = condition.split(/\s+/);
-    const capitalizedWords = words.map((word) => {
-      if (!word) return word;
-      if (word.includes("'")) {
-        const parts = word.split("'");
-        return parts
-          .map((part) => {
-            if (!part) return part;
-            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-          })
-          .join("'");
-      }
-      if (word.length <= 4 && word === word.toUpperCase()) {
-        return word;
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    });
-
-    return capitalizedWords.join(" ");
-  }
+  const conditionsCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...commonConditions,
+      ...SMART_SUGGESTION_KEYWORDS,
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, []);
 
   async function extractConditions(text) {
     if (!text || text.length < 5) return;
@@ -715,20 +707,20 @@ export default function OnboardPatient() {
         body: JSON.stringify({ text }),
       }).then((r) => r.json());
       if (res.conditions?.length > 0) {
-        const capitalizedConditions = res.conditions.map(
-          capitalizeMedicalCondition,
+        const canonicalConditions = res.conditions.map((c) =>
+          resolveToCanonical(c, conditionsCanonicalMap),
         );
-        // Add to identified conditions (for display)
+        const seenKey = (arr, label) =>
+          arr.some((x) => buildNormalizedKey(x) === buildNormalizedKey(label));
         setIdentifiedConditions((prev) => {
-          const newConditions = capitalizedConditions.filter(
-            (c) => !prev.includes(c),
+          const newConditions = canonicalConditions.filter(
+            (c) => !seenKey(prev, c),
           );
           return [...prev, ...newConditions];
         });
-        // Also add to selected conditions
         setSelectedConditions((prev) => {
-          const newConditions = capitalizedConditions.filter(
-            (c) => !prev.includes(c),
+          const newConditions = canonicalConditions.filter(
+            (c) => !seenKey(prev, c),
           );
           return [...prev, ...newConditions];
         });
@@ -756,12 +748,18 @@ export default function OnboardPatient() {
   }
 
   function handleConditionSubmit(value) {
-    const capitalized = capitalizeMedicalCondition(value);
-    if (capitalized && !selectedConditions.includes(capitalized)) {
-      setSelectedConditions((prev) => [...prev, capitalized]);
+    const canonical = resolveToCanonical(value, conditionsCanonicalMap);
+    if (!canonical) return;
+    const key = buildNormalizedKey(canonical);
+    const alreadyAdded = selectedConditions.some(
+      (c) => buildNormalizedKey(c) === key,
+    );
+    if (!alreadyAdded) {
+      setSelectedConditions((prev) => [...prev, canonical]);
       setConditionInput("");
-      // Remove from identified if it was there (since user manually added it)
-      setIdentifiedConditions((prev) => prev.filter((c) => c !== capitalized));
+      setIdentifiedConditions((prev) =>
+        prev.filter((c) => buildNormalizedKey(c) !== key),
+      );
     }
   }
 
@@ -2838,46 +2836,34 @@ export default function OnboardPatient() {
                             value={conditionInput}
                             onChange={setConditionInput}
                             onSubmit={(value) => {
-                              if (value && value.trim()) {
-                                const trimmed = value.trim();
-                                // Check if it's a direct condition match
-                                const exactMatch = commonConditions.find(
-                                  (c) =>
-                                    c.toLowerCase() === trimmed.toLowerCase(),
-                                );
-                                if (exactMatch) {
-                                  handleConditionSubmit(exactMatch);
-                                } else {
-                                  // Check if it looks like symptoms
-                                  const symptomKeywords = [
-                                    "pain",
-                                    "ache",
-                                    "pressure",
-                                    "high",
-                                    "low",
-                                    "difficulty",
-                                    "trouble",
-                                    "issue",
-                                    "problem",
-                                    "feeling",
-                                    "symptom",
-                                    "bp",
-                                    "blood pressure",
-                                    "breathing",
-                                    "chest",
-                                    "headache",
-                                  ];
-                                  const looksLikeSymptom =
-                                    symptomKeywords.some((keyword) =>
-                                      trimmed.toLowerCase().includes(keyword),
-                                    ) || trimmed.length > 15;
-
-                                  if (looksLikeSymptom) {
-                                    extractConditions(trimmed);
-                                  } else {
-                                    handleConditionSubmit(trimmed);
-                                  }
-                                }
+                              if (!value?.trim()) return;
+                              const trimmed = value.trim();
+                              const symptomKeywords = [
+                                "pain",
+                                "ache",
+                                "pressure",
+                                "high",
+                                "low",
+                                "difficulty",
+                                "trouble",
+                                "issue",
+                                "problem",
+                                "feeling",
+                                "symptom",
+                                "bp",
+                                "blood pressure",
+                                "breathing",
+                                "chest",
+                                "headache",
+                              ];
+                              const looksLikeSymptom =
+                                symptomKeywords.some((keyword) =>
+                                  trimmed.toLowerCase().includes(keyword),
+                                ) || trimmed.length > 15;
+                              if (looksLikeSymptom) {
+                                extractConditions(trimmed);
+                              } else {
+                                handleConditionSubmit(trimmed);
                               }
                             }}
                             placeholder="Search or describe symptoms..."
@@ -2886,6 +2872,7 @@ export default function OnboardPatient() {
                               ...SMART_SUGGESTION_KEYWORDS,
                               ...icd11Suggestions,
                             ]}
+                            canonicalMap={conditionsCanonicalMap}
                             maxSuggestions={8}
                             autoSubmitOnSelect={true}
                             inputClassName="w-full py-1.5 px-3 text-sm border rounded-lg transition-all focus:outline-none focus:ring-2"

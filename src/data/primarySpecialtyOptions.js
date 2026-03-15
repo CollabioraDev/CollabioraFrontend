@@ -115,7 +115,7 @@ const flatOptions = [
   "Neonatal-Perinatal Medicine, Pediatrics",
   "Nephrology, Internal Medicine",
   "Neuro-Ophthalmology, Ophthalmology",
-  "Neurocritcial Care , Anesthesiology",
+  "Neurocritical Care, Anesthesiology",
   "Neurocritical Care, Internal Medicine",
   "Neurocritical Care, Neurological Surgery",
   "Neurocritical Care, Neurology",

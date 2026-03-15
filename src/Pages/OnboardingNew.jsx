@@ -27,6 +27,12 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import icd11Dataset from "../data/icd11Dataset.json";
+import {
+  buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
+  buildNormalizedKey,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
 
 // Social provider logos
 const GoogleLogo = () => (
@@ -568,28 +574,18 @@ export default function OnboardingNew() {
   };
   const toggleResearchInterest = (t) =>
     setResearchInterests((prev) => prev.filter((x) => x !== t));
-  function capitalizeMedicalCondition(condition) {
-    if (!condition || typeof condition !== "string") return condition;
-    condition = condition.trim();
-    if (!condition) return condition;
-    const words = condition.split(/\s+/);
-    const capitalizedWords = words.map((word) => {
-      if (!word) return word;
-      if (word.includes("'")) {
-        const parts = word.split("'");
-        return parts
-          .map((part) =>
-            part
-              ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-              : part,
-          )
-          .join("'");
-      }
-      if (word.length <= 4 && word === word.toUpperCase()) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    });
-    return capitalizedWords.join(" ");
-  }
+
+  const conditionsCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...commonConditions,
+      ...SMART_SUGGESTION_KEYWORDS,
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, []);
 
   const looksLikeSymptom = (trimmed) =>
     symptomKeywords.some((keyword) =>
@@ -597,11 +593,21 @@ export default function OnboardingNew() {
     ) || trimmed.length > 15;
 
   const handleConditionSubmit = (val) => {
-    const v = capitalizeMedicalCondition(val || conditionInput);
-    if (v && !conditions.includes(v)) {
-      setConditions((prev) => [...prev, v].slice(0, 15));
+    const canonical = resolveToCanonical(
+      (val || conditionInput || "").trim(),
+      conditionsCanonicalMap,
+    );
+    if (!canonical) return;
+    const key = buildNormalizedKey(canonical);
+    const alreadyAdded = conditions.some(
+      (c) => buildNormalizedKey(c) === key,
+    );
+    if (!alreadyAdded) {
+      setConditions((prev) => [...prev, canonical].slice(0, 15));
       setConditionInput("");
-      setIdentifiedConditions((prev) => prev.filter((c) => c !== v));
+      setIdentifiedConditions((prev) =>
+        prev.filter((c) => buildNormalizedKey(c) !== key),
+      );
     }
   };
 
@@ -615,9 +621,19 @@ export default function OnboardingNew() {
         body: JSON.stringify({ text }),
       }).then((r) => r.json());
       if (res.conditions?.length > 0) {
-        const caps = res.conditions.map(capitalizeMedicalCondition);
-        setIdentifiedConditions((prev) => [...new Set([...prev, ...caps])]);
-        setConditions((prev) => [...new Set([...prev, ...caps])].slice(0, 15));
+        const canonicalConditions = res.conditions.map((c) =>
+          resolveToCanonical(c, conditionsCanonicalMap),
+        );
+        const seenKey = (arr, label) =>
+          arr.some((x) => buildNormalizedKey(x) === buildNormalizedKey(label));
+        setIdentifiedConditions((prev) => {
+          const newC = canonicalConditions.filter((c) => !seenKey(prev, c));
+          return [...prev, ...newC];
+        });
+        setConditions((prev) => {
+          const newC = canonicalConditions.filter((c) => !seenKey(prev, c));
+          return [...prev, ...newC].slice(0, 15);
+        });
         setConditionInput("");
       }
     } catch (e) {
@@ -744,9 +760,14 @@ export default function OnboardingNew() {
   }, []);
 
   const addCondition = (value) => {
-    const v = (value || "").trim();
-    if (!v || conditions.includes(v)) return;
-    setConditions((prev) => [...prev, v].slice(0, 10));
+    const canonical = resolveToCanonical(
+      (value || "").trim(),
+      conditionsCanonicalMap,
+    );
+    if (!canonical) return;
+    const key = buildNormalizedKey(canonical);
+    if (conditions.some((c) => buildNormalizedKey(c) === key)) return;
+    setConditions((prev) => [...prev, canonical].slice(0, 10));
     setConditionInput("");
   };
 
@@ -1700,13 +1721,7 @@ export default function OnboardingNew() {
                             onSubmit={(value) => {
                               if (!value?.trim()) return;
                               const trimmed = value.trim();
-                              const exactMatch = commonConditions.find(
-                                (c) =>
-                                  c.toLowerCase() === trimmed.toLowerCase(),
-                              );
-                              if (exactMatch) {
-                                handleConditionSubmit(exactMatch);
-                              } else if (looksLikeSymptom(trimmed)) {
+                              if (looksLikeSymptom(trimmed)) {
                                 extractConditions(trimmed);
                               } else {
                                 handleConditionSubmit(trimmed);
@@ -1718,6 +1733,7 @@ export default function OnboardingNew() {
                               ...SMART_SUGGESTION_KEYWORDS,
                               ...icd11Suggestions,
                             ]}
+                            canonicalMap={conditionsCanonicalMap}
                             maxSuggestions={8}
                             inputClassName="w-full py-3 px-4 text-base border rounded-xl"
                           />

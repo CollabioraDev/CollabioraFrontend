@@ -11,8 +11,6 @@ import { Toaster, toast } from "react-hot-toast";
 import "./App.css";
 import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
-import FeedbackWidget from "./components/FeedbackWidget.jsx";
-import PageFeedbackWidget from "./components/PageFeedbackWidget.jsx";
 import MobileBottomNav from "./components/MobileBottomNav.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
 
@@ -315,8 +313,6 @@ const AppContent = () => {
           </Suspense>
         )}
       <PWAInstallPrompt />
-      {showLayout && isHomePage && <FeedbackWidget />}
-      {showLayout && <PageFeedbackWidget />}
       <Toaster
         position="top-right"
         reverseOrder={false}

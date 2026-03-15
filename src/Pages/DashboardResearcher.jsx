@@ -76,6 +76,7 @@ import PageTutorial, {
 } from "../components/PageTutorial.jsx";
 import SmartSearchInput from "../components/SmartSearchInput.jsx";
 import icd11Dataset from "../data/icd11Dataset.json";
+import { buildCanonicalMapFromIcd11, resolveToCanonical } from "../utils/canonicalLabels.js";
 
 export default function DashboardResearcher() {
   const [data, setData] = useState({
@@ -245,6 +246,11 @@ export default function DashboardResearcher() {
     }
     return Array.from(termsSet);
   }, []);
+
+  const interestsCanonicalMap = useMemo(
+    () => buildCanonicalMapFromIcd11(icd11Dataset),
+    [],
+  );
 
   const [refreshingSection, setRefreshingSection] = useState(null);
   const [refreshingSectionsBg, setRefreshingSectionsBg] = useState(new Set());
@@ -2421,9 +2427,12 @@ export default function DashboardResearcher() {
   }
 
   function addInterest(value) {
-    const v = value.trim();
-    if (!v) return;
-    setInterestsDraft((prev) => [...prev, v]);
+    const canonical = resolveToCanonical(
+      (value || "").trim(),
+      interestsCanonicalMap,
+    );
+    if (!canonical) return;
+    setInterestsDraft((prev) => [...prev, canonical]);
     setNewInterestInput("");
     setPrimaryIndicesDraft((prev) => {
       if (prev.length >= 2) return prev;
@@ -3270,6 +3279,7 @@ export default function DashboardResearcher() {
                         }
                       }}
                       extraTerms={icd11SuggestionTerms}
+                      canonicalMap={interestsCanonicalMap}
                       maxSuggestions={10}
                       placeholder="Search or select a condition/interest (ICD-11)..."
                       autoSubmitOnSelect={true}
@@ -3341,7 +3351,10 @@ export default function DashboardResearcher() {
                 background: "linear-gradient(90deg, #2F3C96 0%, #D0C4E2 100%)",
               }}
             />
-            {selectedCategory !== "profile" && (
+            {selectedCategory !== "profile" &&
+              selectedCategory !== "forums" &&
+              selectedCategory !== "meetings" &&
+              selectedCategory !== "favorites" && (
               <div className="mb-4 sm:mb-8 pt-0.5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                   <div>

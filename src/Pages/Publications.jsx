@@ -44,6 +44,11 @@ import { processKeywordInput } from "../utils/keywordSplitter.js";
 import { SMART_SUGGESTION_KEYWORDS } from "../utils/smartSuggestions.js";
 import icd11Dataset from "../data/icd11Dataset.json";
 import {
+  buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
+import {
   getLocalRemainingSearches,
   setLocalSearchCount,
   MAX_FREE_SEARCHES,
@@ -342,6 +347,18 @@ export default function Publications() {
     ],
     [icd11Suggestions, userMedicalInterest],
   );
+
+  const publicationCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...SMART_SUGGESTION_KEYWORDS,
+      ...(userMedicalInterest ? [userMedicalInterest] : []),
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, [userMedicalInterest]);
 
   // Tutorial: show for first-time visitors (not yet completed)
   const tutorialCompleted = useTutorialCompleted("publications");
@@ -683,8 +700,12 @@ export default function Publications() {
 
     if (keywords.length === 0) return;
 
-    // Add new keywords that aren't already in the list
-    const newKeywords = keywords.filter((kw) => !searchKeywords.includes(kw));
+    const canonicalKeywords = keywords.map((kw) =>
+      resolveToCanonical(kw, publicationCanonicalMap),
+    );
+    const newKeywords = canonicalKeywords.filter(
+      (kw) => !searchKeywords.some((s) => s.toLowerCase() === kw.toLowerCase()),
+    );
 
     if (newKeywords.length > 0) {
       setSearchKeywords([...searchKeywords, ...newKeywords]);
@@ -2216,6 +2237,7 @@ export default function Publications() {
                     onSubmit={handleKeywordSubmit}
                     placeholder="Try being specific to get more accurate search results...."
                     extraTerms={publicationSuggestionTerms}
+                    canonicalMap={publicationCanonicalMap}
                     className="w-full"
                     inputClassName="w-full min-w-0 py-2 px-3 text-sm rounded-lg border-slate-200 bg-slate-50/80 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] transition shadow-sm"
                   />

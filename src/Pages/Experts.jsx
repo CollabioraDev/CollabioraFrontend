@@ -54,6 +54,11 @@ import {
 } from "../utils/meshSearchIndex.js";
 import icd11Dataset from "../data/icd11Dataset.json";
 import meshSearchTerms from "../data/meshSearchTerms.json";
+import {
+  buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
 import { loadTutorialSampleExperts } from "../utils/tutorialSampleData.js";
 
 export default function Experts() {
@@ -279,6 +284,24 @@ export default function Experts() {
     const meshSlice = getMeshSliceForQuery(meshIndex, researchArea);
     return [...meshSlice, ...SMART_SUGGESTION_KEYWORDS].filter(Boolean);
   }, [meshIndex, researchArea]);
+
+  const expertsDiseaseCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...commonConditions,
+      ...SMART_SUGGESTION_KEYWORDS,
+      ...(userMedicalInterest ? [userMedicalInterest] : []),
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, [userMedicalInterest]);
+
+  const expertsExpertiseCanonicalMap = useMemo(
+    () => buildCanonicalMapFromLabels(SMART_SUGGESTION_KEYWORDS),
+    [],
+  );
 
   // Save useMedicalInterest to localStorage whenever it changes
   useEffect(() => {
@@ -1711,20 +1734,36 @@ export default function Experts() {
                   <SmartSearchInput
                     value={diseaseOfInterest}
                     onChange={setDiseaseOfInterest}
-                    onSubmit={(value) => search({ diseaseOfInterest: value })}
+                    onSubmit={(value) =>
+                      search({
+                        diseaseOfInterest: resolveToCanonical(
+                          value,
+                          expertsDiseaseCanonicalMap,
+                        ),
+                      })
+                    }
                     placeholder="Condition of Interest"
                     extraTerms={diseaseSuggestionTerms}
+                    canonicalMap={expertsDiseaseCanonicalMap}
                     className="flex-1"
                     autoSubmitOnSelect={false}
                   />
                   <SmartSearchInput
                     value={researchArea}
                     onChange={setResearchArea}
-                    onSubmit={(value) => search({ researchArea: value })}
+                    onSubmit={(value) =>
+                      search({
+                        researchArea: resolveToCanonical(
+                          value,
+                          expertsExpertiseCanonicalMap,
+                        ),
+                      })
+                    }
                     placeholder="What expertise are you looking for?"
                     extraTerms={expertSuggestionTerms}
-                    autoSubmitOnSelect={false}
+                    canonicalMap={expertsExpertiseCanonicalMap}
                     className="flex-1"
+                    autoSubmitOnSelect={false}
                   />
                   <Button
                     onClick={search}

@@ -3,6 +3,22 @@ import { createPortal } from "react-dom";
 import clsx from "clsx";
 import researchInterestDataset from "../data/researchInterestDataset.json";
 
+function decodeHtmlEntities(text) {
+  if (!text || typeof text !== "string") return text;
+  const doc = typeof document !== "undefined" ? document : null;
+  if (doc) {
+    const el = doc.createElement("textarea");
+    el.innerHTML = text;
+    return el.value;
+  }
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 export default function ResearchInterestInput({
   value,
   onChange,
@@ -198,10 +214,10 @@ export default function ResearchInterestInput({
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
     }
-    onChange?.(suggestion.term);
-    // Call onSelect callback if provided (for auto-adding to list)
+    const displayTerm = decodeHtmlEntities(suggestion.term);
+    onChange?.(displayTerm);
     if (onSelect) {
-      onSelect(suggestion.term);
+      onSelect(displayTerm);
     }
     setActiveIndex(-1);
     setIsDropdownOpen(false);
@@ -289,7 +305,7 @@ export default function ResearchInterestInput({
                   }
             }
           >
-            <span className="truncate flex-1">{suggestion.term}</span>
+            <span className="truncate flex-1">{decodeHtmlEntities(suggestion.term)}</span>
           </li>
         ))}
       </ul>

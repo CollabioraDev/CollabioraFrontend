@@ -10,6 +10,12 @@ import UniversityInput from "../components/UniversityInput.jsx";
 import { SMART_SUGGESTION_KEYWORDS } from "../utils/smartSuggestions.js";
 import icd11Dataset from "../data/icd11Dataset.json";
 import {
+  buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
+  buildNormalizedKey,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
+import {
   Sparkles,
   Info,
   X,
@@ -76,6 +82,7 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [user, setUser] = useState(null);
+  const [persistedUser, setPersistedUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -142,6 +149,10 @@ export default function EditProfile() {
     generateUniqueUsernames(3, false)
   );
 
+  function normalizeHandle(value) {
+    return String(value || "").replace(/^@+/, "").trim();
+  }
+
   // Function to refresh username suggestions
   const refreshUsernameSuggestions = () => {
     setUsernameSuggestions(generateUniqueUsernames(3, false));
@@ -193,6 +204,7 @@ export default function EditProfile() {
     }
 
     const uid = userData._id || userData.id;
+    loadPersistedUser(uid, userData);
     loadProfile(uid);
     loadFollowedData(uid);
     if (userData.role === "researcher") {
@@ -288,31 +300,18 @@ export default function EditProfile() {
     return Array.from(termsSet);
   }, []);
 
-  function capitalizeMedicalCondition(condition) {
-    if (!condition || typeof condition !== "string") return condition;
-    condition = condition.trim();
-    if (!condition) return condition;
-
-    const words = condition.split(/\s+/);
-    const capitalizedWords = words.map((word) => {
-      if (!word) return word;
-      if (word.includes("'")) {
-        const parts = word.split("'");
-        return parts
-          .map((part) => {
-            if (!part) return part;
-            return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-          })
-          .join("'");
-      }
-      if (word.length <= 4 && word === word.toUpperCase()) {
-        return word;
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    });
-
-    return capitalizedWords.join(" ");
-  }
+  // Canonical map for condition suggestions: ICD11 display_name wins, then curated labels
+  const conditionsCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...commonConditions,
+      ...SMART_SUGGESTION_KEYWORDS,
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, []);
 
   async function extractConditions(text) {
     if (!text || text.length < 5) return;
@@ -325,20 +324,20 @@ export default function EditProfile() {
         body: JSON.stringify({ text }),
       }).then((r) => r.json());
       if (res.conditions?.length > 0) {
-        const capitalizedConditions = res.conditions.map(
-          capitalizeMedicalCondition
+        const canonicalConditions = res.conditions.map((c) =>
+          resolveToCanonical(c, conditionsCanonicalMap)
         );
-        // Add to identified conditions (for display)
+        const seenKey = (arr, label) =>
+          arr.some((x) => buildNormalizedKey(x) === buildNormalizedKey(label));
         setIdentifiedConditions((prev) => {
-          const newConditions = capitalizedConditions.filter(
-            (c) => !prev.includes(c)
+          const newConditions = canonicalConditions.filter(
+            (c) => !seenKey(prev, c)
           );
           return [...prev, ...newConditions];
         });
-        // Also add to selected conditions
         setSelectedConditions((prev) => {
-          const newConditions = capitalizedConditions.filter(
-            (c) => !prev.includes(c)
+          const newConditions = canonicalConditions.filter(
+            (c) => !seenKey(prev, c)
           );
           return [...prev, ...newConditions];
         });
@@ -374,56 +373,44 @@ export default function EditProfile() {
   function handleConditionSubmit(value) {
     if (value && value.trim()) {
       const trimmed = value.trim();
-      // Check if it's a direct condition match
-      const exactMatch = commonConditions.find(
-        (c) => c.toLowerCase() === trimmed.toLowerCase()
-      );
-      if (exactMatch) {
-        const capitalized = capitalizeMedicalCondition(exactMatch);
-        if (capitalized && !selectedConditions.includes(capitalized)) {
-          setSelectedConditions((prev) => [...prev, capitalized]);
-          setConditionInput("");
-          setIdentifiedConditions((prev) =>
-            prev.filter((c) => c !== capitalized)
-          );
-        }
-      } else {
-        // Check if it looks like symptoms
-        const symptomKeywords = [
-          "pain",
-          "ache",
-          "pressure",
-          "high",
-          "low",
-          "difficulty",
-          "trouble",
-          "issue",
-          "problem",
-          "feeling",
-          "symptom",
-          "bp",
-          "blood pressure",
-          "breathing",
-          "chest",
-          "headache",
-        ];
-        const looksLikeSymptom =
-          symptomKeywords.some((keyword) =>
-            trimmed.toLowerCase().includes(keyword)
-          ) || trimmed.length > 15;
+      const symptomKeywords = [
+        "pain",
+        "ache",
+        "pressure",
+        "high",
+        "low",
+        "difficulty",
+        "trouble",
+        "issue",
+        "problem",
+        "feeling",
+        "symptom",
+        "bp",
+        "blood pressure",
+        "breathing",
+        "chest",
+        "headache",
+      ];
+      const looksLikeSymptom =
+        symptomKeywords.some((keyword) =>
+          trimmed.toLowerCase().includes(keyword)
+        ) || trimmed.length > 15;
 
-        if (looksLikeSymptom) {
-          extractConditions(trimmed);
-        } else {
-          const capitalized = capitalizeMedicalCondition(trimmed);
-          if (capitalized && !selectedConditions.includes(capitalized)) {
-            setSelectedConditions((prev) => [...prev, capitalized]);
-            setConditionInput("");
-            setIdentifiedConditions((prev) =>
-              prev.filter((c) => c !== capitalized)
-            );
-          }
-        }
+      if (looksLikeSymptom) {
+        extractConditions(trimmed);
+        return;
+      }
+
+      const canonical = resolveToCanonical(trimmed, conditionsCanonicalMap);
+      if (!canonical) return;
+      const key = buildNormalizedKey(canonical);
+      const alreadyAdded = selectedConditions.some(
+        (c) => buildNormalizedKey(c) === key
+      );
+      if (!alreadyAdded) {
+        setSelectedConditions((prev) => [...prev, canonical]);
+        setConditionInput("");
+        setIdentifiedConditions((prev) => prev.filter((c) => buildNormalizedKey(c) !== key));
       }
     }
   }
@@ -496,6 +483,32 @@ export default function EditProfile() {
       toast.error("Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadPersistedUser(userId, fallbackUser = {}) {
+    try {
+      const response = await fetch(`${base}/api/profile/${userId}/forum-profile`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const serverUser = data.user || {};
+      const mergedUser = { ...fallbackUser, ...serverUser };
+
+      setPersistedUser(mergedUser);
+      setUser((prev) => ({ ...(prev || {}), ...mergedUser }));
+      localStorage.setItem("user", JSON.stringify(mergedUser));
+
+      if (serverUser.username !== undefined && serverUser.username !== null) {
+        setUsername(serverUser.username);
+      }
+      if (serverUser.handle !== undefined && serverUser.handle !== null) {
+        setHandle(serverUser.handle);
+      } else {
+        setHandle("");
+      }
+    } catch (error) {
+      console.error("Error loading persisted user:", error);
     }
   }
 
@@ -706,24 +719,28 @@ export default function EditProfile() {
     const userId = user._id || user.id;
 
     try {
+      const originalUser = persistedUser || user || {};
+
       // Track if there are any changes
       let hasUserChanges = false;
       let hasProfileChanges = false;
 
       // Check for user field changes
       const userUpdateData = {};
-      if (username && username !== user.username) {
-        userUpdateData.username = username;
+      const trimmedUsername = username.trim();
+      const currentUsername = String(originalUser.username || "").trim();
+      if (trimmedUsername && trimmedUsername !== currentUsername) {
+        userUpdateData.username = trimmedUsername;
         hasUserChanges = true;
       }
       // Handle comparison: treat empty string and undefined as the same
-      const currentHandle = user.handle || "";
-      const newHandle = handle.trim();
+      const currentHandle = normalizeHandle(originalUser.handle);
+      const newHandle = normalizeHandle(handle);
       if (newHandle !== currentHandle) {
         userUpdateData.handle = newHandle || undefined;
         hasUserChanges = true;
       }
-      if (nameHidden !== (user.nameHidden || false)) {
+      if (nameHidden !== (originalUser.nameHidden || false)) {
         userUpdateData.nameHidden = nameHidden;
         hasUserChanges = true;
       }
@@ -884,6 +901,7 @@ export default function EditProfile() {
         const updatedUser = { ...user, ...userData.user };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
+        setPersistedUser(updatedUser);
         currentUser = updatedUser; // Update currentUser for profile update
         // Update form state with the saved handle - handle can be empty string
         if (
@@ -899,6 +917,7 @@ export default function EditProfile() {
           setNameHidden(userData.user.nameHidden);
         }
         window.dispatchEvent(new Event("login")); // Update navbar
+        window.dispatchEvent(new Event("userUpdated"));
       }
 
       // Update profile if there are changes
@@ -978,6 +997,7 @@ export default function EditProfile() {
         };
         localStorage.setItem("user", JSON.stringify(updatedUserData));
         setUser(updatedUserData);
+        setPersistedUser(updatedUserData);
       }
 
       // For researchers, also persist meeting settings and weekly availability
@@ -1663,6 +1683,7 @@ export default function EditProfile() {
                         ...SMART_SUGGESTION_KEYWORDS,
                         ...icd11Suggestions,
                       ]}
+                      canonicalMap={conditionsCanonicalMap}
                       maxSuggestions={8}
                       autoSubmitOnSelect={true}
                       inputClassName="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

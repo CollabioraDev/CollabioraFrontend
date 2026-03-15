@@ -77,6 +77,7 @@ import PageTutorial, {
 } from "../components/PageTutorial.jsx";
 import SmartSearchInput from "../components/SmartSearchInput.jsx";
 import icd11Dataset from "../data/icd11Dataset.json";
+import { buildCanonicalMapFromIcd11, resolveToCanonical } from "../utils/canonicalLabels.js";
 
 export default function DashboardPatient() {
   const [data, setData] = useState({
@@ -225,6 +226,11 @@ export default function DashboardPatient() {
     }
     return Array.from(termsSet);
   }, []);
+
+  const conditionsCanonicalMap = useMemo(
+    () => buildCanonicalMapFromIcd11(icd11Dataset),
+    [],
+  );
 
   // Filter publications: hide those about death, pregnancy, pediatric/kids unless user's condition explicitly mentions that topic
   const SENSITIVE_TOPIC_TERMS = [
@@ -2552,9 +2558,12 @@ export default function DashboardPatient() {
   }
 
   function addCondition(value) {
-    const v = value.trim();
-    if (!v) return;
-    setConditionsDraft((prev) => [...prev, v]);
+    const canonical = resolveToCanonical(
+      (value || "").trim(),
+      conditionsCanonicalMap,
+    );
+    if (!canonical) return;
+    setConditionsDraft((prev) => [...prev, canonical]);
     setNewConditionInput("");
     setPrimaryIndicesDraft((prev) => {
       if (prev.length >= 2) return prev;
@@ -3356,6 +3365,7 @@ export default function DashboardPatient() {
                         }
                       }}
                       extraTerms={icd11SuggestionTerms}
+                      canonicalMap={conditionsCanonicalMap}
                       maxSuggestions={10}
                       placeholder="Search or select a condition (ICD-11)..."
                       autoSubmitOnSelect={true}
@@ -3420,22 +3430,26 @@ export default function DashboardPatient() {
             className="rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm overflow-hidden p-4 sm:p-6 md:p-8"
             data-tour="dashboard-recommendations"
           >
-            <div className="mb-4 sm:mb-6">
-              <h2
-                className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
-                style={{
-                  background: "linear-gradient(135deg, #2F3C96, #253075)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                <span className="sm:hidden">Personalized For You</span>
-                <span className="hidden sm:inline">
-                  Your Personalized Recommendations
-                </span>
-              </h2>
-            </div>
+            {selectedCategory !== "forums" &&
+              selectedCategory !== "meetings" &&
+              selectedCategory !== "favorites" && (
+              <div className="mb-4 sm:mb-6">
+                <h2
+                  className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
+                  style={{
+                    background: "linear-gradient(135deg, #2F3C96, #253075)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  <span className="sm:hidden">Personalized For You</span>
+                  <span className="hidden sm:inline">
+                    Your Personalized Recommendations
+                  </span>
+                </h2>
+              </div>
+            )}
 
             {/* Mobile only: Medical Conditions as dropdown – block style (compact) */}
             <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-4">

@@ -12,6 +12,7 @@ export default function SmartSearchInput({
   onSubmit,
   placeholder = "Search...",
   extraTerms = [],
+  canonicalMap = null,
   maxSuggestions = DEFAULT_SUGGESTION_LIMIT,
   className = "",
   inputClassName = "",
@@ -34,8 +35,13 @@ export default function SmartSearchInput({
 
   const suggestions = useMemo(() => {
     if (!deferredValue || !deferredValue.trim()) return [];
-    return getSmartSuggestions(deferredValue, extraTerms, maxSuggestions);
-  }, [deferredValue, extraTerms, maxSuggestions]);
+    return getSmartSuggestions(
+      deferredValue,
+      extraTerms,
+      maxSuggestions,
+      canonicalMap
+    );
+  }, [deferredValue, extraTerms, maxSuggestions, canonicalMap]);
 
   const showDropdown =
     isDropdownOpen && suggestions.length > 0 && value?.trim()?.length > 0;

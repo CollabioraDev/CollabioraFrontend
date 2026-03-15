@@ -1,9 +1,13 @@
+import {
+  buildNormalizedKey,
+  resolveToCanonical,
+} from "./canonicalLabels.js";
+
 export const SMART_SUGGESTION_KEYWORDS = [
   "Cancer",
   "Cardiology",
   "Cardiac",
   "Cardiovascular",
-  "Cardio Oncology",
   "Cardio-Oncology",
   "Cardiac Rehab",
   "Cardiac Surgery",
@@ -19,13 +23,11 @@ export const SMART_SUGGESTION_KEYWORDS = [
   "Neurodegenerative",
   "Neurological Disorders",
   "Functional Neurological Disorders",
-  "Functional Neurological Disorder",
   "FND",
   "Conversion Disorder",
   "Neuropsychiatry",
   "Pediatrics",
   "Genetics",
-  "Rare Disease",
   "Rare Diseases",
   "Diabetes",
   "Endocrinology",
@@ -76,7 +78,6 @@ export const SMART_SUGGESTION_KEYWORDS = [
   "ENT",
   "Urology",
   "Nephrology",
-  "Infectious Disease",
   "Infectious Diseases",
   "Pathology",
   "Epidemiology",
@@ -101,7 +102,15 @@ export const SMART_SUGGESTION_KEYWORDS = [
 const normalizeTerm = (term) =>
   typeof term === "string" ? term.trim() : "";
 
-export function buildSuggestionPool(extraTerms = []) {
+/**
+ * Build suggestion pool from SMART_SUGGESTION_KEYWORDS + extraTerms.
+ * When canonicalMap is provided, each term is resolved to a canonical display label
+ * and deduplication is by normalized key so one canonical label per concept is shown.
+ * @param {string[]} [extraTerms=[]]
+ * @param {Map<string, string>|null} [canonicalMap=null]
+ * @returns {string[]}
+ */
+export function buildSuggestionPool(extraTerms = [], canonicalMap = null) {
   const merged = [...SMART_SUGGESTION_KEYWORDS, ...extraTerms];
   const pool = [];
   const seen = new Set();
@@ -109,10 +118,14 @@ export function buildSuggestionPool(extraTerms = []) {
   for (const rawTerm of merged) {
     const term = normalizeTerm(rawTerm);
     if (!term) continue;
-    const key = term.toLowerCase();
-    if (seen.has(key)) continue;
+    const displayLabel =
+      canonicalMap != null
+        ? resolveToCanonical(term, canonicalMap)
+        : term;
+    const key = buildNormalizedKey(displayLabel);
+    if (!key || seen.has(key)) continue;
     seen.add(key);
-    pool.push(term);
+    pool.push(displayLabel);
   }
 
   return pool;
@@ -120,15 +133,25 @@ export function buildSuggestionPool(extraTerms = []) {
 
 const MAX_POOL_SIZE = 1200;
 
+/**
+ * Get suggestions matching the query from the combined pool.
+ * When canonicalMap is provided, pool is built with canonical labels only.
+ * @param {string} query
+ * @param {string[]} [extraTerms=[]]
+ * @param {number} [limit=8]
+ * @param {Map<string, string>|null} [canonicalMap=null]
+ * @returns {string[]}
+ */
 export function getSmartSuggestions(
   query,
   extraTerms = [],
-  limit = 8
+  limit = 8,
+  canonicalMap = null
 ) {
   if (!query || !query.trim()) return [];
 
   const normalizedQuery = query.trim().toLowerCase();
-  const fullPool = buildSuggestionPool(extraTerms);
+  const fullPool = buildSuggestionPool(extraTerms, canonicalMap);
   const pool =
     fullPool.length > MAX_POOL_SIZE
       ? fullPool.slice(0, MAX_POOL_SIZE)
