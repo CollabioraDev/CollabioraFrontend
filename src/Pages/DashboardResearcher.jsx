@@ -76,7 +76,10 @@ import PageTutorial, {
 } from "../components/PageTutorial.jsx";
 import SmartSearchInput from "../components/SmartSearchInput.jsx";
 import icd11Dataset from "../data/icd11Dataset.json";
-import { buildCanonicalMapFromIcd11, resolveToCanonical } from "../utils/canonicalLabels.js";
+import {
+  buildCanonicalMapFromIcd11,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
 
 export default function DashboardResearcher() {
   const [data, setData] = useState({
@@ -776,6 +779,7 @@ export default function DashboardResearcher() {
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    let abortController = null;
     if (userData?._id || userData?.id) {
       // Check if this is the first load in this session
       const firstLoadKey = `dashboard_researcher_first_load_${
@@ -785,6 +789,10 @@ export default function DashboardResearcher() {
 
       // Set isFirstLoad based on whether user has loaded dashboard before in this session
       setIsFirstLoad(!hasLoadedBefore);
+
+      // AbortController so we ignore results from stale fetches (e.g. Strict Mode double-mount or re-navigation)
+      abortController = new AbortController();
+      const signal = abortController.signal;
 
       // Fetch data in parallel for faster load; limit global experts to 6
       const GLOBAL_EXPERTS_LIMIT = 6;
@@ -810,21 +818,26 @@ export default function DashboardResearcher() {
             profileResponse,
             trialsResponse,
           ] = await Promise.all([
-            fetch(`${base}/api/recommendations/${userId}`),
-            fetch(`${base}/api/favorites/${userId}`),
-            fetch(`${base}/api/insights/${userId}?limit=0`),
-            fetch(`${base}/api/profile/${userId}`),
-            fetch(`${base}/api/search/trials?${trialsParams.toString()}`),
+            fetch(`${base}/api/recommendations/${userId}`, { signal }),
+            fetch(`${base}/api/favorites/${userId}`, { signal }),
+            fetch(`${base}/api/insights/${userId}?limit=0`, { signal }),
+            fetch(`${base}/api/profile/${userId}`, { signal }),
+            fetch(`${base}/api/search/trials?${trialsParams.toString()}`, {
+              signal,
+            }),
           ]);
 
+          if (signal.aborted) return;
           const responseTime = Date.now() - startTime;
           isCacheHit = responseTime < 300;
 
           // Process recommendations (main content)
           if (!recsResponse.ok) {
+            if (signal.aborted) return;
             const errorText = await recsResponse
               .text()
               .catch(() => "Unknown error");
+            if (signal.aborted) return;
             console.error(
               "Error fetching recommendations:",
               recsResponse.status,
@@ -850,6 +863,7 @@ export default function DashboardResearcher() {
                 );
               }
             }
+            if (signal.aborted) return;
             setData({
               ...fetchedData,
               trials: (trialsList || []).sort((a, b) => {
@@ -868,6 +882,7 @@ export default function DashboardResearcher() {
                 return matchB - matchA;
               })
               .slice(0, GLOBAL_EXPERTS_LIMIT);
+            if (signal.aborted) return;
             setGlobalExperts(sortedGlobalExperts);
           }
 
@@ -918,12 +933,14 @@ export default function DashboardResearcher() {
             console.error("Error fetching profile:", error);
           }
         } catch (error) {
+          if (error?.name === "AbortError") return;
           console.error("Error fetching dashboard data:", error);
           toast.error("Failed to load dashboard data");
           setData({ trials: [], publications: [], experts: [] });
           setGlobalExperts([]);
         }
 
+        if (signal.aborted) return;
         const totalElapsedTime = Date.now() - startTime;
 
         // Mark that user has loaded dashboard before in this session
@@ -935,7 +952,7 @@ export default function DashboardResearcher() {
         // Cache hits should load instantly without skeleton loaders
         if (isCacheHit) {
           // Cache hit - load immediately, no skeleton needed
-          setLoading(false);
+          if (!signal.aborted) setLoading(false);
         } else {
           // Cache miss - apply minimum loading time for smooth UX
           // For first load, use longer delay for multi-step loader
@@ -948,10 +965,10 @@ export default function DashboardResearcher() {
           if (totalElapsedTime < randomDelay) {
             const remainingTime = randomDelay - totalElapsedTime;
             setTimeout(() => {
-              setLoading(false);
+              if (!signal.aborted) setLoading(false);
             }, remainingTime);
           } else {
-            setLoading(false);
+            if (!signal.aborted) setLoading(false);
           }
         }
       };
@@ -966,8 +983,9 @@ export default function DashboardResearcher() {
       }, 2000);
     }
 
-    // Cleanup event listeners
+    // Cleanup event listeners and abort in-flight fetch so we don't apply stale results
     return () => {
+      if (abortController) abortController.abort();
       window.removeEventListener("login", handleLoginEvent);
       cleanupCrossTab();
       if (emailCheckInterval) {
@@ -2250,10 +2268,24 @@ export default function DashboardResearcher() {
     setLoadingFiltered(true);
     try {
       const params = new URLSearchParams();
-      const userDisease =
-        user?.medicalInterests?.[0] ||
-        userProfile?.researcher?.interests?.[0] ||
-        "oncology";
+      const availableTopics =
+        userProfile?.researcher?.interests?.length > 0
+          ? userProfile.researcher.interests
+          : userProfile?.researcher?.specialties ||
+            user?.medicalInterests ||
+            [];
+      const selectedIndices = userProfile?.researcher?.primaryInterestIndices;
+      const selectedTopics =
+        Array.isArray(selectedIndices) && availableTopics.length > 0
+          ? selectedIndices
+              .filter(
+                (i) =>
+                  Number.isInteger(i) && i >= 0 && i < availableTopics.length,
+              )
+              .map((i) => availableTopics[i])
+              .filter(Boolean)
+          : [];
+      const userDisease = selectedTopics[0] || availableTopics[0] || "oncology";
       params.set("q", userDisease);
       // Default to RECRUITING if no filter is set
       params.set("status", trialFilter || "RECRUITING");
@@ -3355,31 +3387,32 @@ export default function DashboardResearcher() {
               selectedCategory !== "forums" &&
               selectedCategory !== "meetings" &&
               selectedCategory !== "favorites" && (
-              <div className="mb-4 sm:mb-8 pt-0.5">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <div>
-                    <h2
-                      className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl xl:text-4xl bg-clip-text text-transparent"
-                      style={{
-                        backgroundImage:
-                          "linear-gradient(135deg, #2F3C96 0%, #4a5bb8 50%, #253075 100%)",
-                      }}
-                    >
-                      <span className="sm:hidden">Personalized For You</span>
-                      <span className="hidden sm:inline">
-                        Your Personalized Recommendations
-                      </span>
-                    </h2>
-                    <p className="text-xs text-slate-500 sm:hidden">
-                      Based on your activity
-                    </p>
+                <div className="mb-4 sm:mb-8 pt-0.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div>
+                      <h2
+                        className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl xl:text-4xl bg-clip-text text-transparent"
+                        style={{
+                          backgroundImage:
+                            "linear-gradient(135deg, #2F3C96 0%, #4a5bb8 50%, #253075 100%)",
+                        }}
+                      >
+                        <span className="sm:hidden">Personalized For You</span>
+                        <span className="hidden sm:inline">
+                          Your Personalized Recommendations
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-500 sm:hidden">
+                        Based on your activity
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Grid of Items - Larger Cards - Full Width with 3 columns */}
             <div
+              key={`content-${data.trials?.length ?? 0}-${data.publications?.length ?? 0}-${data.experts?.length ?? 0}`}
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
               data-tour="dashboard-researcher-content"
             >
@@ -6757,14 +6790,21 @@ export default function DashboardResearcher() {
                     <div className="flex items-center justify-between mb-4 gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-[#D0C4E2]/30 flex items-center justify-center">
-                          <Calendar className="w-5 h-5" style={{ color: "#2F3C96" }} />
+                          <Calendar
+                            className="w-5 h-5"
+                            style={{ color: "#2F3C96" }}
+                          />
                         </div>
                         <div>
-                          <h3 className="text-base sm:text-lg font-bold" style={{ color: "#2F3C96" }}>
+                          <h3
+                            className="text-base sm:text-lg font-bold"
+                            style={{ color: "#2F3C96" }}
+                          >
                             Your meetings
                           </h3>
                           <p className="text-xs sm:text-sm text-slate-600">
-                            See upcoming calls and look back at past conversations.
+                            See upcoming calls and look back at past
+                            conversations.
                           </p>
                         </div>
                       </div>
@@ -6772,7 +6812,8 @@ export default function DashboardResearcher() {
 
                     <div className="mb-5 rounded-xl border border-dashed border-[#D0C4E2]/70 bg-[#F5F0FA] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <p className="text-xs sm:text-sm text-slate-700">
-                        Turn on 1:1 meetings and set your weekly availability from your profile so patients can book time with you.
+                        Turn on 1:1 meetings and set your weekly availability
+                        from your profile so patients can book time with you.
                       </p>
                       <button
                         type="button"
@@ -6793,11 +6834,21 @@ export default function DashboardResearcher() {
                         {/* Ongoing + Upcoming meetings */}
                         {(() => {
                           const now = new Date();
-                          const ongoing = upcomingAppointments.filter((appt) => {
-                            const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                            const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
-                            return now >= start && now <= end;
-                          });
+                          const ongoing = upcomingAppointments.filter(
+                            (appt) => {
+                              const start = new Date(
+                                appt.slotStartUtc ||
+                                  appt.slotStart ||
+                                  appt.meetingDate,
+                              );
+                              const end = new Date(
+                                appt.slotEndUtc ||
+                                  appt.slotEnd ||
+                                  appt.meetingDate,
+                              );
+                              return now >= start && now <= end;
+                            },
+                          );
                           const upcomingOnly = upcomingAppointments.filter(
                             (appt) => !ongoing.some((o) => o._id === appt._id),
                           );
@@ -6812,20 +6863,36 @@ export default function DashboardResearcher() {
                                   </h4>
                                   <div className="space-y-3">
                                     {ongoing.map((appt) => {
-                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const start = new Date(
+                                        appt.slotStartUtc ||
+                                          appt.slotStart ||
+                                          appt.meetingDate,
+                                      );
+                                      const end = new Date(
+                                        appt.slotEndUtc ||
+                                          appt.slotEnd ||
+                                          appt.meetingDate,
+                                      );
                                       const canJoin =
                                         appt.joinOpensAt && appt.joinClosesAt
                                           ? now >= new Date(appt.joinOpensAt) &&
                                             now <= new Date(appt.joinClosesAt)
-                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
-                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+                                          : now >=
+                                              new Date(
+                                                start.getTime() -
+                                                  10 * 60 * 1000,
+                                              ) &&
+                                            now <=
+                                              new Date(
+                                                end.getTime() + 10 * 60 * 1000,
+                                              );
 
                                       const withUser =
                                         appt.patientId?.name ||
                                         appt.patientId?.username ||
                                         "Patient";
-                                      const rawStatus = appt.status || "confirmed";
+                                      const rawStatus =
+                                        appt.status || "confirmed";
                                       const status =
                                         rawStatus === "pending_payment"
                                           ? "Awaiting payment"
@@ -6857,17 +6924,22 @@ export default function DashboardResearcher() {
                                                 Meeting with {withUser}
                                               </p>
                                               <p className="text-xs text-slate-600">
-                                                {start.toLocaleString(undefined, {
-                                                  weekday: "short",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                  hour: "numeric",
-                                                  minute: "2-digit",
-                                                })}{" "}
+                                                {start.toLocaleString(
+                                                  undefined,
+                                                  {
+                                                    weekday: "short",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    hour: "numeric",
+                                                    minute: "2-digit",
+                                                  },
+                                                )}{" "}
                                                 – in progress
                                               </p>
                                               <div className="mt-1 flex flex-wrap items-center gap-2">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                                >
                                                   {status}
                                                 </span>
                                               </div>
@@ -6883,7 +6955,8 @@ export default function DashboardResearcher() {
                                               type="button"
                                               disabled={!canJoin}
                                               onClick={() =>
-                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                                canJoin &&
+                                                navigate(`/meeting/${appt._id}`)
                                               }
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
@@ -6912,31 +6985,51 @@ export default function DashboardResearcher() {
                                       className="w-12 h-12 mx-auto mb-3 opacity-60"
                                       style={{ color: "#2F3C96" }}
                                     />
-                                    <h5 className="text-sm sm:text-base font-semibold mb-1" style={{ color: "#2F3C96" }}>
+                                    <h5
+                                      className="text-sm sm:text-base font-semibold mb-1"
+                                      style={{ color: "#2F3C96" }}
+                                    >
                                       No upcoming meetings yet
                                     </h5>
                                     <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
-                                      When patients book with you, confirmed meetings will show up here with a
-                                      join button shortly before start time.
+                                      When patients book with you, confirmed
+                                      meetings will show up here with a join
+                                      button shortly before start time.
                                     </p>
                                   </div>
                                 ) : (
                                   <div className="space-y-3">
                                     {upcomingOnly.map((appt) => {
-                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const start = new Date(
+                                        appt.slotStartUtc ||
+                                          appt.slotStart ||
+                                          appt.meetingDate,
+                                      );
+                                      const end = new Date(
+                                        appt.slotEndUtc ||
+                                          appt.slotEnd ||
+                                          appt.meetingDate,
+                                      );
                                       const canJoin =
                                         appt.joinOpensAt && appt.joinClosesAt
                                           ? now >= new Date(appt.joinOpensAt) &&
                                             now <= new Date(appt.joinClosesAt)
-                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
-                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+                                          : now >=
+                                              new Date(
+                                                start.getTime() -
+                                                  10 * 60 * 1000,
+                                              ) &&
+                                            now <=
+                                              new Date(
+                                                end.getTime() + 10 * 60 * 1000,
+                                              );
 
                                       const withUser =
                                         appt.patientId?.name ||
                                         appt.patientId?.username ||
                                         "Patient";
-                                      const rawStatus = appt.status || "confirmed";
+                                      const rawStatus =
+                                        appt.status || "confirmed";
                                       const status =
                                         rawStatus === "pending_payment"
                                           ? "Awaiting payment"
@@ -6968,16 +7061,21 @@ export default function DashboardResearcher() {
                                                 Meeting with {withUser}
                                               </p>
                                               <p className="text-xs text-slate-600">
-                                                {start.toLocaleString(undefined, {
-                                                  weekday: "short",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                  hour: "numeric",
-                                                  minute: "2-digit",
-                                                })}
+                                                {start.toLocaleString(
+                                                  undefined,
+                                                  {
+                                                    weekday: "short",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    hour: "numeric",
+                                                    minute: "2-digit",
+                                                  },
+                                                )}
                                               </p>
                                               <div className="mt-1 flex flex-wrap items-center gap-2">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                                >
                                                   {status}
                                                 </span>
                                               </div>
@@ -6993,7 +7091,8 @@ export default function DashboardResearcher() {
                                               type="button"
                                               disabled={!canJoin}
                                               onClick={() =>
-                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                                canJoin &&
+                                                navigate(`/meeting/${appt._id}`)
                                               }
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
@@ -7030,7 +7129,8 @@ export default function DashboardResearcher() {
                           </div>
                           {pendingMeetingRequests.length === 0 ? (
                             <p className="text-xs sm:text-sm text-slate-600">
-                              When patients request new meeting times, they&apos;ll appear here and in your Insights.
+                              When patients request new meeting times,
+                              they&apos;ll appear here and in your Insights.
                             </p>
                           ) : (
                             <div className="space-y-3">
@@ -7043,7 +7143,9 @@ export default function DashboardResearcher() {
                                   >
                                     <div className="flex items-start gap-2">
                                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center text-xs font-bold">
-                                        {patient?.username?.charAt(0)?.toUpperCase() || "P"}
+                                        {patient?.username
+                                          ?.charAt(0)
+                                          ?.toUpperCase() || "P"}
                                       </div>
                                       <div>
                                         <p className="text-xs font-semibold text-slate-900">
@@ -7059,15 +7161,16 @@ export default function DashboardResearcher() {
                                             {req.shortDescription}
                                           </p>
                                         )}
-                                        {(req.preferredSlotStartUtc || req.preferredDate) && (
+                                        {(req.preferredSlotStartUtc ||
+                                          req.preferredDate) && (
                                           <p className="text-[11px] text-slate-600 mt-0.5">
                                             <CalendarIcon className="w-3 h-3 inline mr-1" />
                                             Requested:{" "}
                                             {new Date(
                                               req.preferredSlotStartUtc ||
-                                              (req.preferredTime
-                                                ? `${req.preferredDate}T${req.preferredTime}:00`
-                                                : req.preferredDate),
+                                                (req.preferredTime
+                                                  ? `${req.preferredDate}T${req.preferredTime}:00`
+                                                  : req.preferredDate),
                                             ).toLocaleString()}
                                           </p>
                                         )}
@@ -7094,12 +7197,18 @@ export default function DashboardResearcher() {
                           </h4>
                           {pastAppointments.length === 0 ? (
                             <p className="text-xs sm:text-sm text-slate-600">
-                              Once you&apos;ve completed calls with patients, they&apos;ll appear here so you can quickly review who you&apos;ve spoken with.
+                              Once you&apos;ve completed calls with patients,
+                              they&apos;ll appear here so you can quickly review
+                              who you&apos;ve spoken with.
                             </p>
                           ) : (
                             <div className="space-y-3">
                               {pastAppointments.map((appt) => {
-                                const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                const start = new Date(
+                                  appt.slotStartUtc ||
+                                    appt.slotStart ||
+                                    appt.meetingDate,
+                                );
                                 const withUser =
                                   appt.patientId?.name ||
                                   appt.patientId?.username ||
@@ -7145,7 +7254,9 @@ export default function DashboardResearcher() {
                                           })}
                                         </p>
                                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                          <span
+                                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                          >
                                             {status}
                                           </span>
                                         </div>

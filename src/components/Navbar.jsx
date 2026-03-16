@@ -1086,22 +1086,29 @@ export default function Navbar() {
                       </div>
                     )}
 
-                    {/* Name and @handle (username they chose in onboarding form) */}
+                    {/* For patients: show only username (one line). For researchers: name + @handle */}
                     <div className="flex flex-col items-start min-w-0">
                       <span
                         className="text-xs font-semibold truncate max-w-[100px]"
                         style={{ color: "#2F3C96" }}
                       >
-                        {getDisplayName(user, "User")}
+                        {user?.role === "patient"
+                          ? user?.username ||
+                            user?.handle ||
+                            profile?.handle ||
+                            user?.name ||
+                            "User"
+                          : getDisplayName(user, "User")}
                       </span>
-                      {(user?.handle || profile?.handle) && (
-                        <span
-                          className="text-[10px] truncate max-w-[100px] block"
-                          style={{ color: "#787878" }}
-                        >
-                          @{user.handle || profile.handle}
-                        </span>
-                      )}
+                      {user?.role !== "patient" &&
+                        (user?.handle || profile?.handle) && (
+                          <span
+                            className="text-[10px] truncate max-w-[100px] block"
+                            style={{ color: "#787878" }}
+                          >
+                            @{user.handle || profile.handle}
+                          </span>
+                        )}
                     </div>
 
                     {/* Chevron */}

@@ -77,7 +77,10 @@ import PageTutorial, {
 } from "../components/PageTutorial.jsx";
 import SmartSearchInput from "../components/SmartSearchInput.jsx";
 import icd11Dataset from "../data/icd11Dataset.json";
-import { buildCanonicalMapFromIcd11, resolveToCanonical } from "../utils/canonicalLabels.js";
+import {
+  buildCanonicalMapFromIcd11,
+  resolveToCanonical,
+} from "../utils/canonicalLabels.js";
 
 export default function DashboardPatient() {
   const [data, setData] = useState({
@@ -813,6 +816,7 @@ export default function DashboardPatient() {
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    let abortController = null;
     if (userData?._id || userData?.id) {
       // Check if this is the first load in this session
       const firstLoadKey = `dashboard_patient_first_load_${
@@ -822,6 +826,10 @@ export default function DashboardPatient() {
 
       // Set isFirstLoad based on whether user has loaded dashboard before in this session
       setIsFirstLoad(!hasLoadedBefore);
+
+      // AbortController so we ignore results from stale fetches (e.g. Strict Mode double-mount or re-navigation)
+      abortController = new AbortController();
+      const signal = abortController.signal;
 
       // Fetch data in parallel for faster load; limit global experts to 6
       const GLOBAL_EXPERTS_LIMIT = 6;
@@ -839,28 +847,33 @@ export default function DashboardPatient() {
           trialsParams.set("page", "1");
           trialsParams.set("pageSize", "9");
 
-          const [
-            recsResponse,
-            favResponse,
-            forumsResponse,
-            profileResponse,
-            trialsResponse,
-          ] = await Promise.all([
-            fetch(`${base}/api/recommendations/${userId}`),
-            fetch(`${base}/api/favorites/${userId}`),
-            fetch(`${base}/api/forums/categories`),
-            fetch(`${base}/api/profile/${userId}`),
-            fetch(`${base}/api/search/trials?${trialsParams.toString()}`),
+          // Only wait for the recommendation payload needed to paint the page.
+          // Secondary data loads in the background so first render is not blocked.
+          const [recsResponse, trialsResponse] = await Promise.all([
+            fetch(`${base}/api/recommendations/${userId}`, { signal }),
+            fetch(`${base}/api/search/trials?${trialsParams.toString()}`, {
+              signal,
+            }),
           ]);
+
+          if (signal.aborted) return;
 
           const responseTime = Date.now() - startTime;
           isCacheHit = responseTime < 300;
 
+          const ancillaryRequests = Promise.allSettled([
+            fetch(`${base}/api/favorites/${userId}`, { signal }),
+            fetch(`${base}/api/forums/categories`, { signal }),
+            fetch(`${base}/api/profile/${userId}`, { signal }),
+          ]);
+
           // Process recommendations (main content)
           if (!recsResponse.ok) {
+            if (signal.aborted) return;
             const errorText = await recsResponse
               .text()
               .catch(() => "Unknown error");
+            if (signal.aborted) return;
             console.error(
               "Error fetching recommendations:",
               recsResponse.status,
@@ -903,6 +916,7 @@ export default function DashboardPatient() {
                 return matchB - matchA;
               }),
             };
+            if (signal.aborted) return;
             setData(sortedData);
 
             // Global experts are already computed on the backend using the
@@ -915,6 +929,7 @@ export default function DashboardPatient() {
                 return matchB - matchA;
               })
               .slice(0, GLOBAL_EXPERTS_LIMIT);
+            if (signal.aborted) return;
             setGlobalExperts(sortedGlobalExperts);
 
             // Deferred: batch simplify (non-blocking)
@@ -977,130 +992,155 @@ export default function DashboardPatient() {
             }
           }
 
-          // Process favorites (batch simplify deferred, non-blocking)
-          try {
-            if (favResponse.ok) {
-              const favData = await favResponse.json();
-              const favItems = favData.items || [];
-              setFavorites(favItems);
+          ancillaryRequests
+            .then(async ([favResult, forumsResult, profileResult]) => {
+              if (signal.aborted) return;
 
-              const favoritePublicationTitles = favItems
-                .filter(
-                  (fav) =>
-                    fav.type === "publication" &&
-                    fav.item?.title &&
-                    fav.item.title.length > 60,
-                )
-                .map((fav) => fav.item.title);
-              if (favoritePublicationTitles.length > 0) {
-                fetch(`${base}/api/ai/batch-simplify-titles`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    titles: favoritePublicationTitles,
-                  }),
-                })
-                  .then((res) => res.json())
-                  .then((data) => {
-                    const simplifiedTitles = data.simplifiedTitles || [];
-                    setSimplifiedTitles((prev) => {
-                      const newMap = new Map(prev);
-                      favoritePublicationTitles.forEach((title, index) => {
-                        if (simplifiedTitles[index])
-                          newMap.set(title, simplifiedTitles[index]);
-                      });
-                      return newMap;
-                    });
-                  })
-                  .catch((e) =>
-                    console.error(
-                      "Error batch simplifying favorite titles:",
-                      e,
-                    ),
+              // Process favorites (batch simplify deferred, non-blocking)
+              try {
+                if (favResult.status === "fulfilled" && favResult.value.ok) {
+                  const favData = await favResult.value.json();
+                  if (signal.aborted) return;
+                  const favItems = favData.items || [];
+                  setFavorites(favItems);
+
+                  const favoritePublicationTitles = favItems
+                    .filter(
+                      (fav) =>
+                        fav.type === "publication" &&
+                        fav.item?.title &&
+                        fav.item.title.length > 60,
+                    )
+                    .map((fav) => fav.item.title);
+                  if (favoritePublicationTitles.length > 0) {
+                    fetch(`${base}/api/ai/batch-simplify-titles`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        titles: favoritePublicationTitles,
+                      }),
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        const simplifiedTitles = data.simplifiedTitles || [];
+                        setSimplifiedTitles((prev) => {
+                          const newMap = new Map(prev);
+                          favoritePublicationTitles.forEach((title, index) => {
+                            if (simplifiedTitles[index])
+                              newMap.set(title, simplifiedTitles[index]);
+                          });
+                          return newMap;
+                        });
+                      })
+                      .catch((e) =>
+                        console.error(
+                          "Error batch simplifying favorite titles:",
+                          e,
+                        ),
+                      );
+                  }
+
+                  const favoriteTrials = favItems.filter(
+                    (fav) =>
+                      fav.type === "trial" &&
+                      fav.item?.title &&
+                      fav.item.title.length > 60,
                   );
+                  if (favoriteTrials.length > 0) {
+                    const favoriteTrialObjects = favoriteTrials.map(
+                      (fav) => fav.item,
+                    );
+                    fetch(`${base}/api/ai/batch-simplify-trial-summaries`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ trials: favoriteTrialObjects }),
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        const simplifiedSummaries =
+                          data.simplifiedSummaries || [];
+                        setSimplifiedTrialSummaries((prev) => {
+                          const newMap = new Map(prev);
+                          favoriteTrials.forEach((fav, index) => {
+                            if (simplifiedSummaries[index])
+                              newMap.set(
+                                fav.item.title,
+                                simplifiedSummaries[index],
+                              );
+                          });
+                          return newMap;
+                        });
+                      })
+                      .catch((e) =>
+                        console.error(
+                          "Error batch simplifying favorite trial summaries:",
+                          e,
+                        ),
+                      );
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching favorites:", error);
               }
 
-              const favoriteTrials = favItems.filter(
-                (fav) =>
-                  fav.type === "trial" &&
-                  fav.item?.title &&
-                  fav.item.title.length > 60,
-              );
-              if (favoriteTrials.length > 0) {
-                const favoriteTrialObjects = favoriteTrials.map(
-                  (fav) => fav.item,
+              try {
+                if (
+                  forumsResult.status === "fulfilled" &&
+                  forumsResult.value.ok
+                ) {
+                  const forumsData = await forumsResult.value.json();
+                  if (signal.aborted) return;
+                  setForumsCategories(forumsData.categories || []);
+                }
+              } catch (error) {
+                console.error("Error fetching forums categories:", error);
+              }
+
+              try {
+                if (
+                  profileResult.status === "fulfilled" &&
+                  profileResult.value.ok
+                ) {
+                  const profileData = await profileResult.value.json();
+                  if (signal.aborted) return;
+                  const profile = profileData.profile || null;
+                  setUserProfile(profile);
+                  if (profile) {
+                    const conditions =
+                      profile.patient?.conditions ||
+                      profile.researcher?.interests ||
+                      [];
+                    const location =
+                      profile.patient?.location || profile.researcher?.location;
+                    updateProfileSignature(conditions, location);
+                    markDataFetched(
+                      generateProfileSignature(conditions, location),
+                    );
+
+                    // Profile completeness check is handled by ProfileGuard in App.jsx
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching profile:", error);
+              }
+            })
+            .catch((error) => {
+              if (error?.name !== "AbortError") {
+                console.error(
+                  "Error fetching ancillary dashboard data:",
+                  error,
                 );
-                fetch(`${base}/api/ai/batch-simplify-trial-summaries`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ trials: favoriteTrialObjects }),
-                })
-                  .then((res) => res.json())
-                  .then((data) => {
-                    const simplifiedSummaries = data.simplifiedSummaries || [];
-                    setSimplifiedTrialSummaries((prev) => {
-                      const newMap = new Map(prev);
-                      favoriteTrials.forEach((fav, index) => {
-                        if (simplifiedSummaries[index])
-                          newMap.set(
-                            fav.item.title,
-                            simplifiedSummaries[index],
-                          );
-                      });
-                      return newMap;
-                    });
-                  })
-                  .catch((e) =>
-                    console.error(
-                      "Error batch simplifying favorite trial summaries:",
-                      e,
-                    ),
-                  );
               }
-            }
-          } catch (error) {
-            console.error("Error fetching favorites:", error);
-          }
-
-          // Process forums
-          try {
-            if (forumsResponse.ok) {
-              const forumsData = await forumsResponse.json();
-              setForumsCategories(forumsData.categories || []);
-            }
-          } catch (error) {
-            console.error("Error fetching forums categories:", error);
-          }
-
-          // Process profile
-          try {
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              const profile = profileData.profile || null;
-              setUserProfile(profile);
-              if (profile) {
-                const conditions =
-                  profile.patient?.conditions ||
-                  profile.researcher?.interests ||
-                  [];
-                const location =
-                  profile.patient?.location || profile.researcher?.location;
-                updateProfileSignature(conditions, location);
-                markDataFetched(generateProfileSignature(conditions, location));
-
-                // Profile completeness check is handled by ProfileGuard in App.jsx
-              }
-            }
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-          }
+            });
         } catch (error) {
+          if (error?.name === "AbortError") return;
           console.error("Error fetching dashboard data:", error);
           toast.error("Failed to load dashboard data");
           setData({ trials: [], publications: [], experts: [] });
           setGlobalExperts([]);
         }
 
+        if (signal.aborted) return;
         const totalElapsedTime = Date.now() - startTime;
 
         // Mark that user has loaded dashboard before in this session
@@ -1108,27 +1148,19 @@ export default function DashboardPatient() {
           sessionStorage.setItem(firstLoadKey, "true");
         }
 
-        // Only apply minimum loading time for cache misses (first load)
-        // Cache hits should load instantly without skeleton loaders
+        // Keep a tiny minimum so fast responses don't flash, but do not
+        // artificially hold the dashboard for seconds on first load.
         if (isCacheHit) {
-          // Cache hit - load immediately, no skeleton needed
-          setLoading(false);
+          if (!signal.aborted) setLoading(false);
         } else {
-          // Cache miss - apply minimum loading time for smooth UX
-          // For first load, use longer delay for multi-step loader
-          // For subsequent loads, use shorter delay for simple spinner
-          const minLoadingTime = !hasLoadedBefore ? 1500 : 800; // 1.5s for first load, 0.8s for subsequent
-          const maxLoadingTime = !hasLoadedBefore ? 2000 : 1200; // 2s for first load, 1.2s for subsequent
-          const randomDelay =
-            Math.random() * (maxLoadingTime - minLoadingTime) + minLoadingTime;
-
-          if (totalElapsedTime < randomDelay) {
-            const remainingTime = randomDelay - totalElapsedTime;
+          const minLoadingTime = !hasLoadedBefore ? 250 : 150;
+          if (totalElapsedTime < minLoadingTime) {
+            const remainingTime = minLoadingTime - totalElapsedTime;
             setTimeout(() => {
-              setLoading(false);
+              if (!signal.aborted) setLoading(false);
             }, remainingTime);
           } else {
-            setLoading(false);
+            if (!signal.aborted) setLoading(false);
           }
         }
       };
@@ -1144,8 +1176,9 @@ export default function DashboardPatient() {
       }, 2000);
     }
 
-    // Cleanup event listeners
+    // Cleanup event listeners and abort in-flight fetch so we don't apply stale results
     return () => {
+      if (abortController) abortController.abort();
       window.removeEventListener("login", handleLoginEvent);
       cleanupCrossTab();
       if (emailCheckInterval) {
@@ -2417,10 +2450,23 @@ export default function DashboardPatient() {
     setLoadingFiltered(true);
     try {
       const params = new URLSearchParams();
+      const availableConditions =
+        userProfile?.patient?.conditions || user?.medicalInterests || [];
+      const selectedIndices = userProfile?.patient?.primaryConditionIndices;
+      const selectedConditions =
+        Array.isArray(selectedIndices) && availableConditions.length > 0
+          ? selectedIndices
+              .filter(
+                (i) =>
+                  Number.isInteger(i) &&
+                  i >= 0 &&
+                  i < availableConditions.length,
+              )
+              .map((i) => availableConditions[i])
+              .filter(Boolean)
+          : [];
       const userDisease =
-        user?.medicalInterests?.[0] ||
-        userProfile?.patient?.conditions?.[0] ||
-        "oncology";
+        selectedConditions[0] || availableConditions[0] || "oncology";
       params.set("q", userDisease);
       // Only set status parameter if trialFilter is set (empty string means "all")
       if (trialFilter) {
@@ -3433,23 +3479,23 @@ export default function DashboardPatient() {
             {selectedCategory !== "forums" &&
               selectedCategory !== "meetings" &&
               selectedCategory !== "favorites" && (
-              <div className="mb-4 sm:mb-6">
-                <h2
-                  className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
-                  style={{
-                    background: "linear-gradient(135deg, #2F3C96, #253075)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  <span className="sm:hidden">Personalized For You</span>
-                  <span className="hidden sm:inline">
-                    Your Personalized Recommendations
-                  </span>
-                </h2>
-              </div>
-            )}
+                <div className="mb-4 sm:mb-6">
+                  <h2
+                    className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
+                    style={{
+                      background: "linear-gradient(135deg, #2F3C96, #253075)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    <span className="sm:hidden">Personalized For You</span>
+                    <span className="hidden sm:inline">
+                      Your Personalized Recommendations
+                    </span>
+                  </h2>
+                </div>
+              )}
 
             {/* Mobile only: Medical Conditions as dropdown – block style (compact) */}
             <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-4">
@@ -3596,8 +3642,9 @@ export default function DashboardPatient() {
               </div>
             </div>
 
-            {/* Grid of Items - block cards within main content block */}
+            {/* Grid of Items - block cards within main content block. Key forces re-render when data arrives (fixes no-results-until-refresh on mobile). */}
             <div
+              key={`content-${data.trials?.length ?? 0}-${data.publications?.length ?? 0}-${data.experts?.length ?? 0}`}
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
               data-tour="dashboard-content"
             >
@@ -5924,10 +5971,16 @@ export default function DashboardPatient() {
                     <div className="flex items-center justify-between mb-4 gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                          <Calendar className="w-5 h-5" style={{ color: "#2F3C96" }} />
+                          <Calendar
+                            className="w-5 h-5"
+                            style={{ color: "#2F3C96" }}
+                          />
                         </div>
                         <div>
-                          <h3 className="text-base sm:text-lg font-bold" style={{ color: "#2F3C96" }}>
+                          <h3
+                            className="text-base sm:text-lg font-bold"
+                            style={{ color: "#2F3C96" }}
+                          >
                             Your meetings
                           </h3>
                           <p className="text-xs sm:text-sm text-slate-600">
@@ -5946,11 +5999,21 @@ export default function DashboardPatient() {
                       <div className="space-y-6">
                         {(() => {
                           const now = new Date();
-                          const ongoing = upcomingAppointments.filter((appt) => {
-                            const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                            const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
-                            return now >= start && now <= end;
-                          });
+                          const ongoing = upcomingAppointments.filter(
+                            (appt) => {
+                              const start = new Date(
+                                appt.slotStartUtc ||
+                                  appt.slotStart ||
+                                  appt.meetingDate,
+                              );
+                              const end = new Date(
+                                appt.slotEndUtc ||
+                                  appt.slotEnd ||
+                                  appt.meetingDate,
+                              );
+                              return now >= start && now <= end;
+                            },
+                          );
                           const upcomingOnly = upcomingAppointments.filter(
                             (appt) => !ongoing.some((o) => o._id === appt._id),
                           );
@@ -5965,23 +6028,41 @@ export default function DashboardPatient() {
                                   </h4>
                                   <div className="space-y-3">
                                     {ongoing.map((appt) => {
-                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const start = new Date(
+                                        appt.slotStartUtc ||
+                                          appt.slotStart ||
+                                          appt.meetingDate,
+                                      );
+                                      const end = new Date(
+                                        appt.slotEndUtc ||
+                                          appt.slotEnd ||
+                                          appt.meetingDate,
+                                      );
                                       const canJoin =
                                         appt.joinOpensAt && appt.joinClosesAt
                                           ? now >= new Date(appt.joinOpensAt) &&
                                             now <= new Date(appt.joinClosesAt)
-                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
-                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+                                          : now >=
+                                              new Date(
+                                                start.getTime() -
+                                                  10 * 60 * 1000,
+                                              ) &&
+                                            now <=
+                                              new Date(
+                                                end.getTime() + 10 * 60 * 1000,
+                                              );
 
                                       const expertName =
                                         appt.researcherId?.name ||
                                         appt.researcherId?.username ||
                                         "Expert";
-                                      const withUser = expertName.startsWith("Dr ")
+                                      const withUser = expertName.startsWith(
+                                        "Dr ",
+                                      )
                                         ? expertName
                                         : `Dr ${expertName}`;
-                                      const rawStatus = appt.status || "confirmed";
+                                      const rawStatus =
+                                        appt.status || "confirmed";
                                       const status =
                                         rawStatus === "pending_payment"
                                           ? "Awaiting payment"
@@ -6013,17 +6094,22 @@ export default function DashboardPatient() {
                                                 Meeting with {withUser}
                                               </p>
                                               <p className="text-xs text-slate-600">
-                                                {start.toLocaleString(undefined, {
-                                                  weekday: "short",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                  hour: "numeric",
-                                                  minute: "2-digit",
-                                                })}{" "}
+                                                {start.toLocaleString(
+                                                  undefined,
+                                                  {
+                                                    weekday: "short",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    hour: "numeric",
+                                                    minute: "2-digit",
+                                                  },
+                                                )}{" "}
                                                 – in progress
                                               </p>
                                               <div className="mt-1 flex flex-wrap items-center gap-2">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                                >
                                                   {status}
                                                 </span>
                                               </div>
@@ -6039,7 +6125,8 @@ export default function DashboardPatient() {
                                               type="button"
                                               disabled={!canJoin}
                                               onClick={() =>
-                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                                canJoin &&
+                                                navigate(`/meeting/${appt._id}`)
                                               }
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
@@ -6068,34 +6155,56 @@ export default function DashboardPatient() {
                                       className="w-12 h-12 mx-auto mb-3 opacity-60"
                                       style={{ color: "#2F3C96" }}
                                     />
-                                    <h5 className="text-sm sm:text-base font-semibold mb-1" style={{ color: "#2F3C96" }}>
+                                    <h5
+                                      className="text-sm sm:text-base font-semibold mb-1"
+                                      style={{ color: "#2F3C96" }}
+                                    >
                                       No upcoming meetings yet
                                     </h5>
                                     <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
-                                      When you book with an expert, your confirmed meetings will show up here with a
-                                      join button shortly before start time.
+                                      When you book with an expert, your
+                                      confirmed meetings will show up here with
+                                      a join button shortly before start time.
                                     </p>
                                   </div>
                                 ) : (
                                   <div className="space-y-3">
                                     {upcomingOnly.map((appt) => {
-                                      const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
-                                      const end = new Date(appt.slotEndUtc || appt.slotEnd || appt.meetingDate);
+                                      const start = new Date(
+                                        appt.slotStartUtc ||
+                                          appt.slotStart ||
+                                          appt.meetingDate,
+                                      );
+                                      const end = new Date(
+                                        appt.slotEndUtc ||
+                                          appt.slotEnd ||
+                                          appt.meetingDate,
+                                      );
                                       const canJoin =
                                         appt.joinOpensAt && appt.joinClosesAt
                                           ? now >= new Date(appt.joinOpensAt) &&
                                             now <= new Date(appt.joinClosesAt)
-                                          : now >= new Date(start.getTime() - 10 * 60 * 1000) &&
-                                            now <= new Date(end.getTime() + 10 * 60 * 1000);
+                                          : now >=
+                                              new Date(
+                                                start.getTime() -
+                                                  10 * 60 * 1000,
+                                              ) &&
+                                            now <=
+                                              new Date(
+                                                end.getTime() + 10 * 60 * 1000,
+                                              );
 
                                       const expertName =
                                         appt.researcherId?.name ||
                                         appt.researcherId?.username ||
                                         "Expert";
-                                      const withUser = expertName.startsWith("Dr ")
+                                      const withUser = expertName.startsWith(
+                                        "Dr ",
+                                      )
                                         ? expertName
                                         : `Dr ${expertName}`;
-                                      const rawStatus = appt.status || "confirmed";
+                                      const rawStatus =
+                                        appt.status || "confirmed";
                                       const status =
                                         rawStatus === "pending_payment"
                                           ? "Awaiting payment"
@@ -6127,16 +6236,21 @@ export default function DashboardPatient() {
                                                 Meeting with {withUser}
                                               </p>
                                               <p className="text-xs text-slate-600">
-                                                {start.toLocaleString(undefined, {
-                                                  weekday: "short",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                  hour: "numeric",
-                                                  minute: "2-digit",
-                                                })}
+                                                {start.toLocaleString(
+                                                  undefined,
+                                                  {
+                                                    weekday: "short",
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    hour: "numeric",
+                                                    minute: "2-digit",
+                                                  },
+                                                )}
                                               </p>
                                               <div className="mt-1 flex flex-wrap items-center gap-2">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                                <span
+                                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                                >
                                                   {status}
                                                 </span>
                                               </div>
@@ -6152,7 +6266,8 @@ export default function DashboardPatient() {
                                               type="button"
                                               disabled={!canJoin}
                                               onClick={() =>
-                                                canJoin && navigate(`/meeting/${appt._id}`)
+                                                canJoin &&
+                                                navigate(`/meeting/${appt._id}`)
                                               }
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
@@ -6180,12 +6295,18 @@ export default function DashboardPatient() {
                           </h4>
                           {pastAppointments.length === 0 ? (
                             <p className="text-xs sm:text-sm text-slate-600">
-                              After you complete calls with experts, they&apos;ll appear here so you can easily remember who you&apos;ve spoken with.
+                              After you complete calls with experts,
+                              they&apos;ll appear here so you can easily
+                              remember who you&apos;ve spoken with.
                             </p>
                           ) : (
                             <div className="space-y-3">
                               {pastAppointments.map((appt) => {
-                                const start = new Date(appt.slotStartUtc || appt.slotStart || appt.meetingDate);
+                                const start = new Date(
+                                  appt.slotStartUtc ||
+                                    appt.slotStart ||
+                                    appt.meetingDate,
+                                );
                                 const expertName =
                                   appt.researcherId?.name ||
                                   appt.researcherId?.username ||
@@ -6234,7 +6355,9 @@ export default function DashboardPatient() {
                                           })}
                                         </p>
                                         <div className="mt-1 flex flex-wrap items-center gap-2">
-                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}>
+                                          <span
+                                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${statusClasses}`}
+                                          >
                                             {status}
                                           </span>
                                         </div>
