@@ -6954,10 +6954,11 @@ export default function DashboardResearcher() {
                                             <button
                                               type="button"
                                               disabled={!canJoin}
-                                              onClick={() =>
-                                                canJoin &&
-                                                navigate(`/meeting/${appt._id}`)
-                                              }
+                                              onClick={() => {
+                                                if (!canJoin) return;
+                                                const href = `/meeting/${appt._id}`;
+                                                window.open(href, "_blank", "noopener,noreferrer");
+                                              }}
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
                                                   ? "bg-[#2F3C96] hover:bg-[#253075]"
@@ -7090,10 +7091,11 @@ export default function DashboardResearcher() {
                                             <button
                                               type="button"
                                               disabled={!canJoin}
-                                              onClick={() =>
-                                                canJoin &&
-                                                navigate(`/meeting/${appt._id}`)
-                                              }
+                                              onClick={() => {
+                                                if (!canJoin) return;
+                                                const href = `/meeting/${appt._id}`;
+                                                window.open(href, "_blank", "noopener,noreferrer");
+                                              }}
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
                                                   ? "bg-[#2F3C96] hover:bg-[#253075]"

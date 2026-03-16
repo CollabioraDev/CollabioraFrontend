@@ -415,29 +415,33 @@ export default function Notifications() {
     }
   }
 
-  async function acceptMeetingRequest(requestId, meetingNotes) {
+  async function acceptMeetingRequest(requestId) {
     try {
       const response = await fetch(`${base}/api/meeting-requests/${requestId}/accept-time`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          meetingNotes: meetingNotes || null,
-        }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {
-        toast.success("Meeting scheduled successfully!");
-        setAcceptMeetingModal({ open: false, requestId: null, request: null, meetingDate: "", meetingNotes: "" });
+        toast.success("Meeting accepted!");
+        setAcceptMeetingModal({
+          open: false,
+          requestId: null,
+          request: null,
+          meetingDate: "",
+          meetingNotes: "",
+        });
         const userId = user?._id || user?.id;
         loadMeetingRequests(userId);
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to schedule meeting");
+        toast.error(errorData.error || "Failed to accept meeting");
       }
     } catch (error) {
       console.error("Error accepting meeting request:", error);
-      toast.error("Failed to schedule meeting");
+      toast.error("Failed to accept meeting");
     }
   }
 
@@ -1537,19 +1541,11 @@ export default function Notifications() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => {
-                              setAcceptMeetingModal({
-                                open: true,
-                                requestId: request._id,
-                                request,
-                                meetingDate: toLocalDatetimeLocalValue(request.preferredDate, request.preferredTime || "09:00"),
-                                meetingNotes: "",
-                              });
-                            }}
+                            onClick={() => acceptMeetingRequest(request._id)}
                             className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg text-sm font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-sm hover:shadow-md flex items-center gap-2"
                           >
                             <Check className="w-4 h-4" />
-                            Accept & Schedule
+                            Accept
                           </button>
                           <button
                             onClick={() => rejectMeetingRequest(request._id)}

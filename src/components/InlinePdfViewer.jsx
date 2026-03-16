@@ -79,6 +79,15 @@ function getHostname(url) {
   }
 }
 
+/**
+ * Returns true for URLs that are known to be broken/deprecated and should never
+ * be used as a PDF source or iframe src (e.g. old Europe PMC ptpmcrender.fcgi endpoint).
+ */
+function isDeprecatedUrl(url) {
+  if (!url || typeof url !== "string") return false;
+  return url.includes("ptpmcrender.fcgi");
+}
+
 function matchesHost(url, list) {
   const host = getHostname(url);
   if (!host) return false;
@@ -116,16 +125,14 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
     setErrorMsg(null);
     setIframeLoaded(false);
 
-    if (url) {
-      // We have a proxy URL — start there
-      if (matchesHost(directUrl, NO_IFRAME_HOSTS) && !matchesHost(directUrl, IFRAME_OK_HOSTS)) {
-        // Publisher blocks iframe too; don't bother with proxy either if we know it will fail.
-        // BUT we still try proxy first because if pdfUrl is from PMC/repository, proxy WILL work
-        setMode("proxy");
-      } else {
-        setMode("proxy");
-      }
-    } else if (directUrl && canIframe(directUrl)) {
+    // If directUrl is a deprecated/broken URL (e.g. ptpmcrender.fcgi), skip PDF modes
+    // entirely and go straight to pmcViewerUrl fallback.
+    const effectiveDirectUrl = isDeprecatedUrl(directUrl) ? null : directUrl;
+    const effectiveProxyUrl = isDeprecatedUrl(url) ? null : url;
+
+    if (effectiveProxyUrl) {
+      setMode("proxy");
+    } else if (effectiveDirectUrl && canIframe(effectiveDirectUrl)) {
       setMode("iframe");
     } else if (pmcViewerUrl) {
       setMode("pmc");
@@ -136,9 +143,12 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
 
   const advanceMode = useCallback(
     (currentMode, errMessage) => {
+      // Never use deprecated URLs (ptpmcrender.fcgi, etc.) in any fallback mode
+      const safeDirectUrl = isDeprecatedUrl(directUrl) ? null : directUrl;
+
       if (currentMode === "proxy") {
         // Try direct pdfjs fetch (works if CORS headers present or same-origin)
-        if (directUrl) {
+        if (safeDirectUrl) {
           setMode("direct");
           setNumPages(null);
           setPageNumber(1);
@@ -149,7 +159,7 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
 
       if (currentMode === "proxy" || currentMode === "direct") {
         // Try iframe (only for hosts that permit framing)
-        if (directUrl && canIframe(directUrl)) {
+        if (safeDirectUrl && canIframe(safeDirectUrl)) {
           setMode("iframe");
           setErrorMsg(null);
           return;
@@ -225,8 +235,9 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
+  const safeDirectUrl = isDeprecatedUrl(directUrl) ? null : directUrl;
   const effectiveUrl =
-    mode === "proxy" ? url : mode === "direct" ? directUrl : null;
+    mode === "proxy" ? url : mode === "direct" ? safeDirectUrl : null;
 
   // ── PMC Viewer fallback ──────────────────────────────────────────────────
   if (mode === "pmc" && pmcViewerUrl) {
@@ -260,9 +271,9 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
             <ExternalLink className="w-4 h-4" />
             Read on PubMed Central
           </a>
-          {directUrl && (
+          {safeDirectUrl && (
             <a
-              href={directUrl}
+              href={safeDirectUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border transition-colors hover:bg-slate-50"
@@ -281,7 +292,7 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
   }
 
   // ── IFRAME mode ──────────────────────────────────────────────────────────
-  if (mode === "iframe" && directUrl) {
+  if (mode === "iframe" && safeDirectUrl) {
     return (
       <div ref={containerRef} className="w-full flex flex-col gap-2">
         <div className="flex items-center justify-between px-2 py-1.5 bg-slate-50 border rounded-lg border-slate-200">
@@ -297,7 +308,7 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
               <Maximize2 className="w-4 h-4" />
             </button>
             <a
-              href={directUrl}
+              href={pmcViewerUrl || directUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border transition-colors"
@@ -313,7 +324,7 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
           </div>
         </div>
         <iframe
-          src={directUrl}
+          src={safeDirectUrl}
           title="PDF viewer"
           className="w-full rounded border"
           style={{
@@ -364,9 +375,9 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
               Read on PubMed Central
             </a>
           )}
-          {directUrl && (
+          {safeDirectUrl && (
             <a
-              href={directUrl}
+              href={safeDirectUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
@@ -471,9 +482,9 @@ export default function InlinePdfViewer({ url, directUrl, pmcViewerUrl }) {
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
-                {(directUrl || pmcViewerUrl) && (
+                {(pmcViewerUrl || directUrl) && (
                   <a
-                    href={directUrl || pmcViewerUrl}
+                    href={pmcViewerUrl || directUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Open in new tab"

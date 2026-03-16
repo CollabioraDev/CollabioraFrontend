@@ -1432,6 +1432,52 @@ export default function Trials() {
     }
   }
 
+  function getTrialSourceLabel(trial) {
+    const src = trial?.sourceRegistry;
+    if (src === "clinicaltrials.gov") return "ClinicalTrials.gov";
+    if (src === "isrctn") return "ISRCTN";
+    if (src === "ctis") return "EU CTIS";
+    return src || "Unknown";
+  }
+
+  function resolveExternalTrialUrl(trial) {
+    if (!trial) return null;
+    if (trial.clinicalTrialsGovUrl) return trial.clinicalTrialsGovUrl;
+    if (trial.isrctnUrl) return trial.isrctnUrl;
+    if (trial.euCtrUrl) return trial.euCtrUrl;
+
+    const id = (trial.id || trial._id || "").trim();
+    if (!id) return null;
+    if (trial.sourceRegistry === "clinicaltrials.gov") {
+      return `https://clinicaltrials.gov/study/${encodeURIComponent(id)}`;
+    }
+    if (trial.sourceRegistry === "isrctn") {
+      const normalized = id.toUpperCase().replace(/^ISRCTN/i, "");
+      return `https://www.isrctn.com/ISRCTN${normalized}`;
+    }
+    if (trial.sourceRegistry === "ctis") {
+      return `https://euclinicaltrials.eu/search-for-clinical-trials/?lang=en&EUCT=${encodeURIComponent(
+        id,
+      )}`;
+    }
+    return null;
+  }
+
+  function getRenderableConditions(trial) {
+    const raw = Array.isArray(trial?.conditions) ? trial.conditions : [];
+    return raw
+      .map((condition) => {
+        if (typeof condition === "string") return condition;
+        if (condition && typeof condition === "object") {
+          if (typeof condition.name === "string") return condition.name;
+          if (typeof condition.condition === "string") return condition.condition;
+        }
+        return "";
+      })
+      .map((condition) => condition.trim())
+      .filter((condition) => condition && condition !== "[object Object]");
+  }
+
   async function openDetailsModal(trial) {
     // Mark as read when modal opens
     if (isSignedIn) {
@@ -1455,9 +1501,12 @@ export default function Trials() {
         const nctId = trial.id || trial._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const audience = isResearcher ? "researcher" : "patient";
+        const sourceParam = encodeURIComponent(
+          trial.sourceRegistry || "clinicaltrials.gov",
+        );
 
         const response = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified?audience=${audience}`,
+          `${base}/api/search/trial/${nctId}/simplified?audience=${audience}&source=${sourceParam}`,
         );
 
         if (response.ok) {
@@ -1484,7 +1533,7 @@ export default function Trials() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified`,
+          `${base}/api/search/trial/${nctId}/simplified?source=${sourceParam}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
@@ -1614,7 +1663,12 @@ export default function Trials() {
       try {
         const nctId = trial.id || trial._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const response = await fetch(`${base}/api/search/trial/${nctId}`);
+        const sourceParam = encodeURIComponent(
+          trial.sourceRegistry || "clinicaltrials.gov",
+        );
+        const response = await fetch(
+          `${base}/api/search/trial/${nctId}?source=${sourceParam}`,
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -3646,6 +3700,19 @@ export default function Trials() {
                         Phase {detailsModal.trial.phase}
                       </span>
                     )}
+                    {detailsModal.trial.sourceRegistry && (
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border bg-slate-50 text-slate-600 border-slate-200">
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        {detailsModal.trial.sourceRegistry ===
+                        "clinicaltrials.gov"
+                          ? "ClinicalTrials.gov"
+                          : detailsModal.trial.sourceRegistry === "isrctn"
+                            ? "ISRCTN"
+                            : detailsModal.trial.sourceRegistry === "eu-ctr"
+                              ? "EU Clinical Trials Register"
+                              : detailsModal.trial.sourceRegistry}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -3964,9 +4031,9 @@ export default function Trials() {
                 )}
 
                 {/* Conditions Studied - Show simplified if available */}
-                {(detailsModal.trial.simplifiedDetails?.conditionsStudied ||
-                  (detailsModal.trial.conditions &&
-                    detailsModal.trial.conditions.length > 0)) && (
+                {detailsModal.trial.sourceRegistry !== "isrctn" &&
+                  (detailsModal.trial.simplifiedDetails?.conditionsStudied ||
+                    getRenderableConditions(detailsModal.trial).length > 0) && (
                   <div
                     className="bg-gradient-to-br rounded-xl p-5 border shadow-sm"
                     style={{
@@ -3990,11 +4057,19 @@ export default function Trials() {
                         className="text-sm leading-relaxed"
                         style={{ color: "#787878" }}
                       >
-                        {detailsModal.trial.simplifiedDetails.conditionsStudied}
+                        {(() => {
+                          const c =
+                            detailsModal.trial.simplifiedDetails
+                              .conditionsStudied;
+                          if (typeof c === "string") return c;
+                          if (Array.isArray(c)) return c.join(", ");
+                          return "";
+                        })()}
                       </p>
-                    ) : (
+                    ) : getRenderableConditions(detailsModal.trial).length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {detailsModal.trial.conditions.map((condition, idx) => (
+                        {getRenderableConditions(detailsModal.trial).map(
+                          (condition, idx) => (
                           <span
                             key={idx}
                             className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border"
@@ -4002,8 +4077,16 @@ export default function Trials() {
                           >
                             {condition}
                           </span>
-                        ))}
+                          ),
+                        )}
                       </div>
+                    ) : (
+                      <p
+                        className="text-sm leading-relaxed"
+                        style={{ color: "#787878" }}
+                      >
+                        Not specified
+                      </p>
                     )}
                   </div>
                 )}
@@ -4067,6 +4150,20 @@ export default function Trials() {
                                 style={{ color: "#787878" }}
                               />
                               {contact.name}
+                            </div>
+                          )}
+                          {contact.role && (
+                            <div className="mb-2">
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+                                style={{
+                                  color: "#2F3C96",
+                                  borderColor: "#D0C4E2",
+                                  backgroundColor: "rgba(208, 196, 226, 0.15)",
+                                }}
+                              >
+                                {contact.role}
+                              </span>
                             </div>
                           )}
                           <div className="space-y-2">
@@ -4189,7 +4286,8 @@ export default function Trials() {
                   style={{ borderColor: "rgba(232, 232, 232, 1)" }}
                 >
                   {/* Conditions */}
-                  {detailsModal.trial.conditions?.length > 0 && (
+                  {detailsModal.trial.sourceRegistry !== "isrctn" &&
+                    getRenderableConditions(detailsModal.trial).length > 0 && (
                     <div
                       className="rounded-xl p-4 border"
                       style={{
@@ -4208,7 +4306,8 @@ export default function Trials() {
                         Conditions Studied
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {detailsModal.trial.conditions.map((condition, idx) => (
+                        {getRenderableConditions(detailsModal.trial).map(
+                          (condition, idx) => (
                           <span
                             key={idx}
                             className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border shadow-sm"
@@ -4216,7 +4315,8 @@ export default function Trials() {
                           >
                             {condition}
                           </span>
-                        ))}
+                          ),
+                        )}
                       </div>
                     </div>
                   )}
@@ -4284,19 +4384,73 @@ export default function Trials() {
                 </div>
               </div>
 
-              {/* Sticky Footer with Actions */}
+              {/* Source Registry + Sticky Footer with Actions */}
               <div
                 className="bottom-0 px-6 pb-6 pt-4 border-t bg-white/95 backdrop-blur-sm shadow-lg"
                 style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
               >
                 <div className="flex flex-col gap-2">
+                  {detailsModal.trial && (
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        Source registry
+                      </span>
+                      <span
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                        style={{
+                          borderColor: "#D0C4E2",
+                          color: "#2F3C96",
+                          backgroundColor: "rgba(208, 196, 226, 0.1)",
+                        }}
+                      >
+                        {(() => {
+                          return getTrialSourceLabel(detailsModal.trial);
+                        })()}
+                      </span>
+                    </div>
+                  )}
                   <button
                     onClick={() => {
-                      const nctId =
-                        detailsModal.trial?.id || detailsModal.trial?._id;
-                      if (nctId) {
-                        closeDetailsModal();
-                        navigate(`/trial/${nctId}`);
+                      const trial = detailsModal.trial;
+                      if (!trial) return;
+                      const externalUrl = resolveExternalTrialUrl(trial);
+                      // #region agent log
+                      fetch(
+                        "http://127.0.0.1:7242/ingest/f1b3fc61-8c8f-48bb-889f-dd932b9156c8",
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            runId: "ctis-debug-frontend-1",
+                            hypothesisId: "H4",
+                            location: "Trials.jsx:DETAILS_MODAL_OPEN",
+                            message:
+                              "User opened full trial from details modal",
+                            data: {
+                              id: trial.id || trial._id || null,
+                              sourceRegistry: trial.sourceRegistry || null,
+                              hasClinicalTrialsGovUrl:
+                                !!trial.clinicalTrialsGovUrl,
+                              hasIsrctnUrl: !!trial.isrctnUrl,
+                              hasEuCtrUrl: !!trial.euCtrUrl,
+                            },
+                            timestamp: Date.now(),
+                          }),
+                        },
+                      ).catch(() => {});
+                      // #endregion agent log
+                      if (externalUrl) {
+                        window.open(
+                          externalUrl,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      } else {
+                        const innerId = trial.id || trial._id;
+                        if (innerId) {
+                          closeDetailsModal();
+                          navigate(`/trial/${innerId}`);
+                        }
                       }
                     }}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all w-full"
@@ -4368,6 +4522,20 @@ export default function Trials() {
                             {contact.name}
                           </div>
                         )}
+                        {contact.role && (
+                          <div className="mb-2">
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+                              style={{
+                                color: "#2F3C96",
+                                borderColor: "#D0C4E2",
+                                backgroundColor: "rgba(208, 196, 226, 0.15)",
+                              }}
+                            >
+                              {contact.role}
+                            </span>
+                          </div>
+                        )}
                         <div className="space-y-2">
                           {contact.email && (
                             <a
@@ -4421,6 +4589,26 @@ export default function Trials() {
                     <p className="text-gray-600">
                       No contact information available for this trial.
                     </p>
+                    {contactInfoModal.trial && resolveExternalTrialUrl(contactInfoModal.trial) && (
+                      <button
+                        onClick={() =>
+                          window.open(
+                            resolveExternalTrialUrl(contactInfoModal.trial),
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors"
+                        style={{
+                          color: "#2F3C96",
+                          borderColor: "#D0C4E2",
+                          backgroundColor: "rgba(208, 196, 226, 0.12)",
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open Official Registry Contact Page
+                      </button>
+                    )}
                   </div>
                 )}
 

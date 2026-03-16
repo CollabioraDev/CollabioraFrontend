@@ -2504,6 +2504,12 @@ export default function Experts() {
                                       params.set("location", expert.location);
                                     if (expert.orcid)
                                       params.set("orcid", expert.orcid);
+                                    if (expert.verification?.openAlexId) {
+                                      params.set(
+                                        "openAlexId",
+                                        expert.verification.openAlexId,
+                                      );
+                                    }
                                     if (expert.biography)
                                       params.set("biography", expert.biography);
                                     if (

@@ -79,6 +79,7 @@ export default function ExpertProfile() {
   const expertAffiliation = searchParams.get("affiliation");
   const expertLocation = searchParams.get("location");
   const expertOrcid = searchParams.get("orcid");
+  const expertOpenAlexId = searchParams.get("openAlexId");
   const expertBiography = searchParams.get("biography");
   const expertResearchInterests = searchParams.get("researchInterests");
   const fromPage = searchParams.get("from") || "experts"; // Default to "experts" if not specified
@@ -102,6 +103,7 @@ export default function ExpertProfile() {
         if (expertAffiliation) params.set("affiliation", expertAffiliation);
         if (expertLocation) params.set("location", expertLocation);
         if (expertOrcid) params.set("orcid", expertOrcid);
+        if (expertOpenAlexId) params.set("openAlexId", expertOpenAlexId);
         if (expertBiography) params.set("biography", expertBiography);
         if (expertResearchInterests) {
           // If it's already a JSON string, use it; otherwise stringify it
@@ -154,6 +156,7 @@ export default function ExpertProfile() {
     expertAffiliation,
     expertLocation,
     expertOrcid,
+    expertOpenAlexId,
     expertBiography,
     expertResearchInterests,
     navigate,

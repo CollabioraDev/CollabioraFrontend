@@ -1458,7 +1458,7 @@ export default function EditProfile() {
             {/* Handle/Username */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Handle / Username
+                Handle / Username <span className="text-red-500">*</span>
               </label>
               <div className="relative" data-username-suggestions>
                 <input
@@ -1517,43 +1517,14 @@ export default function EditProfile() {
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Your unique handle (optional) - Choose from suggestions or type
-                your own
+                Your unique handle – choose from suggestions or type your own; your username will be used to keep you anonymous.
               </p>
             </div>
 
-            {/* Hide Name Option */}
-            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="nameHidden"
-                  checked={nameHidden}
-                  onChange={(e) => setNameHidden(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Eye className="w-4 h-4 text-slate-600" />
-                    <label htmlFor="nameHidden" className="text-sm font-medium text-slate-700 cursor-pointer">
-                      Hide my name from others
-                    </label>
-                  </div>
-                  <p className="text-xs text-slate-500 ml-6">
-                    Only your username will be visible to other users
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Age - Optional */}
+            {/* Age */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Age
-                <span className="ml-2 text-xs font-normal text-slate-500">
-                  (Optional - helps improve search results for trials and
-                  publications)
-                </span>
               </label>
               <input
                 type="number"
@@ -1566,14 +1537,10 @@ export default function EditProfile() {
               />
             </div>
 
-            {/* Gender/Sex - Optional */}
+            {/* Gender/Sex */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Gender / Sex
-                <span className="ml-2 text-xs font-normal text-slate-500">
-                  (Optional - helps improve search results for trials and
-                  publications)
-                </span>
               </label>
               <select
                 value={gender}
@@ -1588,14 +1555,11 @@ export default function EditProfile() {
               </select>
             </div>
 
-            {/* Location - Optional */}
+            {/* Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   City
-                  <span className="ml-2 text-xs font-normal text-slate-500">
-                    (Optional - helps improve search results)
-                  </span>
                 </label>
                 <input
                   type="text"
@@ -1612,9 +1576,6 @@ export default function EditProfile() {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Country
-                  <span className="ml-2 text-xs font-normal text-slate-500">
-                    (Optional - helps improve search results)
-                  </span>
                 </label>
                 <input
                   type="text"

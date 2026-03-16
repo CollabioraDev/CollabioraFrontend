@@ -121,7 +121,8 @@ function NewsCard({
           <div className="mb-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
             <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <p className="text-[11px] text-amber-800 font-medium">
-              Interpret cautiously — this source is advocacy-focused or has limited specialist review.
+              Interpret cautiously — this source is advocacy-focused or has
+              limited specialist review.
             </p>
           </div>
         )}
@@ -756,9 +757,10 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
             <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Articles are ranked by source reliability (e.g. WHO, CDC, FDA = Authoritative).
-              Sources marked &quot;Use with Caution&quot; are flagged for limited specialist review.
-              Summaries are informational only and not medical advice.
+              Articles are ranked by source reliability (e.g. WHO, CDC, FDA =
+              Authoritative). Sources marked &quot;Use with Caution&quot; are
+              flagged for limited specialist review. Summaries are informational
+              only and not medical advice.
             </p>
           </div>
         )}
