@@ -2670,10 +2670,11 @@ export default function OnboardingNew() {
                   }}
                 >
                   {loading ? "Setting up…" : "Skip for now"}
-                </button>
+        </button>
               </div>
             )}
           </div>
+        </div>
       </div>
     </Layout>
   );
