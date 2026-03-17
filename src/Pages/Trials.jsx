@@ -256,6 +256,7 @@ export default function Trials() {
   const [eligibilityAge, setEligibilityAge] = useState(""); // "Child", "Adult", "Older adult", or custom range
   const [ageRange, setAgeRange] = useState({ min: "", max: "" }); // For manual age range
   const [phase, setPhase] = useState(""); // Phase filter: "PHASE1", "PHASE2", "PHASE3", "PHASE4", or ""
+  const [institution, setInstitution] = useState("");
   const [otherTerms, setOtherTerms] = useState(""); // Other search terms
   const [intervention, setIntervention] = useState(""); // Intervention/treatment
 
@@ -467,6 +468,7 @@ export default function Trials() {
     setEligibilityAge("");
     setAgeRange({ min: "", max: "" });
     setPhase("");
+    setInstitution("");
     setOtherTerms("");
     setIntervention("");
   };
@@ -527,13 +529,22 @@ export default function Trials() {
       setIsInitialLoad(false);
     }
 
-    // For manual searches, combine enabled medical interests with search query
+    // For manual searches, combine enabled medical interests with search query.
+    // Exception: if this is an institution-only search (no typed terms), do not
+    // auto-inject interests since that can over-constrain backend relevance filters.
     let searchQuery = appliedQuery.trim();
     const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
-    if (enabledInterests && searchQuery) {
+    const hasUserTypedTerms =
+      !!searchQuery || !!otherTerms.trim() || !!intervention.trim();
+    const shouldInjectEnabledInterests = hasUserTypedTerms || !institution;
+    if (enabledInterests && searchQuery && shouldInjectEnabledInterests) {
       // Combine enabled interests with search query
       searchQuery = `${enabledInterests} ${searchQuery}`;
-    } else if (enabledInterests && !searchQuery) {
+    } else if (
+      enabledInterests &&
+      !searchQuery &&
+      shouldInjectEnabledInterests
+    ) {
       // If no search query but medical interests are enabled, use just the enabled interests
       searchQuery = enabledInterests;
     }
@@ -567,6 +578,9 @@ export default function Trials() {
     // Add phase filter
     if (phase) {
       params.set("phase", phase);
+    }
+    if (institution) {
+      params.set("institution", institution);
     }
 
     // Add advanced eligibility filters
@@ -602,6 +616,7 @@ export default function Trials() {
       searchKeywords: searchKeywords, // Store keywords array separately
       status,
       phase,
+      institution,
       eligibilitySex,
       eligibilityAge,
       ageRange,
@@ -719,6 +734,7 @@ export default function Trials() {
         status,
         location,
         locationMode,
+        institution,
         useMedicalInterest,
         userMedicalInterest,
         results: sortedResults,
@@ -730,6 +746,7 @@ export default function Trials() {
           searchKeywords: searchKeywords, // Include keywords in lastSearchParams
           status,
           phase,
+          institution,
           eligibilitySex,
           eligibilityAge,
           ageRange,
@@ -770,6 +787,7 @@ export default function Trials() {
       searchKeywords: savedSearchKeywords, // Get saved keywords array
       status: savedStatus,
       phase: savedPhase,
+      institution: savedInstitution,
       eligibilitySex: savedEligibilitySex,
       eligibilityAge: savedEligibilityAge,
       ageRange: savedAgeRange,
@@ -817,6 +835,10 @@ export default function Trials() {
     // Add phase filter
     if (savedPhase || phase) {
       params.set("phase", savedPhase || phase);
+    }
+    const currentInstitution = savedInstitution || institution;
+    if (currentInstitution) {
+      params.set("institution", currentInstitution);
     }
 
     // Add advanced eligibility filters
@@ -939,6 +961,7 @@ export default function Trials() {
         totalPages: calculatedTotalPages,
         totalCount: data.totalCount || 0,
         phase: savedPhase || phase,
+        institution: currentInstitution || "",
         eligibilitySex: currentEligibilitySex,
         eligibilityAge: currentEligibilityAge,
         ageRange: currentAgeRange,
@@ -947,6 +970,7 @@ export default function Trials() {
           searchKeywords: savedSearchKeywords || searchKeywords || [], // Include keywords in lastSearchParams
           status: savedStatus || status,
           phase: savedPhase || phase,
+          institution: currentInstitution || "",
           eligibilitySex: currentEligibilitySex,
           eligibilityAge: currentEligibilityAge,
           ageRange: currentAgeRange,
@@ -1021,6 +1045,7 @@ export default function Trials() {
         finalQuery: searchQuery,
         status,
         phase,
+        institution,
         eligibilitySex,
         eligibilityAge,
         ageRange,
@@ -1041,6 +1066,9 @@ export default function Trials() {
       } else if (locationMode === "custom" && location.trim()) {
         // For custom location, use as-is (user can enter country)
         params.set("location", location.trim());
+      }
+      if (institution) {
+        params.set("institution", institution);
       }
 
       // Add user profile data for matching
@@ -1130,6 +1158,7 @@ export default function Trials() {
             status: "",
             location,
             locationMode,
+            institution,
             useMedicalInterest,
             userMedicalInterest,
             results: sortedResults,
@@ -1140,6 +1169,7 @@ export default function Trials() {
               finalQuery: searchQuery,
               status: "",
               phase,
+              institution,
               eligibilitySex,
               eligibilityAge,
               ageRange,
@@ -1470,7 +1500,8 @@ export default function Trials() {
         if (typeof condition === "string") return condition;
         if (condition && typeof condition === "object") {
           if (typeof condition.name === "string") return condition.name;
-          if (typeof condition.condition === "string") return condition.condition;
+          if (typeof condition.condition === "string")
+            return condition.condition;
         }
         return "";
       })
@@ -1972,6 +2003,7 @@ export default function Trials() {
         setStatus(state.status || "RECRUITING"); // Default to RECRUITING
         setLocation(state.location || "");
         setLocationMode(state.locationMode || "global");
+        setInstitution(state.institution || "");
         // useMedicalInterest is loaded from localStorage in useState initializer
         // Only override if sessionStorage has it and localStorage doesn't
         if (localStorage.getItem("useMedicalInterest") === null) {
@@ -2041,6 +2073,7 @@ export default function Trials() {
       setStatus("");
       setLocation("");
       setLocationMode("global");
+      setInstitution("");
       setUseMedicalInterest(true);
       setUserMedicalInterest("");
       setUserMedicalInterests([]);
@@ -2513,12 +2546,7 @@ export default function Trials() {
                     </button>
                   </div>
                 )}
-                {searchKeywords.length === 0 && (
-                  <p className="text-xs text-slate-500 italic">
-                    Add keywords to refine your search (optional). Press Enter
-                    after each keyword.
-                  </p>
-                )}
+                {searchKeywords.length === 0 && <></>}
               </div>
 
               {/* Advanced Filters Applied Section */}
@@ -2648,6 +2676,35 @@ export default function Trials() {
                     inputClassName="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 placeholder-slate-400"
                   />
                 )}
+                <div className="relative">
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Institution
+                  </label>
+                  <select
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 appearance-none"
+                  >
+                    <option value="">All institutions</option>
+                    <option value="University of California, Los Angeles">
+                      University of California, Los Angeles
+                    </option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs mt-4">
+                    <svg
+                      className="h-3 w-3"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {/* Simplify titles checkbox - researchers only */}
@@ -2860,6 +2917,7 @@ export default function Trials() {
                     setEligibilityAge("");
                     setAgeRange({ min: "", max: "" });
                     setPhase("");
+                    setInstitution("");
                     setOtherTerms("");
                     setIntervention("");
                   }}
@@ -4034,62 +4092,67 @@ export default function Trials() {
                 {detailsModal.trial.sourceRegistry !== "isrctn" &&
                   (detailsModal.trial.simplifiedDetails?.conditionsStudied ||
                     getRenderableConditions(detailsModal.trial).length > 0) && (
-                  <div
-                    className="bg-gradient-to-br rounded-xl p-5 border shadow-sm"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(232, 233, 242, 1), rgba(245, 242, 248, 1))",
-                      borderColor: "rgba(163, 167, 203, 1)",
-                    }}
-                  >
-                    <h4
-                      className="font-bold mb-3 flex items-center gap-2 text-base"
-                      style={{ color: "#2F3C96" }}
+                    <div
+                      className="bg-gradient-to-br rounded-xl p-5 border shadow-sm"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(232, 233, 242, 1), rgba(245, 242, 248, 1))",
+                        borderColor: "rgba(163, 167, 203, 1)",
+                      }}
                     >
-                      <Activity
-                        className="w-5 h-5"
+                      <h4
+                        className="font-bold mb-3 flex items-center gap-2 text-base"
                         style={{ color: "#2F3C96" }}
-                      />
-                      Conditions Studied
-                    </h4>
-                    {detailsModal.trial.simplifiedDetails?.conditionsStudied ? (
-                      <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "#787878" }}
                       >
-                        {(() => {
-                          const c =
-                            detailsModal.trial.simplifiedDetails
-                              .conditionsStudied;
-                          if (typeof c === "string") return c;
-                          if (Array.isArray(c)) return c.join(", ");
-                          return "";
-                        })()}
-                      </p>
-                    ) : getRenderableConditions(detailsModal.trial).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {getRenderableConditions(detailsModal.trial).map(
-                          (condition, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border"
-                            style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
-                          >
-                            {condition}
-                          </span>
-                          ),
-                        )}
-                      </div>
-                    ) : (
-                      <p
-                        className="text-sm leading-relaxed"
-                        style={{ color: "#787878" }}
-                      >
-                        Not specified
-                      </p>
-                    )}
-                  </div>
-                )}
+                        <Activity
+                          className="w-5 h-5"
+                          style={{ color: "#2F3C96" }}
+                        />
+                        Conditions Studied
+                      </h4>
+                      {detailsModal.trial.simplifiedDetails
+                        ?.conditionsStudied ? (
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{ color: "#787878" }}
+                        >
+                          {(() => {
+                            const c =
+                              detailsModal.trial.simplifiedDetails
+                                .conditionsStudied;
+                            if (typeof c === "string") return c;
+                            if (Array.isArray(c)) return c.join(", ");
+                            return "";
+                          })()}
+                        </p>
+                      ) : getRenderableConditions(detailsModal.trial).length >
+                        0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {getRenderableConditions(detailsModal.trial).map(
+                            (condition, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border"
+                                style={{
+                                  color: "#2F3C96",
+                                  borderColor: "#D0C4E2",
+                                }}
+                              >
+                                {condition}
+                              </span>
+                            ),
+                          )}
+                        </div>
+                      ) : (
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{ color: "#787878" }}
+                        >
+                          Not specified
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                 {/* What to Expect - Show if simplified details available */}
                 {detailsModal.trial.simplifiedDetails?.whatToExpect && (
@@ -4288,38 +4351,41 @@ export default function Trials() {
                   {/* Conditions */}
                   {detailsModal.trial.sourceRegistry !== "isrctn" &&
                     getRenderableConditions(detailsModal.trial).length > 0 && (
-                    <div
-                      className="rounded-xl p-4 border"
-                      style={{
-                        backgroundColor: "rgba(245, 242, 248, 1)",
-                        borderColor: "#D0C4E2",
-                      }}
-                    >
-                      <h4
-                        className="font-bold mb-3 flex items-center gap-2 text-sm"
-                        style={{ color: "#2F3C96" }}
+                      <div
+                        className="rounded-xl p-4 border"
+                        style={{
+                          backgroundColor: "rgba(245, 242, 248, 1)",
+                          borderColor: "#D0C4E2",
+                        }}
                       >
-                        <Activity
-                          className="w-4 h-4"
+                        <h4
+                          className="font-bold mb-3 flex items-center gap-2 text-sm"
                           style={{ color: "#2F3C96" }}
-                        />
-                        Conditions Studied
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {getRenderableConditions(detailsModal.trial).map(
-                          (condition, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border shadow-sm"
-                            style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
-                          >
-                            {condition}
-                          </span>
-                          ),
-                        )}
+                        >
+                          <Activity
+                            className="w-4 h-4"
+                            style={{ color: "#2F3C96" }}
+                          />
+                          Conditions Studied
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {getRenderableConditions(detailsModal.trial).map(
+                            (condition, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border shadow-sm"
+                                style={{
+                                  color: "#2F3C96",
+                                  borderColor: "#D0C4E2",
+                                }}
+                              >
+                                {condition}
+                              </span>
+                            ),
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Location */}
                   {detailsModal.trial.locations &&
@@ -4589,26 +4655,27 @@ export default function Trials() {
                     <p className="text-gray-600">
                       No contact information available for this trial.
                     </p>
-                    {contactInfoModal.trial && resolveExternalTrialUrl(contactInfoModal.trial) && (
-                      <button
-                        onClick={() =>
-                          window.open(
-                            resolveExternalTrialUrl(contactInfoModal.trial),
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
-                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors"
-                        style={{
-                          color: "#2F3C96",
-                          borderColor: "#D0C4E2",
-                          backgroundColor: "rgba(208, 196, 226, 0.12)",
-                        }}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Open Official Registry Contact Page
-                      </button>
-                    )}
+                    {contactInfoModal.trial &&
+                      resolveExternalTrialUrl(contactInfoModal.trial) && (
+                        <button
+                          onClick={() =>
+                            window.open(
+                              resolveExternalTrialUrl(contactInfoModal.trial),
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                          className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-colors"
+                          style={{
+                            color: "#2F3C96",
+                            borderColor: "#D0C4E2",
+                            backgroundColor: "rgba(208, 196, 226, 0.12)",
+                          }}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Open Official Registry Contact Page
+                        </button>
+                      )}
                   </div>
                 )}
 

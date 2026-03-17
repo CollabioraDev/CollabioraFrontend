@@ -61,6 +61,9 @@ export default function Navbar() {
     location.pathname === "/terms" ||
     location.pathname === "/cookie-policy";
 
+  // How It Works: always show About Us, FAQ, Contact (Sign In button still visible)
+  const isHowItWorksPage = location.pathname === "/how-it-works";
+
   // Check if we're on forgot-password or reset-password pages
   const isForgotOrResetPasswordPage =
     location.pathname === "/forgot-password" ||
@@ -94,6 +97,10 @@ export default function Navbar() {
   // Explore: Explore, Forums, Discovery
   // When signed in (other pages): Dashboard, Explore, Forums, Discovery
   const getNavItems = () => {
+    // How It Works page: restrict to About Us, FAQ, Contact
+    if (isHowItWorksPage) {
+      return ["About Us", "FAQ", "Contact"];
+    }
     // FAQ page: always show About Us, FAQ, Contact (regardless of auth state)
     if (isFAQPage) {
       return ["About Us", "FAQ", "Contact"];

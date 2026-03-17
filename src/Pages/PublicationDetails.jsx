@@ -25,6 +25,10 @@ const SOURCE_LABELS = {
   openalex: "OpenAlex",
   semantic_scholar: "Semantic Scholar",
   arxiv: "arXiv",
+  openfda: "OpenFDA",
+  uspstf: "USPSTF",
+  genereviews: "GeneReviews",
+  medlineplus: "MedlinePlus",
 };
 
 export default function PublicationDetails() {

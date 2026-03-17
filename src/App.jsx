@@ -74,6 +74,7 @@ const PrivacyPolicyAndTerms = React.lazy(
   () => import("./Pages/PrivacyPolicyAndTerms.jsx"),
 );
 const CookiePolicy = React.lazy(() => import("./Pages/CookiePolicy.jsx"));
+const HowItWorks = React.lazy(() => import("./Pages/HowItWorks.jsx"));
 const TrialDetails = React.lazy(() => import("./Pages/TrialDetails.jsx"));
 const PublicationDetails = React.lazy(
   () => import("./Pages/PublicationDetails.jsx"),
@@ -406,6 +407,7 @@ const AppContent = () => {
             }
           />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<PrivacyPolicyAndTerms />} />

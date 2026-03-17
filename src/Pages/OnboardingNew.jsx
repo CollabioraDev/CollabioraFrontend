@@ -970,6 +970,9 @@ export default function OnboardingNew() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(newUser));
 
+      // After first successful signup, ask if they want to join the beta program
+      setShowBetaModal(true);
+
       const profile =
         role === "patient"
           ? {
@@ -2671,7 +2674,6 @@ export default function OnboardingNew() {
               </div>
             )}
           </div>
-        </div>
       </div>
     </Layout>
   );

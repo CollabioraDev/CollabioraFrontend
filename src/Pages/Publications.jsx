@@ -3000,6 +3000,36 @@ export default function Publications() {
                             )
                           </span>
                         )}
+                        {(publicationSources.sourceCounts.openfda ?? 0) > 0 && (
+                          <span>
+                            OpenFDA (
+                            {publicationSources.sourceCounts.openfda.toLocaleString()}
+                            )
+                          </span>
+                        )}
+                        {(publicationSources.sourceCounts.uspstf ?? 0) > 0 && (
+                          <span>
+                            USPSTF (
+                            {publicationSources.sourceCounts.uspstf.toLocaleString()}
+                            )
+                          </span>
+                        )}
+                        {(publicationSources.sourceCounts.genereviews ?? 0) >
+                          0 && (
+                          <span>
+                            GeneReviews (
+                            {publicationSources.sourceCounts.genereviews.toLocaleString()}
+                            )
+                          </span>
+                        )}
+                        {(publicationSources.sourceCounts.medlineplus ?? 0) >
+                          0 && (
+                          <span>
+                            MedlinePlus (
+                            {publicationSources.sourceCounts.medlineplus.toLocaleString()}
+                            )
+                          </span>
+                        )}
                       </div>
                     )}
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -3403,7 +3433,11 @@ export default function Publications() {
                       publicationSources.sourceCounts.openalex > 0 ||
                       (publicationSources.sourceCounts.semantic_scholar ?? 0) >
                         0 ||
-                      (publicationSources.sourceCounts.arxiv ?? 0) > 0) && (
+                      (publicationSources.sourceCounts.arxiv ?? 0) > 0 ||
+                      (publicationSources.sourceCounts.openfda ?? 0) > 0 ||
+                      (publicationSources.sourceCounts.uspstf ?? 0) > 0 ||
+                      (publicationSources.sourceCounts.genereviews ?? 0) > 0 ||
+                      (publicationSources.sourceCounts.medlineplus ?? 0) > 0) && (
                       <span className="text-xs text-slate-500">
                         From:{" "}
                         {[
@@ -3416,6 +3450,16 @@ export default function Publications() {
                             `Semantic Scholar (${publicationSources.sourceCounts.semantic_scholar.toLocaleString()})`,
                           (publicationSources.sourceCounts.arxiv ?? 0) > 0 &&
                             `arXiv (${publicationSources.sourceCounts.arxiv.toLocaleString()})`,
+                          (publicationSources.sourceCounts.openfda ?? 0) > 0 &&
+                            `OpenFDA (${publicationSources.sourceCounts.openfda.toLocaleString()})`,
+                          (publicationSources.sourceCounts.uspstf ?? 0) > 0 &&
+                            `USPSTF (${publicationSources.sourceCounts.uspstf.toLocaleString()})`,
+                          (publicationSources.sourceCounts.genereviews ?? 0) >
+                            0 &&
+                            `GeneReviews (${publicationSources.sourceCounts.genereviews.toLocaleString()})`,
+                          (publicationSources.sourceCounts.medlineplus ?? 0) >
+                            0 &&
+                            `MedlinePlus (${publicationSources.sourceCounts.medlineplus.toLocaleString()})`,
                         ]
                           .filter(Boolean)
                           .join(" · ")}

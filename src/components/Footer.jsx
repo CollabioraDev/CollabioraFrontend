@@ -51,15 +51,18 @@ export default function Footer() {
               Quick Links
             </h3>
             <ul className="space-y-2">
-              {["About Us", "How it works", "Research", "Contact"].map((link) => {
+              {["About Us", "How it Works", "Explore", "News"].map((link) => {
                 const routeMap = {
                   "About Us": "/about",
-                  "How it works": "/how-it-works",
-                  Research: "/research",
-                  Contact: "/contact",
+                  "How it Works": "/how-it-works",
+                  Explore: "/explore",
+                  // News should go to Discovery page
+                  News: "/discovery",
                 };
-                const route = routeMap[link] || `/${link.toLowerCase().replace(/\s+/g, "-")}`;
-                
+                const route =
+                  routeMap[link] ||
+                  `/${link.toLowerCase().replace(/\s+/g, "-")}`;
+
                 return (
                   <li key={link}>
                     <PrefetchLink

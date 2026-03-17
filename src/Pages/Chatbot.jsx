@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { buildChatExportHtml } from "../components/ChatExportPdf.js";
+import Button from "../components/ui/Button.jsx";
+import { X } from "lucide-react";
 
 const YORI_STORAGE_KEY_PREFIX = "collabiora_yori_chat_sessions_v1";
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -66,6 +68,8 @@ const loadStoredUser = () => {
     return null;
   }
 };
+
+const BETA_PROMPT_DISMISSED_KEY = "collabiora_beta_prompt_dismissed_v1";
 
 const getChatStorageKey = (user) => {
   const identity =
@@ -185,6 +189,22 @@ const formatRelativeTime = (timestamp) => {
   if (diff < 24 * 60 * 60 * 1000)
     return `${Math.floor(diff / (60 * 60 * 1000))}h ago`;
   return `${Math.floor(diff / (24 * 60 * 60 * 1000))}d ago`;
+};
+
+const hasDismissedBetaPrompt = () => {
+  try {
+    return localStorage.getItem(BETA_PROMPT_DISMISSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+const setDismissedBetaPrompt = () => {
+  try {
+    localStorage.setItem(BETA_PROMPT_DISMISSED_KEY, "true");
+  } catch {
+    // ignore
+  }
 };
 
 const getAskContext = (type, item) => {
@@ -1599,6 +1619,21 @@ export default function YoriAI() {
     [refreshAuthToken],
   );
 
+  // Beta program modal state (shown on /yori, not during onboarding)
+  const [showBetaModal, setShowBetaModal] = useState(false);
+  const [betaChoicePending, setBetaChoicePending] = useState(null);
+
+  // Decide if we should show beta popup when user lands on /yori
+  useEffect(() => {
+    if (!userId || !authToken) return;
+    if (hasDismissedBetaPrompt()) return;
+
+    const alreadyOptedIn = user?.betaProgramOptIn === true;
+    if (alreadyOptedIn) return;
+
+    setShowBetaModal(true);
+  }, [userId, authToken, user]);
+
   useEffect(() => {
     if (!activeChatId && chatSessions.length > 0) {
       setActiveChatId(chatSessions[0].id);
@@ -2892,6 +2927,128 @@ export default function YoriAI() {
           </div>
         </main>
       </div>
+
+      {/* Join Beta Program Modal (shown on /yori for signed-in users) */}
+      {showBetaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/40">
+          <div
+            className="w-full max-w-md rounded-2xl bg-white shadow-2xl border p-6 space-y-4"
+            style={{ borderColor: "#D0C4E2" }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2
+                  className="text-lg font-bold mb-1"
+                  style={{ color: "#2F3C96" }}
+                >
+                  Join our beta program?
+                </h2>
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: "#555" }}
+                >
+                 Get early access to new Collabiora features and help shape what comes next. Join as a beta user to preview updates, test improvements, and share your feedback.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBetaModal(false);
+                  setDismissedBetaPrompt();
+                }}
+                className="p-1 rounded-full hover:bg-black/5"
+                aria-label="Close beta program dialog"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                onClick={async () => {
+                  if (betaChoicePending || !authToken || !userId) {
+                    setShowBetaModal(false);
+                    setDismissedBetaPrompt();
+                    return;
+                  }
+                  setBetaChoicePending("yes");
+                  try {
+                    await fetch(`${apiBase}/api/users/me/beta-program`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${authToken}`,
+                      },
+                      body: JSON.stringify({ wantsBeta: true }),
+                    });
+                    const updated = { ...(user || {}), betaProgramOptIn: true };
+                    setUser(updated);
+                    try {
+                      localStorage.setItem("user", JSON.stringify(updated));
+                    } catch {
+                      // ignore
+                    }
+                  } catch {
+                    // non-blocking
+                  } finally {
+                    setShowBetaModal(false);
+                    setBetaChoicePending(null);
+                    setDismissedBetaPrompt();
+                  }
+                }}
+                disabled={!!betaChoicePending}
+                className="flex-1 rounded-lg py-2 text-sm font-semibold"
+                style={{
+                  backgroundColor: "#2F3C96",
+                  color: "#FFFFFF",
+                }}
+              >
+                Yes, Count Me In
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (betaChoicePending || !authToken || !userId) {
+                    setShowBetaModal(false);
+                    setDismissedBetaPrompt();
+                    return;
+                  }
+                  setBetaChoicePending("no");
+                  try {
+                    await fetch(`${apiBase}/api/users/me/beta-program`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${authToken}`,
+                      },
+                      body: JSON.stringify({ wantsBeta: false }),
+                    });
+                  } catch {
+                    // non-blocking
+                  } finally {
+                    setShowBetaModal(false);
+                    setBetaChoicePending(null);
+                    setDismissedBetaPrompt();
+                  }
+                }}
+                disabled={!!betaChoicePending}
+                className="flex-1 rounded-lg py-2 text-sm font-semibold border"
+                style={{
+                  borderColor: "#D0C4E2",
+                  color: "#2F3C96",
+                  backgroundColor: "#FFFFFF",
+                }}
+              >
+                Maybe Later
+              </Button>
+            </div>
+
+            <p className="text-[11px]" style={{ color: "#777" }}>
+            We’ll only use your email to share beta updates, research invites, and opportunities to give feedback.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
