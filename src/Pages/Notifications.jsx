@@ -419,7 +419,10 @@ export default function Notifications() {
     try {
       const response = await fetch(`${base}/api/meeting-requests/${requestId}/accept-time`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
         body: JSON.stringify({}),
       });
 
@@ -449,7 +452,10 @@ export default function Notifications() {
     try {
       const response = await fetch(`${base}/api/meeting-requests/${requestId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
         body: JSON.stringify({ action: "reject" }),
       });
 
@@ -656,6 +662,10 @@ export default function Notifications() {
       case "meeting_request_accepted":
       case "meeting_request_rejected":
       case "meeting_request_cancelled":
+      case "payment_required":
+      case "payment_completed":
+      case "refund_requested":
+      case "refund_dispute":
         return <Calendar className="w-5 h-5 text-emerald-600" />;
       default:
         return <Bell className="w-5 h-5 text-indigo-600" />;
@@ -746,7 +756,14 @@ export default function Notifications() {
       navigate(`/trials`);
     } else if (notification.type === "connection_request" || notification.type === "connection_request_accepted") {
       setActiveTab("connection-requests");
-    } else if (notification.type === "meeting_request" || notification.type === "meeting_request_accepted") {
+    } else if (
+      notification.type === "meeting_request" ||
+      notification.type === "meeting_request_accepted" ||
+      notification.type === "payment_required" ||
+      notification.type === "payment_completed" ||
+      notification.type === "refund_requested" ||
+      notification.type === "refund_dispute"
+    ) {
       if (user?.role === "researcher") {
         // For researchers, check if it's accepted (show upcoming) or pending (show requests)
         if (notification.type === "meeting_request_accepted") {

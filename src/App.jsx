@@ -13,6 +13,10 @@ import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
 import MobileBottomNav from "./components/MobileBottomNav.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
+import {
+  installAuthFetchInterceptor,
+  startSessionAutoRefresh,
+} from "./utils/api.js";
 
 // Eagerly-loaded navbars kept as lazy to shave framer-motion + icons from initial chunk;
 // null fallback means no layout shift — they paint on the same frame as the page content.
@@ -86,6 +90,9 @@ const FloatingChatbot = React.lazy(
   () => import("./components/FloatingChatbot.jsx"),
 );
 const MeetingRoom = React.lazy(() => import("./Pages/MeetingRoom.jsx"));
+const EmailPreferences = React.lazy(
+  () => import("./Pages/EmailPreferences.jsx"),
+);
 
 // If the user is already signed in, send them straight to /yori,
 // unless this route is explicitly allowed for incomplete onboarding.
@@ -250,6 +257,11 @@ const AppContent = () => {
       return "patient";
     }
   });
+
+  useEffect(() => {
+    installAuthFetchInterceptor();
+    startSessionAutoRefresh();
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -492,6 +504,7 @@ const AppContent = () => {
           <Route path="/auth/orcid/callback" element={<OrcidCallback />} />
           {/* Email verification */}
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/email-preferences" element={<EmailPreferences />} />
           <Route path="/404" element={<ErrorPage />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>

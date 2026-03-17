@@ -119,6 +119,9 @@ export default function EditProfile() {
   const [meetingTimezone, setMeetingTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   );
+  const [stripeConnectStatus, setStripeConnectStatus] = useState("not_connected");
+  const [stripeConnecting, setStripeConnecting] = useState(false);
+  const [refreshingStripeStatus, setRefreshingStripeStatus] = useState(false);
   const [weeklyAvailability, setWeeklyAvailability] = useState(() =>
     Array.from({ length: 7 }, (_, dayOfWeek) => ({
       dayOfWeek,
@@ -209,6 +212,7 @@ export default function EditProfile() {
     loadFollowedData(uid);
     if (userData.role === "researcher") {
       loadAvailability(uid);
+      refreshStripeConnectStatus();
     }
   }, [navigate]);
 
@@ -476,6 +480,9 @@ export default function EditProfile() {
           if (profileObj.researcher.meetingTimezone) {
             setMeetingTimezone(profileObj.researcher.meetingTimezone);
           }
+          if (profileObj.researcher.stripeConnectStatus) {
+            setStripeConnectStatus(profileObj.researcher.stripeConnectStatus);
+          }
         }
       }
     } catch (error) {
@@ -548,6 +555,69 @@ export default function EditProfile() {
       }
     } catch (err) {
       console.error("Error loading availability:", err);
+    }
+  }
+
+  async function refreshStripeConnectStatus() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      setRefreshingStripeStatus(true);
+      const res = await fetch(`${base}/api/stripe/connect/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.stripeConnectStatus) {
+        setStripeConnectStatus(data.stripeConnectStatus);
+      }
+    } catch (err) {
+      console.error("Error refreshing Stripe status:", err);
+    } finally {
+      setRefreshingStripeStatus(false);
+    }
+  }
+
+  async function connectStripeAccount() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please sign in first");
+        return;
+      }
+      setStripeConnecting(true);
+
+      const createRes = await fetch(`${base}/api/stripe/connect/account`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const createData = await createRes.json();
+      if (!createRes.ok || !createData.ok) {
+        throw new Error(createData.error || "Failed to create Stripe account");
+      }
+
+      const linkRes = await fetch(`${base}/api/stripe/connect/onboarding-link`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const linkData = await linkRes.json();
+      if (!linkRes.ok || !linkData.ok || !linkData.url) {
+        throw new Error(linkData.error || "Failed to create onboarding link");
+      }
+
+      setStripeConnectStatus(createData.stripeConnectStatus || "pending");
+      window.location.href = linkData.url;
+    } catch (err) {
+      console.error("Error connecting Stripe account:", err);
+      toast.error(err.message || "Failed to connect Stripe");
+    } finally {
+      setStripeConnecting(false);
     }
   }
 
@@ -1005,11 +1075,6 @@ export default function EditProfile() {
         const token = localStorage.getItem("token");
         if (token) {
           try {
-            const rateNumber =
-              meetingRate && !Number.isNaN(Number(meetingRate))
-                ? Number(meetingRate)
-                : undefined;
-
             // Derive whether there is any actual availability configured
             const weeklyRules = weeklyAvailability.flatMap((d) => {
               if (!d.enabled || !Array.isArray(d.windows)) return [];
@@ -1028,7 +1093,19 @@ export default function EditProfile() {
             });
 
             const hasAnyAvailability = weeklyRules.length > 0;
-
+            const rateNumber =
+              meetingRate && !Number.isNaN(Number(meetingRate))
+                ? Number(meetingRate)
+                : undefined;
+            const wantsPaidMeetings =
+              (typeof rateNumber === "number" && rateNumber > 0) ||
+              interestedInMeetings ||
+              hasAnyAvailability;
+            if (wantsPaidMeetings && stripeConnectStatus !== "verified") {
+              throw new Error(
+                "Connect and verify Stripe in your profile before enabling patient meetings.",
+              );
+            }
             await fetch(`${base}/api/researchers/${userId}/meeting-settings`, {
               method: "PUT",
               headers: {
@@ -1970,6 +2047,56 @@ export default function EditProfile() {
 
                 {/* Meetings configuration */}
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800">
+                          Stripe payouts
+                        </p>
+                        <p className="text-[11px] text-slate-600">
+                          Connect Stripe before enabling paid meetings.
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                          stripeConnectStatus === "verified"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : stripeConnectStatus === "pending"
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {stripeConnectStatus === "verified"
+                          ? "Verified"
+                          : stripeConnectStatus === "pending"
+                            ? "Onboarding pending"
+                            : "Not connected"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={connectStripeAccount}
+                        disabled={stripeConnecting}
+                        className="inline-flex items-center rounded-lg bg-[#2F3C96] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#253075] disabled:opacity-60"
+                      >
+                        {stripeConnecting
+                          ? "Opening Stripe..."
+                          : stripeConnectStatus === "verified"
+                            ? "Reconnect Stripe"
+                            : "Connect Stripe"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={refreshStripeConnectStatus}
+                        disabled={refreshingStripeStatus}
+                        className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                      >
+                        {refreshingStripeStatus ? "Refreshing..." : "Refresh status"}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                       <h3 className="text-sm font-semibold text-slate-800">
@@ -1983,7 +2110,19 @@ export default function EditProfile() {
                       <input
                         type="checkbox"
                         checked={interestedInMeetings}
-                        onChange={(e) => setInterestedInMeetings(e.target.checked)}
+                        onChange={(e) => {
+                          if (
+                            e.target.checked &&
+                            stripeConnectStatus !== "verified"
+                          ) {
+                            toast.error(
+                              "Connect and verify Stripe before enabling patient meetings.",
+                            );
+                            return;
+                          }
+                          setInterestedInMeetings(e.target.checked);
+                        }}
+                        disabled={stripeConnectStatus !== "verified"}
                         className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
                       />
                       Accept patient meeting requests

@@ -216,6 +216,74 @@ export default function DashboardResearcher() {
   const [newInterestInput, setNewInterestInput] = useState("");
   const [savingInterests, setSavingInterests] = useState(false);
   const [editInterestsModalOpen, setEditInterestsModalOpen] = useState(false);
+  const [reviewingRefundAppointmentId, setReviewingRefundAppointmentId] =
+    useState(null);
+
+  async function reviewRefundForAppointment(appointmentId) {
+    try {
+      const token = localStorage.getItem("token") || "";
+      if (!token) {
+        toast.error("Please sign in first");
+        return;
+      }
+      setReviewingRefundAppointmentId(appointmentId);
+      const getRes = await fetch(`${base}/api/refunds/appointments/${appointmentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const getData = await getRes.json();
+      if (!getRes.ok || !getData.ok) {
+        throw new Error(getData.error || "Failed to load refund request");
+      }
+      const refundRequest = getData.refundRequest;
+      if (!refundRequest) {
+        toast("No refund request for this appointment yet.");
+        return;
+      }
+      if (
+        refundRequest.status !== "requested" &&
+        refundRequest.status !== "admin_review"
+      ) {
+        toast(`Refund request status: ${refundRequest.status}`);
+        return;
+      }
+
+      const approve = window.confirm(
+        `Refund request reason:\n\n${refundRequest.reason || "No reason"}\n\nClick OK to approve refund, or Cancel to reject.`,
+      );
+      const decision = approve ? "approve" : "reject";
+      const note = window.prompt(
+        decision === "approve"
+          ? "Optional note for approval"
+          : "Optional reason for rejection",
+      );
+
+      const decisionRes = await fetch(
+        `${base}/api/refunds/${refundRequest._id}/researcher-decision`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ decision, note: note || undefined }),
+        },
+      );
+      const decisionData = await decisionRes.json();
+      if (!decisionRes.ok || !decisionData.ok) {
+        throw new Error(decisionData.error || "Failed to submit refund decision");
+      }
+      toast.success(
+        decision === "approve"
+          ? "Refund approved and processed."
+          : "Refund request rejected.",
+      );
+    } catch (err) {
+      console.error("Error reviewing refund request:", err);
+      toast.error(err.message || "Failed to review refund request");
+    } finally {
+      setReviewingRefundAppointmentId(null);
+    }
+  }
 
   // ICD-11 suggestion terms for research interests (same dataset as Publications.jsx)
   const icd11SuggestionTerms = useMemo(() => {
@@ -7269,6 +7337,26 @@ export default function DashboardResearcher() {
                                         )}
                                       </div>
                                     </div>
+                                    {appt.paymentStatus === "paid" && (
+                                      <div className="flex items-center justify-end">
+                                        <button
+                                          type="button"
+                                          disabled={
+                                            reviewingRefundAppointmentId ===
+                                            appt._id
+                                          }
+                                          onClick={() =>
+                                            reviewRefundForAppointment(appt._id)
+                                          }
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                                        >
+                                          {reviewingRefundAppointmentId ===
+                                          appt._id
+                                            ? "Reviewing..."
+                                            : "Review refund"}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}

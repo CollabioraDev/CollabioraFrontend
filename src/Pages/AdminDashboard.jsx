@@ -409,6 +409,11 @@ const SECTIONS = [
   { id: "page-feedback", label: "Page Feedback", icon: MessageCircle },
   { id: "contacts", label: "Contact Messages", icon: Mail },
   {
+    id: "profile-reminders",
+    label: "Profile Reminders",
+    icon: ClipboardList,
+  },
+  {
     id: "onboarding-cleanup",
     label: "Onboarding Cleanup",
     icon: AlertTriangle,
@@ -423,7 +428,10 @@ const SIDEBAR_GROUPS = [
     items: ["search", "experts", "patients", "forums", "posts", "community"],
   },
   { title: "SUPPORT", items: ["reviews", "page-feedback", "contacts"] },
-  { title: "OTHERS", items: ["onboarding-cleanup", "meeting-requests"] },
+  {
+    title: "OTHERS",
+    items: ["onboarding-cleanup", "meeting-requests", "profile-reminders"],
+  },
 ];
 
 export default function AdminDashboard() {
@@ -606,6 +614,12 @@ export default function AdminDashboard() {
   const [loadingMeetingRequests, setLoadingMeetingRequests] = useState(false);
   const [clearingAllMeetings, setClearingAllMeetings] = useState(false);
   const [deletingMeetingId, setDeletingMeetingId] = useState(null);
+  // Profile reminder mailing
+  const [profileReminderStats, setProfileReminderStats] = useState(null);
+  const [profileReminderLogs, setProfileReminderLogs] = useState([]);
+  const [loadingProfileReminders, setLoadingProfileReminders] = useState(false);
+  const [profileReminderRoleFilter, setProfileReminderRoleFilter] =
+    useState("all");
 
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -634,6 +648,40 @@ export default function AdminDashboard() {
     return false;
   };
 
+  const fetchProfileReminderData = async (role = profileReminderRoleFilter) => {
+    try {
+      setLoadingProfileReminders(true);
+      const { token, headers } = getAuth();
+      if (!token) return;
+
+      const [statsRes, logsRes] = await Promise.all([
+        fetch(`${base}/api/admin/profile-reminders/stats`, {
+          headers,
+        }),
+        fetch(
+          `${base}/api/admin/profile-reminders/logs${
+            role && role !== "all" ? `?role=${role}` : ""
+          }`,
+          { headers },
+        ),
+      ]);
+
+      if (handleAdminAuthFailure(statsRes) || handleAdminAuthFailure(logsRes)) {
+        return;
+      }
+
+      const statsJson = await statsRes.json();
+      const logsJson = await logsRes.json();
+      setProfileReminderStats(statsJson);
+      setProfileReminderLogs(Array.isArray(logsJson) ? logsJson : []);
+    } catch (error) {
+      console.error("Failed to load profile reminder data:", error);
+      toast.error("Failed to load profile reminder stats");
+    } finally {
+      setLoadingProfileReminders(false);
+    }
+  };
+
   useEffect(() => {
     const adminToken = localStorage.getItem("adminToken");
     if (!adminToken) {
@@ -648,6 +696,7 @@ export default function AdminDashboard() {
       fetchReviewStats();
     }
     if (activeSection === "overview") fetchOverviewStats();
+    if (activeSection === "profile-reminders") fetchProfileReminderData();
   }, [navigate, activeSection]);
 
   useEffect(() => {
@@ -698,6 +747,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "meeting-requests") {
       fetchMeetingRequests();
+    }
+    if (activeSection === "profile-reminders") {
+      fetchProfileReminderData();
     }
   }, [activeSection]);
 
@@ -3093,6 +3145,220 @@ export default function AdminDashboard() {
                   </div>
                 );
               })()}
+
+            {activeSection === "profile-reminders" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-brand-royal-blue">
+                      Profile completion reminders
+                    </h2>
+                    <p className="text-xs text-slate-600">
+                      Track automated reminder emails for patients and researchers.
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-0.5 text-xs">
+                    <button
+                      type="button"
+                      className={`px-2 py-0.5 rounded-full ${profileReminderRoleFilter === "all" ? "bg-brand-royal-blue text-white" : "text-slate-700"}`}
+                      onClick={() => {
+                        setProfileReminderRoleFilter("all");
+                        fetchProfileReminderData("all");
+                      }}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-2 py-0.5 rounded-full ${profileReminderRoleFilter === "patient" ? "bg-brand-royal-blue text-white" : "text-slate-700"}`}
+                      onClick={() => {
+                        setProfileReminderRoleFilter("patient");
+                        fetchProfileReminderData("patient");
+                      }}
+                    >
+                      Patients
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-2 py-0.5 rounded-full ${profileReminderRoleFilter === "researcher" ? "bg-brand-royal-blue text-white" : "text-slate-700"}`}
+                      onClick={() => {
+                        setProfileReminderRoleFilter("researcher");
+                        fetchProfileReminderData("researcher");
+                      }}
+                    >
+                      Researchers
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Total patients
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.totalPatients ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Total researchers
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.totalResearchers ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Incomplete patients
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.incompletePatients ?? "—"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Completed: {profileReminderStats?.completePatients ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Incomplete researchers
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.incompleteResearchers ?? "—"}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Completed: {profileReminderStats?.completeResearchers ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Total reminders sent
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.totalRemindersSent ?? 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-500 uppercase mb-1">
+                      Opt-outs
+                    </p>
+                    <p className="text-2xl font-semibold text-brand-royal-blue">
+                      {profileReminderStats?.optOuts ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/80">
+                    <p className="text-xs font-semibold text-slate-600">
+                      Recent users (sorted by account created)
+                    </p>
+                    {loadingProfileReminders && (
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Refreshing...</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-xs">
+                      <thead className="bg-slate-50 text-slate-500 border-b border-slate-200/80">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-medium">Email</th>
+                          <th className="px-3 py-2 text-left font-medium">Role</th>
+                          <th className="px-3 py-2 text-left font-medium">Email verified</th>
+                          <th className="px-3 py-2 text-left font-medium">Completion</th>
+                          <th className="px-3 py-2 text-left font-medium">Missing steps</th>
+                          <th className="px-3 py-2 text-left font-medium">Last stage</th>
+                          <th className="px-3 py-2 text-left font-medium">Account created</th>
+                          <th className="px-3 py-2 text-left font-medium">Last reminder</th>
+                          <th className="px-3 py-2 text-left font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {profileReminderLogs.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={9}
+                              className="px-3 py-6 text-center text-slate-500"
+                            >
+                              No reminder activity yet.
+                            </td>
+                          </tr>
+                        )}
+                        {profileReminderLogs.map((row) => (
+                          <tr key={row._id} className="border-t border-slate-100">
+                            <td className="px-3 py-2 text-slate-800 break-all">
+                              {row.email || "—"}
+                            </td>
+                            <td className="px-3 py-2 capitalize text-slate-700">
+                              {row.role || "unknown"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {row.emailVerified ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 border border-emerald-100">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-100">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Not verified
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2">
+                              {row.isComplete ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 border border-emerald-100">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Complete
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 border border-rose-100">
+                                  <XCircle className="w-3 h-3" />
+                                  Incomplete
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-slate-600 max-w-[260px]">
+                              <span className="line-clamp-2">
+                                {row.missingStepsSummary || "Completed"}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-slate-700">
+                              {row.stage || "—"}
+                            </td>
+                            <td className="px-3 py-2 text-slate-500">
+                              {row.userCreatedAt
+                                ? new Date(row.userCreatedAt).toLocaleDateString()
+                                : "—"}
+                            </td>
+                            <td className="px-3 py-2 text-slate-500">
+                              {row.sentAt
+                                ? new Date(row.sentAt).toLocaleString()
+                                : "—"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {row.optOut ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-700 border border-red-100">
+                                  <XCircle className="w-3 h-3" />
+                                  Opted out
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 border border-emerald-100">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Active
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {activeSection === "search" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">

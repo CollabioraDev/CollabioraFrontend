@@ -514,7 +514,10 @@ export default function CollabioraExpertProfile() {
     try {
       const response = await fetch(`${base}/api/meeting-requests`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
         body: JSON.stringify({
           patientId: user._id || user.id,
           expertId: userId,
@@ -618,7 +621,10 @@ export default function CollabioraExpertProfile() {
     try {
       const response = await fetch(`${base}/api/meeting-requests/${requestId}/questions`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
         body: JSON.stringify({ patientQuestions: questions.trim() || null }),
       });
       if (!response.ok) {
@@ -877,10 +883,17 @@ export default function CollabioraExpertProfile() {
   };
 
   const isCurrentUser = (user?._id || user?.id) === profile.userId;
+  const requiresPaidMeeting =
+    profile.meetingRate != null && Number(profile.meetingRate) > 0;
+  const isStripeReadyForMeetings =
+    !requiresPaidMeeting || profile.stripeConnectStatus === "verified";
+  const researcherCanAcceptMeetings =
+    profile.interestedInMeetings === true && isStripeReadyForMeetings;
   const canSendMeetingRequest =
     user?.role === "patient" &&
     !isCurrentUser &&
-    user?.emailVerified === true;
+    user?.emailVerified === true &&
+    researcherCanAcceptMeetings;
   const canSendConnectionRequest =
     user?.role === "researcher" && !isCurrentUser;
   const canSendMessage =
@@ -1197,6 +1210,14 @@ export default function CollabioraExpertProfile() {
                     This expert hasn&apos;t finished setting up their profile for meetings yet.
                   </p>
                 )}
+                {user?.emailVerified &&
+                  profile.interestedInMeetings === true &&
+                  !isStripeReadyForMeetings && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-2">
+                      Payments are not live for this expert yet. They need to
+                      complete Stripe onboarding before bookings can be confirmed.
+                    </p>
+                  )}
                 <p className="text-xs text-slate-600 border-t border-slate-100 pt-2 mt-2">
                   <Clock className="w-3.5 h-3.5 inline mr-1 align-middle" />
                   Available times are shown in your local timezone after you pick a date.

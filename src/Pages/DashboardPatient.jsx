@@ -202,6 +202,82 @@ export default function DashboardPatient() {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [pastAppointments, setPastAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const [processingPaymentAppointmentId, setProcessingPaymentAppointmentId] =
+    useState(null);
+  const [requestingRefundAppointmentId, setRequestingRefundAppointmentId] =
+    useState(null);
+
+  async function startPaymentForAppointment(appointmentId) {
+    try {
+      const token = localStorage.getItem("token") || "";
+      if (!token) {
+        toast.error("Please sign in first");
+        return;
+      }
+      setProcessingPaymentAppointmentId(appointmentId);
+      const res = await fetch(
+        `${base}/api/payments/appointments/${appointmentId}/checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to start payment");
+      }
+      if (data.alreadyPaid) {
+        toast.success("This meeting is already paid.");
+        return;
+      }
+      if (!data.checkoutUrl) {
+        throw new Error("Stripe checkout URL is missing");
+      }
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      console.error("Error starting appointment payment:", err);
+      toast.error(err.message || "Failed to start payment");
+    } finally {
+      setProcessingPaymentAppointmentId(null);
+    }
+  }
+
+  async function requestRefundForAppointment(appointmentId) {
+    const reason = window.prompt(
+      "Why are you requesting a refund for this meeting?",
+    );
+    if (!reason || !reason.trim()) return;
+
+    try {
+      const token = localStorage.getItem("token") || "";
+      if (!token) {
+        toast.error("Please sign in first");
+        return;
+      }
+      setRequestingRefundAppointmentId(appointmentId);
+      const res = await fetch(`${base}/api/refunds/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ appointmentId, reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Failed to request refund");
+      }
+      toast.success("Refund request sent. The researcher will review it.");
+    } catch (err) {
+      console.error("Error requesting refund:", err);
+      toast.error(err.message || "Failed to request refund");
+    } finally {
+      setRequestingRefundAppointmentId(null);
+    }
+  }
 
   // ICD-11 suggestion terms for conditions (same dataset as Publications.jsx)
   const icd11SuggestionTerms = useMemo(() => {
@@ -6121,22 +6197,47 @@ export default function DashboardPatient() {
                                             </div>
                                           </div>
                                           <div className="flex items-center gap-2 justify-end">
-                                            <button
-                                              type="button"
-                                              disabled={!canJoin}
-                                              onClick={() => {
-                                                if (!canJoin) return;
-                                                const href = `/meeting/${appt._id}`;
-                                                window.open(href, "_blank", "noopener,noreferrer");
-                                              }}
-                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
-                                                canJoin
-                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
-                                                  : "bg-slate-300 cursor-not-allowed"
-                                              }`}
-                                            >
-                                              Join now
-                                            </button>
+                                            {rawStatus === "pending_payment" ? (
+                                              <button
+                                                type="button"
+                                                disabled={
+                                                  processingPaymentAppointmentId ===
+                                                  appt._id
+                                                }
+                                                onClick={() =>
+                                                  startPaymentForAppointment(
+                                                    appt._id,
+                                                  )
+                                                }
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60"
+                                              >
+                                                {processingPaymentAppointmentId ===
+                                                appt._id
+                                                  ? "Opening..."
+                                                  : "Pay now"}
+                                              </button>
+                                            ) : (
+                                              <button
+                                                type="button"
+                                                disabled={!canJoin}
+                                                onClick={() => {
+                                                  if (!canJoin) return;
+                                                  const href = `/meeting/${appt._id}`;
+                                                  window.open(
+                                                    href,
+                                                    "_blank",
+                                                    "noopener,noreferrer",
+                                                  );
+                                                }}
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                  canJoin
+                                                    ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                    : "bg-slate-300 cursor-not-allowed"
+                                                }`}
+                                              >
+                                                Join now
+                                              </button>
+                                            )}
                                           </div>
                                         </div>
                                       );
@@ -6263,22 +6364,47 @@ export default function DashboardPatient() {
                                             </div>
                                           </div>
                                           <div className="flex items-center gap-2 justify-end">
-                                            <button
-                                              type="button"
-                                              disabled={!canJoin}
-                                              onClick={() => {
-                                                if (!canJoin) return;
-                                                const href = `/meeting/${appt._id}`;
-                                                window.open(href, "_blank", "noopener,noreferrer");
-                                              }}
-                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
-                                                canJoin
-                                                  ? "bg-[#2F3C96] hover:bg-[#253075]"
-                                                  : "bg-slate-300 cursor-not-allowed"
-                                              }`}
-                                            >
-                                              Join
-                                            </button>
+                                            {rawStatus === "pending_payment" ? (
+                                              <button
+                                                type="button"
+                                                disabled={
+                                                  processingPaymentAppointmentId ===
+                                                  appt._id
+                                                }
+                                                onClick={() =>
+                                                  startPaymentForAppointment(
+                                                    appt._id,
+                                                  )
+                                                }
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60"
+                                              >
+                                                {processingPaymentAppointmentId ===
+                                                appt._id
+                                                  ? "Opening..."
+                                                  : "Pay now"}
+                                              </button>
+                                            ) : (
+                                              <button
+                                                type="button"
+                                                disabled={!canJoin}
+                                                onClick={() => {
+                                                  if (!canJoin) return;
+                                                  const href = `/meeting/${appt._id}`;
+                                                  window.open(
+                                                    href,
+                                                    "_blank",
+                                                    "noopener,noreferrer",
+                                                  );
+                                                }}
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
+                                                  canJoin
+                                                    ? "bg-[#2F3C96] hover:bg-[#253075]"
+                                                    : "bg-slate-300 cursor-not-allowed"
+                                                }`}
+                                              >
+                                                Join
+                                              </button>
+                                            )}
                                           </div>
                                         </div>
                                       );
@@ -6370,6 +6496,26 @@ export default function DashboardPatient() {
                                         )}
                                       </div>
                                     </div>
+                                    {appt.paymentStatus === "paid" && (
+                                      <div className="flex items-center justify-end">
+                                        <button
+                                          type="button"
+                                          disabled={
+                                            requestingRefundAppointmentId ===
+                                            appt._id
+                                          }
+                                          onClick={() =>
+                                            requestRefundForAppointment(appt._id)
+                                          }
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                                        >
+                                          {requestingRefundAppointmentId ===
+                                          appt._id
+                                            ? "Sending..."
+                                            : "Request refund"}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
