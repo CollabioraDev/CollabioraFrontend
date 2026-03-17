@@ -151,6 +151,33 @@ const getAuthToken = () => {
   }
 };
 
+const readJsonSafely = async (response) => {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token?.split(".")?.[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+};
+
+const isTokenExpiringSoon = (token, thresholdMs = 10 * 60 * 1000) => {
+  const payload = decodeJwtPayload(token);
+  const expMs = Number(payload?.exp) * 1000;
+  if (!Number.isFinite(expMs)) return false;
+  return expMs - Date.now() <= thresholdMs;
+};
+
 const formatRelativeTime = (timestamp) => {
   const diff = Date.now() - timestamp;
   if (diff < 60 * 1000) return "Just now";
@@ -1447,6 +1474,7 @@ const ChatHistoryItem = ({
 
 export default function YoriAI() {
   const [user, setUser] = useState(loadStoredUser);
+  const [authExpired, setAuthExpired] = useState(false);
   const [chatSessions, setChatSessions] = useState(() => {
     const initialUser = loadStoredUser();
     return initialUser && getAuthToken()
@@ -1476,16 +1504,99 @@ export default function YoriAI() {
   const messagesContainerRef = useRef(null);
   const abortControllerRef = useRef(null);
   const textareaRef = useRef(null);
+  const refreshPromiseRef = useRef(null);
 
   const userId = user?._id || user?.id;
   const userRole = user?.role || "patient";
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const authToken = getAuthToken();
-  const isRemoteChatUser = Boolean(userId && authToken);
+  const isRemoteChatUser = Boolean(userId && authToken && !authExpired);
   const chatStorageKey = useMemo(() => getChatStorageKey(user), [user]);
-  const authHeaders = useMemo(
-    () => (authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-    [authToken],
+  const handleAuthExpired = useCallback((errorMessage) => {
+    setAuthExpired(true);
+    setUser(null);
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch {
+      // Ignore storage errors and still recover chat locally.
+    }
+    window.dispatchEvent(new Event("logout"));
+    setSessionLimitNotice(
+      errorMessage || "Your session expired. Please sign in again.",
+    );
+  }, []);
+
+  useEffect(() => {
+    if (userId && authToken) {
+      setAuthExpired(false);
+    }
+  }, [userId, authToken]);
+
+  const refreshAuthToken = useCallback(async () => {
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
+    }
+
+    refreshPromiseRef.current = (async () => {
+      const currentToken = getAuthToken();
+      if (!currentToken) return null;
+
+      try {
+        const response = await fetch(`${apiBase}/api/auth/refresh`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${currentToken}`,
+          },
+        });
+        const data = await readJsonSafely(response);
+        if (!response.ok) {
+          if (response.status === 401) {
+            handleAuthExpired(data?.error);
+          }
+          return null;
+        }
+        if (!data?.token) return null;
+
+        localStorage.setItem("token", data.token);
+        if (data?.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          setUser(data.user);
+          window.dispatchEvent(new Event("userUpdated"));
+        }
+        return data.token;
+      } catch (error) {
+        console.error("Silent token refresh failed:", error);
+        return null;
+      } finally {
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    return refreshPromiseRef.current;
+  }, [apiBase, handleAuthExpired]);
+
+  const fetchWithAuthRetry = useCallback(
+    async (url, options = {}) => {
+      const doFetch = (token) =>
+        fetch(url, {
+          ...options,
+          headers: {
+            ...(options.headers || {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+      let response = await doFetch(getAuthToken());
+      if (response.status === 401) {
+        const refreshedToken = await refreshAuthToken();
+        if (refreshedToken) {
+          response = await doFetch(refreshedToken);
+        }
+      }
+      return response;
+    },
+    [refreshAuthToken],
   );
 
   useEffect(() => {
@@ -1523,9 +1634,13 @@ export default function YoriAI() {
       setUser(loadStoredUser());
     };
     window.addEventListener("login", handler);
+    window.addEventListener("logout", handler);
+    window.addEventListener("userUpdated", handler);
     window.addEventListener("storage", handler);
     return () => {
       window.removeEventListener("login", handler);
+      window.removeEventListener("logout", handler);
+      window.removeEventListener("userUpdated", handler);
       window.removeEventListener("storage", handler);
     };
   }, []);
@@ -1553,12 +1668,16 @@ export default function YoriAI() {
       setIsHydratingChats(true);
 
       try {
-        const response = await fetch(`${apiBase}/api/chatbot/sessions`, {
-          headers: authHeaders,
-        });
-        const data = await response.json();
+        const response = await fetchWithAuthRetry(
+          `${apiBase}/api/chatbot/sessions`,
+        );
+        const data = await readJsonSafely(response);
         if (!response.ok) {
-          throw new Error(data.error || "Failed to load chat sessions");
+          if (response.status === 401) {
+            handleAuthExpired(data?.error);
+            return;
+          }
+          throw new Error(data?.error || "Failed to load chat sessions");
         }
 
         let nextSessions = Array.isArray(data.sessions)
@@ -1566,14 +1685,18 @@ export default function YoriAI() {
           : [];
 
         if (nextSessions.length === 0) {
-          const createRes = await fetch(`${apiBase}/api/chatbot/sessions`, {
-            method: "POST",
-            headers: authHeaders,
-          });
-          const createData = await createRes.json();
+          const createRes = await fetchWithAuthRetry(
+            `${apiBase}/api/chatbot/sessions`,
+            { method: "POST" },
+          );
+          const createData = await readJsonSafely(createRes);
           if (!createRes.ok) {
+            if (createRes.status === 401) {
+              handleAuthExpired(createData?.error);
+              return;
+            }
             throw new Error(
-              createData.error || "Failed to create chat session",
+              createData?.error || "Failed to create chat session",
             );
           }
           nextSessions = [normalizeSession(createData.session)];
@@ -1604,7 +1727,13 @@ export default function YoriAI() {
     return () => {
       cancelled = true;
     };
-  }, [apiBase, authHeaders, chatStorageKey, isRemoteChatUser]);
+  }, [
+    apiBase,
+    chatStorageKey,
+    fetchWithAuthRetry,
+    handleAuthExpired,
+    isRemoteChatUser,
+  ]);
 
   useEffect(() => {
     const loadProfileAndSuggestions = async () => {
@@ -1726,6 +1855,20 @@ export default function YoriAI() {
   }, []);
 
   useEffect(() => {
+    if (!isRemoteChatUser) return;
+
+    const refreshIfNeeded = async () => {
+      const currentToken = getAuthToken();
+      if (!currentToken || !isTokenExpiringSoon(currentToken)) return;
+      await refreshAuthToken();
+    };
+
+    refreshIfNeeded();
+    const timer = window.setInterval(refreshIfNeeded, 5 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [isRemoteChatUser, refreshAuthToken]);
+
+  useEffect(() => {
     if (!isRemoteChatUser || !activeChatId) return;
     const selectedSession = chatSessions.find(
       (session) => session.id === activeChatId,
@@ -1736,15 +1879,16 @@ export default function YoriAI() {
 
     const loadSession = async () => {
       try {
-        const response = await fetch(
+        const response = await fetchWithAuthRetry(
           `${apiBase}/api/chatbot/sessions/${activeChatId}`,
-          {
-            headers: authHeaders,
-          },
         );
-        const data = await response.json();
+        const data = await readJsonSafely(response);
         if (!response.ok) {
-          throw new Error(data.error || "Failed to load chat history");
+          if (response.status === 401) {
+            handleAuthExpired(data?.error);
+            return;
+          }
+          throw new Error(data?.error || "Failed to load chat history");
         }
         if (!cancelled) {
           mergeRemoteSession(data.session);
@@ -1765,10 +1909,11 @@ export default function YoriAI() {
   }, [
     activeChatId,
     apiBase,
-    authHeaders,
     chatSessions,
+    fetchWithAuthRetry,
     isRemoteChatUser,
     mergeRemoteSession,
+    handleAuthExpired,
   ]);
 
   const appendAssistantNotice = useCallback(
@@ -1832,13 +1977,16 @@ export default function YoriAI() {
         setInput("");
         setSidebarOpen(false);
 
-        const response = await fetch(`${apiBase}/api/chatbot/sessions`, {
+        const response = await fetchWithAuthRetry(`${apiBase}/api/chatbot/sessions`, {
           method: "POST",
-          headers: authHeaders,
         });
-        const data = await response.json();
+        const data = await readJsonSafely(response);
         if (!response.ok) {
-          throw new Error(data.error || "Failed to create chat session");
+          if (response.status === 401) {
+            handleAuthExpired(data?.error);
+            throw new Error("Your session expired. Please sign in again.");
+          }
+          throw new Error(data?.error || "Failed to create chat session");
         }
         newChat = mergeRemoteSession(data.session);
         setChatSessions((prev) =>
@@ -1869,11 +2017,12 @@ export default function YoriAI() {
     }
   }, [
     apiBase,
-    authHeaders,
     canCreateNewChat,
     chatSessions,
+    fetchWithAuthRetry,
     isRemoteChatUser,
     mergeRemoteSession,
+    handleAuthExpired,
   ]);
 
   const deleteChat = useCallback(
@@ -1906,12 +2055,16 @@ export default function YoriAI() {
 
       try {
         if (isRemoteChatUser) {
-          const response = await fetch(
+          const response = await fetchWithAuthRetry(
             `${apiBase}/api/chatbot/sessions/${sessionId}`,
-            { method: "DELETE", headers: authHeaders },
+            { method: "DELETE" },
           );
           if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
+            const data = (await readJsonSafely(response)) || {};
+            if (response.status === 401) {
+              handleAuthExpired(data.error);
+              throw new Error("Your session expired. Please sign in again.");
+            }
             throw new Error(data.error || "Failed to delete chat");
           }
           if (remaining.length === 0) {
@@ -1934,9 +2087,10 @@ export default function YoriAI() {
       activeChatId,
       activeChat?.id,
       apiBase,
-      authHeaders,
       chatSessions,
       createNewChat,
+      fetchWithAuthRetry,
+      handleAuthExpired,
       isRemoteChatUser,
     ],
   );
@@ -1995,7 +2149,6 @@ export default function YoriAI() {
 
         const requestHeaders = {
           "Content-Type": "application/json",
-          ...(isRemoteChatUser ? authHeaders : {}),
         };
 
         const requestBody = isRemoteChatUser
@@ -2028,21 +2181,29 @@ export default function YoriAI() {
               ...(userId ? { userId } : {}),
             };
 
-        const response = await fetch(`${apiBase}/api/chatbot/chat`, {
-          method: "POST",
-          headers: requestHeaders,
-          credentials: "include",
-          body: JSON.stringify(requestBody),
-          signal: abortControllerRef.current.signal,
-        });
+        const response = isRemoteChatUser
+          ? await fetchWithAuthRetry(`${apiBase}/api/chatbot/chat`, {
+              method: "POST",
+              headers: requestHeaders,
+              credentials: "include",
+              body: JSON.stringify(requestBody),
+              signal: abortControllerRef.current.signal,
+            })
+          : await fetch(`${apiBase}/api/chatbot/chat`, {
+              method: "POST",
+              headers: requestHeaders,
+              credentials: "include",
+              body: JSON.stringify(requestBody),
+              signal: abortControllerRef.current.signal,
+            });
 
         if (!response.ok) {
           let errMsg = "Failed to get response";
-          try {
-            const errBody = await response.json();
-            if (errBody?.error) errMsg = errBody.error;
-          } catch {
-            // noop
+          const errBody = await readJsonSafely(response);
+          if (errBody?.error) errMsg = errBody.error;
+          if (response.status === 401) {
+            errMsg = "Your session expired. Please sign in again.";
+            handleAuthExpired(errBody?.error || errMsg);
           }
           if (response.status === 409) {
             setSessionLimitNotice(errMsg);
@@ -2137,10 +2298,11 @@ export default function YoriAI() {
       activeChatIsFull,
       activeChatMessageCount,
       apiBase,
-      authHeaders,
       chatInteractionDisabled,
+      fetchWithAuthRetry,
       input,
       isRemoteChatUser,
+      handleAuthExpired,
       updateSessionMessages,
       userId,
     ],
