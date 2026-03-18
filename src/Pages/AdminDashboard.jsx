@@ -414,6 +414,11 @@ const SECTIONS = [
     icon: ClipboardList,
   },
   {
+    id: "weekly-mailer",
+    label: "Weekly Mailer",
+    icon: Mail,
+  },
+  {
     id: "onboarding-cleanup",
     label: "Onboarding Cleanup",
     icon: AlertTriangle,
@@ -430,7 +435,7 @@ const SIDEBAR_GROUPS = [
   { title: "SUPPORT", items: ["reviews", "page-feedback", "contacts"] },
   {
     title: "OTHERS",
-    items: ["onboarding-cleanup", "meeting-requests", "profile-reminders"],
+    items: ["weekly-mailer", "onboarding-cleanup", "meeting-requests", "profile-reminders"],
   },
 ];
 
@@ -544,6 +549,13 @@ export default function AdminDashboard() {
   const [deletingExpertId, setDeletingExpertId] = useState(null);
   const [patientSortBy, setPatientSortBy] = useState("accountCreated");
   const [patientOrder, setPatientOrder] = useState("desc");
+  // Weekly mailer
+  const [weeklyMailerSelectedUserIds, setWeeklyMailerSelectedUserIds] = useState(
+    [],
+  );
+  const [sendingWeeklyMailer, setSendingWeeklyMailer] = useState(false);
+  const [weeklyMailerSearchQuery, setWeeklyMailerSearchQuery] = useState("");
+  const [weeklyMailerPipeline, setWeeklyMailerPipeline] = useState([]);
   // Overview stats
   const [overviewStats, setOverviewStats] = useState(null);
   const [loadingOverviewStats, setLoadingOverviewStats] = useState(false);
@@ -725,7 +737,9 @@ export default function AdminDashboard() {
   }, [activeSection]);
 
   useEffect(() => {
-    if (activeSection === "patients") fetchPatients();
+    if (activeSection === "patients" || activeSection === "weekly-mailer") {
+      fetchPatients();
+    }
   }, [activeSection, patientSortBy, patientOrder]);
 
   useEffect(() => {
@@ -1041,6 +1055,193 @@ export default function AdminDashboard() {
       toast.error("Failed to load patients");
     } finally {
       setLoadingPatients(false);
+    }
+  };
+
+  const toggleWeeklyMailerUser = (userId) => {
+    if (sendingWeeklyMailer) return;
+    setWeeklyMailerSelectedUserIds((prev) => {
+      if (prev.includes(userId)) return prev.filter((id) => id !== userId);
+      return [...prev, userId];
+    });
+  };
+
+  const getWeeklyMailerFilteredPatients = () => {
+    const q = (weeklyMailerSearchQuery || "").trim().toLowerCase();
+    if (!q) return patients;
+
+    return (patients || []).filter((p) => {
+      const name = p?.name || "";
+      const email = p?.email || "";
+      const cond = Array.isArray(p?.conditions) ? p.conditions.join(" ") : "";
+      const hay = `${name} ${email} ${cond}`.toLowerCase();
+      return hay.includes(q);
+    });
+  };
+
+  const handleToggleSelectAllWeeklyMailer = () => {
+    if (sendingWeeklyMailer) return;
+    const filtered = getWeeklyMailerFilteredPatients();
+    if (!Array.isArray(filtered) || filtered.length === 0) return;
+    const allIds = filtered.map((p) => p.userId);
+    setWeeklyMailerSelectedUserIds((prev) => {
+      const same = prev.length === allIds.length;
+      return same ? [] : allIds;
+    });
+  };
+
+  const handleSendWeeklyMailer = async () => {
+    if (weeklyMailerSelectedUserIds.length === 0) {
+      toast.error("Select at least one patient to send the weekly mailer.");
+      return;
+    }
+
+    const { token, headers } = getAuth();
+    if (!token) return;
+
+    // Initialize per-user pipeline so the admin can see progress "1 by 1"
+    const pipelineInit = weeklyMailerSelectedUserIds.map((id, idx) => {
+      const u = (patients || []).find((p) => p.userId === id);
+      return {
+        idx,
+        userId: id,
+        name: u?.name || "Patient",
+        email: u?.email || "",
+        status: "pending",
+        message: "",
+      };
+    });
+    setWeeklyMailerPipeline(pipelineInit);
+
+    setSendingWeeklyMailer(true);
+    try {
+      let sentCount = 0;
+      let skippedCount = 0;
+      let errorCount = 0;
+
+      const ids = weeklyMailerSelectedUserIds;
+      for (let i = 0; i < ids.length; i++) {
+        const userId = ids[i];
+
+        setWeeklyMailerPipeline((prev) =>
+          prev.map((entry) =>
+            entry.userId === userId
+              ? {
+                  ...entry,
+                  status: "sending",
+                  message: `Sending (${i + 1}/${ids.length})...`,
+                }
+              : entry,
+          ),
+        );
+
+        try {
+          const res = await fetch(`${base}/api/admin/weekly-mailer/send`, {
+            method: "POST",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify({ userIds: [userId] }),
+          });
+
+          if (handleAdminAuthFailure(res)) return;
+          const data = await res.json();
+
+          if (!res.ok) {
+            errorCount += 1;
+            setWeeklyMailerPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "error",
+                      message: data?.message || data?.error || "Failed to send",
+                    }
+                  : entry,
+              ),
+            );
+            continue;
+          }
+
+          const sent = Number(data.sent || 0);
+          const skipped = Number(data.skipped || 0);
+          const hasErr = Array.isArray(data.errors) && data.errors.length > 0;
+
+          if (sent > 0) {
+            sentCount += sent;
+            setWeeklyMailerPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "sent",
+                      message: "Sent",
+                    }
+                  : entry,
+              ),
+            );
+          } else if (skipped > 0) {
+            skippedCount += skipped;
+            setWeeklyMailerPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "skipped",
+                      message: "Skipped (missing email/profile or opted out)",
+                    }
+                  : entry,
+              ),
+            );
+          } else if (hasErr) {
+            errorCount += 1;
+            setWeeklyMailerPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "error",
+                      message: data.errors?.[0]?.message || "Failed",
+                    }
+                  : entry,
+              ),
+            );
+          } else {
+            // Fallback: treat as sent if backend didn't explicitly skip
+            sentCount += 1;
+            setWeeklyMailerPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "sent",
+                      message: "Sent",
+                    }
+                  : entry,
+              ),
+            );
+          }
+        } catch (err) {
+          errorCount += 1;
+          setWeeklyMailerPipeline((prev) =>
+            prev.map((entry) =>
+              entry.userId === userId
+                ? {
+                    ...entry,
+                    status: "error",
+                    message: err?.message || "Request failed",
+                  }
+                : entry,
+            ),
+          );
+        }
+      }
+
+      toast.success(
+        `Weekly mailer finished. Sent: ${sentCount}, skipped: ${skippedCount}, errors: ${errorCount}`,
+      );
+    } catch (e) {
+      toast.error(e?.message || "Failed to send weekly mailer");
+    } finally {
+      setSendingWeeklyMailer(false);
     }
   };
 
@@ -6786,6 +6987,226 @@ export default function AdminDashboard() {
                   </div>
                 );
               })()}
+
+            {activeSection === "weekly-mailer" && (
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
+                <p className="text-sm text-brand-gray mb-4">
+                  Search patients, select who should receive the weekly digest, then send.
+                  The email is personalized using your backend pipeline.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+                    <Search className="w-4 h-4 text-brand-gray/70 shrink-0" />
+                    <input
+                      type="text"
+                      value={weeklyMailerSearchQuery}
+                      onChange={(e) => setWeeklyMailerSearchQuery(e.target.value)}
+                      placeholder="Search users (name, email, condition)..."
+                      className="w-full px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
+                      disabled={sendingWeeklyMailer}
+                    />
+                  </div>
+
+                  {getWeeklyMailerFilteredPatients().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAllWeeklyMailer}
+                      disabled={sendingWeeklyMailer}
+                      className="flex items-center gap-2 text-xs text-brand-royal-blue hover:underline"
+                      title="Select/deselect all filtered patients"
+                    >
+                      {weeklyMailerSelectedUserIds.length ===
+                        getWeeklyMailerFilteredPatients().length &&
+                      getWeeklyMailerFilteredPatients().length > 0 ? (
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {weeklyMailerSelectedUserIds.length > 0
+                          ? `Selected (${weeklyMailerSelectedUserIds.length})`
+                          : "Select all"}
+                      </span>
+                    </button>
+                  )}
+
+                  {weeklyMailerSelectedUserIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setWeeklyMailerSelectedUserIds([])}
+                      disabled={sendingWeeklyMailer}
+                      className="flex items-center gap-2 text-xs text-brand-gray hover:underline"
+                      title="Clear selection"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Clear
+                    </button>
+                  )}
+
+                  <div className="flex-1" />
+
+                  <button
+                    type="button"
+                    onClick={handleSendWeeklyMailer}
+                    disabled={
+                      sendingWeeklyMailer ||
+                      weeklyMailerSelectedUserIds.length === 0
+                    }
+                    className="px-3 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue rounded-lg hover:bg-brand-royal-blue/20 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sendingWeeklyMailer ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
+                    Send ({weeklyMailerSelectedUserIds.length})
+                  </button>
+                </div>
+
+                {weeklyMailerPipeline.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-[rgba(208,196,226,0.35)] bg-slate-50/80 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-brand-gray uppercase">
+                        Sending pipeline
+                      </p>
+                      <p className="text-xs text-brand-gray">
+                        {weeklyMailerPipeline.filter(
+                          (e) => e.status === "sent",
+                        ).length} sent •{" "}
+                        {weeklyMailerPipeline.filter(
+                          (e) => e.status === "skipped",
+                        ).length} skipped •{" "}
+                        {weeklyMailerPipeline.filter(
+                          (e) => e.status === "error",
+                        ).length} errors
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {weeklyMailerPipeline.map((entry) => {
+                        const isSending = entry.status === "sending";
+                        const isSent = entry.status === "sent";
+                        const isSkipped = entry.status === "skipped";
+                        const isError = entry.status === "error";
+                        const pillClass = isSent
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : isSkipped
+                            ? "bg-amber-50 text-amber-800 border-amber-200"
+                            : isError
+                              ? "bg-rose-50 text-rose-800 border-rose-200"
+                              : isSending
+                                ? "bg-blue-50 text-blue-800 border-blue-200"
+                                : "bg-slate-50 text-slate-700 border-slate-200";
+
+                        return (
+                          <div
+                            key={entry.userId}
+                            className="flex items-start justify-between gap-3 rounded-lg border border-[rgba(208,196,226,0.35)] bg-white p-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-[#2F3C96] truncate">
+                                {entry.idx + 1}. {entry.name}
+                              </p>
+                              {entry.email && (
+                                <p className="text-[11px] text-brand-gray truncate">
+                                  {entry.email}
+                                </p>
+                              )}
+                              {!!entry.message && (
+                                <p className="text-[11px] text-brand-gray mt-1">
+                                  {entry.message}
+                                </p>
+                              )}
+                            </div>
+                            <div
+                              className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}
+                            >
+                              {isSending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : isSent ? (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              ) : isSkipped ? (
+                                <XCircle className="w-3.5 h-3.5" />
+                              ) : isError ? (
+                                <XCircle className="w-3.5 h-3.5" />
+                              ) : (
+                                <Mail className="w-3.5 h-3.5" />
+                              )}
+                              <span className="capitalize">
+                                {entry.status}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {loadingPatients ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                  </div>
+                ) : getWeeklyMailerFilteredPatients().length === 0 ? (
+                  <div className="text-center py-12">
+                    <UserCircle className="w-16 h-16 text-brand-gray-300 mx-auto mb-4" />
+                    <p className="text-brand-gray font-medium">
+                      No matching patients found
+                    </p>
+                    {weeklyMailerSearchQuery.trim() && (
+                      <p className="text-sm text-brand-gray/70 mt-1">
+                        Try a different search (name, email, or condition).
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {getWeeklyMailerFilteredPatients().map((p) => (
+                      <div
+                        key={p.userId}
+                        className="bg-slate-50/80 rounded-lg p-3 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all flex items-start justify-between gap-4"
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              !sendingWeeklyMailer &&
+                              toggleWeeklyMailerUser(p.userId)
+                            }
+                            className="shrink-0 text-brand-royal-blue hover:opacity-80 mt-0.5"
+                            title="Toggle selection"
+                          >
+                            {weeklyMailerSelectedUserIds.includes(p.userId) ? (
+                              <CheckSquare className="w-4 h-4" />
+                            ) : (
+                              <Square className="w-4 h-4" />
+                            )}
+                          </button>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[#2F3C96] truncate">
+                              {p.name || "Patient"}
+                            </p>
+                            {p.email && (
+                              <p className="text-xs text-brand-gray truncate">
+                                {p.email}
+                              </p>
+                            )}
+                            {Array.isArray(p.conditions) &&
+                              p.conditions.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200">
+                                    {p.conditions[0]}
+                                  </span>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {activeSection === "onboarding-cleanup" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">

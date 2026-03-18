@@ -14,6 +14,9 @@ export default function EmailPreferences() {
   const navigate = useNavigate();
   const token = query.get("token") || "";
   const type = query.get("type") || "";
+  const action = query.get("action") || "";
+  const endpointType =
+    type === "profile-reminder" ? "profile-reminders" : "weekly-mailer";
 
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -23,7 +26,8 @@ export default function EmailPreferences() {
 
   useEffect(() => {
     async function load() {
-      if (!token || type !== "profile-reminder") {
+      const allowedTypes = ["profile-reminder", "weekly-mailer"];
+      if (!token || !allowedTypes.includes(type)) {
         setError("This email preferences link is invalid or incomplete.");
         setLoading(false);
         return;
@@ -31,26 +35,48 @@ export default function EmailPreferences() {
 
       try {
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+        // One-click unsubscribe: the email link opens this page and auto-submits.
+        if (action === "unsubscribe") {
+          setSaving(true);
+          const unsubRes = await fetch(
+            `${base}/api/email-preferences/${endpointType}/unsubscribe`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token }),
+            },
+          );
+          const unsubData = await unsubRes.json();
+          if (!unsubRes.ok) {
+            throw new Error(unsubData.error || "Failed to update preferences.");
+          }
+          setOptedOut(true);
+          setEmail(unsubData.email || "");
+          setError("");
+          return;
+        }
+
         const res = await fetch(
-          `${base}/api/email-preferences/profile-reminders?token=${encodeURIComponent(
+          `${base}/api/email-preferences/${endpointType}?token=${encodeURIComponent(
             token,
           )}`,
         );
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Invalid or expired link.");
-        }
+        if (!res.ok) throw new Error(data.error || "Invalid or expired link.");
+
         setEmail(data.email || "");
-        setOptedOut(!!data.profileReminderOptOut);
+        setOptedOut(!!data.profileReminderOptOut || !!data.weeklyMailerOptOut);
       } catch (err) {
         console.error("Email preferences load error:", err);
         setError(err.message || "Invalid or expired link.");
       } finally {
         setLoading(false);
+        setSaving(false);
       }
     }
     load();
-  }, [token, type]);
+  }, [token, type, action]);
 
   async function handleUnsubscribe() {
     if (!token) return;
@@ -59,7 +85,7 @@ export default function EmailPreferences() {
     try {
       const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const res = await fetch(
-        `${base}/api/email-preferences/profile-reminders/unsubscribe`,
+        `${base}/api/email-preferences/${endpointType}/unsubscribe`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -129,7 +155,9 @@ export default function EmailPreferences() {
                 </span>
               </p>
               <p className="mt-1">
-                These settings only apply to profile completion reminder emails.
+                {type === "weekly-mailer"
+                  ? "These settings only apply to Collabiora weekly digest emails."
+                  : "These settings only apply to profile completion reminder emails."}
               </p>
             </div>
 
@@ -149,7 +177,7 @@ export default function EmailPreferences() {
                 <div className="mt-3">
                   {optedOut ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700 border border-emerald-100">
-                      You&apos;re currently unsubscribed from these reminders.
+                      You&apos;re currently unsubscribed.
                     </span>
                   ) : (
                     <Button
@@ -160,7 +188,9 @@ export default function EmailPreferences() {
                       {saving && (
                         <Loader2 className="w-3 h-3 animate-spin mr-1" />
                       )}
-                      Stop sending these reminders
+                      {type === "weekly-mailer"
+                        ? "Unsubscribe from weekly digest"
+                        : "Stop sending these reminders"}
                     </Button>
                   )}
                 </div>
