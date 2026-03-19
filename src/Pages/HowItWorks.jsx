@@ -4,7 +4,7 @@ import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Footer from "../components/Footer";
 
 const DEMO_VIDEO_URL =
-  "https://res.cloudinary.com/dtgmjvfms/video/upload/v1773933937/collabiora-demo_Oo8ls0s0";
+  "https://res.cloudinary.com/dtgmjvfms/video/upload/v1773933937/collabiora-demo_Oo8ls0s0_kqkxvz.mp4";
 
 export default function HowItWorks() {
   const [isMobile, setIsMobile] = useState(false);
