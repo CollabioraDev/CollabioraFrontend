@@ -39,6 +39,57 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CHAT_SESSIONS = 5;
 const MAX_MESSAGES_PER_SESSION = 80;
 
+// ── Remote caching (for better UX when switching pages) ──────────────────
+// Chat history can be expensive to fetch; we cache for a short window so
+// navigation back to `/yori` feels instant and doesn't spam the API.
+const REMOTE_SESSIONS_CACHE_PREFIX = "collabiora_yori_remote_sessions_cache_v1";
+const REMOTE_SESSION_CACHE_PREFIX = "collabiora_yori_remote_session_cache_v1";
+const REMOTE_CONDITIONS_CACHE_PREFIX =
+  "collabiora_yori_remote_conditions_cache_v1";
+const REMOTE_SUGGESTIONS_CACHE_PREFIX =
+  "collabiora_yori_remote_suggestions_cache_v1";
+
+const REMOTE_SESSIONS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const REMOTE_SESSION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const REMOTE_CONDITIONS_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const REMOTE_SUGGESTIONS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function safeJsonParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function readCachedJson(key, ttlMs) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = safeJsonParse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (typeof parsed.updatedAt !== "number") return null;
+    if (Date.now() - parsed.updatedAt > ttlMs) return null;
+    return parsed.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedJson(key, data) {
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        updatedAt: Date.now(),
+        data,
+      }),
+    );
+  } catch {
+    // ignore cache failures (storage quota/private mode/etc.)
+  }
+}
+
 const createChatId = () => {
   if (
     typeof crypto !== "undefined" &&
@@ -1703,6 +1754,21 @@ export default function YoriAI() {
       setIsHydratingChats(true);
 
       try {
+        if (userId) {
+          const sessionsCacheKey = `${REMOTE_SESSIONS_CACHE_PREFIX}:${userId}`;
+          const cached = readCachedJson(
+            sessionsCacheKey,
+            REMOTE_SESSIONS_CACHE_TTL_MS,
+          );
+          if (Array.isArray(cached) && cached.length > 0) {
+            const nextSessions = cached.map(normalizeSession);
+            if (cancelled) return;
+            setChatSessions(nextSessions);
+            setActiveChatId(nextSessions[0]?.id || null);
+            return; // Skip the network fetch
+          }
+        }
+
         const response = await fetchWithAuthRetry(
           `${apiBase}/api/chatbot/sessions`,
         );
@@ -1738,6 +1804,11 @@ export default function YoriAI() {
         }
 
         if (cancelled) return;
+
+        if (userId) {
+          const sessionsCacheKey = `${REMOTE_SESSIONS_CACHE_PREFIX}:${userId}`;
+          writeCachedJson(sessionsCacheKey, nextSessions);
+        }
 
         setChatSessions(nextSessions);
         setActiveChatId(nextSessions[0]?.id || null);
@@ -1777,25 +1848,63 @@ export default function YoriAI() {
         let condition = user?.medicalInterests?.[0] || null;
         if (userId) {
           try {
-            const profileRes = await fetch(`${apiBase}/api/profile/${userId}`);
-            const profileData = await profileRes.json();
-            const profile = profileData?.profile;
-            if (profile?.patient?.conditions?.length > 0) {
-              conditions.push(...profile.patient.conditions.slice(0, 3));
+            const conditionsCacheKey = `${REMOTE_CONDITIONS_CACHE_PREFIX}:${userId}:${userRole}`;
+            const cachedConditions = readCachedJson(
+              conditionsCacheKey,
+              REMOTE_CONDITIONS_CACHE_TTL_MS,
+            );
+
+            if (Array.isArray(cachedConditions) && cachedConditions.length > 0) {
+              conditions.push(...cachedConditions.slice(0, 3));
               if (!condition) condition = conditions[0];
-            } else if (profile?.researcher) {
-              const specs = profile.researcher.specialties || [];
-              const ints = profile.researcher.interests || [];
-              conditions.push(...[...specs, ...ints].slice(0, 3));
-              if (!condition) condition = conditions[0];
+            } else {
+              const profileRes = await fetch(`${apiBase}/api/profile/${userId}`);
+              const profileData = await profileRes.json();
+              const profile = profileData?.profile;
+              if (profile?.patient?.conditions?.length > 0) {
+                conditions.push(...profile.patient.conditions.slice(0, 3));
+                if (!condition) condition = conditions[0];
+              } else if (profile?.researcher) {
+                const specs = profile.researcher.specialties || [];
+                const ints = profile.researcher.interests || [];
+                conditions.push(...[...specs, ...ints].slice(0, 3));
+                if (!condition) condition = conditions[0];
+              }
+
+              if (conditions.length > 0) {
+                writeCachedJson(conditionsCacheKey, conditions);
+              }
             }
           } catch {
             /* ignore */
           }
         }
         setUserConditions(conditions);
+
         const params = new URLSearchParams({ role: userRole });
         if (condition) params.set("condition", condition);
+
+        if (userId) {
+          const suggestionsCacheKey = `${REMOTE_SUGGESTIONS_CACHE_PREFIX}:${userId}:${userRole}:${condition || "none"}`;
+          const cachedSuggestions = readCachedJson(
+            suggestionsCacheKey,
+            REMOTE_SUGGESTIONS_CACHE_TTL_MS,
+          );
+          if (Array.isArray(cachedSuggestions)) {
+            setSuggestions(cachedSuggestions);
+            return;
+          }
+
+          const res = await fetch(`${apiBase}/api/chatbot/suggestions?${params}`);
+          const data = await res.json();
+          const next = data?.suggestions || [];
+          setSuggestions(next);
+          if (Array.isArray(next) && next.length > 0) {
+            writeCachedJson(suggestionsCacheKey, next);
+          }
+          return;
+        }
+
         const res = await fetch(`${apiBase}/api/chatbot/suggestions?${params}`);
         const data = await res.json();
         setSuggestions(data.suggestions || []);
@@ -1914,6 +2023,20 @@ export default function YoriAI() {
 
     const loadSession = async () => {
       try {
+        if (userId) {
+          const sessionCacheKey = `${REMOTE_SESSION_CACHE_PREFIX}:${userId}:${activeChatId}`;
+          const cachedSession = readCachedJson(
+            sessionCacheKey,
+            REMOTE_SESSION_CACHE_TTL_MS,
+          );
+          if (cachedSession && typeof cachedSession === "object") {
+            if (!cancelled) {
+              mergeRemoteSession(cachedSession);
+            }
+            return; // Skip network fetch
+          }
+        }
+
         const response = await fetchWithAuthRetry(
           `${apiBase}/api/chatbot/sessions/${activeChatId}`,
         );
@@ -1927,6 +2050,10 @@ export default function YoriAI() {
         }
         if (!cancelled) {
           mergeRemoteSession(data.session);
+          if (userId && data?.session) {
+            const sessionCacheKey = `${REMOTE_SESSION_CACHE_PREFIX}:${userId}:${activeChatId}`;
+            writeCachedJson(sessionCacheKey, data.session);
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -2494,6 +2621,9 @@ export default function YoriAI() {
         .yori-main-enter {
           animation: yori-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
         }
+        .yori-message-enter {
+          animation: yori-rise 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
         @media (max-width: 767px) {
           .yori-sidebar-enter { animation: none; opacity: 1; }
         }
@@ -2593,15 +2723,8 @@ export default function YoriAI() {
         {/* Main chat area */}
         <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
           {/* Header - aligned with global layout */}
-          <div className="flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#2F3C96]">
-                <img
-                  src="/yori-face.png"
-                  alt="Yori"
-                  className="h-6 w-6 object-contain"
-                />
-              </div>
+          <div className="relative flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
+            <div className="relative flex items-center gap-3 min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-[#2F3C96] min-w-0">
                 {activeChat?.title || "New chat"}
               </p>
@@ -2702,19 +2825,23 @@ export default function YoriAI() {
                           </p>
                         </div>
                       </div>
-                    ) : isLoading &&
-                      index === messages.length - 1 &&
-                      !message.content &&
-                      !message.searchResults &&
-                      !message.trialDetails &&
-                      !message.publicationDetails &&
-                      !message.communityResults ? null : (
-                      <div className="flex gap-3">
-                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F3C96]">
+                    ) : (
+                      <div className="flex items-start gap-0 yori-message-enter">
+                        <div className="relative z-10 mt-2 -mr-2  flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center">
                           <img
-                            src="/yori-face.png"
-                            alt=""
-                            className="h-6 w-6 object-contain"
+                            src={
+                              isLoading &&
+                              index === messages.length - 1 &&
+                              !message.content &&
+                              !message.searchResults &&
+                              !message.trialDetails &&
+                              !message.publicationDetails &&
+                              !message.communityResults
+                                ? "/yori-thinking.png"
+                                : "/Yorisidepeak.png"
+                            }
+                            alt="Yori"
+                            className="h-full w-full object-contain"
                           />
                         </div>
                         <div className="min-w-0 flex-1 space-y-3">
@@ -2731,6 +2858,29 @@ export default function YoriAI() {
                                     {message.content}
                                   </ReactMarkdown>
                                 </div>
+                              </div>
+                            )}
+
+                          {!message.content &&
+                            !message.searchResults &&
+                            !message.trialDetails &&
+                            !message.publicationDetails &&
+                            !message.communityResults &&
+                            isLoading &&
+                            index === messages.length - 1 && (
+                              <div className="ml-2 sm:ml-3 inline-flex items-center gap-1.5 rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-2.5 sm:px-4">
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
+                                  style={{ animationDelay: "0ms" }}
+                                />
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
+                                  style={{ animationDelay: "150ms" }}
+                                />
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
+                                  style={{ animationDelay: "300ms" }}
+                                />
                               </div>
                             )}
 
@@ -2830,32 +2980,6 @@ export default function YoriAI() {
                     )}
                   </React.Fragment>
                 ))}
-
-                {isLoading && (
-                  <div className="flex gap-3 py-2">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#2F3C96]">
-                      <img
-                        src="/yori-face.png"
-                        alt=""
-                        className="h-6 w-6 object-contain"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="h-1.5 w-1.5 rounded-full bg-[#2F3C96]/60 animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                    </div>
-                  </div>
-                )}
 
                 <div ref={messagesEndRef} />
               </div>

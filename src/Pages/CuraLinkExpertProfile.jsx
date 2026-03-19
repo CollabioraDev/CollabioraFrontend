@@ -1825,7 +1825,7 @@ export default function CollabioraExpertProfile() {
                         className="flex-1 px-4 py-2 bg-gradient-to-r from-[#2F3C96] to-[#253075] text-white rounded-lg text-xs font-semibold hover:from-[#253075] hover:to-[#1C2454] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        Understand this paper
+                        Simplify
                       </button>
                       {(pub.link || pub.doi || pub.pmid) && (
                         <a

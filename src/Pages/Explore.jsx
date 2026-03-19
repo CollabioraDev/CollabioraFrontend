@@ -18,6 +18,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
+import Footer from "../components/Footer";
 import apiFetch from "../utils/api.js";
 import {
   getLocalRemainingSearches,
@@ -205,12 +206,12 @@ export default function Explore() {
   ];
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen flex flex-col">
       {/* Animated Background */}
       <AnimatedBackground isMobile={isMobile} />
 
       {/* Main Content */}
-      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-hidden">
+      <section className="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-hidden">
         <div className="max-w-4xl relative z-10 w-full">
           {/* Header */}
           <motion.div
@@ -505,6 +506,7 @@ export default function Explore() {
           )}
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

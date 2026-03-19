@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   Newspaper,
   ExternalLink,
@@ -179,7 +180,7 @@ function NewsCard({
               ) : (
                 <ListOrdered className="w-3 h-3" />
               )}
-              Understand
+              Simplify
             </button>
             <a
               href={article.url}
@@ -212,7 +213,7 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
       >
         <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0">
           <h3 className="text-lg font-bold text-[#2F3C96] pr-8 line-clamp-2">
-            {article?.title || "Understand this article"}
+            {article?.title || "Simplify"}
           </h3>
           <button
             type="button"
@@ -504,6 +505,14 @@ export default function HealthNewsSection({ user }) {
   const displayedArticles = searchQuery ? searchResults || [] : articles;
   const isSearchMode = !!searchQuery;
 
+  // Small CTA banner using the latest press release PDF from `frontend/public`.
+  // Kept compact so it doesn't take much vertical space in the News section.
+  const pressReleaseHref = "/press-releases/yori";
+  const pressReleaseTitle = "Collabiora Files Provisional Patent for Yori";
+  const pressReleaseBlurb =
+    "An AI-powered health information retrieval agent connecting patients, clinical researchers, and medical institutions through evidence-based synthesis.";
+  const pressReleaseDate = "March 17, 2026";
+
   // ── Handle condition pill click ───────────────────────────────────────
   function handleConditionClick(cond) {
     if (activeCondition === cond) {
@@ -516,11 +525,34 @@ export default function HealthNewsSection({ user }) {
 
   return (
     <div className="mb-8">
-      {/* ── Section Header ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-900 leading-tight">
-          Health News &amp; Articles
-        </h2>
+      {/* ── Latest Press Release (compact) ─────────────────────────────── */}
+      <div className="mb-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-lg bg-[#2F3C96]/10 flex items-center justify-center shrink-0">
+              <Newspaper className="w-4 h-4 text-[#2F3C96]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                Latest Press Release
+              </p>
+              <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                {pressReleaseTitle}
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                {pressReleaseDate} · {pressReleaseBlurb}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to={pressReleaseHref}
+            className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#2F3C96] text-white text-[11px] font-semibold hover:bg-brand-blue-600 transition-colors"
+          >
+            Check our latest press release
+            <BookOpen className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </div>
 
       {/* ── Persistent Search Bar ──────────────────────────────────────── */}

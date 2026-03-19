@@ -1320,7 +1320,7 @@ export default function Trials() {
   }, []);
 
   async function generateSummary(item) {
-    // For "Understand this trial": simplified for patients, technical for researchers (same first-level key insights style as Publications for patients)
+    // For "Simplify": simplified for patients, technical for researchers (same first-level key insights style as Publications for patients)
     const isResearcher = userProfile?.researcher !== undefined;
     const shouldSimplify = !isResearcher;
 
@@ -2306,7 +2306,7 @@ export default function Trials() {
       },
       {
         target: "[data-tour='trials-understand-btn']",
-        title: "Understand this trial",
+        title: "Simplify",
         content:
           "Get a plain-language summary of the trial—great for understanding what it's about and who it's for.",
         placement: "top",
@@ -3204,7 +3204,7 @@ export default function Trials() {
                                   }
                                 }}
                               >
-                                Understand this trial
+                                Simplify
                               </button>
                               <button
                                 onClick={() => favorite(trial)}

@@ -460,7 +460,7 @@ export default function DashboardPatient() {
         target: "[data-tour='dashboard-publication-view-details']",
         title: "View details for a card",
         content:
-          "In the publications section, use 'View full details' or 'Understand this Paper' on any card to read more. This opens the full abstract and key takeaways.",
+          "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
         placement: "top",
       },
       {
@@ -915,22 +915,12 @@ export default function DashboardPatient() {
         let isCacheHit = false;
 
         try {
-          // Use same trials pipeline as Trials.jsx: fetch trials via /api/search/trials (userId + profile-derived q/location)
-          const trialsParams = new URLSearchParams();
-          trialsParams.set("userId", userId);
-          trialsParams.set("status", "RECRUITING");
-          trialsParams.set("recentMonths", "3");
-          trialsParams.set("page", "1");
-          trialsParams.set("pageSize", "9");
-
           // Only wait for the recommendation payload needed to paint the page.
           // Secondary data loads in the background so first render is not blocked.
-          const [recsResponse, trialsResponse] = await Promise.all([
-            fetch(`${base}/api/recommendations/${userId}`, { signal }),
-            fetch(`${base}/api/search/trials?${trialsParams.toString()}`, {
-              signal,
-            }),
-          ]);
+          const recsResponse = await fetch(
+            `${base}/api/recommendations/${userId}`,
+            { signal },
+          );
 
           if (signal.aborted) return;
 
@@ -960,21 +950,9 @@ export default function DashboardPatient() {
             setGlobalExperts([]);
           } else {
             const fetchedData = await recsResponse.json();
-            // Prefer trials from same pipeline as Trials.jsx (/api/search/trials); fallback to recommendations trials
-            let trialsList = fetchedData.trials || [];
-            if (trialsResponse?.ok) {
-              try {
-                const trialsData = await trialsResponse.json();
-                if (trialsData.results && Array.isArray(trialsData.results)) {
-                  trialsList = trialsData.results;
-                }
-              } catch (e) {
-                console.warn(
-                  "Dashboard: could not use search/trials response, using recommendations trials",
-                  e,
-                );
-              }
-            }
+            // Use trials from recommendations payload to avoid duplicate external
+            // trial pipeline work during initial dashboard load.
+            const trialsList = fetchedData.trials || [];
             const sortedData = {
               trials: (trialsList || []).sort((a, b) => {
                 const matchA = a.matchPercentage ?? 0;
@@ -3342,9 +3320,8 @@ export default function DashboardPatient() {
               <button
                 type="button"
                 onClick={openEditConditionsModal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white border transition-colors hover:opacity-90"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border text-[#2F3C96] bg-white/90 transition-all duration-200 select-none cursor-pointer hover:bg-indigo-50/80 hover:shadow-sm active:scale-[0.98]"
                 style={{
-                  backgroundColor: "#2F3C96",
                   borderColor: "#2F3C96",
                 }}
               >
@@ -3390,11 +3367,10 @@ export default function DashboardPatient() {
                   }
                   generateFavoritesSummaryReport();
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white border transition-colors hover:opacity-90"
                 style={{
-                  backgroundColor: "#D0C4E2",
-                  color: "#2F3C96",
-                  borderColor: "rgba(47, 60, 150, 0.4)",
+                  backgroundColor: "#2F3C96",
+                  borderColor: "#2F3C96",
                 }}
                 title="Generate a PDF summary of your saved items to share with your doctor"
               >
@@ -3654,9 +3630,8 @@ export default function DashboardPatient() {
                     <button
                       type="button"
                       onClick={openEditConditionsModal}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-white border transition-colors hover:opacity-90"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium border text-[#2F3C96] bg-white/90 transition-all duration-200 select-none cursor-pointer hover:bg-indigo-50/80 active:scale-[0.99]"
                       style={{
-                        backgroundColor: "#2F3C96",
                         borderColor: "#2F3C96",
                       }}
                     >
@@ -3702,11 +3677,10 @@ export default function DashboardPatient() {
                         }
                         generateFavoritesSummaryReport();
                       }}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium border-2 transition-all hover:opacity-90 active:scale-[0.99]"
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium text-white border transition-colors hover:opacity-90"
                       style={{
-                        backgroundColor: "#D0C4E2",
-                        color: "#2F3C96",
-                        borderColor: "rgba(47, 60, 150, 0.4)",
+                        backgroundColor: "#2F3C96",
+                        borderColor: "#2F3C96",
                       }}
                       title="Generate a PDF summary to share with your doctor"
                     >
@@ -3883,7 +3857,7 @@ export default function DashboardPatient() {
                               }
                             }}
                           >
-                            Understand this trial
+                            Simplify
                           </button>
                           <button
                             onClick={() =>
@@ -4205,7 +4179,7 @@ export default function DashboardPatient() {
                                   "linear-gradient(135deg, #2F3C96, #253075)";
                               }}
                             >
-                              Understand this Paper
+                              Simplify
                             </button>
 
                             <button
@@ -6803,7 +6777,7 @@ export default function DashboardPatient() {
                                               "linear-gradient(135deg, #2F3C96, #253075)";
                                           }}
                                         >
-                                          Understand this paper
+                                          Simplify
                                         </button>
                                         {(p.pmid || p.id) && (
                                           <Link
@@ -7002,7 +6976,7 @@ export default function DashboardPatient() {
                                         !t.conditionDescription && (
                                           <div className="flex-grow" />
                                         )}
-                                      {/* Action: only Understand this trial (no View Trial Details, no sparkles) */}
+                                      {/* Action: only Simplify (no View Trial Details, no sparkles) */}
                                       <div className="mt-auto">
                                         <button
                                           onClick={() =>
@@ -7022,7 +6996,7 @@ export default function DashboardPatient() {
                                               "linear-gradient(135deg, #2F3C96, #253075)";
                                           }}
                                         >
-                                          Understand this trial
+                                          Simplify
                                         </button>
                                       </div>
                                       <button

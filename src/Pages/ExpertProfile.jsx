@@ -471,7 +471,7 @@ export default function ExpertProfile() {
   }
 
   async function generateSummary(item, type) {
-    // For "Understand this Paper": always use simplified summary (readable for all), not overly technical
+    // For "Simplify": always use simplified summary (readable for all), not overly technical
     const shouldSimplify = true;
 
     let text = "";
@@ -1031,7 +1031,7 @@ export default function ExpertProfile() {
                           onClick={() => generateSummary(pub, "publication")}
                           className="flex-1 px-4 py-2 bg-gradient-to-r from-[#2F3C96] to-[#253075] text-white rounded-lg text-xs font-semibold hover:from-[#253075] hover:to-[#1C2454] transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                         >
-                          Understand this Paper
+                          Simplify
                         </button>
                         {pub.link && (
                           <a

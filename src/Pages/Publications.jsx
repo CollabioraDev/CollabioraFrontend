@@ -475,7 +475,7 @@ export default function Publications() {
       },
       {
         target: "[data-tour='publications-understand-btn']",
-        title: "Understand this Paper",
+        title: "Simplify",
         content:
           "This button gets a plain-language summary of the study—great for understanding complex research at a glance.",
         placement: "top",
@@ -1700,7 +1700,7 @@ export default function Publications() {
   }
 
   async function generateSummary(item) {
-    // For "Understand this Paper": simplified for patients, technical for researchers
+    // For "Simplify": simplified for patients, technical for researchers
     const isResearcher = userProfile?.researcher !== undefined;
     const shouldSimplify = !isResearcher;
 
@@ -2948,22 +2948,6 @@ export default function Publications() {
             {!loading &&
               (results.length > 0 || tutorialSampleResults.length > 0) && (
                 <>
-                  {/* Extracted search terms (2–3 keywords from user query) */}
-                  {extractedSearchTerms.length > 0 && (
-                    <div className="mb-3 flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-slate-600 font-medium">
-                        Searching for:
-                      </span>
-                      {extractedSearchTerms.map((term, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-200"
-                        >
-                          {term}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                   {/* Source summary: PubMed + OpenAlex when combined search was used */}
                   {publicationSources?.sourcesUsed?.length > 0 &&
                     publicationSources?.sourceCounts && (
@@ -3265,7 +3249,7 @@ export default function Publications() {
                                       "linear-gradient(135deg, #2F3C96, #253075)";
                                   }}
                                 >
-                                  Understand this Paper
+                                  Simplify
                                 </button>
 
                                 <button

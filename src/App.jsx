@@ -83,6 +83,12 @@ const VerifyEmail = React.lazy(() => import("./Pages/VerifyEmail.jsx"));
 const ForgotPassword = React.lazy(() => import("./Pages/ForgotPassword.jsx"));
 const ResetPassword = React.lazy(() => import("./Pages/ResetPassword.jsx"));
 const Discovery = React.lazy(() => import("./Pages/Discovery.jsx"));
+const DiscoveryBlogDetails = React.lazy(
+  () => import("./Pages/DiscoveryBlogDetails.jsx"),
+);
+const PressReleaseYoriDetails = React.lazy(
+  () => import("./Pages/PressReleaseYoriDetails.jsx"),
+);
 const Notifications = React.lazy(() => import("./Pages/Notifications.jsx"));
 const Trending = React.lazy(() => import("./Pages/Trending.jsx"));
 const ErrorPage = React.lazy(() => import("./Pages/ErrorPage.jsx"));
@@ -481,6 +487,11 @@ const AppContent = () => {
           />
           <Route path="/trending" element={<Trending />} />
           <Route path="/discovery" element={<Discovery />} />
+          <Route path="/discovery/blogs/:slug" element={<DiscoveryBlogDetails />} />
+          <Route
+            path="/press-releases/yori"
+            element={<PressReleaseYoriDetails />}
+          />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/manage-trials" element={<ManageTrials />} />
           <Route path="/notifications" element={<Notifications />} />

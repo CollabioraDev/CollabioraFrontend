@@ -223,30 +223,6 @@ export default function Footer() {
               <span>. All rights reserved.</span>
             </div>
 
-            {/* Legal Links */}
-            <div className="flex items-center gap-4">
-              {["Privacy", "Terms", "Cookies"].map((link) => {
-                const routeMap = {
-                  Privacy: "/privacy",
-                  Terms: "/terms",
-                  Cookies: "/cookies",
-                };
-                const route = routeMap[link] || `/${link.toLowerCase()}`;
-                
-                return (
-                  <PrefetchLink
-                    key={link}
-                    to={route}
-                    className="text-xs transition-colors duration-200"
-                    style={{ color: "#787878" }}
-                    onMouseEnter={(e) => (e.target.style.color = "#2F3C96")}
-                    onMouseLeave={(e) => (e.target.style.color = "#787878")}
-                  >
-                    {link}
-                  </PrefetchLink>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>

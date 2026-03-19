@@ -99,6 +99,49 @@ const ASK_ABOUT_OPTIONS = {
   ],
 };
 
+// ── Lightweight local cache to avoid refetching suggestions on navigation ──
+const YORI_SUGGESTIONS_CACHE_PREFIX = "collabiora_yori_suggestions_cache_v1";
+const YORI_CONDITION_CACHE_PREFIX = "collabiora_yori_condition_cache_v1";
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const SUGGESTIONS_CACHE_TTL_MS = ONE_DAY_MS; // keep fresh-ish but avoid repeated API hits
+const CONDITION_CACHE_TTL_MS = 7 * ONE_DAY_MS;
+
+function safeJsonParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function readCachedJson(key, ttlMs) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = safeJsonParse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (typeof parsed.updatedAt !== "number") return null;
+    if (Date.now() - parsed.updatedAt > ttlMs) return null;
+    return parsed.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedJson(key, data) {
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        updatedAt: Date.now(),
+        data,
+      }),
+    );
+  } catch {
+    // ignore cache write failures
+  }
+}
+
 const getPublicationRoute = (publication) => {
   const publicationId = publication?.pmid || publication?.id;
   return publicationId
@@ -152,39 +195,75 @@ const PublicationCard = React.memo(
         )}
         <div className="p-4">
           <div className="flex items-start gap-2.5 mb-2">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(208, 196, 226, 0.35)" }}>
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "rgba(208, 196, 226, 0.35)" }}
+            >
               <BookOpen className="w-4 h-4" style={{ color: "#2F3C96" }} />
             </div>
             <div className="flex-1 min-w-0 pr-8">
-              <h4 className="font-bold text-sm leading-snug line-clamp-2" style={{ color: "#2F3C96" }}>
+              <h4
+                className="font-bold text-sm leading-snug line-clamp-2"
+                style={{ color: "#2F3C96" }}
+              >
                 {displayTitle}
               </h4>
             </div>
           </div>
           <div className="text-xs text-slate-600 space-y-0.5 mb-2">
             <p className="line-clamp-1">{publication.authors}</p>
-            <p className="text-slate-500">{publication.journal} ({publication.year})</p>
+            <p className="text-slate-500">
+              {publication.journal} ({publication.year})
+            </p>
           </div>
           {summary && (
             <p
               className={`text-xs leading-relaxed text-slate-600 mb-3 ${useSimplified ? "line-clamp-2" : "line-clamp-3"}`}
-              style={{ WebkitLineClamp: useSimplified ? 2 : 3, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}
+              style={{
+                WebkitLineClamp: useSimplified ? 2 : 3,
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
             >
               {summary}
             </p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
             {publicationRoute ? (
-              <Link to={publicationRoute} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+              <Link
+                to={publicationRoute}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
                 View full Publication <ExternalLink className="w-3 h-3" />
               </Link>
             ) : publication.url ? (
-              <a href={publication.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+              <a
+                href={publication.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
                 View full Publication <ExternalLink className="w-3 h-3" />
               </a>
             ) : null}
             {onAskAbout && (
-              <button type="button" onClick={() => onAskAbout(publication, "publication")} className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: "#2F3C96" }}>
+              <button
+                type="button"
+                onClick={() => onAskAbout(publication, "publication")}
+                className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                style={{ color: "#2F3C96" }}
+              >
                 <MessageSquare className="w-3 h-3" /> Ask about this
               </button>
             )}
@@ -236,22 +315,42 @@ const TrialCard = React.memo(
         )}
         <div className="p-4">
           <div className="flex items-start gap-2.5 mb-2">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))" }}>
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))",
+              }}
+            >
               <Microscope className="w-4 h-4" style={{ color: "#2F3C96" }} />
             </div>
             <div className="flex-1 min-w-0 pr-8">
-              <h4 className="font-bold text-sm leading-snug line-clamp-2" style={{ color: "#2F3C96" }}>
+              <h4
+                className="font-bold text-sm leading-snug line-clamp-2"
+                style={{ color: "#2F3C96" }}
+              >
                 {displayTitle}
               </h4>
             </div>
           </div>
           {trial.conditions && trial.conditions !== "Not specified" && (
-            <p className="text-xs text-slate-600 line-clamp-1 mb-1"><span className="font-medium text-slate-700">Condition:</span> {trial.conditions}</p>
+            <p className="text-xs text-slate-600 line-clamp-1 mb-1">
+              <span className="font-medium text-slate-700">Condition:</span>{" "}
+              {trial.conditions}
+            </p>
           )}
-          {(trial.status || (trial.phase && trial.phase !== "Not specified")) && (
+          {(trial.status ||
+            (trial.phase && trial.phase !== "Not specified")) && (
             <div className="flex items-center gap-1.5 flex-wrap mb-2">
               {trial.status && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: "rgba(208, 196, 226, 0.35)", color: "#2F3C96", border: "1px solid rgba(47, 60, 150, 0.2)" }}>
+                <span
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                  style={{
+                    backgroundColor: "rgba(208, 196, 226, 0.35)",
+                    color: "#2F3C96",
+                    border: "1px solid rgba(47, 60, 150, 0.2)",
+                  }}
+                >
                   {trial.status}
                 </span>
               )}
@@ -264,26 +363,50 @@ const TrialCard = React.memo(
           )}
           {trial.locations && trial.locations !== "Not specified" && (
             <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
-              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "#2F3C96" }} />
-              <span><span className="font-medium text-slate-700">Location:</span> {trial.locations}</span>
+              <MapPin
+                className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                style={{ color: "#2F3C96" }}
+              />
+              <span>
+                <span className="font-medium text-slate-700">Location:</span>{" "}
+                {trial.locations}
+              </span>
             </p>
           )}
           {summary && summary !== "No summary available" && (
             <p
               className="text-xs leading-relaxed text-slate-600 mb-3 line-clamp-3"
-              style={{ WebkitLineClamp: 3, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}
+              style={{
+                WebkitLineClamp: 3,
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
             >
               {summary}
             </p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
             {trial.nctId && (
-              <Link to={`/trial/${encodeURIComponent(trial.nctId)}`} className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90" style={{ color: "#2F3C96", backgroundColor: "rgba(208, 196, 226, 0.25)", borderColor: "rgba(47, 60, 150, 0.25)" }}>
+              <Link
+                to={`/trial/${encodeURIComponent(trial.nctId)}`}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
                 View full Trial <ExternalLink className="w-3 h-3" />
               </Link>
             )}
             {onAskAbout && (
-              <button type="button" onClick={() => onAskAbout(trial, "trial")} className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline" style={{ color: "#2F3C96" }}>
+              <button
+                type="button"
+                onClick={() => onAskAbout(trial, "trial")}
+                className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                style={{ color: "#2F3C96" }}
+              >
                 <MessageSquare className="w-3 h-3" /> Ask about this
               </button>
             )}
@@ -1098,7 +1221,9 @@ const SearchResultsCards = ({
               <meta.Icon className="h-4 w-4 text-[#2F3C96]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#2F3C96]">{meta.title}</p>
+              <p className="text-sm font-semibold text-[#2F3C96]">
+                {meta.title}
+              </p>
               <p className="text-xs text-slate-500">{meta.subtitle}</p>
             </div>
           </div>
@@ -1117,8 +1242,8 @@ const SearchResultsCards = ({
                   onSaveToFavourites={onSaveToFavourites}
                   userId={userId}
                   useSimplified={useSimplified}
-                />
-              )
+                />,
+              ),
             )}
           {type === "trials" &&
             items.map((trial, idx) =>
@@ -1130,12 +1255,18 @@ const SearchResultsCards = ({
                   onSaveToFavourites={onSaveToFavourites}
                   userId={userId}
                   useSimplified={useSimplified}
-                />
-              )
+                />,
+              ),
             )}
           {type === "experts" &&
             items.map((expert, idx) =>
-              cardWrap(<ExpertCard key={idx} expert={expert} onAskAbout={onAskAbout} />)
+              cardWrap(
+                <ExpertCard
+                  key={idx}
+                  expert={expert}
+                  onAskAbout={onAskAbout}
+                />,
+              ),
             )}
         </div>
       </div>
@@ -1215,9 +1346,7 @@ const FloatingChatbot = () => {
   const [isClosedTeaserCollapsed, setIsClosedTeaserCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
-      return (
-        localStorage.getItem(YORI_MOBILE_TEASER_STORAGE_KEY) === "true"
-      );
+      return localStorage.getItem(YORI_MOBILE_TEASER_STORAGE_KEY) === "true";
     } catch (e) {
       console.warn("yori: could not load teaser state", e);
       return false;
@@ -1559,31 +1688,54 @@ const FloatingChatbot = () => {
       const role = userData?.role || "patient";
       let condition = userData?.medicalInterests?.[0] || null;
       if (!condition && userData?._id) {
-        try {
-          const res = await fetch(`${base}/api/profile/${userData._id}`);
-          const data = await res.json();
-          const profile = data?.profile;
-          if (profile?.patient?.conditions?.length > 0) {
-            condition = profile.patient.conditions[0];
-          } else if (
-            profile?.researcher &&
-            (profile.researcher.specialties?.length > 0 ||
-              profile.researcher.interests?.length > 0)
-          ) {
-            condition =
-              profile.researcher.specialties?.[0] ||
-              profile.researcher.interests?.[0];
+        const cacheKey = `${YORI_CONDITION_CACHE_PREFIX}:${userData._id}`;
+        const cachedCondition = readCachedJson(
+          cacheKey,
+          CONDITION_CACHE_TTL_MS,
+        );
+        if (cachedCondition) {
+          condition = cachedCondition;
+        } else {
+          try {
+            const res = await fetch(`${base}/api/profile/${userData._id}`);
+            const data = await res.json();
+            const profile = data?.profile;
+            if (profile?.patient?.conditions?.length > 0) {
+              condition = profile.patient.conditions[0];
+            } else if (
+              profile?.researcher &&
+              (profile.researcher.specialties?.length > 0 ||
+                profile.researcher.interests?.length > 0)
+            ) {
+              condition =
+                profile.researcher.specialties?.[0] ||
+                profile.researcher.interests?.[0];
+            }
+            if (condition) writeCachedJson(cacheKey, condition);
+          } catch (_) {
+            /* ignore */
           }
-        } catch (_) {
-          /* ignore */
         }
       }
+
+      const cacheKey = `${YORI_SUGGESTIONS_CACHE_PREFIX}:${role}:${condition || "none"}`;
+      const cachedSuggestions = readCachedJson(
+        cacheKey,
+        SUGGESTIONS_CACHE_TTL_MS,
+      );
+      if (cachedSuggestions && Array.isArray(cachedSuggestions)) {
+        setSuggestions(cachedSuggestions);
+        return;
+      }
+
       const params = new URLSearchParams({ role });
       if (condition) params.set("condition", condition);
       try {
         const res = await fetch(`${base}/api/chatbot/suggestions?${params}`);
         const data = await res.json();
-        if (Array.isArray(data.suggestions)) setSuggestions(data.suggestions);
+        const next = Array.isArray(data.suggestions) ? data.suggestions : [];
+        setSuggestions(next);
+        if (next.length > 0) writeCachedJson(cacheKey, next);
       } catch (_) {
         setSuggestions([]);
       }
@@ -1984,10 +2136,13 @@ const FloatingChatbot = () => {
     location.pathname === "/library" ||
     location.pathname === "/experts" ||
     location.pathname === "/trials";
-  const mobileBottomOffsetClass =
-    isLandingPage || (isGuest && isGuestBrowsePage) ? "bottom-4" : "bottom-24";
-  const closedBotPositionClass = `${mobileBottomOffsetClass} sm:bottom-10`;
-  const openChatPositionClass = `${mobileBottomOffsetClass} sm:bottom-10`;
+  const isLowerOnPublicPages = isLandingPage || (isGuest && isGuestBrowsePage);
+  const mobileBottomOffsetClass = isLowerOnPublicPages
+    ? "bottom-4"
+    : "bottom-24";
+  const desktopBottomOffsetClass = "sm:bottom-4";
+  const closedBotPositionClass = `${mobileBottomOffsetClass} ${desktopBottomOffsetClass}`;
+  const openChatPositionClass = `${mobileBottomOffsetClass} ${desktopBottomOffsetClass}`;
   const showMobileCollapsedDock = isOpen && isMobileView && isSideCollapsed;
   const showClosedMobileCollapsedDock =
     !isOpen && isMobileView && isClosedTeaserCollapsed;
@@ -2054,12 +2209,12 @@ const FloatingChatbot = () => {
           <button
             type="button"
             onClick={handleOpen}
-            className="flex items-center"
+            className="flex items-center translate-x-2"
             aria-label="Open Yori chat"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-l-full rounded-r-none border-2 border-r-0 border-[#2F3C96] bg-[#2F3C96] p-1 shadow-lg overflow-hidden">
+            <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
-                src="/Yori's Face Outline.png"
+                src="/Yorisidepeak.png"
                 alt="Yori"
                 className="h-full w-full object-contain"
               />
@@ -2075,12 +2230,12 @@ const FloatingChatbot = () => {
           <button
             type="button"
             onClick={() => setIsSideCollapsed(false)}
-            className="flex items-center"
+            className="flex items-center translate-x-2"
             aria-label="Expand Yori chat"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-l-full rounded-r-none border-2 border-r-0 border-[#2F3C96] bg-[#2F3C96] p-1 shadow-lg overflow-hidden">
+            <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
-                src="/Yori's Face Outline.png"
+                src="/Yorisidepeak.png"
                 alt="Yori"
                 className="h-full w-full object-contain"
               />
@@ -2092,7 +2247,7 @@ const FloatingChatbot = () => {
       {/* Chat Window - reduced on mobile so it clears the bottom navigation */}
       {isOpen && !showMobileCollapsedDock && (
         <div
-          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col overflow-hidden ${openChatPositionClass} ${
+          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col overflow-visible ${openChatPositionClass} ${
             isMinimized
               ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
               : "w-[calc(100vw-2rem)] sm:w-96 h-[min(460px,calc(100vh-8.5rem))] sm:h-[min(600px,calc(100vh-2rem))]"
@@ -2105,15 +2260,15 @@ const FloatingChatbot = () => {
         >
           {/* Header - site theme (royal blue) */}
           <div
-            className="text-white px-3 py-2.5 sm:px-4 sm:py-3 rounded-t-2xl flex items-center justify-between border-b border-white/20"
+            className="relative overflow-visible text-white px-3 py-2.5 sm:px-4 sm:py-3 rounded-t-2xl flex items-center justify-between border-b border-white/20"
             style={{ background: "linear-gradient(135deg, #2F3C96, #474F97)" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/30 overflow-hidden">
+            <div className="relative flex items-center gap-3 pl-14 sm:pl-16">
+              <div className="absolute -left-2 -top-0 w-14 h-14 sm:w-16 sm:h-16 pointer-events-none drop-shadow-[0_8px_14px_rgba(47,60,150,0.45)]">
                 <img
                   src="/Yori's Face Outline.png"
                   alt="Yori"
-                  className="w-5 h-5 sm:w-6 sm:h-6 object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
@@ -2208,13 +2363,7 @@ const FloatingChatbot = () => {
           {!isMinimized &&
             (isGuest ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80 rounded-b-2xl">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4 bg-white/80 border-2 border-[#D0C4E2] overflow-hidden">
-                  <img
-                    src="/Yori's Face Outline.png"
-                    alt="Yori"
-                    className="w-9 h-9 object-contain"
-                  />
-                </div>
+              
                 <p className="text-slate-800 font-semibold mb-1">
                   Sign in to use Yori at its fullest
                 </p>

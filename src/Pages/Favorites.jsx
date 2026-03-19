@@ -995,7 +995,7 @@ export default function Favorites() {
               }}
             >
               <Sparkles className="w-4 h-4" />
-              Understand this trial
+              Simplify
             </button>
             <button
               onClick={(e) => {
@@ -1287,7 +1287,7 @@ export default function Favorites() {
               }}
             >
               <Sparkles className="w-4 h-4" />
-              Understand this Paper
+              Simplify
             </button>
             <button
               onClick={(e) => {

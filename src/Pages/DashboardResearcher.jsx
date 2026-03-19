@@ -433,7 +433,7 @@ export default function DashboardResearcher() {
         target: "[data-tour='dashboard-researcher-publication-card']",
         title: "View details for a card",
         content:
-          "In the publications section, use 'View full details' or 'Understand this Paper' on any card to read more. This opens the full abstract and key takeaways.",
+          "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
         placement: "top",
       },
       {
@@ -4654,7 +4654,7 @@ export default function DashboardResearcher() {
                                   }
                                 }}
                               >
-                                Understand this trial
+                                Simplify
                               </button>
                               <button
                                 onClick={() =>
@@ -4981,7 +4981,7 @@ export default function DashboardResearcher() {
                                     "linear-gradient(135deg, #2F3C96, #253075)";
                                 }}
                               >
-                                Understand this Paper
+                                Simplify
                               </button>
 
                               <button
@@ -7617,7 +7617,7 @@ export default function DashboardResearcher() {
                                               "linear-gradient(135deg, #2F3C96, #253075)";
                                           }}
                                         >
-                                          Understand this paper
+                                          Simplify
                                         </button>
                                         {(p.pmid || p.id) && (
                                           <Link
@@ -7801,7 +7801,7 @@ export default function DashboardResearcher() {
                                               "linear-gradient(135deg, #2F3C96, #253075)",
                                           }}
                                         >
-                                          Understand this trial
+                                          Simplify
                                         </button>
                                       </div>
                                       <button
