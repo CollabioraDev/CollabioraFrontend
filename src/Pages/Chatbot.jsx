@@ -39,57 +39,6 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CHAT_SESSIONS = 5;
 const MAX_MESSAGES_PER_SESSION = 80;
 
-// ── Remote caching (for better UX when switching pages) ──────────────────
-// Chat history can be expensive to fetch; we cache for a short window so
-// navigation back to `/yori` feels instant and doesn't spam the API.
-const REMOTE_SESSIONS_CACHE_PREFIX = "collabiora_yori_remote_sessions_cache_v1";
-const REMOTE_SESSION_CACHE_PREFIX = "collabiora_yori_remote_session_cache_v1";
-const REMOTE_CONDITIONS_CACHE_PREFIX =
-  "collabiora_yori_remote_conditions_cache_v1";
-const REMOTE_SUGGESTIONS_CACHE_PREFIX =
-  "collabiora_yori_remote_suggestions_cache_v1";
-
-const REMOTE_SESSIONS_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
-const REMOTE_SESSION_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const REMOTE_CONDITIONS_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const REMOTE_SUGGESTIONS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-function safeJsonParse(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
-function readCachedJson(key, ttlMs) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = safeJsonParse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    if (typeof parsed.updatedAt !== "number") return null;
-    if (Date.now() - parsed.updatedAt > ttlMs) return null;
-    return parsed.data ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedJson(key, data) {
-  try {
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        updatedAt: Date.now(),
-        data,
-      }),
-    );
-  } catch {
-    // ignore cache failures (storage quota/private mode/etc.)
-  }
-}
-
 const createChatId = () => {
   if (
     typeof crypto !== "undefined" &&
@@ -1754,21 +1703,6 @@ export default function YoriAI() {
       setIsHydratingChats(true);
 
       try {
-        if (userId) {
-          const sessionsCacheKey = `${REMOTE_SESSIONS_CACHE_PREFIX}:${userId}`;
-          const cached = readCachedJson(
-            sessionsCacheKey,
-            REMOTE_SESSIONS_CACHE_TTL_MS,
-          );
-          if (Array.isArray(cached) && cached.length > 0) {
-            const nextSessions = cached.map(normalizeSession);
-            if (cancelled) return;
-            setChatSessions(nextSessions);
-            setActiveChatId(nextSessions[0]?.id || null);
-            return; // Skip the network fetch
-          }
-        }
-
         const response = await fetchWithAuthRetry(
           `${apiBase}/api/chatbot/sessions`,
         );
@@ -1804,11 +1738,6 @@ export default function YoriAI() {
         }
 
         if (cancelled) return;
-
-        if (userId) {
-          const sessionsCacheKey = `${REMOTE_SESSIONS_CACHE_PREFIX}:${userId}`;
-          writeCachedJson(sessionsCacheKey, nextSessions);
-        }
 
         setChatSessions(nextSessions);
         setActiveChatId(nextSessions[0]?.id || null);
@@ -1848,32 +1777,17 @@ export default function YoriAI() {
         let condition = user?.medicalInterests?.[0] || null;
         if (userId) {
           try {
-            const conditionsCacheKey = `${REMOTE_CONDITIONS_CACHE_PREFIX}:${userId}:${userRole}`;
-            const cachedConditions = readCachedJson(
-              conditionsCacheKey,
-              REMOTE_CONDITIONS_CACHE_TTL_MS,
-            );
-
-            if (Array.isArray(cachedConditions) && cachedConditions.length > 0) {
-              conditions.push(...cachedConditions.slice(0, 3));
+            const profileRes = await fetch(`${apiBase}/api/profile/${userId}`);
+            const profileData = await profileRes.json();
+            const profile = profileData?.profile;
+            if (profile?.patient?.conditions?.length > 0) {
+              conditions.push(...profile.patient.conditions.slice(0, 3));
               if (!condition) condition = conditions[0];
-            } else {
-              const profileRes = await fetch(`${apiBase}/api/profile/${userId}`);
-              const profileData = await profileRes.json();
-              const profile = profileData?.profile;
-              if (profile?.patient?.conditions?.length > 0) {
-                conditions.push(...profile.patient.conditions.slice(0, 3));
-                if (!condition) condition = conditions[0];
-              } else if (profile?.researcher) {
-                const specs = profile.researcher.specialties || [];
-                const ints = profile.researcher.interests || [];
-                conditions.push(...[...specs, ...ints].slice(0, 3));
-                if (!condition) condition = conditions[0];
-              }
-
-              if (conditions.length > 0) {
-                writeCachedJson(conditionsCacheKey, conditions);
-              }
+            } else if (profile?.researcher) {
+              const specs = profile.researcher.specialties || [];
+              const ints = profile.researcher.interests || [];
+              conditions.push(...[...specs, ...ints].slice(0, 3));
+              if (!condition) condition = conditions[0];
             }
           } catch {
             /* ignore */
@@ -1883,28 +1797,6 @@ export default function YoriAI() {
 
         const params = new URLSearchParams({ role: userRole });
         if (condition) params.set("condition", condition);
-
-        if (userId) {
-          const suggestionsCacheKey = `${REMOTE_SUGGESTIONS_CACHE_PREFIX}:${userId}:${userRole}:${condition || "none"}`;
-          const cachedSuggestions = readCachedJson(
-            suggestionsCacheKey,
-            REMOTE_SUGGESTIONS_CACHE_TTL_MS,
-          );
-          if (Array.isArray(cachedSuggestions)) {
-            setSuggestions(cachedSuggestions);
-            return;
-          }
-
-          const res = await fetch(`${apiBase}/api/chatbot/suggestions?${params}`);
-          const data = await res.json();
-          const next = data?.suggestions || [];
-          setSuggestions(next);
-          if (Array.isArray(next) && next.length > 0) {
-            writeCachedJson(suggestionsCacheKey, next);
-          }
-          return;
-        }
-
         const res = await fetch(`${apiBase}/api/chatbot/suggestions?${params}`);
         const data = await res.json();
         setSuggestions(data.suggestions || []);
@@ -2023,20 +1915,6 @@ export default function YoriAI() {
 
     const loadSession = async () => {
       try {
-        if (userId) {
-          const sessionCacheKey = `${REMOTE_SESSION_CACHE_PREFIX}:${userId}:${activeChatId}`;
-          const cachedSession = readCachedJson(
-            sessionCacheKey,
-            REMOTE_SESSION_CACHE_TTL_MS,
-          );
-          if (cachedSession && typeof cachedSession === "object") {
-            if (!cancelled) {
-              mergeRemoteSession(cachedSession);
-            }
-            return; // Skip network fetch
-          }
-        }
-
         const response = await fetchWithAuthRetry(
           `${apiBase}/api/chatbot/sessions/${activeChatId}`,
         );
@@ -2050,10 +1928,6 @@ export default function YoriAI() {
         }
         if (!cancelled) {
           mergeRemoteSession(data.session);
-          if (userId && data?.session) {
-            const sessionCacheKey = `${REMOTE_SESSION_CACHE_PREFIX}:${userId}:${activeChatId}`;
-            writeCachedJson(sessionCacheKey, data.session);
-          }
         }
       } catch (error) {
         if (!cancelled) {

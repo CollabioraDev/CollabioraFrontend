@@ -109,7 +109,7 @@ export default function PressReleaseYoriDetails() {
       ? `${origin}/press-releases/yori`
       : "/press-releases/yori";
 
-    document.title = title;
+    document.title = `${title} | Collabiora`;
     upsertMetaTag({ name: "description", content: description });
     upsertCanonicalLink(canonicalUrl);
 
@@ -139,6 +139,10 @@ export default function PressReleaseYoriDetails() {
         },
       },
     });
+
+    return () => {
+      document.title = "Collabiora | Health Research Made Simple";
+    };
   }, []);
 
   if (loading) {

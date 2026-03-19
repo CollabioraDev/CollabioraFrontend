@@ -99,49 +99,6 @@ const ASK_ABOUT_OPTIONS = {
   ],
 };
 
-// ── Lightweight local cache to avoid refetching suggestions on navigation ──
-const YORI_SUGGESTIONS_CACHE_PREFIX = "collabiora_yori_suggestions_cache_v1";
-const YORI_CONDITION_CACHE_PREFIX = "collabiora_yori_condition_cache_v1";
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const SUGGESTIONS_CACHE_TTL_MS = ONE_DAY_MS; // keep fresh-ish but avoid repeated API hits
-const CONDITION_CACHE_TTL_MS = 7 * ONE_DAY_MS;
-
-function safeJsonParse(value) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-}
-
-function readCachedJson(key, ttlMs) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = safeJsonParse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    if (typeof parsed.updatedAt !== "number") return null;
-    if (Date.now() - parsed.updatedAt > ttlMs) return null;
-    return parsed.data ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedJson(key, data) {
-  try {
-    localStorage.setItem(
-      key,
-      JSON.stringify({
-        updatedAt: Date.now(),
-        data,
-      }),
-    );
-  } catch {
-    // ignore cache write failures
-  }
-}
-
 const getPublicationRoute = (publication) => {
   const publicationId = publication?.pmid || publication?.id;
   return publicationId
@@ -1688,44 +1645,24 @@ const FloatingChatbot = () => {
       const role = userData?.role || "patient";
       let condition = userData?.medicalInterests?.[0] || null;
       if (!condition && userData?._id) {
-        const cacheKey = `${YORI_CONDITION_CACHE_PREFIX}:${userData._id}`;
-        const cachedCondition = readCachedJson(
-          cacheKey,
-          CONDITION_CACHE_TTL_MS,
-        );
-        if (cachedCondition) {
-          condition = cachedCondition;
-        } else {
-          try {
-            const res = await fetch(`${base}/api/profile/${userData._id}`);
-            const data = await res.json();
-            const profile = data?.profile;
-            if (profile?.patient?.conditions?.length > 0) {
-              condition = profile.patient.conditions[0];
-            } else if (
-              profile?.researcher &&
-              (profile.researcher.specialties?.length > 0 ||
-                profile.researcher.interests?.length > 0)
-            ) {
-              condition =
-                profile.researcher.specialties?.[0] ||
-                profile.researcher.interests?.[0];
-            }
-            if (condition) writeCachedJson(cacheKey, condition);
-          } catch (_) {
-            /* ignore */
+        try {
+          const res = await fetch(`${base}/api/profile/${userData._id}`);
+          const data = await res.json();
+          const profile = data?.profile;
+          if (profile?.patient?.conditions?.length > 0) {
+            condition = profile.patient.conditions[0];
+          } else if (
+            profile?.researcher &&
+            (profile.researcher.specialties?.length > 0 ||
+              profile.researcher.interests?.length > 0)
+          ) {
+            condition =
+              profile.researcher.specialties?.[0] ||
+              profile.researcher.interests?.[0];
           }
+        } catch (_) {
+          /* ignore */
         }
-      }
-
-      const cacheKey = `${YORI_SUGGESTIONS_CACHE_PREFIX}:${role}:${condition || "none"}`;
-      const cachedSuggestions = readCachedJson(
-        cacheKey,
-        SUGGESTIONS_CACHE_TTL_MS,
-      );
-      if (cachedSuggestions && Array.isArray(cachedSuggestions)) {
-        setSuggestions(cachedSuggestions);
-        return;
       }
 
       const params = new URLSearchParams({ role });
@@ -1733,9 +1670,7 @@ const FloatingChatbot = () => {
       try {
         const res = await fetch(`${base}/api/chatbot/suggestions?${params}`);
         const data = await res.json();
-        const next = Array.isArray(data.suggestions) ? data.suggestions : [];
-        setSuggestions(next);
-        if (next.length > 0) writeCachedJson(cacheKey, next);
+        if (Array.isArray(data.suggestions)) setSuggestions(data.suggestions);
       } catch (_) {
         setSuggestions([]);
       }

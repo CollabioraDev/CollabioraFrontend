@@ -163,7 +163,7 @@ export default function DiscoveryBlogDetails() {
       : `/discovery/blogs/${blog.slug}`;
 
     // Basic SEO tags
-    document.title = blog.title;
+    document.title = `${blog.title} | Collabiora`;
     upsertMetaTag({
       name: "description",
       content: blog.excerpt || blog.title,
@@ -228,6 +228,10 @@ export default function DiscoveryBlogDetails() {
         articleSection: blog.category,
       },
     });
+
+    return () => {
+      document.title = "Collabiora | Health Research Made Simple";
+    };
   }, [blog]);
 
   useEffect(() => {
