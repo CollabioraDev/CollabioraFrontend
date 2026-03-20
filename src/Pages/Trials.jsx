@@ -536,7 +536,12 @@ export default function Trials() {
     const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
     const hasUserTypedTerms =
       !!searchQuery || !!otherTerms.trim() || !!intervention.trim();
-    const shouldInjectEnabledInterests = hasUserTypedTerms || !institution;
+    const institutionStr = (institution || "").trim();
+    const isUclaInstitution =
+      /ucla/i.test(institutionStr) ||
+      /university of california,?\s*los angeles/i.test(institutionStr);
+    const shouldInjectEnabledInterests =
+      hasUserTypedTerms || !institutionStr || isUclaInstitution;
     if (enabledInterests && searchQuery && shouldInjectEnabledInterests) {
       // Combine enabled interests with search query
       searchQuery = `${enabledInterests} ${searchQuery}`;
@@ -1467,6 +1472,7 @@ export default function Trials() {
     if (src === "clinicaltrials.gov") return "ClinicalTrials.gov";
     if (src === "isrctn") return "ISRCTN";
     if (src === "ctis") return "EU CTIS";
+    if (src === "cura-link") return "Collabiora";
     return src || "Unknown";
   }
 
@@ -3757,7 +3763,9 @@ export default function Trials() {
                             ? "ISRCTN"
                             : detailsModal.trial.sourceRegistry === "eu-ctr"
                               ? "EU Clinical Trials Register"
-                              : detailsModal.trial.sourceRegistry}
+                              : detailsModal.trial.sourceRegistry === "cura-link"
+                                ? "Collabiora"
+                                : detailsModal.trial.sourceRegistry}
                       </span>
                     )}
                   </div>
@@ -4464,65 +4472,67 @@ export default function Trials() {
                       </span>
                     </div>
                   )}
-                  <button
-                    onClick={() => {
-                      const trial = detailsModal.trial;
-                      if (!trial) return;
-                      const externalUrl = resolveExternalTrialUrl(trial);
-                      // #region agent log
-                      fetch(
-                        "http://127.0.0.1:7242/ingest/f1b3fc61-8c8f-48bb-889f-dd932b9156c8",
-                        {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            runId: "ctis-debug-frontend-1",
-                            hypothesisId: "H4",
-                            location: "Trials.jsx:DETAILS_MODAL_OPEN",
-                            message:
-                              "User opened full trial from details modal",
-                            data: {
-                              id: trial.id || trial._id || null,
-                              sourceRegistry: trial.sourceRegistry || null,
-                              hasClinicalTrialsGovUrl:
-                                !!trial.clinicalTrialsGovUrl,
-                              hasIsrctnUrl: !!trial.isrctnUrl,
-                              hasEuCtrUrl: !!trial.euCtrUrl,
-                            },
-                            timestamp: Date.now(),
-                          }),
-                        },
-                      ).catch(() => {});
-                      // #endregion agent log
-                      if (externalUrl) {
-                        window.open(
-                          externalUrl,
-                          "_blank",
-                          "noopener,noreferrer",
-                        );
-                      } else {
-                        const innerId = trial.id || trial._id;
-                        if (innerId) {
-                          closeDetailsModal();
-                          navigate(`/trial/${innerId}`);
+                  {detailsModal.trial.sourceRegistry !== "cura-link" && (
+                    <button
+                      onClick={() => {
+                        const trial = detailsModal.trial;
+                        if (!trial) return;
+                        const externalUrl = resolveExternalTrialUrl(trial);
+                        // #region agent log
+                        fetch(
+                          "http://127.0.0.1:7242/ingest/f1b3fc61-8c8f-48bb-889f-dd932b9156c8",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              runId: "ctis-debug-frontend-1",
+                              hypothesisId: "H4",
+                              location: "Trials.jsx:DETAILS_MODAL_OPEN",
+                              message:
+                                "User opened full trial from details modal",
+                              data: {
+                                id: trial.id || trial._id || null,
+                                sourceRegistry: trial.sourceRegistry || null,
+                                hasClinicalTrialsGovUrl:
+                                  !!trial.clinicalTrialsGovUrl,
+                                hasIsrctnUrl: !!trial.isrctnUrl,
+                                hasEuCtrUrl: !!trial.euCtrUrl,
+                              },
+                              timestamp: Date.now(),
+                            }),
+                          },
+                        ).catch(() => {});
+                        // #endregion agent log
+                        if (externalUrl) {
+                          window.open(
+                            externalUrl,
+                            "_blank",
+                            "noopener,noreferrer",
+                          );
+                        } else {
+                          const innerId = trial.id || trial._id;
+                          if (innerId) {
+                            closeDetailsModal();
+                            navigate(`/trial/${innerId}`);
+                          }
                         }
-                      }
-                    }}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all w-full"
-                    style={{
-                      color: "#FFFFFF",
-                      backgroundColor: "#2F3C96",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#253075";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#2F3C96";
-                    }}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    View Full Trial
-                  </button>
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all w-full"
+                      style={{
+                        color: "#FFFFFF",
+                        backgroundColor: "#2F3C96",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#253075";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#2F3C96";
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      View Full Trial
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

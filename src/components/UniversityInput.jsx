@@ -207,6 +207,10 @@ export default function UniversityInput({
   location: locationProp,
   /** When true, only values selected from the dropdown are accepted; typed values are cleared on blur */
   strict = false,
+  /** Show “Institution not found” to switch to typing your institution manually */
+  allowManualFallback = false,
+  /** Label for the manual-entry affordance */
+  manualFallbackLabel = "Institution not found",
   ...rest
 }) {
   const [suggestions, setSuggestions] = useState([]);
@@ -219,8 +223,10 @@ export default function UniversityInput({
     width: 0,
   });
   const [wasPickedFromList, setWasPickedFromList] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
 
   const inputRef = useRef(null);
+  const manualInputRef = useRef(null);
   const blurTimeoutRef = useRef(null);
   const debounceRef = useRef(null);
   const searchIdRef = useRef(0);
@@ -317,11 +323,19 @@ export default function UniversityInput({
 
   // ── Dropdown positioning ───────────────────────────────────────────────
 
+  const queryOk =
+    (value?.trim()?.length ?? 0) >= 2 ||
+    (hasLocation && (value?.trim()?.length ?? 0) === 0);
+
   const showDropdown =
+    !manualMode &&
     isDropdownOpen &&
-    (suggestions.length > 0 || isLoading) &&
-    ((value?.trim()?.length ?? 0) >= 2 ||
-      (hasLocation && (value?.trim()?.length ?? 0) === 0));
+    queryOk &&
+    (suggestions.length > 0 ||
+      isLoading ||
+      (allowManualFallback &&
+        !isLoading &&
+        (value?.trim()?.length ?? 0) >= 2));
 
   const updateDropdownPosition = () => {
     if (inputRef.current) {
@@ -423,12 +437,33 @@ export default function UniversityInput({
       return;
     }
 
-    if (strict && value?.trim() && !wasPickedFromList) {
+    if (strict && value?.trim() && !wasPickedFromList && !manualMode) {
       onChange?.("");
     }
 
     closeDropdown(150);
     onBlur?.(event);
+  };
+
+  const handleManualFallbackSelect = () => {
+    if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    setManualMode(true);
+    setWasPickedFromList(true);
+    setActiveIndex(-1);
+    setIsDropdownOpen(false);
+    setTimeout(() => manualInputRef.current?.focus(), 0);
+  };
+
+  const handleManualChange = (event) => {
+    onChange?.(event.target.value);
+    setWasPickedFromList(true);
+  };
+
+  const handleBackToSearch = () => {
+    setManualMode(false);
+    onChange?.("");
+    setWasPickedFromList(false);
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleSelectUniversity = (uni) => {
@@ -439,25 +474,38 @@ export default function UniversityInput({
     setIsDropdownOpen(false);
   };
 
+  const listLength =
+    allowManualFallback && !isLoading
+      ? suggestions.length + 1
+      : suggestions.length;
+
   const handleKeyDown = (event) => {
-    if (event.key === "ArrowDown" && suggestions.length > 0) {
+    if (event.key === "ArrowDown" && listLength > 0) {
       event.preventDefault();
       setIsDropdownOpen(true);
-      setActiveIndex((prev) => (prev + 1 >= suggestions.length ? 0 : prev + 1));
+      setActiveIndex((prev) => (prev + 1 >= listLength ? 0 : prev + 1));
       return;
     }
 
-    if (event.key === "ArrowUp" && suggestions.length > 0) {
+    if (event.key === "ArrowUp" && listLength > 0) {
       event.preventDefault();
       setIsDropdownOpen(true);
       setActiveIndex((prev) =>
-        prev - 1 < 0 ? suggestions.length - 1 : prev - 1,
+        prev - 1 < 0 ? listLength - 1 : prev - 1,
       );
       return;
     }
 
     if (event.key === "Enter") {
       event.preventDefault();
+      if (
+        allowManualFallback &&
+        !isLoading &&
+        activeIndex === suggestions.length
+      ) {
+        handleManualFallbackSelect();
+        return;
+      }
       if (activeIndex >= 0 && suggestions[activeIndex]) {
         handleSelectUniversity(suggestions[activeIndex]);
       }
@@ -517,7 +565,7 @@ export default function UniversityInput({
             Searching institutions…
           </li>
         )}
-        {!isLoading && suggestions.length === 0 && (
+        {!isLoading && suggestions.length === 0 && !allowManualFallback && (
           <li
             className="px-3 py-4 text-sm text-center"
             style={{ color: "#787878" }}
@@ -554,53 +602,111 @@ export default function UniversityInput({
             )}
           </li>
         ))}
+        {allowManualFallback && !isLoading && (
+          <li
+            onMouseDown={(event) => {
+              event.preventDefault();
+              handleManualFallbackSelect();
+            }}
+            onMouseEnter={() => setActiveIndex(suggestions.length)}
+            className={clsx(
+              "flex flex-col px-3 py-2.5 text-sm transition-colors cursor-pointer",
+              suggestions.length > 0 && "border-t",
+            )}
+            style={
+              activeIndex === suggestions.length
+                ? {
+                    backgroundColor: "rgba(47, 60, 150, 0.08)",
+                    color: "#2F3C96",
+                    borderColor: "#E8E8E8",
+                  }
+                : { color: "#2F3C96", borderColor: "#E8E8E8" }
+            }
+          >
+            <span className="font-semibold">{manualFallbackLabel}</span>
+            <span className="text-xs mt-0.5 opacity-90">
+              You can type your institution name if it isn’t listed
+            </span>
+          </li>
+        )}
       </ul>
     </div>
   );
 
+  const manualPlaceholder = "Type your institution name";
+
   return (
     <>
       <div className={clsx("relative", className)}>
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-          onBlur={handleBlurEvent}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={clsx(
-            "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-            inputClassName,
-          )}
-          style={style}
-          autoComplete="off"
-          {...rest}
-        />
-        {isLoading && (value?.trim()?.length ?? 0) >= 2 && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg
-              className="animate-spin h-4 w-4 text-indigo-400"
-              viewBox="0 0 24 24"
-              fill="none"
+        {manualMode ? (
+          <div className="space-y-2">
+            <input
+              ref={manualInputRef}
+              type="text"
+              value={value}
+              onChange={handleManualChange}
+              onBlur={onBlur}
+              placeholder={manualPlaceholder}
+              disabled={disabled}
+              className={clsx(
+                "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                inputClassName,
+              )}
+              style={style}
+              autoComplete="organization"
+            />
+            <button
+              type="button"
+              onClick={handleBackToSearch}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
             >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+              Search institution database instead
+            </button>
           </div>
+        ) : (
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={handleInputChange}
+              onFocus={handleFocus}
+              onBlur={handleBlurEvent}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              className={clsx(
+                "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                inputClassName,
+              )}
+              style={style}
+              autoComplete="off"
+              {...rest}
+            />
+            {isLoading && (value?.trim()?.length ?? 0) >= 2 && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg
+                  className="animate-spin h-4 w-4 text-indigo-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+              </div>
+            )}
+          </>
         )}
       </div>
       {typeof document !== "undefined" &&

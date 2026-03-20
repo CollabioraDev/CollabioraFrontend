@@ -2004,7 +2004,10 @@ export default function YoriAI() {
     try {
       let newChat;
       if (isRemoteChatUser) {
-        const tempChat = createChatSession("New chat");
+        const tempChat = {
+          ...createChatSession("New chat"),
+          pendingRemoteCreate: true,
+        };
         tempChatId = tempChat.id;
         setChatSessions((prev) =>
           [tempChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
@@ -2024,11 +2027,23 @@ export default function YoriAI() {
           }
           throw new Error(data?.error || "Failed to create chat session");
         }
-        newChat = mergeRemoteSession(data.session);
-        setChatSessions((prev) =>
-          prev.map((s) => (s.id === tempChatId ? newChat : s)),
+        newChat = normalizeSession({ ...data.session, loaded: true });
+        setChatSessions((prev) => {
+          const mapped = prev.map((s) =>
+            s.id === tempChatId ? newChat : s,
+          );
+          const seen = new Set();
+          return mapped
+            .filter((s) => {
+              if (seen.has(s.id)) return false;
+              seen.add(s.id);
+              return true;
+            })
+            .sort((a, b) => b.updatedAt - a.updatedAt);
+        });
+        setActiveChatId((prev) =>
+          prev === tempChatId ? newChat.id : prev,
         );
-        setActiveChatId(newChat.id);
       } else {
         newChat = createChatSession();
         setChatSessions((prev) =>
@@ -2043,10 +2058,14 @@ export default function YoriAI() {
         error.message || "Couldn't create a new chat right now.",
       );
       if (tempChatId) {
-        setChatSessions((prev) => prev.filter((s) => s.id !== tempChatId));
-        setActiveChatId((prev) =>
-          prev === tempChatId ? (chatSessions[0]?.id ?? null) : prev,
-        );
+        setChatSessions((prev) => {
+          const next = prev.filter((s) => s.id !== tempChatId);
+          const fallbackActive = next[0]?.id ?? null;
+          setActiveChatId((prevActive) =>
+            prevActive === tempChatId ? fallbackActive : prevActive,
+          );
+          return next;
+        });
       }
     } finally {
       setIsCreatingNewChat(false);
@@ -2054,10 +2073,8 @@ export default function YoriAI() {
   }, [
     apiBase,
     canCreateNewChat,
-    chatSessions,
     fetchWithAuthRetry,
     isRemoteChatUser,
-    mergeRemoteSession,
     handleAuthExpired,
   ]);
 
@@ -2069,11 +2086,14 @@ export default function YoriAI() {
       setDeletingSessionId(sessionId);
 
       const previousSessions = chatSessions;
+      const sessionBeingDeleted = previousSessions.find(
+        (s) => s.id === sessionId,
+      );
+      const skipRemoteDelete =
+        isRemoteChatUser && sessionBeingDeleted?.pendingRemoteCreate === true;
       const remaining = previousSessions.filter((s) => s.id !== sessionId);
       const nextActiveId =
-        activeChatId === sessionId
-          ? (remaining[0]?.id ?? (remaining.length === 0 ? null : null))
-          : activeChatId;
+        activeChatId === sessionId ? (remaining[0]?.id ?? null) : activeChatId;
 
       // Optimistic update: remove from UI immediately
       if (remaining.length > 0) {
@@ -2091,20 +2111,22 @@ export default function YoriAI() {
 
       try {
         if (isRemoteChatUser) {
-          const response = await fetchWithAuthRetry(
-            `${apiBase}/api/chatbot/sessions/${sessionId}`,
-            { method: "DELETE" },
-          );
-          if (!response.ok) {
-            const data = (await readJsonSafely(response)) || {};
-            if (response.status === 401) {
-              handleAuthExpired(data.error);
-              throw new Error("Your session expired. Please sign in again.");
+          if (!skipRemoteDelete) {
+            const response = await fetchWithAuthRetry(
+              `${apiBase}/api/chatbot/sessions/${sessionId}`,
+              { method: "DELETE" },
+            );
+            if (!response.ok) {
+              const data = (await readJsonSafely(response)) || {};
+              if (response.status === 401) {
+                handleAuthExpired(data.error);
+                throw new Error("Your session expired. Please sign in again.");
+              }
+              throw new Error(data.error || "Failed to delete chat");
             }
-            throw new Error(data.error || "Failed to delete chat");
           }
           if (remaining.length === 0) {
-            createNewChat();
+            await createNewChat();
           }
         }
       } catch (error) {

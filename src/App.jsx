@@ -40,6 +40,7 @@ const DashboardResearcher = React.lazy(
   () => import("./Pages/DashboardResearcher.jsx"),
 );
 const Trials = React.lazy(() => import("./Pages/Trials.jsx"));
+const CurateTrials = React.lazy(() => import("./Pages/CurateTrials.jsx"));
 const Publications = React.lazy(() => import("./Pages/Publications.jsx"));
 const Experts = React.lazy(() => import("./Pages/Experts.jsx"));
 const ExpertProfile = React.lazy(() => import("./Pages/ExpertProfile.jsx"));
@@ -465,6 +466,7 @@ const AppContent = () => {
             }
           />
           <Route path="/trials" element={<Trials />} />
+          <Route path="/curate-trials" element={<CurateTrials />} />
           <Route path="/trial/:nctId" element={<TrialDetails />} />
           <Route path="/publications" element={<Publications />} />
           <Route path="/library" element={<Publications />} />

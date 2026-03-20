@@ -24,6 +24,7 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
+  FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import icd11Dataset from "../data/icd11Dataset.json";
@@ -244,6 +245,11 @@ export default function OnboardingNew() {
   const [orcidConnecting, setOrcidConnecting] = useState(false);
   const [orcidSuggestedInstitution, setOrcidSuggestedInstitution] =
     useState("");
+  /** true = show ORCID connect; false = show ID verification upload (no ORCID) */
+  const [hasOrcid, setHasOrcid] = useState(true);
+  const [verificationDocument, setVerificationDocument] = useState(null);
+  const [verificationDocumentUrl, setVerificationDocumentUrl] = useState("");
+  const [uploadingVerification, setUploadingVerification] = useState(false);
 
   const {
     loginWithGoogle,
@@ -313,6 +319,8 @@ export default function OnboardingNew() {
     skills,
     location,
     orcid,
+    hasOrcid,
+    verificationDocumentUrl,
   });
 
   const persistOnboardingDraft = () => {
@@ -357,6 +365,9 @@ export default function OnboardingNew() {
     if (Array.isArray(draft.skills)) setSkills(draft.skills);
     if (typeof draft.location === "string") setLocation(draft.location);
     if (typeof draft.orcid === "string") setOrcid(draft.orcid);
+    if (draft.hasOrcid !== undefined) setHasOrcid(draft.hasOrcid);
+    if (typeof draft.verificationDocumentUrl === "string")
+      setVerificationDocumentUrl(draft.verificationDocumentUrl);
     if (draft.step) setStep(draft.step);
     if (draft.maxStepReached) setMaxStepReached(draft.maxStepReached);
   };
@@ -375,6 +386,7 @@ export default function OnboardingNew() {
     skills,
     isAcademicResearcher,
     orcid: orcid || undefined,
+    verificationDocumentUrl: verificationDocumentUrl || undefined,
   });
 
   const getExistingEmailMessage = (availability) => {
@@ -425,10 +437,9 @@ export default function OnboardingNew() {
     const username =
       `${firstName} ${lastName}`.trim() || email.split("@")[0] || "User";
     const handleValue =
-      handle.trim() ||
       (username.replace(/\s+/g, "").toLowerCase() || "user") +
-        "_" +
-        Math.random().toString(36).slice(2, 8);
+      "_" +
+      Math.random().toString(36).slice(2, 8);
     const medicalInterests = [
       primarySpecialty,
       ...subspecialties,
@@ -667,6 +678,108 @@ export default function OnboardingNew() {
     }
   };
 
+  async function handleVerificationDocumentUpload(file) {
+    if (!file) return;
+
+    setUploadingVerification(true);
+    setError("");
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setVerificationDocument(file);
+      setUploadingVerification(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+
+      const response = await fetch(`${base}/api/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload verification document");
+      }
+
+      if (data.files && data.files.length > 0) {
+        setVerificationDocumentUrl(data.files[0].url);
+        setVerificationDocument(file);
+      } else {
+        throw new Error("No file URL returned from upload");
+      }
+    } catch (err) {
+      console.error("Error uploading verification document:", err);
+      setError("Failed to upload verification document. Please try again.");
+    } finally {
+      setUploadingVerification(false);
+    }
+  }
+
+  async function uploadVerificationDocumentAfterAuth(file, token) {
+    if (!file || !token) return null;
+
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+
+      const response = await fetch(`${base}/api/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to upload verification document");
+      }
+
+      if (data.files && data.files.length > 0) {
+        return data.files[0].url;
+      }
+      throw new Error("No file URL returned from upload");
+    } catch (err) {
+      console.error("Error uploading verification document:", err);
+      throw err;
+    }
+  }
+
+  function handleVerificationFileChange(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/pdf",
+      ];
+      if (!validTypes.includes(file.type)) {
+        setError(
+          "Please upload an image (JPEG, PNG, GIF, WebP) or PDF file",
+        );
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError("File size must be less than 10MB");
+        return;
+      }
+      handleVerificationDocumentUpload(file);
+    }
+  }
+
   // Restore form after ORCID callback
   useEffect(() => {
     const orcidSuccess = searchParams.get("orcid_success");
@@ -688,6 +801,7 @@ export default function OnboardingNew() {
         // Apply the ORCID returned from OAuth after draft restore so a stale
         // pre-auth draft value cannot overwrite the connected ORCID.
         setOrcid(orcidId);
+        setHasOrcid(true);
         if (profile) {
           if (
             profile.affiliation?.trim() &&
@@ -826,6 +940,19 @@ export default function OnboardingNew() {
 
     if (token && userId) {
       try {
+        let finalVerificationDocumentUrl = verificationDocumentUrl;
+        if (verificationDocument && !verificationDocumentUrl) {
+          try {
+            finalVerificationDocumentUrl =
+              await uploadVerificationDocumentAfterAuth(
+                verificationDocument,
+                token,
+              );
+          } catch (err) {
+            console.error("Failed to upload verification document:", err);
+          }
+        }
+
         const locationData = getLocationData();
         const selectedRole = onboardingRole || user?.role || "patient";
         const role =
@@ -861,6 +988,8 @@ export default function OnboardingNew() {
                       : undefined,
                   isAcademicResearcher,
                   orcid: orcid || undefined,
+                  verificationDocumentUrl:
+                    finalVerificationDocumentUrl || undefined,
                 },
               };
         const profileRes = await fetch(`${base}/api/profile/${userId}`, {
@@ -915,11 +1044,14 @@ export default function OnboardingNew() {
     try {
       const username =
         `${firstName} ${lastName}`.trim() || email.split("@")[0] || "User";
-      const handleValue =
-        handle.trim() ||
+      const generatedHandle =
         (username.replace(/\s+/g, "").toLowerCase() || "user") +
-          "_" +
-          Math.random().toString(36).slice(2, 8);
+        "_" +
+        Math.random().toString(36).slice(2, 8);
+      const handleValue =
+        isMedicalProfessional === false
+          ? handle.trim() || generatedHandle
+          : generatedHandle;
       const combined = getCombinedConditions(conditions, symptomsText);
       const locationData = getLocationData();
       const role = isMedicalProfessional ? "researcher" : "patient";
@@ -970,6 +1102,19 @@ export default function OnboardingNew() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(newUser));
 
+      let finalVerificationDocumentUrl = verificationDocumentUrl;
+      if (verificationDocument && !verificationDocumentUrl && data.token) {
+        try {
+          finalVerificationDocumentUrl =
+            await uploadVerificationDocumentAfterAuth(
+              verificationDocument,
+              data.token,
+            );
+        } catch (err) {
+          console.error("Failed to upload verification document:", err);
+        }
+      }
+
       const profile =
         role === "patient"
           ? {
@@ -980,7 +1125,7 @@ export default function OnboardingNew() {
               role: "researcher",
               researcher: {
                 profession,
-                academicRank,
+                academicRank: academicRank || undefined,
                 institutionAffiliation,
                 specialties: [primarySpecialty, ...subspecialties].filter(
                   Boolean,
@@ -996,6 +1141,8 @@ export default function OnboardingNew() {
                     : undefined,
                 isAcademicResearcher,
                 orcid: orcid || undefined,
+                verificationDocumentUrl:
+                  finalVerificationDocumentUrl || undefined,
               },
             };
       const profileRes = await fetch(
@@ -1183,7 +1330,7 @@ export default function OnboardingNew() {
                       className="text-xl sm:text-2xl font-bold text-center"
                       style={{ color: "#2F3C96" }}
                     >
-                      Are you a healthcare professional?
+                      Are you a Medical or Allied Care Professional?
                     </h1>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <button
@@ -1577,89 +1724,91 @@ export default function OnboardingNew() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label
-                        className="block text-sm font-semibold"
-                        style={{ color: "#2F3C96" }}
-                      >
-                        Username <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative" data-username-suggestions>
-                        <Input
-                          placeholder="@username or pick one below"
-                          value={handle}
-                          onChange={(e) => {
-                            const v = e.target.value.replace(/^@+/, "");
-                            setHandle(v);
-                            setShowUsernameSuggestions(v.length === 0);
-                          }}
-                          onFocus={() => setShowUsernameSuggestions(true)}
-                          className="w-full py-3 px-4 text-base border rounded-xl focus:outline-none focus:ring-2"
-                          style={{
-                            borderColor: "#E8E8E8",
-                            color: "#2F3C96",
-                            "--tw-ring-color": "#D0C4E2",
-                          }}
-                        />
-                        {showUsernameSuggestions &&
-                          usernameSuggestions.length > 0 && (
-                            <div
-                              className="absolute z-10 w-full mt-1.5 bg-white border rounded-xl shadow-lg py-3 px-3"
-                              style={{ borderColor: "#E8E8E8" }}
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <span
-                                  className="text-sm font-semibold"
-                                  style={{ color: "#2F3C96" }}
-                                >
-                                  Suggested usernames
-                                </span>
+                    {isMedicalProfessional === false && (
+                      <div className="space-y-2">
+                        <label
+                          className="block text-sm font-semibold"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          Username <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative" data-username-suggestions>
+                          <Input
+                            placeholder="@username or pick one below"
+                            value={handle}
+                            onChange={(e) => {
+                              const v = e.target.value.replace(/^@+/, "");
+                              setHandle(v);
+                              setShowUsernameSuggestions(v.length === 0);
+                            }}
+                            onFocus={() => setShowUsernameSuggestions(true)}
+                            className="w-full py-3 px-4 text-base border rounded-xl focus:outline-none focus:ring-2"
+                            style={{
+                              borderColor: "#E8E8E8",
+                              color: "#2F3C96",
+                              "--tw-ring-color": "#D0C4E2",
+                            }}
+                          />
+                          {showUsernameSuggestions &&
+                            usernameSuggestions.length > 0 && (
+                              <div
+                                className="absolute z-10 w-full mt-1.5 bg-white border rounded-xl shadow-lg py-3 px-3"
+                                style={{ borderColor: "#E8E8E8" }}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span
+                                    className="text-sm font-semibold"
+                                    style={{ color: "#2F3C96" }}
+                                  >
+                                    Suggested usernames
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={refreshUsernameSuggestions}
+                                    className="flex items-center gap-1 text-sm"
+                                    style={{ color: "#2F3C96" }}
+                                  >
+                                    <RefreshCw className="w-4 h-4" /> Refresh
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                  {usernameSuggestions.map((s, i) => (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => {
+                                        setHandle(s);
+                                        setShowUsernameSuggestions(false);
+                                      }}
+                                      className="px-3 py-2 text-sm font-medium rounded-lg"
+                                      style={{
+                                        backgroundColor:
+                                          "rgba(47, 60, 150, 0.12)",
+                                        color: "#2F3C96",
+                                      }}
+                                    >
+                                      @{s}
+                                    </button>
+                                  ))}
+                                </div>
                                 <button
                                   type="button"
-                                  onClick={refreshUsernameSuggestions}
-                                  className="flex items-center gap-1 text-sm"
-                                  style={{ color: "#2F3C96" }}
+                                  onClick={() =>
+                                    setShowUsernameSuggestions(false)
+                                  }
+                                  className="text-sm hover:underline"
+                                  style={{ color: "#787878" }}
                                 >
-                                  <RefreshCw className="w-4 h-4" /> Refresh
+                                  Hide suggestions
                                 </button>
                               </div>
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                {usernameSuggestions.map((s, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => {
-                                      setHandle(s);
-                                      setShowUsernameSuggestions(false);
-                                    }}
-                                    className="px-3 py-2 text-sm font-medium rounded-lg"
-                                    style={{
-                                      backgroundColor:
-                                        "rgba(47, 60, 150, 0.12)",
-                                      color: "#2F3C96",
-                                    }}
-                                  >
-                                    @{s}
-                                  </button>
-                                ))}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setShowUsernameSuggestions(false)
-                                }
-                                className="text-sm hover:underline"
-                                style={{ color: "#787878" }}
-                              >
-                                Hide suggestions
-                              </button>
-                            </div>
-                          )}
+                            )}
+                        </div>
+                        <p className="text-sm" style={{ color: "#787878" }}>
+                          Username will be public.
+                        </p>
                       </div>
-                      <p className="text-sm" style={{ color: "#787878" }}>
-                        Username will be public.
-                      </p>
-                    </div>
+                    )}
                     {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-3 pt-2">
                       <Button
@@ -1678,13 +1827,14 @@ export default function OnboardingNew() {
                         onClick={() =>
                           firstName?.trim() &&
                           lastName?.trim() &&
-                          handle?.trim() &&
+                          (isMedicalProfessional !== false ||
+                            handle?.trim()) &&
                           goToStep(4)
                         }
                         disabled={
                           !firstName?.trim() ||
                           !lastName?.trim() ||
-                          !handle?.trim()
+                          (isMedicalProfessional === false && !handle?.trim())
                         }
                         className="flex-1 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
@@ -1862,7 +2012,7 @@ export default function OnboardingNew() {
                           className="block text-sm font-semibold mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          Academic Rank <span className="text-red-500">*</span>
+                          Academic Rank
                         </label>
                         <CustomSelect
                           value={academicRank}
@@ -1888,6 +2038,7 @@ export default function OnboardingNew() {
                         onChange={setInstitutionAffiliation}
                         location={location.trim() ? getLocationData() : null}
                         strict
+                        allowManualFallback
                         placeholder="Search and select your institution"
                         maxSuggestions={10}
                         inputClassName="w-full py-3 px-4 text-base border rounded-xl"
@@ -2057,9 +2208,137 @@ export default function OnboardingNew() {
                           style={{ color: "#2F3C96" }}
                         >
                           ORCID ID
+                          <span
+                            className="text-xs font-normal ml-1"
+                            style={{ color: "#787878" }}
+                          >
+                            (Required — connect or verify with ID)
+                          </span>
                         </label>
 
-                        {!orcid ? (
+                        {!hasOrcid ? (
+                          <div className="space-y-3">
+                            <div
+                              className="p-3 rounded-lg border"
+                              style={{
+                                borderColor: "#E8E8E8",
+                                backgroundColor: "#F9FAFB",
+                              }}
+                            >
+                              <p
+                                className="text-xs mb-3"
+                                style={{ color: "#2F3C96" }}
+                              >
+                                Upload a verification document (ID, certificate,
+                                or other proof of research credentials). Your
+                                document will be reviewed by moderators.
+                              </p>
+                              {verificationDocumentUrl ||
+                              verificationDocument ? (
+                                <div className="space-y-2">
+                                  <div
+                                    className="flex items-center gap-2 p-2 rounded border"
+                                    style={{
+                                      borderColor: "#A6CE39",
+                                      backgroundColor: "#F8FFF0",
+                                    }}
+                                  >
+                                    <CheckCircle
+                                      size={16}
+                                      style={{ color: "#A6CE39" }}
+                                    />
+                                    <span
+                                      className="text-xs font-medium flex-1 truncate"
+                                      style={{ color: "#2F3C96" }}
+                                    >
+                                      {verificationDocument?.name ||
+                                        "Verification document uploaded"}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVerificationDocument(null);
+                                        setVerificationDocumentUrl("");
+                                      }}
+                                      className="text-gray-500 hover:text-gray-700 transition-colors shrink-0"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                  <p
+                                    className="text-[10px] text-center"
+                                    style={{ color: "#787878" }}
+                                  >
+                                    {verificationDocumentUrl
+                                      ? "Your verification document will be reviewed by moderators"
+                                      : "File selected. It will be uploaded when you finish onboarding."}
+                                  </p>
+                                </div>
+                              ) : (
+                                <label className="block">
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    onChange={handleVerificationFileChange}
+                                    disabled={
+                                      uploadingVerification ||
+                                      verificationDocumentUrl ||
+                                      verificationDocument
+                                    }
+                                    className="hidden"
+                                  />
+                                  <div
+                                    className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 border-2 border-dashed ${
+                                      uploadingVerification ||
+                                      verificationDocumentUrl ||
+                                      verificationDocument
+                                        ? "cursor-not-allowed opacity-60"
+                                        : "cursor-pointer hover:shadow-md"
+                                    }`}
+                                    style={{
+                                      borderColor: uploadingVerification
+                                        ? "#E8E8E8"
+                                        : "#2F3C96",
+                                      backgroundColor: uploadingVerification
+                                        ? "#F3F4F6"
+                                        : "#FFFFFF",
+                                      color: uploadingVerification
+                                        ? "#787878"
+                                        : "#2F3C96",
+                                    }}
+                                  >
+                                    {uploadingVerification ? (
+                                      <>
+                                        <RefreshCw
+                                          size={16}
+                                          className="animate-spin"
+                                        />
+                                        Uploading...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FileText size={16} />
+                                        Attach verification document
+                                      </>
+                                    )}
+                                  </div>
+                                </label>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setHasOrcid(true);
+                                setVerificationDocument(null);
+                                setVerificationDocumentUrl("");
+                              }}
+                              className="text-xs underline"
+                              style={{ color: "#2F3C96" }}
+                            >
+                              I have an ORCID ID instead
+                            </button>
+                          </div>
+                        ) : !orcid ? (
                           <div className="space-y-2">
                             <button
                               type="button"
@@ -2109,7 +2388,7 @@ export default function OnboardingNew() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => setIsAcademicResearcher(false)}
+                              onClick={() => setHasOrcid(false)}
                               className="w-full py-2 px-4 text-xs font-medium rounded-lg transition-all border hover:shadow-sm"
                               style={{
                                 borderColor: "#E8E8E8",
@@ -2117,8 +2396,15 @@ export default function OnboardingNew() {
                                 backgroundColor: "#FFFFFF",
                               }}
                             >
-                              I don't have an ORCID ID
+                              I don&apos;t have an ORCID ID
                             </button>
+                            <p
+                              className="text-[10px] text-center"
+                              style={{ color: "#787878" }}
+                            >
+                              Authenticate with ORCID to link your research
+                              profile, or upload ID verification above.
+                            </p>
                           </div>
                         ) : (
                           <div className="space-y-2">
@@ -2206,9 +2492,14 @@ export default function OnboardingNew() {
                       <Button
                         onClick={() => {
                           setError("");
-                          if (isAcademicResearcher && !orcid) {
+                          if (
+                            isAcademicResearcher &&
+                            !orcid?.trim() &&
+                            !verificationDocumentUrl?.trim() &&
+                            !verificationDocument
+                          ) {
                             setError(
-                              "Please connect with ORCID or choose 'I don't have an ORCID ID'",
+                              "Please connect with ORCID or upload a verification document to continue.",
                             );
                             return;
                           }

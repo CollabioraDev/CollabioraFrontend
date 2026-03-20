@@ -1720,6 +1720,7 @@ export default function OnboardResearcher() {
                         onChange={setInstitutionAffiliation}
                         location={(city || country) ? getLocationData() : null}
                         strict
+                        allowManualFallback
                         placeholder="Search and select your university (e.g. Harvard, MIT, Johns Hopkins)"
                         maxSuggestions={10}
                         inputClassName="w-full py-1.5 px-2.5 text-sm border rounded-lg transition-all focus:outline-none focus:ring-2"
@@ -1731,8 +1732,8 @@ export default function OnboardResearcher() {
                       />
                       <p className="text-[10px] mt-0.5" style={{ color: "#787878" }}>
                         {(city?.trim() || country?.trim())
-                          ? "Institutions in your city/country shown first. You must select from the list."
-                          : "Type to search, then select from the list. Free text is not accepted."}
+                          ? "Institutions in your city/country shown first. Pick from the list or choose “Institution not found” to type your name."
+                          : "Type to search and pick from the list, or choose “Institution not found” to type your institution name."}
                       </p>
                       {orcidSuggestedInstitution && (
                         <div

@@ -2244,6 +2244,7 @@ export default function OnboardPatient() {
                               city || country ? getLocationData() : null
                             }
                             strict
+                            allowManualFallback
                             placeholder="Search and select your institution"
                             maxSuggestions={10}
                             inputClassName="w-full py-2 px-3 text-sm border rounded-lg transition-all focus:outline-none focus:ring-2"

@@ -1845,6 +1845,7 @@ export default function EditProfile() {
                         setInstitutionAffiliation(corrected);
                       }
                     }}
+                    allowManualFallback
                     placeholder="Search for your university (e.g. Harvard, MIT)"
                     maxSuggestions={10}
                     className="w-full"

@@ -89,12 +89,12 @@ export default function Footer() {
               Resources
             </h3>
             <ul className="space-y-2">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Support", "FAQ"].map((link) => {
+              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Contact Us", "FAQ"].map((link) => {
                 const routeMap = {
                   "Privacy Policy": "/privacy",
                   "Terms of Service": "/terms",
                   "Cookie Policy": "/cookie-policy",
-                  Support: "/support",
+                  "Contact Us": "/contact",
                   FAQ: "/faq",
                 };
                 const route = routeMap[link] || `/${link.toLowerCase().replace(/\s+/g, "-")}`;
