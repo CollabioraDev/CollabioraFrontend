@@ -107,7 +107,21 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Error caught by boundary:", error, errorInfo);
+    // Log as plain strings — React DevTools' console hook can throw
+    // "Cannot convert object to primitive value" when formatting multi-arg errors.
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "Unknown error";
+    console.error("Error caught by boundary:", message);
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack);
+    }
+    if (errorInfo?.componentStack) {
+      console.error(errorInfo.componentStack);
+    }
   }
 
   handleGoHome = () => {

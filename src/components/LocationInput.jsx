@@ -316,6 +316,16 @@ export default function LocationInput({
         : "e.g. City, State/Province, Country";
   const resolvedPlaceholder = placeholder || defaultPlaceholder;
 
+  // Parents / session restore must only pass strings; coerce defensively to avoid runtime errors.
+  const inputValue =
+    typeof value === "string"
+      ? value
+      : value == null || typeof value === "boolean"
+        ? ""
+        : typeof value === "number"
+          ? String(value)
+          : "";
+
   const IconComponent = mode === "country" ? Globe : MapPin;
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -343,12 +353,12 @@ export default function LocationInput({
 
   // Instant local suggestions based on query (no API call needed)
   const localSuggestions = useMemo(() => {
-    if (!value || value.trim().length < 1) return [];
-    const query = value.toLowerCase().trim();
+    if (!inputValue || inputValue.trim().length < 1) return [];
+    const query = inputValue.toLowerCase().trim();
     return popularList
       .filter((loc) => loc.toLowerCase().includes(query))
       .slice(0, 6);
-  }, [value, popularList]);
+  }, [inputValue, popularList]);
 
   // Combined suggestions: local first, then API results (deduplicated)
   const suggestions = useMemo(() => {
@@ -491,14 +501,14 @@ export default function LocationInput({
   // Any pre-filled value (e.g. from sessionStorage or profile) is treated as selected so the
   // dropdown does not open on first visit / page load
   useEffect(() => {
-    if (value && value.trim().length > 0 && !selectedLocation) {
-      setSelectedLocation(value.trim());
+    if (inputValue && inputValue.trim().length > 0 && !selectedLocation) {
+      setSelectedLocation(inputValue.trim());
     }
   }, []); // Run only on mount - this handles remounts and pre-filled values on load
 
   // Sync selectedLocation when value changes externally (e.g., cleared by parent)
   useEffect(() => {
-    const trimmedValue = value?.trim() || "";
+    const trimmedValue = inputValue?.trim() || "";
     // If value is cleared externally and we had a selected location, clear it
     if (!trimmedValue) {
       if (selectedLocation) {
@@ -524,20 +534,23 @@ export default function LocationInput({
         setSelectedLocation(trimmedValue);
       }
     }
-  }, [value, selectedLocation, popularList, mode]);
+  }, [inputValue, selectedLocation, popularList, mode]);
 
   // Update API suggestions when value changes
   useEffect(() => {
     // Only fetch suggestions if user is actively editing (not viewing selected location)
     const isEditing =
-      !selectedLocation || value.trim() !== selectedLocation.trim();
+      !selectedLocation || inputValue.trim() !== selectedLocation.trim();
     const hasLocalMatches = localSuggestions.length > 0;
     // Skip API call if we have good local matches (3+ suggestions) to improve performance
     const shouldSkipAPI = hasLocalMatches && localSuggestions.length >= 3;
     const willFetch =
-      value && value.trim().length >= 2 && isEditing && !shouldSkipAPI;
+      inputValue &&
+      inputValue.trim().length >= 2 &&
+      isEditing &&
+      !shouldSkipAPI;
     if (willFetch) {
-      getPlaceSuggestions(value);
+      getPlaceSuggestions(inputValue);
     } else {
       setApiSuggestions([]);
     }
@@ -550,7 +563,7 @@ export default function LocationInput({
         abortControllerRef.current.abort();
       }
     };
-  }, [value, selectedLocation, localSuggestions]);
+  }, [inputValue, selectedLocation, localSuggestions]);
 
   // Open dropdown when we have suggestions, but only if:
   // - User is actively typing (not just viewing a selected location)
@@ -568,7 +581,7 @@ export default function LocationInput({
       return;
     }
     // Close when value exactly matches selected location (e.g. after selection or external sync)
-    if (selectedLocation && value?.trim() === selectedLocation.trim()) {
+    if (selectedLocation && inputValue?.trim() === selectedLocation.trim()) {
       setIsDropdownOpen(false);
       return;
     }
@@ -578,14 +591,14 @@ export default function LocationInput({
     }
     if (
       suggestions.length > 0 &&
-      value &&
-      value.trim().length >= 1 &&
-      (!selectedLocation || value.trim() !== selectedLocation.trim())
+      inputValue &&
+      inputValue.trim().length >= 1 &&
+      (!selectedLocation || inputValue.trim() !== selectedLocation.trim())
     ) {
       setIsDropdownOpen(true);
       updateDropdownPosition();
     }
-  }, [suppressDropdown, suggestions, value, selectedLocation, isSelecting]);
+  }, [suppressDropdown, suggestions, inputValue, selectedLocation, isSelecting]);
 
   // Only show dropdown if:
   // 1. Not suppressed (e.g. value from "Use my current location")
@@ -597,8 +610,8 @@ export default function LocationInput({
     !suppressDropdown &&
     isDropdownOpen &&
     suggestions.length > 0 &&
-    value?.trim()?.length >= 1 &&
-    (!selectedLocation || value.trim() !== selectedLocation.trim());
+    inputValue?.trim()?.length >= 1 &&
+    (!selectedLocation || inputValue.trim() !== selectedLocation.trim());
 
   // Find scrollable ancestors so we can listen to their scroll (e.g. when input is inside a long form)
   const getScrollParents = (el) => {
@@ -682,7 +695,7 @@ export default function LocationInput({
         );
       };
     }
-  }, [showDropdown, value]);
+  }, [showDropdown, inputValue]);
 
   // Close dropdown when clicking outside (input or dropdown) - backup for blur
   useEffect(() => {
@@ -764,16 +777,20 @@ export default function LocationInput({
       // 1. Value doesn't match selected location (user is editing)
       // 2. Or there's no selected location yet
       const isEditing =
-        !selectedLocation || value.trim() !== selectedLocation.trim();
+        !selectedLocation || inputValue.trim() !== selectedLocation.trim();
 
       if (isEditing) {
-        if (value && value.trim().length >= 1 && suggestions.length > 0) {
+        if (
+          inputValue &&
+          inputValue.trim().length >= 1 &&
+          suggestions.length > 0
+        ) {
           setIsDropdownOpen(true);
           updateDropdownPosition();
           requestAnimationFrame(updateDropdownPosition); // After browser scroll-into-view (e.g. Publications/Trials)
-        } else if (value && value.trim().length >= 2) {
+        } else if (inputValue && inputValue.trim().length >= 2) {
           setIsDropdownOpen(true);
-          getPlaceSuggestions(value);
+          getPlaceSuggestions(inputValue);
           requestAnimationFrame(updateDropdownPosition);
         }
       }
@@ -798,7 +815,7 @@ export default function LocationInput({
       onBlur(event);
     }
 
-    const trimmedValue = value.trim();
+    const trimmedValue = inputValue.trim();
 
     // If we have a selected location and the value matches it, keep it selected
     if (selectedLocation && trimmedValue === selectedLocation.trim()) {
@@ -884,9 +901,9 @@ export default function LocationInput({
       if (activeIndex >= 0 && suggestions[activeIndex]) {
         // User selected from dropdown
         handleSelectSuggestion(suggestions[activeIndex]);
-      } else if (value && value.trim().length > 0) {
+      } else if (inputValue && inputValue.trim().length > 0) {
         // User manually entered a location and pressed Enter - treat as selected
-        const trimmedValue = value.trim();
+        const trimmedValue = inputValue.trim();
         setSelectedLocation(trimmedValue);
         setIsDropdownOpen(false);
         setApiSuggestions([]);
@@ -1007,7 +1024,7 @@ export default function LocationInput({
           <input
             ref={inputRef}
             type="text"
-            value={value}
+            value={inputValue}
             onChange={handleInputChange}
             onFocus={handleFocus}
             onBlur={handleBlur}

@@ -2001,9 +2001,25 @@ export default function Trials() {
         }
 
         setStatus(state.status || "RECRUITING"); // Default to RECRUITING
-        setLocation(state.location || "");
+        setLocation(
+          typeof state.location === "string"
+            ? state.location
+            : state.location &&
+                typeof state.location === "object" &&
+                (state.location.city || state.location.country)
+              ? [
+                  state.location.city,
+                  state.location.state,
+                  state.location.country,
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : "",
+        );
         setLocationMode(state.locationMode || "global");
-        setInstitution(state.institution || "");
+        setInstitution(
+          typeof state.institution === "string" ? state.institution : "",
+        );
         // useMedicalInterest is loaded from localStorage in useState initializer
         // Only override if sessionStorage has it and localStorage doesn't
         if (localStorage.getItem("useMedicalInterest") === null) {
@@ -2165,9 +2181,15 @@ export default function Trials() {
       }
 
       if (!isUserSignedIn && (guestLocation || parsedGuestInfo?.location)) {
-        const loc = guestLocation || parsedGuestInfo?.location;
-        if (loc) {
-          setLocation(loc);
+        const raw = guestLocation || parsedGuestInfo?.location;
+        const locStr =
+          typeof raw === "string"
+            ? raw
+            : raw && typeof raw === "object"
+              ? [raw.city, raw.state, raw.country].filter(Boolean).join(", ")
+              : "";
+        if (locStr) {
+          setLocation(locStr);
           setLocationMode("custom");
         }
       }
@@ -2594,115 +2616,82 @@ export default function Trials() {
                 </div>
               )}
 
-              {/* Location Options: Near Me | Global | Custom (same as Experts – site colour) */}
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs font-medium text-slate-700">
+              {/* Location + Institution: institution flush right on wide layouts */}
+              <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0 shrink-0">
+                  <span className="text-xs font-medium text-[#2F3C96] shrink-0">
                     Location:
                   </span>
                   {userLocation && (
                     <button
                       type="button"
+                      aria-pressed={locationMode === "current"}
+                      aria-label="Use my profile location for search"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setLocationMode("current");
-                        setLocation("");
+                        if (locationMode === "current") {
+                          setLocationMode("global");
+                          setLocation("");
+                        } else {
+                          setLocationMode("current");
+                          setLocation("");
+                        }
                       }}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                      className={`h-9 shrink-0 inline-flex items-center justify-center gap-1 rounded-lg border px-3 text-xs font-medium text-[#2F3C96] transition-colors ${
                         locationMode === "current"
-                          ? "shadow-md border border-[#D0C4E2]"
-                          : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          ? "border-[#D0C4E2] bg-[#D0C4E2]"
+                          : "border-[#E8E8E8] bg-white hover:bg-slate-50"
                       }`}
-                      style={
-                        locationMode === "current"
-                          ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
-                          : undefined
-                      }
                     >
-                      <MapPin className="w-3 h-3" />
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
                       Near Me
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setLocationMode("global");
-                      setLocation("");
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      locationMode === "global"
-                        ? "shadow-md border border-[#D0C4E2]"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                    style={
-                      locationMode === "global"
-                        ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
-                        : undefined
-                    }
-                  >
-                    Global
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setLocationMode("custom");
-                    }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      locationMode === "custom"
-                        ? "shadow-md border border-[#D0C4E2]"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                    style={
-                      locationMode === "custom"
-                        ? { backgroundColor: "#D0C4E2", color: "#2F3C96" }
-                        : undefined
-                    }
-                  >
-                    Custom
-                  </button>
-                </div>
-
-                {locationMode === "custom" && (
                   <LocationInput
-                    value={location}
-                    onChange={setLocation}
-                    placeholder="e.g. City, State/Province, Country"
-                    className="w-full"
-                    inputClassName="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 placeholder-slate-400"
+                    value={locationMode === "current" ? "" : location}
+                    onChange={(v) => {
+                      setLocation(v);
+                      if (v.trim()) {
+                        setLocationMode("custom");
+                      } else {
+                        setLocationMode("global");
+                      }
+                    }}
+                    placeholder="City, country…"
+                    className="w-[9rem] sm:w-44 shrink-0 max-w-[11rem]"
+                    inputClassName="!h-9 !min-h-9 !py-0 !rounded-lg !text-xs border border-[#E8E8E8] bg-white pl-9 pr-3 text-[#2F3C96] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D0C4E2] focus:border-[#D0C4E2] box-border leading-none"
                   />
-                )}
-                <div className="relative">
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Institution
-                  </label>
-                  <select
-                    value={institution}
-                    onChange={(e) => setInstitution(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 appearance-none"
-                  >
-                    <option value="">All institutions</option>
-                    <option value="University of California, Los Angeles">
-                      University of California, Los Angeles
-                    </option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs mt-4">
-                    <svg
-                      className="h-3 w-3"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
+                </div>
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  <span className="text-xs font-medium text-[#2F3C96] shrink-0">
+                    Institution:
+                  </span>
+                  <div className="relative w-56 min-w-[10rem] sm:w-72">
+                    <select
+                      value={institution}
+                      onChange={(e) => setInstitution(e.target.value)}
+                      className="h-9 min-h-9 w-full rounded-lg border border-[#E8E8E8] bg-white px-3 py-0 pr-8 text-xs leading-none text-[#2F3C96] focus:outline-none focus:ring-2 focus:ring-[#D0C4E2] focus:border-[#D0C4E2] appearance-none box-border"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                      <option value="">All institutions</option>
+                      <option value="University of California, Los Angeles">
+                        University of California, Los Angeles
+                      </option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
+                      <svg
+                        className="h-3 w-3"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
