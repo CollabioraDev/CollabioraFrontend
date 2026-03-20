@@ -67,6 +67,7 @@ export default function Experts() {
   const [researchArea, setResearchArea] = useState("");
   const [diseaseOfInterest, setDiseaseOfInterest] = useState("");
   const [location, setLocation] = useState("");
+  const [institution, setInstitution] = useState("");
   const [locationMode, setLocationMode] = useState("global"); // "current", "global", "custom"
   const [userLocation, setUserLocation] = useState(null);
   const [useMedicalInterest, setUseMedicalInterest] = useState(() => {
@@ -365,6 +366,26 @@ export default function Experts() {
     // If on platform is checked, search platform; otherwise search global
     const sourcesToSearch = isOnPlatform ? ["platform"] : ["global"];
 
+    const hasTopicInput =
+      Boolean(currentResearchArea) || Boolean(currentDiseaseOfInterest);
+    const hasInstitutionFilter = Boolean(institution && institution.trim());
+
+    if (!hasTopicInput && !hasInstitutionFilter) {
+      toast.error(
+        "Enter a condition, research focus, or select an institution to search.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (isOnPlatform && !hasTopicInput && hasInstitutionFilter) {
+      toast.error(
+        'Browsing by institution uses global experts. Uncheck "On Platform" or enter a topic.',
+      );
+      setLoading(false);
+      return;
+    }
+
     // Parse "City, State/Province, Country" into structured object
     const parseLocationToObject = (locStr) => {
       if (!locStr || !locStr.trim()) return null;
@@ -448,6 +469,10 @@ export default function Experts() {
           // OLD: searchQueryParts.push(`in ${locationStr}`); // Removed - causes Gemini to treat location as topic
         } else if (locationMode === "global") {
           // For global search, no location parameter needed
+        }
+
+        if (institution) {
+          sourceParams.set("institution", institution);
         }
 
         const searchQuery = searchQueryParts.join(" ");
@@ -614,6 +639,7 @@ export default function Experts() {
         researchArea: nextResearchArea,
         diseaseOfInterest: nextDiseaseOfInterest,
         location,
+        institution,
         locationMode,
         useMedicalInterest,
         userMedicalInterest,
@@ -824,6 +850,10 @@ export default function Experts() {
           const searchQuery = searchQueryParts.join(" ");
           if (searchQuery) sourceParams.set("q", searchQuery);
 
+          if (institution) {
+            sourceParams.set("institution", institution);
+          }
+
           sourceParams.set("page", "1");
           sourceParams.set("pageSize", "5");
 
@@ -974,6 +1004,7 @@ export default function Experts() {
           researchArea: filterValue,
           diseaseOfInterest: "",
           location,
+          institution,
           locationMode,
           useMedicalInterest,
           userMedicalInterest,
@@ -1359,6 +1390,7 @@ export default function Experts() {
         setResearchArea(state.researchArea || "");
         setDiseaseOfInterest(state.diseaseOfInterest || "");
         setLocation(state.location || "");
+        setInstitution(state.institution || "");
         setLocationMode(state.locationMode || "global");
         // useMedicalInterest is loaded from localStorage in useState initializer
         // Only override if localStorage doesn't have it
@@ -1397,6 +1429,7 @@ export default function Experts() {
       setResearchArea("");
       setDiseaseOfInterest("");
       setLocation("");
+      setInstitution("");
       setLocationMode("global");
       setUseMedicalInterest(true);
       setUserMedicalInterest("");
@@ -1895,6 +1928,35 @@ export default function Experts() {
                       inputClassName="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 placeholder-slate-400"
                     />
                   )}
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                      Institution
+                    </label>
+                    <select
+                      value={institution}
+                      onChange={(e) => setInstitution(e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pr-8 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-slate-900 appearance-none"
+                    >
+                      <option value="">All institutions</option>
+                      <option value="University of California, Los Angeles">
+                        University of California, Los Angeles
+                      </option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs mt-4">
+                      <svg
+                        className="h-3 w-3"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Expert Source Toggle */}
