@@ -2684,7 +2684,7 @@ export default function YoriAI() {
                     )}
                     {sampleQuestionsOpen
                       ? "Hide questions"
-                      : "What you can ask?"}
+                      : "What can I help with?"}
                   </button>
                   {sampleQuestionsOpen && (
                     <div className="flex flex-wrap gap-2 mt-2 justify-center">

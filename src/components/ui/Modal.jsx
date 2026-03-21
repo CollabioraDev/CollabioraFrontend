@@ -2,7 +2,13 @@ import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  maxWidthClassName = "max-w-2xl",
+}) {
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -37,7 +43,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
           {/* Modal Content */}
           <motion.div
-            className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-hidden bg-white rounded-2xl shadow-2xl border"
+            className={`relative z-10 w-full ${maxWidthClassName} max-h-[90vh] overflow-hidden bg-white rounded-2xl shadow-2xl border`}
             style={{ borderColor: "rgba(208, 196, 226, 0.5)" }}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

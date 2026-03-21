@@ -851,12 +851,20 @@ export default function CurateTrials() {
               page.
             </p>
           </div>
-          <Link
-            to="/trials"
-            className="text-sm font-medium text-[#2F3C96] hover:underline shrink-0"
-          >
-            ← Back to Trials
-          </Link>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Link
+              to="/curate-trials/manage"
+              className="text-sm font-medium text-indigo-600 hover:underline"
+            >
+              View & edit saved trials
+            </Link>
+            <Link
+              to="/trials"
+              className="text-sm font-medium text-[#2F3C96] hover:underline"
+            >
+              ← Back to Trials
+            </Link>
+          </div>
         </div>
 
         {/* Per-trial slots */}
@@ -1009,3 +1017,11 @@ export default function CurateTrials() {
     </Layout>
   );
 }
+
+export {
+  TrialPreviewDetail,
+  applyTrialPatch,
+  buildEligibilityCriteriaFromParts,
+  parseContactsLines,
+  getStatusColor,
+};

@@ -345,6 +345,17 @@ export default function Trials() {
     })),
   ];
 
+  const INSTITUTION_UCLA = "University of California, Los Angeles";
+  const institutionOptions = [
+    { value: "", label: "All institutions" },
+    { value: INSTITUTION_UCLA, label: INSTITUTION_UCLA },
+  ];
+
+  /** Tracks prior institution for proactive UCLA search; synced in effect below. */
+  const prevInstitutionRef = useRef("");
+  /** Skip one auto-search when UCLA is rehydrated from session (not a user toggle). */
+  const suppressUclaAutoSearchFromSessionRef = useRef(false);
+
   // Keyword chips management functions
   const addKeyword = (keyword) => {
     // Auto-correct the keyword before adding
@@ -777,6 +788,26 @@ export default function Trials() {
       setLoading(false);
     }
   }
+
+  // Selecting UCLA after "All institutions" runs search immediately (loading via search()).
+  useEffect(() => {
+    if (suppressUclaAutoSearchFromSessionRef.current) {
+      if (institution === INSTITUTION_UCLA) {
+        suppressUclaAutoSearchFromSessionRef.current = false;
+        prevInstitutionRef.current = institution;
+        return;
+      }
+      // Restore wrote UCLA but state not updated yet — wait for next run.
+      return;
+    }
+    const prev = prevInstitutionRef.current;
+    prevInstitutionRef.current = institution;
+    if (institution === INSTITUTION_UCLA && prev === "") {
+      void search();
+    }
+    // search() closes over latest filters; institution is already updated this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only react to institution
+  }, [institution]);
 
   // Navigate to specific page (server-side pagination)
   async function goToPage(page) {
@@ -2023,9 +2054,14 @@ export default function Trials() {
               : "",
         );
         setLocationMode(state.locationMode || "global");
-        setInstitution(
-          typeof state.institution === "string" ? state.institution : "",
-        );
+        {
+          const restoredInst =
+            typeof state.institution === "string" ? state.institution : "";
+          setInstitution(restoredInst);
+          if (restoredInst === INSTITUTION_UCLA) {
+            suppressUclaAutoSearchFromSessionRef.current = true;
+          }
+        }
         // useMedicalInterest is loaded from localStorage in useState initializer
         // Only override if sessionStorage has it and localStorage doesn't
         if (localStorage.getItem("useMedicalInterest") === null) {
@@ -2673,32 +2709,15 @@ export default function Trials() {
                   <span className="text-xs font-medium text-[#2F3C96] shrink-0">
                     Institution:
                   </span>
-                  <div className="relative w-56 min-w-[10rem] sm:w-72">
-                    <select
-                      value={institution}
-                      onChange={(e) => setInstitution(e.target.value)}
-                      className="h-9 min-h-9 w-full rounded-lg border border-[#E8E8E8] bg-white px-3 py-0 pr-8 text-xs leading-none text-[#2F3C96] focus:outline-none focus:ring-2 focus:ring-[#D0C4E2] focus:border-[#D0C4E2] appearance-none box-border"
-                    >
-                      <option value="">All institutions</option>
-                      <option value="University of California, Los Angeles">
-                        University of California, Los Angeles
-                      </option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  </div>
+                  <CustomSelect
+                    value={institution}
+                    onChange={(v) => setInstitution(v)}
+                    options={institutionOptions}
+                    placeholder="All institutions"
+                    variant="location"
+                    className="w-56 min-w-[10rem] sm:w-72"
+                    maxDropdownHeight={320}
+                  />
                 </div>
               </div>
 

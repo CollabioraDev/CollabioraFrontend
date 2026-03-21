@@ -7,7 +7,7 @@ March 17, 2026
 
 Contact: ssasikumar@collabiora.com | collabiora.com
 
----
+---                                                     
 
 LOS ANGELES, CA — Collabiora, an AI-powered health literacy platform bridging patients, clinical researchers, and the healthcare industry, today announced the filing of a provisional patent application with the United States Patent and Trademark Office (USPTO) for Yori, its proprietary AI agent and health information retrieval system. The filing marks a pivotal milestone as the Los Angeles-based healthtech startup moves to protect its core artificial intelligence technology and expand its footprint in the rapidly growing medical AI market.
 

@@ -191,16 +191,64 @@ export default function CustomSelect({
   };
 
   const isOnboarding = variant === "onboarding";
-  const borderColor = isOnboarding ? "#E8E8E8" : "rgba(208, 196, 226, 0.3)";
-  const selectedBg = isOnboarding ? "rgba(208, 196, 226, 0.25)" : "rgba(232, 224, 239, 0.6)";
-  const hoverBg = isOnboarding ? "rgba(208, 196, 226, 0.15)" : "rgba(245, 242, 248, 1)";
-  const accentColor = isOnboarding ? "#2F3C96" : "#2F3C96";
+  const isLocation = variant === "location";
+  const borderColor = isOnboarding || isLocation
+    ? "#E8E8E8"
+    : "rgba(208, 196, 226, 0.3)";
+  const selectedBg = isOnboarding
+    ? "rgba(208, 196, 226, 0.25)"
+    : "rgba(232, 224, 239, 0.6)";
+  const hoverBg = isOnboarding
+    ? "rgba(208, 196, 226, 0.15)"
+    : "rgba(245, 242, 248, 1)";
+  const accentColor = "#2F3C96";
 
   const renderOption = (option) => {
     const isSelected = option.value === value;
+    const optKey = option.value === "" ? "__empty__" : String(option.value);
+
+    if (isLocation) {
+      return (
+        <li
+          key={optKey}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            handleSelect(option.value);
+          }}
+          className="flex items-center justify-between gap-2 px-3 py-2.5 text-sm transition-colors cursor-pointer min-w-0"
+          style={
+            isSelected
+              ? {
+                  backgroundColor: "rgba(208, 196, 226, 0.3)",
+                  color: "#2F3C96",
+                }
+              : { color: "#787878" }
+          }
+          onMouseEnter={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor =
+                "rgba(208, 196, 226, 0.2)";
+              e.currentTarget.style.color = "#2F3C96";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "#787878";
+            }
+          }}
+        >
+          <span className="flex-1 min-w-0 truncate">{option.label}</span>
+          {isSelected && (
+            <Check className="w-4 h-4 shrink-0" style={{ color: "#2F3C96" }} />
+          )}
+        </li>
+      );
+    }
+
     return (
       <li
-        key={option.value}
+        key={optKey}
         onMouseDown={(e) => {
           e.preventDefault();
           handleSelect(option.value);
@@ -224,8 +272,12 @@ export default function CustomSelect({
           }
         }}
       >
-        <span className="flex-1 min-w-0 whitespace-normal break-words">{option.label}</span>
-        {isSelected && <Check className="w-4 h-4 shrink-0" style={{ color: accentColor }} />}
+        <span className="flex-1 min-w-0 whitespace-normal break-words">
+          {option.label}
+        </span>
+        {isSelected && (
+          <Check className="w-4 h-4 shrink-0" style={{ color: accentColor }} />
+        )}
       </li>
     );
   };
@@ -234,7 +286,9 @@ export default function CustomSelect({
     <div
       ref={dropdownRef}
       data-custom-select-dropdown
-      className="fixed overflow-hidden rounded-lg border bg-white shadow-xl z-[10000]"
+      className={`fixed overflow-hidden border bg-white shadow-xl ${
+        isLocation ? "rounded-xl z-[9999]" : "rounded-lg z-[10000]"
+      }`}
       style={{
         top: `${dropdownPosition.top}px`,
         left: `${dropdownPosition.left}px`,
@@ -244,7 +298,10 @@ export default function CustomSelect({
         maxHeight: `${maxDropdownHeight}px`,
         borderColor,
         overflowX: "hidden",
-        visibility: isPositionCalculated || dropdownPosition.width > 0 ? "visible" : "hidden",
+        visibility:
+          isPositionCalculated || dropdownPosition.width > 0
+            ? "visible"
+            : "hidden",
       }}
       onMouseDown={(e) => e.preventDefault()}
     >
@@ -274,7 +331,9 @@ export default function CustomSelect({
       <ul
         className="overflow-y-auto overflow-x-hidden overscroll-contain list-none"
         style={{
-          maxHeight: searchable ? `${maxDropdownHeight - 44}px` : `${maxDropdownHeight}px`,
+          maxHeight: searchable
+            ? `${maxDropdownHeight - 44}px`
+            : `${maxDropdownHeight}px`,
           scrollBehavior: "smooth",
         }}
       >
@@ -314,31 +373,47 @@ export default function CustomSelect({
         aria-haspopup="listbox"
       >
         <div
-          className={`w-full px-3 py-2 pr-8 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 transition-all cursor-pointer ${
-            disabled
-              ? "opacity-50 cursor-not-allowed"
-              : isOnboarding
-                ? "hover:border-[#D0C4E2]"
-                : "hover:border-indigo-300"
-          } ${
-            isOpen
-              ? isOnboarding
-                ? "border-[#2F3C96] ring-2 ring-[#D0C4E2]"
-                : "border-indigo-500 ring-2 ring-indigo-500"
-              : isOnboarding
-                ? "border-[#E8E8E8]"
-                : "border-slate-300"
+          className={`w-full border bg-white focus:outline-none transition-all cursor-pointer ${
+            isLocation
+              ? `h-9 min-h-9 rounded-xl px-3 pr-8 py-0 text-xs leading-none box-border flex items-center ${
+                  disabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:border-[#D0C4E2]"
+                } ${
+                  isOpen
+                    ? "border-[#E8E8E8] ring-2 ring-[#D0C4E2]"
+                    : "border-[#E8E8E8]"
+                }`
+              : `px-3 py-2 pr-8 rounded-lg text-sm ${
+                  disabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : isOnboarding
+                      ? "hover:border-[#D0C4E2]"
+                      : "hover:border-indigo-300"
+                } ${
+                  isOpen
+                    ? isOnboarding
+                      ? "border-[#2F3C96] ring-2 ring-[#D0C4E2]"
+                      : "border-indigo-500 ring-2 ring-indigo-500"
+                    : isOnboarding
+                      ? "border-[#E8E8E8]"
+                      : "border-slate-300"
+                }`
           }`}
-          style={isOnboarding ? { color: selectedOption ? "#2F3C96" : "#787878" } : {}}
+          style={
+            isOnboarding || isLocation
+              ? { color: selectedOption ? "#2F3C96" : "#787878" }
+              : {}
+          }
         >
-          <span className="block truncate">
+          <span className="block truncate min-w-0">
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </div>
         <ChevronDown
-          className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none transition-transform ${
+          className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none transition-transform ${
             isOpen ? "rotate-180" : ""
-          }`}
+          } ${isLocation ? "h-3 w-3" : "w-4 h-4"}`}
           style={{ color: "#787878" }}
         />
       </div>

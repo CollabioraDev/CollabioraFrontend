@@ -41,6 +41,9 @@ const DashboardResearcher = React.lazy(
 );
 const Trials = React.lazy(() => import("./Pages/Trials.jsx"));
 const CurateTrials = React.lazy(() => import("./Pages/CurateTrials.jsx"));
+const CuratedTrialsManage = React.lazy(
+  () => import("./Pages/CuratedTrialsManage.jsx"),
+);
 const Publications = React.lazy(() => import("./Pages/Publications.jsx"));
 const Experts = React.lazy(() => import("./Pages/Experts.jsx"));
 const ExpertProfile = React.lazy(() => import("./Pages/ExpertProfile.jsx"));
@@ -467,6 +470,10 @@ const AppContent = () => {
           />
           <Route path="/trials" element={<Trials />} />
           <Route path="/curate-trials" element={<CurateTrials />} />
+          <Route
+            path="/curate-trials/manage"
+            element={<CuratedTrialsManage />}
+          />
           <Route path="/trial/:nctId" element={<TrialDetails />} />
           <Route path="/publications" element={<Publications />} />
           <Route path="/library" element={<Publications />} />
