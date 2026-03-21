@@ -421,7 +421,7 @@ export default function Favorites() {
       toast.loading("Generating PDF...", { id: "pdf-generation" });
 
       const patientName = reportModal.report?.patientContext?.name || "Patient";
-      const fileName = `Collabiora-Summary-Report-${patientName.replace(
+      const fileName = `collabiora-Summary-Report-${patientName.replace(
         /\s+/g,
         "-",
       )}-${new Date().toISOString().split("T")[0]}.pdf`;
@@ -463,7 +463,7 @@ export default function Favorites() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Collabiora Summary Report - ${patientName}</title>
+          <title>collabiora Summary Report - ${patientName}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #4f46e5; }
@@ -3635,7 +3635,7 @@ export default function Favorites() {
                         ).toLocaleString()}
                       </p>
                       <p className="mt-1" style={{ color: "#2F3C96" }}>
-                        Collabiora - Personalized Medical Research Platform
+                        collabiora - Personalized Medical Research Platform
                       </p>
                     </div>
                   </div>

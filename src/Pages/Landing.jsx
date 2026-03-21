@@ -504,7 +504,7 @@ export default function Landing() {
                   className="text-lg font-bold"
                   style={{ color: "#2F3C96" }}
                 >
-                  Add Collabiora to Home Screen
+                  Add collabiora to Home Screen
                 </h2>
                 <button
                   type="button"

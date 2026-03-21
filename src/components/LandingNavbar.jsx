@@ -105,7 +105,7 @@ export default function LandingNavbar() {
         <Link to={user ? "/yori" : "/"} className="flex items-center">
           <motion.img
             src="/logo.png"
-            alt="Collabiora"
+            alt="collabiora"
             animate={{
               height: isMobile
                 ? isAtTop

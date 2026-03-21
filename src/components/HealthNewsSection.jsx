@@ -508,7 +508,7 @@ export default function HealthNewsSection({ user }) {
   // Small CTA banner using the latest press release PDF from `frontend/public`.
   // Kept compact so it doesn't take much vertical space in the News section.
   const pressReleaseHref = "/press-releases/yori";
-  const pressReleaseTitle = "Collabiora Files Provisional Patent for Yori";
+  const pressReleaseTitle = "collabiora Files Provisional Patent for Yori";
   const pressReleaseBlurb =
     "An AI-powered health information retrieval agent connecting patients, clinical researchers, and medical institutions through evidence-based synthesis.";
   const pressReleaseDate = "March 17, 2026";

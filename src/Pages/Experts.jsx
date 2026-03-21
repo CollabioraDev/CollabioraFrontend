@@ -1628,7 +1628,7 @@ export default function Experts() {
         target: "[data-tour='experts-on-platform']",
         title: "On platform vs global",
         content:
-          "When **On platform** is checked, you see researchers who are on Collabiora. Uncheck it to search global experts from other sources.",
+          "When **On platform** is checked, you see researchers who are on collabiora. Uncheck it to search global experts from other sources.",
         placement: "bottom",
       },
       {

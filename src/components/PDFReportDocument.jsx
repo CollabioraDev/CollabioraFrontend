@@ -259,12 +259,12 @@ const Icons = {
 // Helper component to render page header
 const PageHeader = ({ report }) => (
   <>
-    <Text style={styles.watermark}>Collabiora AI</Text>
+    <Text style={styles.watermark}>collabiora AI</Text>
     <View style={styles.header}>
       <View style={styles.headerLeft}>
         <Text style={styles.title}>Medical Research Summary Report</Text>
         <Text style={styles.subtitle}>
-          Collabiora- Personalized Medical Insights
+          collabiora- Personalized Medical Insights
         </Text>
       </View>
       <View style={styles.reportInfo}>
@@ -297,7 +297,7 @@ const SectionHeader = ({ icon, title, count, trialNumbers }) => (
 const PageFooter = ({ report, pageNumber, totalPages }) => (
   <View style={styles.footer}>
     <Text style={styles.footerMain}>
-      Collabiora - AI Powered Healthcare Platform
+      collabiora - AI Powered Healthcare Platform
     </Text>
     <Text>Generated Summary Report • Confidential Medical Document</Text>
     <Text>
@@ -309,7 +309,7 @@ const PageFooter = ({ report, pageNumber, totalPages }) => (
 
 /**
  * Enhanced PDF Report Document Component
- * Renders professional medical report with Collabiora branding
+ * Renders professional medical report with collabiora branding
  * Each publication, trial, and expert appears on its own page
  */
 // Do not show Contact for global experts/collaborators (e.g. "Contact Request via CuraLink Admin")

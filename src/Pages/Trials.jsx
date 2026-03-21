@@ -1503,7 +1503,7 @@ export default function Trials() {
     if (src === "clinicaltrials.gov") return "ClinicalTrials.gov";
     if (src === "isrctn") return "ISRCTN";
     if (src === "ctis") return "EU CTIS";
-    if (src === "cura-link") return "Collabiora";
+    if (src === "cura-link") return "collabiora";
     return src || "Unknown";
   }
 
@@ -1996,8 +1996,12 @@ export default function Trials() {
     const subject = encodeURIComponent(
       `Interest in Clinical Trial: ${trial.title}`,
     );
+    const afterTitle =
+      trial.sourceRegistry === "cura-link"
+        ? `\n\nStatus: ${trial.status}`
+        : `\n\nTrial ID: ${trial.id || trial._id || "N/A"}\nStatus: ${trial.status}`;
     const body = encodeURIComponent(
-      `Dear Clinical Trial Team,\n\nI am interested in learning more about the clinical trial: ${trial.title}\n\nTrial ID: ${trial.id}\nStatus: ${trial.status}\n\nPlease provide more information about participation requirements and next steps.\n\nThank you.\n\nBest regards,`,
+      `Dear Clinical Trial Team,\n\nI am interested in learning more about the clinical trial: ${trial.title}${afterTitle}\n\nPlease provide more information about participation requirements and next steps.\n\nThank you.\n\nBest regards,`,
     );
     const email = trial.contacts?.[0]?.email || "contact@clinicaltrials.gov";
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, "_blank");
@@ -3741,16 +3745,20 @@ export default function Trials() {
                     </h4>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span
-                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border"
-                      style={{
-                        backgroundColor: "rgba(209, 211, 229, 1)",
-                        color: "#253075",
-                        borderColor: "rgba(163, 167, 203, 1)",
-                      }}
-                    >
-                      {detailsModal.trial._id || detailsModal.trial.id || "N/A"}
-                    </span>
+                    {detailsModal.trial.sourceRegistry !== "cura-link" && (
+                      <span
+                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border"
+                        style={{
+                          backgroundColor: "rgba(209, 211, 229, 1)",
+                          color: "#253075",
+                          borderColor: "rgba(163, 167, 203, 1)",
+                        }}
+                      >
+                        {detailsModal.trial._id ||
+                          detailsModal.trial.id ||
+                          "N/A"}
+                      </span>
+                    )}
                     {detailsModal.trial.status && (
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
@@ -3782,8 +3790,9 @@ export default function Trials() {
                             ? "ISRCTN"
                             : detailsModal.trial.sourceRegistry === "eu-ctr"
                               ? "EU Clinical Trials Register"
-                              : detailsModal.trial.sourceRegistry === "cura-link"
-                                ? "Collabiora"
+                              : detailsModal.trial.sourceRegistry ===
+                                  "cura-link"
+                                ? "collabiora"
                                 : detailsModal.trial.sourceRegistry}
                       </span>
                     )}
@@ -4812,9 +4821,14 @@ export default function Trials() {
                       {contactModal.trial?.title || "Trial"}
                     </h4>
                   </div>
-                  <p className="text-sm text-slate-600">
-                    Trial ID: {contactModal.trial?.id || "N/A"}
-                  </p>
+                  {contactModal.trial?.sourceRegistry !== "cura-link" && (
+                    <p className="text-sm text-slate-600">
+                      Trial ID:{" "}
+                      {contactModal.trial?.id ||
+                        contactModal.trial?._id ||
+                        "N/A"}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -4905,9 +4919,14 @@ export default function Trials() {
                       {contactStepsModal.trial?.title || "Trial"}
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Trial ID: {contactStepsModal.trial?.id || "N/A"}
-                  </p>
+                  {contactStepsModal.trial?.sourceRegistry !== "cura-link" && (
+                    <p className="text-xs text-slate-600 mb-3">
+                      Trial ID:{" "}
+                      {contactStepsModal.trial?.id ||
+                        contactStepsModal.trial?._id ||
+                        "N/A"}
+                    </p>
+                  )}
 
                   {/* Navigation Buttons */}
                   <div className="flex gap-3">

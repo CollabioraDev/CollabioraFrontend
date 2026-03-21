@@ -19,14 +19,14 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-4">
               <img
                 src="/logo1.png"
-                alt="Collabiora Logo"
+                alt="collabiora Logo"
                 className="h-6 w-auto"
               />
               <span
                 className="text-lg font-bold tracking-tight"
                 style={{ color: "#2F3C96" }}
               >
-                Collabiora
+                collabiora
               </span>
             </div>
             <p

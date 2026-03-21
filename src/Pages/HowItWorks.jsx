@@ -36,7 +36,7 @@ export default function HowItWorks() {
             </h1>
             <div className="w-20 h-1 bg-linear-to-r from-primary/50 via-primary to-primary/50 rounded-full mx-auto mb-4" />
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
-              Watch a quick walkthrough of the Collabiora platform and how it
+              Watch a quick walkthrough of the collabiora platform and how it
               helps patients and researchers collaborate more effectively.
             </p>
           </motion.div>

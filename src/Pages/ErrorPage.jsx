@@ -42,7 +42,7 @@ export default function ErrorPage() {
             >
               <img
                 src="/sad-yori-face.png"
-                alt="Yori – Collabiora's friendly assistant"
+                alt="Yori – collabiora's friendly assistant"
                 className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
               />
             </motion.div>

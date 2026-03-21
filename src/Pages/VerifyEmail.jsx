@@ -122,7 +122,7 @@ export default function VerifyEmail() {
       <div className="mb-8">
         <img 
           src={logoUrl} 
-          alt="Collabiora Logo" 
+          alt="collabiora Logo" 
           className="h-16 w-auto"
         />
       </div>
@@ -218,7 +218,7 @@ export default function VerifyEmail() {
       {/* Footer Text */}
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
-          © {new Date().getFullYear()} Collabiora. All rights reserved.
+          © {new Date().getFullYear()} collabiora. All rights reserved.
         </p>
       </div>
     </div>

@@ -368,7 +368,7 @@ const markdownComponents = {
       : isClinicalTrials
         ? "View on ClinicalTrials.gov"
         : isPublicationRoute
-          ? "View on Collabiora"
+          ? "View on collabiora"
           : isExpertProfile
             ? "View profile"
             : children || href;
@@ -1073,7 +1073,7 @@ const PublicationDetailsCard = ({
                 to={publicationRoute}
                 className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
               >
-                View on Collabiora <ExternalLink className="w-4 h-4" />
+                View on collabiora <ExternalLink className="w-4 h-4" />
               </Link>
             ) : url ? (
               <a
@@ -1326,7 +1326,7 @@ const CommunityCards = ({ communities }) => {
         <div className="border-b border-[#D1D3E5] bg-[#E8E9F2]/60 px-5 py-4">
           <p className="text-sm font-semibold text-[#2F3C96] flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Communities on Collabiora
+            Communities on collabiora
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Join these communities to connect with others.
@@ -1827,7 +1827,7 @@ export default function YoriAI() {
       first
         ? `Latest research on ${first}`
         : "Latest research on my condition",
-      "What communities can I join on Collabiora?",
+      "What communities can I join on collabiora?",
     ];
   }, [userConditions]);
   const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
@@ -2967,7 +2967,7 @@ export default function YoriAI() {
                   className="text-xs leading-relaxed"
                   style={{ color: "#555" }}
                 >
-                 Get early access to new Collabiora features and help shape what comes next. Join as a beta user to preview updates, test improvements, and share your feedback.
+                 Get early access to new collabiora features and help shape what comes next. Join as a beta user to preview updates, test improvements, and share your feedback.
                 </p>
               </div>
               <button

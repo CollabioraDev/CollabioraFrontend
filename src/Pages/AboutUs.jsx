@@ -78,7 +78,7 @@ export default function AboutUs() {
 
                 <div className="space-y-3.5 text-foreground/90">
                   <p className="text-base sm:text-lg font-semibold text-foreground leading-relaxed">
-                    Collabiora began with patients.
+                    collabiora began with patients.
                   </p>
 
                   <p className="text-sm sm:text-base leading-relaxed">
@@ -108,7 +108,7 @@ export default function AboutUs() {
                   </div>
 
                   <p className="text-base sm:text-lg font-semibold text-foreground">
-                    Collabiora was created to close that gap.
+                    collabiora was created to close that gap.
                   </p>
 
                   <p className="text-sm sm:text-base leading-relaxed">

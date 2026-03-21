@@ -117,7 +117,7 @@ export default function EmailPreferences() {
               Email preferences
             </h1>
             <p className="text-xs text-slate-600">
-              Manage reminders related to your Collabiora account.
+              Manage reminders related to your collabiora account.
             </p>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function EmailPreferences() {
                 className="text-[11px] text-slate-600 underline"
                 onClick={() => navigate("/")}
               >
-                Go back to Collabiora
+                Go back to collabiora
               </button>
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function EmailPreferences() {
               </p>
               <p className="mt-1">
                 {type === "weekly-mailer"
-                  ? "These settings only apply to Collabiora weekly digest emails."
+                  ? "These settings only apply to collabiora weekly digest emails."
                   : "These settings only apply to profile completion reminder emails."}
               </p>
             </div>

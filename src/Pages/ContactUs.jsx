@@ -98,9 +98,9 @@ export default function ContactUs() {
     }
   };
 
-  const defaultEmailSubject = "Contact from Collabiora website";
+  const defaultEmailSubject = "Contact from collabiora website";
   const defaultEmailBody =
-    "Hello,\n\nI would like to get in touch with the Collabiora team.\n\n[Please share your question or feedback here]";
+    "Hello,\n\nI would like to get in touch with the collabiora team.\n\n[Please share your question or feedback here]";
   const contactEmail = "info@collabiora.com";
 
   // Gmail compose URL — opens compose in a new browser tab

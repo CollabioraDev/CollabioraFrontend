@@ -86,7 +86,7 @@ export default function DashboardPatient() {
   const [data, setData] = useState({
     trials: [],
     publications: [],
-    experts: [], // Collabiora Experts (from recommendations)
+    experts: [], // collabiora experts (from recommendations)
   });
   const [globalExperts, setGlobalExperts] = useState([]); // Global Experts (from external search, loaded on initial page load)
   const [user, setUser] = useState(null);
@@ -597,7 +597,7 @@ export default function DashboardPatient() {
 
       const patientName =
         favoritesReportModal.report?.patientContext?.name || "Patient";
-      const fileName = `Collabiora-Summary-Report-${patientName.replace(
+      const fileName = `collabiora-Summary-Report-${patientName.replace(
         /\s+/g,
         "-",
       )}-${new Date().toISOString().split("T")[0]}.pdf`;
@@ -4343,7 +4343,7 @@ export default function DashboardPatient() {
                                   </div>
                                   <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-0.5 sm:mt-1 line-clamp-2">
                                     Connect with {expertsLabel.toLowerCase()}{" "}
-                                    who are active on Collabiora and available
+                                    who are active on collabiora and available
                                     for direct collaboration.
                                   </p>
                                 </div>
@@ -6479,7 +6479,9 @@ export default function DashboardPatient() {
                                             appt._id
                                           }
                                           onClick={() =>
-                                            requestRefundForAppointment(appt._id)
+                                            requestRefundForAppointment(
+                                              appt._id,
+                                            )
                                           }
                                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-60"
                                         >

@@ -4696,7 +4696,7 @@ export default function Forums() {
                         Community Guidelines
                       </h3>
                       <p>
-                        Collabiora is a space for respectful, educational
+                        collabiora is a space for respectful, educational
                         discussion about health research. By participating, you
                         agree to:
                       </p>
@@ -4725,7 +4725,7 @@ export default function Forums() {
                           Medical Disclaimer
                         </h4>
                         <p className="mb-2">
-                          Collabiora does not provide medical advice.
+                          collabiora does not provide medical advice.
                         </p>
                         <ul className="list-disc list-inside space-y-1 text-[#484848]">
                           <li>
@@ -4777,7 +4777,7 @@ export default function Forums() {
                           Moderation Rights
                         </h4>
                         <p className="text-[#484848]">
-                          Collabiora reserves the right to remove posts or
+                          collabiora reserves the right to remove posts or
                           restrict accounts that violate these guidelines.
                         </p>
                         <p className="mt-2 text-[#484848]">
@@ -4985,7 +4985,7 @@ export default function Forums() {
 
                         {userProfileModalData.isForumHelper && (
                           <p className="text-sm text-[#787878] bg-[#F5F5F5] border border-[#E8E8E8] rounded-lg p-4">
-                            This is the Collabiora forum helper/tool account. It
+                            This is the collabiora forum helper/tool account. It
                             posts helpful answers in the community. You cannot
                             follow this account.
                           </p>

@@ -682,7 +682,7 @@ export default function ExpertProfile() {
                       className="flex items-center gap-1.5"
                     >
                       <Info className="w-3.5 h-3.5" />
-                      On Collabiora? → {isOnPlatform ? "Yes" : "No"}
+                      On collabiora? → {isOnPlatform ? "Yes" : "No"}
                     </span>,
                   );
                   parts.push(
@@ -1262,7 +1262,7 @@ export default function ExpertProfile() {
               <div className="flex items-center gap-2 text-[#787878]">
                 <Info className="w-4 h-4 text-[#2F3C96]" />
                 <span className="text-sm">
-                  Messaging unavailable — this expert is not yet on Collabiora.
+                  Messaging unavailable — this expert is not yet on collabiora.
                 </span>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -1331,7 +1331,7 @@ export default function ExpertProfile() {
               <div className="inline-flex items-center justify-center rounded-full bg-brand-blue-700 p-4 sm:p-5 shadow-lg">
                 <img
                   src="/sad-yori-face.png"
-                  alt="Yori – Collabiora's friendly assistant"
+                  alt="Yori – collabiora's friendly assistant"
                   className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
                 />
               </div>
@@ -1339,12 +1339,12 @@ export default function ExpertProfile() {
             {!isOnPlatform ? (
               <>
                 <h3 className="text-lg font-semibold text-[#2F3C96] mb-1">
-                  This expert isn&apos;t on Collabiora yet
+                  This expert isn&apos;t on collabiora yet
                 </h3>
                 <p className="text-sm text-[#787878] max-w-md">
                   You can invite {profile.name} to join the platform so that you
                   can book meetings and collaborate with them directly inside
-                  Collabiora.
+                  collabiora.
                 </p>
               </>
             ) : (
@@ -1353,7 +1353,7 @@ export default function ExpertProfile() {
                   Booking coming soon
                 </h3>
                 <p className="text-sm text-[#787878] max-w-md">
-                  Meeting booking for Collabiora experts will be available here
+                  Meeting booking for collabiora experts will be available here
                   soon. In the meantime, you can follow this expert and explore
                   their work.
                 </p>
@@ -2002,7 +2002,7 @@ export default function ExpertProfile() {
       >
         <div className="space-y-4">
           <p className="text-[#787878]">
-            Would you like to invite {profile.name} to join Collabiora? We'll
+            Would you like to invite {profile.name} to join collabiora? We'll
             send them an invitation to create an account on our platform,
             enabling direct communication and collaboration opportunities.
           </p>

@@ -85,7 +85,7 @@ export default function DashboardResearcher() {
   const [data, setData] = useState({
     trials: [],
     publications: [],
-    experts: [], // Collabiora Experts (from recommendations)
+    experts: [], // collabiora Experts (from recommendations)
   });
   const [globalExperts, setGlobalExperts] = useState([]); // Global Experts (from external search, loaded on initial page load)
   const [user, setUser] = useState(null);
@@ -227,9 +227,12 @@ export default function DashboardResearcher() {
         return;
       }
       setReviewingRefundAppointmentId(appointmentId);
-      const getRes = await fetch(`${base}/api/refunds/appointments/${appointmentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const getRes = await fetch(
+        `${base}/api/refunds/appointments/${appointmentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       const getData = await getRes.json();
       if (!getRes.ok || !getData.ok) {
         throw new Error(getData.error || "Failed to load refund request");
@@ -270,7 +273,9 @@ export default function DashboardResearcher() {
       );
       const decisionData = await decisionRes.json();
       if (!decisionRes.ok || !decisionData.ok) {
-        throw new Error(decisionData.error || "Failed to submit refund decision");
+        throw new Error(
+          decisionData.error || "Failed to submit refund decision",
+        );
       }
       toast.success(
         decision === "approve"
@@ -1963,7 +1968,7 @@ export default function DashboardResearcher() {
       toast.loading("Generating PDF...", { id: "favorites-pdf-researcher" });
       const name =
         favoritesReportModal.report?.patientContext?.name || "Researcher";
-      const fileName = `Collabiora-Summary-Report-${String(name).replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`;
+      const fileName = `collabiora-Summary-Report-${String(name).replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`;
       const pdfInstance = pdf(
         <PDFReportDocument report={favoritesReportModal.report} />,
       );
@@ -5136,7 +5141,7 @@ export default function DashboardResearcher() {
                                     </span>
                                   </div>
                                   <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-0.5 sm:mt-1 line-clamp-2">
-                                    Collaborators who are active on Collabiora
+                                    Collaborators who are active on collabiora
                                     and available for direct collaboration.
                                   </p>
                                 </div>
@@ -5687,7 +5692,7 @@ export default function DashboardResearcher() {
                                   </div>
                                   <p className="text-[11px] sm:text-xs md:text-sm text-slate-600 mt-0.5 sm:mt-1 line-clamp-2">
                                     Discover global researchers and potential
-                                    collaborators beyond the CuraLink platform.
+                                    collaborators beyond the collabiora platform.
                                   </p>
                                 </div>
                               </div>
@@ -7025,7 +7030,11 @@ export default function DashboardResearcher() {
                                               onClick={() => {
                                                 if (!canJoin) return;
                                                 const href = `/meeting/${appt._id}`;
-                                                window.open(href, "_blank", "noopener,noreferrer");
+                                                window.open(
+                                                  href,
+                                                  "_blank",
+                                                  "noopener,noreferrer",
+                                                );
                                               }}
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin
@@ -7162,7 +7171,11 @@ export default function DashboardResearcher() {
                                               onClick={() => {
                                                 if (!canJoin) return;
                                                 const href = `/meeting/${appt._id}`;
-                                                window.open(href, "_blank", "noopener,noreferrer");
+                                                window.open(
+                                                  href,
+                                                  "_blank",
+                                                  "noopener,noreferrer",
+                                                );
                                               }}
                                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-white transition-colors ${
                                                 canJoin

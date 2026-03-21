@@ -100,16 +100,16 @@ export default function PressReleaseYoriDetails() {
   }, []);
 
   useEffect(() => {
-    const title = "Collabiora Files Provisional Patent for Yori";
+    const title = "collabiora Files Provisional Patent for Yori";
     const description =
-      "Press release: Collabiora announces the filing of a provisional patent application for Yori, its AI-powered health information retrieval agent.";
+      "Press release: collabiora announces the filing of a provisional patent application for Yori, its AI-powered health information retrieval agent.";
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const canonicalUrl = origin
       ? `${origin}/press-releases/yori`
       : "/press-releases/yori";
 
-    document.title = `${title} | Collabiora`;
+    document.title = `${title} | collabiora`;
     upsertMetaTag({ name: "description", content: description });
     upsertCanonicalLink(canonicalUrl);
 
@@ -135,13 +135,13 @@ export default function PressReleaseYoriDetails() {
         articleSection: "Press Release",
         author: {
           "@type": "Organization",
-          name: "Collabiora",
+          name: "collabiora",
         },
       },
     });
 
     return () => {
-      document.title = "Collabiora | Health Research Made Simple";
+      document.title = "collabiora | Health Research Made Simple";
     };
   }, []);
 

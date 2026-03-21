@@ -9,24 +9,24 @@ import Footer from "../components/Footer";
 
 const faqs = [
   {
-    question: "What is Collabiora?",
+    question: "What is collabiora?",
     answer:
-      "Collabiora is a social research network designed to make medical research more accessible, transparent, and collaborative for patients and researchers.",
+      "collabiora is a social research network designed to make medical research more accessible, transparent, and collaborative for patients and researchers.",
   },
   {
-    question: "Who can join Collabiora?",
+    question: "Who can join collabiora?",
     answer:
       "Patients, caregivers, researchers, clinicians, students, and anyone interested in evidence-based health research are welcome.",
   },
   {
-    question: "Does Collabiora provide medical advice?",
+    question: "Does collabiora provide medical advice?",
     answer:
-      "No. Collabiora is an educational platform and does not replace professional medical care.",
+      "No. collabiora is an educational platform and does not replace professional medical care.",
   },
   {
     question: "Do I need a scientific background to use the platform?",
     answer:
-      "Not at all. Collabiora is designed to make research understandable without requiring a science background.",
+      "Not at all. collabiora is designed to make research understandable without requiring a science background.",
   },
   {
     question: "How do I know the information is reliable?",
@@ -34,7 +34,7 @@ const faqs = [
       "We verify researcher credentials and share only peer-reviewed research to promote evidence-based discussion.",
   },
   {
-    question: "Can I find clinical trials on Collabiora?",
+    question: "Can I find clinical trials on collabiora?",
     answer:
       "Yes. We simplify clinical trial discovery and provide tools to better understand eligibility and study goals.",
   },
@@ -56,7 +56,7 @@ const faqs = [
   {
     question: "Can I book time with researchers?",
     answer:
-      "Yes. Verified researchers on Collabiora may offer direct consultations or extended messaging access. Participation and pricing are determined individually by each researcher, and compensation goes directly to them.",
+      "Yes. Verified researchers on collabiora may offer direct consultations or extended messaging access. Participation and pricing are determined individually by each researcher, and compensation goes directly to them.",
   },
 ];
 
@@ -77,7 +77,7 @@ export default function FAQ() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Animated Collabiora Background */}
+      {/* Animated collabiora Background */}
       <AnimatedBackground isMobile={isMobile} />
 
       <section className="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-16 z-10">
@@ -115,7 +115,7 @@ export default function FAQ() {
                           : "rounded-xl shadow-sm"
                       }`}
                       style={{
-                        backgroundColor: "#F5F2F8", // Same Collabiora light pink when open and closed
+                        backgroundColor: "#F5F2F8", // Same collabiora light pink when open and closed
                         borderColor: isOpen ? "#D0C4E2" : "#E5D8F2",
                       }}
                     >

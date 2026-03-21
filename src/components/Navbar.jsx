@@ -565,7 +565,7 @@ export default function Navbar() {
           {/* Logo Image */}
           <motion.img
             src={"/logo.png"}
-            alt="Collabiora Logo"
+            alt="collabiora Logo"
             className="w-auto relative z-10"
             animate={{
               height: isAtTop ? "3.5rem" : "3rem",

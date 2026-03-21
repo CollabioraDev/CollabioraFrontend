@@ -487,7 +487,7 @@ export default function SignIn() {
               style={{ color: "#787878" }}
             >
               By signing in or using third-party authentication, you agree to
-              Collabiora's{" "}
+              collabiora's{" "}
               <a
                 href="/terms"
                 target="_blank"

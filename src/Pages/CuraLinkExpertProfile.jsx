@@ -1281,7 +1281,7 @@ export default function CollabioraExpertProfile() {
                   </h4>
                   <p className="text-sm text-yellow-700">
                     {profile.orcidMessage ||
-                      "Could not fetch ORCID profile. Showing basic information from Collabiora profile."}
+                      "Could not fetch ORCID profile. Showing basic information from collabiora profile."}
                   </p>
                 </div>
               </div>

@@ -4295,7 +4295,7 @@ export default function ResearcherForums() {
                     <div className="bg-[#F5F5F5] rounded-lg p-4 border border-[#E8E8E8] space-y-4 text-sm text-[#484848]">
                       <h3 className="font-semibold text-[#2F3C96]">Community Guidelines</h3>
                       <p>
-                        Collabiora is a space for respectful, educational discussion about health research. By participating, you agree to:
+                        collabiora is a space for respectful, educational discussion about health research. By participating, you agree to:
                       </p>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">Respect & Conduct</h4>
@@ -4308,7 +4308,7 @@ export default function ResearcherForums() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">Medical Disclaimer</h4>
-                        <p className="mb-2">Collabiora does not provide medical advice.</p>
+                        <p className="mb-2">collabiora does not provide medical advice.</p>
                         <ul className="list-disc list-inside space-y-1 text-[#484848]">
                           <li>Do not ask for personal diagnoses or treatment recommendations</li>
                           <li>Information shared is for educational purposes only</li>
@@ -4328,7 +4328,7 @@ export default function ResearcherForums() {
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">Moderation Rights</h4>
                         <p className="text-[#484848]">
-                          Collabiora reserves the right to remove posts or restrict accounts that violate these guidelines.
+                          collabiora reserves the right to remove posts or restrict accounts that violate these guidelines.
                         </p>
                         <p className="mt-2 text-[#484848]">
                           Our goal is to maintain a safe, supportive, and scientifically grounded community.
@@ -4495,7 +4495,7 @@ export default function ResearcherForums() {
 
                         {userProfileModalData.isForumHelper && (
                           <p className="text-sm text-[#787878] bg-[#F5F5F5] border border-[#E8E8E8] rounded-lg p-4">
-                            This is the Collabiora forum helper/tool account. It posts helpful answers in the community. You cannot follow this account.
+                            This is the collabiora forum helper/tool account. It posts helpful answers in the community. You cannot follow this account.
                           </p>
                         )}
                         {userProfileModalData.isSampleParticipant && (

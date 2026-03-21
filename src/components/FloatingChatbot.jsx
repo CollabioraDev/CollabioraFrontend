@@ -33,7 +33,7 @@ const YORI_MOBILE_TEASER_STORAGE_KEY =
 const DEFAULT_GREETING = {
   role: "assistant",
   content:
-    "Hi! I'm **Yori**, your personal AI assistant from Collabiora. I can help you find publications, clinical trials, and experts. What would you like to know?",
+    "Hi! I'm **Yori**, your personal AI assistant from collabiora. I can help you find publications, clinical trials, and experts. What would you like to know?",
   searchResults: null,
 };
 
@@ -845,7 +845,7 @@ const TrialDetailsCard = ({
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  View full trial on Collabiora
+                  View full trial on collabiora
                 </Link>
               )}
             </div>
@@ -1231,7 +1231,7 @@ const SearchResultsCards = ({
   );
 };
 
-// Quick replies for "summarize for my doctor" and "Collabiora features" (no API call)
+// Quick replies for "summarize for my doctor" and "collabiora features" (no API call)
 const getCannedReply = (messageText) => {
   const t = (messageText || "").trim().toLowerCase();
   const summarizeForDoctor =
@@ -1252,7 +1252,7 @@ const getCannedReply = (messageText) => {
   }
   if (collabioraFeatures) {
     return (
-      "Here’s what you can do with Collabiora:\n\n" +
+      "Here’s what you can do with collabiora:\n\n" +
       "- **Search** publications, clinical trials, and experts\n" +
       "- **Save** items to your Favourites for quick access\n" +
       "- **Generate summarized reports** for your doctor from your saved favourites\n\n" +

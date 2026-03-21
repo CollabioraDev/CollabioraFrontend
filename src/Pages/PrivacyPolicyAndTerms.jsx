@@ -194,7 +194,7 @@ export default function PrivacyPolicyAndTerms() {
                   <div id="privacy-3" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>3. Consultation Data</h3>
                     <p className={`mb-3 ${bodyClass}`}>Consultation scheduling and payment information may be processed by third-party providers.</p>
-                    <p className={`mb-2 ${bodyClass}`}>Collabiora:</p>
+                    <p className={`mb-2 ${bodyClass}`}>collabiora:</p>
                     <ul className={listClass}>
                       <li>Does not record consultations.</li>
                       <li>Does not access private consultation discussions except as required for safety or compliance.</li>
@@ -224,7 +224,7 @@ export default function PrivacyPolicyAndTerms() {
                       <li>State medical licensing laws</li>
                       <li>International privacy regulations (e.g., GDPR where applicable)</li>
                     </ul>
-                    <p className={`mt-3 ${bodyClass}`}>Collabiora is not responsible for individual regulatory compliance failures by users.</p>
+                    <p className={`mt-3 ${bodyClass}`}>collabiora is not responsible for individual regulatory compliance failures by users.</p>
                   </div>
                   <div id="privacy-7" className="mt-8">
                     <h3 className="text-lg font-medium mb-3 flex items-center gap-2" style={headingStyle}>
@@ -251,11 +251,11 @@ export default function PrivacyPolicyAndTerms() {
                 <div className="space-y-10">
                   <div id="terms-1" className="mt-8 first:mt-0">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>1. Acceptance of Terms</h3>
-                    <p className={bodyClass}>By accessing or using Collabiora (“the Platform”), you agree to these Terms and Conditions. If you do not agree, you may not use the Platform.</p>
+                    <p className={bodyClass}>By accessing or using collabiora (“the Platform”), you agree to these Terms and Conditions. If you do not agree, you may not use the Platform.</p>
                   </div>
                   <div id="terms-2" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>2. Purpose of the Platform</h3>
-                    <p className={`mb-3 ${bodyClass}`}>Collabiora is an educational and research-focused platform designed to:</p>
+                    <p className={`mb-3 ${bodyClass}`}>collabiora is an educational and research-focused platform designed to:</p>
                     <ul className={listClass}>
                       <li>Improve medical literacy</li>
                       <li>Translate peer-reviewed research into accessible insights</li>
@@ -263,27 +263,27 @@ export default function PrivacyPolicyAndTerms() {
                       <li>Provide awareness of clinical trials</li>
                       <li>Enable paid educational consultations between users and verified researchers</li>
                     </ul>
-                    <p className={`mt-3 ${bodyClass}`}>Collabiora is not a healthcare provider.</p>
+                    <p className={`mt-3 ${bodyClass}`}>collabiora is not a healthcare provider.</p>
                   </div>
                   <div id="terms-3" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>3. No Medical Advice / No Physician-Patient Relationship</h3>
                     <ul className={listClass}>
                       <li>The Platform provides educational information only.</li>
-                      <li>Consultations conducted through Collabiora are for informational and research-related discussion purposes.</li>
+                      <li>Consultations conducted through collabiora are for informational and research-related discussion purposes.</li>
                       <li>These consultations do not constitute medical diagnosis, treatment, or clinical care.</li>
                       <li>Use of the Platform does not create a physician-patient relationship.</li>
-                      <li>Researchers participating in consultations act independently and are not agents of Collabiora.</li>
+                      <li>Researchers participating in consultations act independently and are not agents of collabiora.</li>
                       <li>Users should seek medical advice from licensed healthcare professionals for personal medical decisions.</li>
                     </ul>
                   </div>
                   <div id="terms-4" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>4. Paid Consultations</h3>
                     <ul className={listClass}>
-                      <li>Collabiora may allow verified researchers to offer paid consultations.</li>
+                      <li>collabiora may allow verified researchers to offer paid consultations.</li>
                       <li>Researchers set their own consultation fees.</li>
                       <li>Payments are made directly to the researcher or processed through the Platform as a facilitation service.</li>
-                      <li>Collabiora does not control, supervise, or direct consultation content.</li>
-                      <li>Collabiora does not guarantee outcomes, accuracy, or clinical applicability of consultation discussions.</li>
+                      <li>collabiora does not control, supervise, or direct consultation content.</li>
+                      <li>collabiora does not guarantee outcomes, accuracy, or clinical applicability of consultation discussions.</li>
                       <li>Users acknowledge that consultations are educational in nature and not a substitute for medical care.</li>
                     </ul>
                   </div>
@@ -296,7 +296,7 @@ export default function PrivacyPolicyAndTerms() {
                       <li>To comply with applicable licensing and regulatory laws</li>
                       <li>To avoid establishing a physician-patient relationship through the Platform</li>
                     </ul>
-                    <p className={`mt-3 ${bodyClass}`}>Collabiora reserves the right to suspend or remove researchers who violate these policies.</p>
+                    <p className={`mt-3 ${bodyClass}`}>collabiora reserves the right to suspend or remove researchers who violate these policies.</p>
                   </div>
                   <div id="terms-6" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>6. User Conduct</h3>
@@ -323,22 +323,22 @@ export default function PrivacyPolicyAndTerms() {
                       <li>The Platform allows pseudonymous handles to enhance privacy.</li>
                       <li>Users should avoid posting identifiable medical information publicly.</li>
                       <li>Researchers must comply with applicable privacy laws when interacting with users.</li>
-                      <li>Collabiora implements reasonable safeguards but cannot guarantee absolute confidentiality of information shared voluntarily by users.</li>
+                      <li>collabiora implements reasonable safeguards but cannot guarantee absolute confidentiality of information shared voluntarily by users.</li>
                     </ul>
                   </div>
                   <div id="terms-8" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>8. Payments & Financial Terms</h3>
                     <p className={`mb-3 ${bodyClass}`}>If the Platform processes payments:</p>
                     <ul className={listClass}>
-                      <li>Collabiora may use third-party payment processors.</li>
+                      <li>collabiora may use third-party payment processors.</li>
                       <li>Users agree to the terms of those processors.</li>
                       <li>Refund policies (if applicable) will be defined separately.</li>
-                      <li>Collabiora is not responsible for disputes arising from consultation content.</li>
+                      <li>collabiora is not responsible for disputes arising from consultation content.</li>
                     </ul>
                   </div>
                   <div id="terms-9" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>9. Clinical Trial Information</h3>
-                    <p className={`mb-3 ${bodyClass}`}>Clinical trial listings are for informational purposes only. Collabiora:</p>
+                    <p className={`mb-3 ${bodyClass}`}>Clinical trial listings are for informational purposes only. collabiora:</p>
                     <ul className={listClass}>
                       <li>Does not sponsor trials</li>
                       <li>Does not determine eligibility</li>
@@ -359,19 +359,19 @@ export default function PrivacyPolicyAndTerms() {
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>11. Limitation of Liability</h3>
                     <p className={`mb-3 ${bodyClass}`}>To the fullest extent permitted by law:</p>
                     <ul className={listClass}>
-                      <li>Collabiora is not liable for health decisions made based on Platform content.</li>
-                      <li>Collabiora is not liable for actions or statements made by researchers.</li>
-                      <li>Collabiora does not guarantee the accuracy of user-generated content.</li>
+                      <li>collabiora is not liable for health decisions made based on Platform content.</li>
+                      <li>collabiora is not liable for actions or statements made by researchers.</li>
+                      <li>collabiora does not guarantee the accuracy of user-generated content.</li>
                       <li>Users assume all risk associated with using the Platform.</li>
                     </ul>
                   </div>
                   <div id="terms-12" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>12. Indemnification</h3>
-                    <p className={bodyClass}>Users agree to indemnify and hold harmless Collabiora from claims arising from: misuse of the Platform; violation of these Terms; improper medical advice or misconduct.</p>
+                    <p className={bodyClass}>Users agree to indemnify and hold harmless collabiora from claims arising from: misuse of the Platform; violation of these Terms; improper medical advice or misconduct.</p>
                   </div>
                   <div id="terms-13" className="mt-8">
                     <h3 className="text-lg font-medium mb-3" style={headingStyle}>13. Termination</h3>
-                    <p className={bodyClass}>Collabiora may suspend or terminate accounts at its discretion for policy violations.</p>
+                    <p className={bodyClass}>collabiora may suspend or terminate accounts at its discretion for policy violations.</p>
                   </div>
                 </div>
               </div>

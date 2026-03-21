@@ -60,7 +60,7 @@ export default function HowItWorks() {
       icon: MessageSquare,
       title: "Collaborate & Schedule",
       description:
-        "Patients can request meetings with experts. Researchers can chat with peers and collaborate directly within Collabiora.",
+        "Patients can request meetings with experts. Researchers can chat with peers and collaborate directly within collabiora.",
       color: "indigo",
       visual: "collaboration",
     },

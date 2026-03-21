@@ -83,7 +83,7 @@ function downloadAsCsv(content, filename) {
 }
 
 function exportExpertsAsTxt(experts) {
-  const lines = ["Collabiora – Experts / Researchers Export", "Generated: " + new Date().toLocaleString(), ""];
+  const lines = ["collabiora – Experts / Researchers Export", "Generated: " + new Date().toLocaleString(), ""];
   experts.forEach((e, i) => {
     const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
     lines.push(`${i + 1}. ${e.name || "—"}`);
@@ -102,7 +102,7 @@ function exportExpertsAsPdf(experts) {
   const pageW = doc.internal.pageSize.getWidth();
   let y = 15;
   doc.setFontSize(14);
-  doc.text("Collabiora – Experts / Researchers", 14, y);
+  doc.text("collabiora – Experts / Researchers", 14, y);
   y += 8;
   doc.setFontSize(9);
   doc.text("Generated: " + new Date().toLocaleString(), 14, y);
@@ -144,7 +144,7 @@ function exportExpertsAsCsv(experts) {
 }
 
 function exportPatientsAsTxt(patients) {
-  const lines = ["Collabiora – Patients Export", "Generated: " + new Date().toLocaleString(), ""];
+  const lines = ["collabiora – Patients Export", "Generated: " + new Date().toLocaleString(), ""];
   patients.forEach((p, i) => {
     const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
     lines.push(`${i + 1}. ${p.name || "—"}`);
@@ -161,7 +161,7 @@ function exportPatientsAsPdf(patients) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   let y = 15;
   doc.setFontSize(14);
-  doc.text("Collabiora – Patients", 14, y);
+  doc.text("collabiora – Patients", 14, y);
   y += 8;
   doc.setFontSize(9);
   doc.text("Generated: " + new Date().toLocaleString(), 14, y);
@@ -2721,13 +2721,13 @@ export default function AdminDashboard() {
             <div className="w-9 h-9 rounded-lg bg-brand-royal-blue/10 flex items-center justify-center shrink-0">
               <img
                 src="/logo1.png"
-                alt="Collabiora"
+                alt="collabiora"
                 className="h-5 w-5 object-contain"
               />
             </div>
             <div className="min-w-0 flex-1">
               <span className="font-semibold text-brand-royal-blue text-sm block truncate">
-                Collabiora
+                collabiora
               </span>
               <span className="text-[11px] text-brand-royal-blue/80 font-medium block">Admin</span>
               {adminEmail ? (
@@ -5925,7 +5925,7 @@ export default function AdminDashboard() {
                                 <div className="grid gap-2 md:grid-cols-2">
                                   <div>
                                     <p className="font-semibold text-gray-900">
-                                      2. What brought them to Collabiora
+                                      2. What brought them to collabiora
                                     </p>
                                     <p className="mt-0.5 text-gray-700">
                                       {Array.isArray(survey.purposes) &&

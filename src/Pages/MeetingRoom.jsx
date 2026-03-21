@@ -169,7 +169,7 @@ function MeetingRoomContent({ tokenPayload }) {
             <div className="flex items-center gap-2 text-slate-700">
               <Calendar className="w-5 h-5 text-[#2F3C96]" />
               <h1 className="text-base md:text-lg font-semibold">
-                Collabiora Meeting Room
+                collabiora Meeting Room
               </h1>
             </div>
           </div>
