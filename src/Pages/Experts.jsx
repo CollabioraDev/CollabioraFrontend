@@ -2052,7 +2052,10 @@ export default function Experts() {
           )}
 
           {/* Results Area - wrapper for tour targeting */}
-          <div data-tour="experts-results-area" className="min-h-[200px]">
+          <div
+            data-tour="experts-results-area"
+            className={viewMode === "explore" ? "min-h-[200px]" : "min-h-0"}
+          >
             {/* Skeleton Loaders - Explore */}
             {viewMode === "explore" && (loading || tutorialSampleLoading) && (
               <div className="flex flex-col gap-4">
