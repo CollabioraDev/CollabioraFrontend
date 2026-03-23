@@ -77,6 +77,10 @@ export default function Navbar() {
   // On explore page: show Explore (dropdown) + Forums + Discovery
   const isSignInOrExplorePage = location.pathname === "/explore";
 
+  // Blogs listing + single blog: same nav as Explore (Explore, Forums, Discovery)
+  const isBlogsPage =
+    location.pathname === "/blogs" || location.pathname.startsWith("/blogs/");
+
   // Trials, Publications/Library, Experts (including detail pages): for non-signed-in users, show same nav as Explore (Explore, Forums, Discovery)
   const isTrialsPublicationsOrExperts =
     location.pathname === "/trials" ||
@@ -115,6 +119,10 @@ export default function Navbar() {
     }
     // Auth callback / complete-profile (setting up account): show only Explore, Forums, Discovery
     if (isAuthCallbackPage) {
+      return ["Explore", "Forums", "Discovery"];
+    }
+    // Blogs page: Explore, Forums, Discovery (no Dashboard — match public content nav)
+    if (isBlogsPage) {
       return ["Explore", "Forums", "Discovery"];
     }
     // About Us, Contact, Sign In, Onboarding: basic nav for guests, app nav for signed-in
@@ -569,9 +577,10 @@ export default function Navbar() {
             className="w-auto relative z-10"
             animate={{
               height: isAtTop ? "3.5rem" : "3rem",
-              maxWidth: isAtTop ? 64 : 56,
             }}
             style={{
+              width: "auto",
+              maxWidth: "none",
               filter: isAtTop
                 ? "drop-shadow(0 4px 8px rgba(47, 60, 150, 0.2))"
                 : "drop-shadow(0 2px 4px rgba(47, 60, 150, 0.15))",
@@ -1056,41 +1065,44 @@ export default function Navbar() {
               {user ? (
                 <div className="relative" ref={menuRef}>
                   <motion.button
+                    type="button"
                     onClick={() => setIsMenuOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 px-2 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-300 border backdrop-blur-sm"
+                    aria-haspopup="menu"
+                    aria-expanded={isDropdownOpen}
+                    aria-label="Account menu"
+                    className="flex items-center gap-2 px-2 py-2 rounded-full shadow-md hover:shadow-lg transition-colors duration-200 border backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96]/40 focus-visible:ring-offset-2"
                     style={{
                       backgroundColor: "",
                       borderColor: "rgba(47, 60, 150, 0.2)",
                     }}
                     whileHover={{
-                      scale: 1.02,
                       backgroundColor: "rgba(232, 224, 239, 0.8)",
                     }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 1 }}
                   >
-                    {/* Profile Avatar with Image or First Letter */}
+                    {/* Profile Avatar — fixed box + overflow clip stops image jump on open/click */}
                     {user?.picture && !imageError ? (
-                      <img
-                        src={user.picture}
-                        alt={getDisplayName(user, "User")}
-                        className="w-8 h-8 rounded-full object-cover shadow-md shrink-0 border-2"
-                        style={{
-                          borderColor: "rgba(47, 60, 150, 0.3)",
-                        }}
-                        onError={() => setImageError(true)}
-                      />
+                      <span
+                        className="relative flex h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-200/90 ring-2 ring-[rgba(47,60,150,0.35)] shadow-sm [transform:translateZ(0)]"
+                        aria-hidden
+                      >
+                        <img
+                          src={user.picture}
+                          alt=""
+                          className="pointer-events-none h-full w-full object-cover object-center block select-none"
+                          draggable={false}
+                          onError={() => setImageError(true)}
+                        />
+                      </span>
                     ) : (
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shrink-0"
-                        style={{
-                          backgroundColor: "rgba(47, 60, 150, 0.8)",
-                          border: "2px solid rgba(47, 60, 150, 0.3)",
-                        }}
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(47,60,150,0.85)] text-white font-bold text-sm shadow-sm ring-2 ring-[rgba(47,60,150,0.35)] [transform:translateZ(0)]"
+                        aria-hidden
                       >
                         {(user?.username || getDisplayName(user, "U"))
                           .charAt(0)
                           .toUpperCase()}
-                      </div>
+                      </span>
                     )}
 
                     {/* For patients: show only username (one line). For researchers: name + @handle */}

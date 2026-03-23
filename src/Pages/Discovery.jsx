@@ -35,7 +35,6 @@ import { getDisplayName } from "../utils/researcherDisplayName.js";
 import CustomSelect from "../components/ui/CustomSelect.jsx";
 import { AuroraText } from "../components/ui/aurora-text.js";
 import HealthNewsSection from "../components/HealthNewsSection.jsx";
-import DiscoveryBlogsSection from "../components/DiscoveryBlogsSection.jsx";
 import {
   IconHospital,
   IconRibbonHealth,
@@ -1153,17 +1152,6 @@ export default function Discovery() {
               >
                 Community
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("blogs")}
-                className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                  viewMode === "blogs"
-                    ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
-                    : "text-[#787878] hover:text-[#484848]"
-                }`}
-              >
-                Blogs
-              </button>
             </div>
           </div>
 
@@ -1173,9 +1161,6 @@ export default function Discovery() {
               <HealthNewsSection user={user} />
             </div>
           )}
-
-          {/* ── Blogs Section ─────────────────────────────────────────── */}
-          {viewMode === "blogs" && <DiscoveryBlogsSection />}
 
           {/* ── Discovery Community Feed ──────────────────────────────── */}
           {viewMode === "community" && (

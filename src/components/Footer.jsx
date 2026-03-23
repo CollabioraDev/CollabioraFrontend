@@ -51,13 +51,12 @@ export default function Footer() {
               Quick Links
             </h3>
             <ul className="space-y-2">
-              {["About Us", "How it Works", "Explore", "News"].map((link) => {
+              {["About Us", "How it Works", "Explore", "Blogs"].map((link) => {
                 const routeMap = {
                   "About Us": "/about",
                   "How it Works": "/how-it-works",
                   Explore: "/explore",
-                  // News should go to Discovery page
-                  News: "/discovery",
+                  Blogs: "/blogs",
                 };
                 const route =
                   routeMap[link] ||

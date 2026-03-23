@@ -87,6 +87,7 @@ const VerifyEmail = React.lazy(() => import("./Pages/VerifyEmail.jsx"));
 const ForgotPassword = React.lazy(() => import("./Pages/ForgotPassword.jsx"));
 const ResetPassword = React.lazy(() => import("./Pages/ResetPassword.jsx"));
 const Discovery = React.lazy(() => import("./Pages/Discovery.jsx"));
+const Blogs = React.lazy(() => import("./Pages/Blogs.jsx"));
 const DiscoveryBlogDetails = React.lazy(
   () => import("./Pages/DiscoveryBlogDetails.jsx"),
 );
@@ -496,6 +497,8 @@ const AppContent = () => {
           />
           <Route path="/trending" element={<Trending />} />
           <Route path="/discovery" element={<Discovery />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/blogs/:slug" element={<DiscoveryBlogDetails />} />
           <Route path="/discovery/blogs/:slug" element={<DiscoveryBlogDetails />} />
           <Route
             path="/press-releases/yori"

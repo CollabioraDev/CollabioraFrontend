@@ -9,26 +9,8 @@ import {
   DISCOVERY_BLOGS,
 } from "../data/discoveryBlogs.js";
 
-function toYoutubeEmbedUrl(url) {
-  if (!url) return "";
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("youtube.com")) {
-      const videoId = parsed.searchParams.get("v");
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
-    }
-    if (parsed.hostname.includes("youtu.be")) {
-      const videoId = parsed.pathname.replace("/", "");
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
-    }
-    return "";
-  } catch {
-    return "";
-  }
-}
-
 function extractMediaUrls(markdown) {
-  if (!markdown) return { spotifyUrl: "", youtubeUrl: "", youtubeEmbedUrl: "" };
+  if (!markdown) return { spotifyUrl: "", youtubeUrl: "" };
   const spotifyMatch = markdown.match(
     /\[SPOTIFY BUTTON\s*→\s*(https?:\/\/[^\]]+)\]/i,
   );
@@ -41,7 +23,6 @@ function extractMediaUrls(markdown) {
   return {
     spotifyUrl,
     youtubeUrl,
-    youtubeEmbedUrl: toYoutubeEmbedUrl(youtubeUrl),
   };
 }
 
@@ -159,8 +140,8 @@ export default function DiscoveryBlogDetails() {
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const canonicalUrl = origin
-      ? `${origin}/discovery/blogs/${blog.slug}`
-      : `/discovery/blogs/${blog.slug}`;
+      ? `${origin}/blogs/${blog.slug}`
+      : `/blogs/${blog.slug}`;
 
     // Basic SEO tags
     document.title = `${blog.title} | collabiora`;
@@ -277,11 +258,11 @@ export default function DiscoveryBlogDetails() {
   }, [blog]);
 
   if (!blog) {
-    return <Navigate to="/discovery" replace />;
+    return <Navigate to="/blogs" replace />;
   }
 
   const sanitizedMarkdown = sanitizeMarkdownForDetails(markdown);
-  const { spotifyUrl, youtubeUrl, youtubeEmbedUrl } = extractMediaUrls(markdown);
+  const { spotifyUrl, youtubeUrl } = extractMediaUrls(markdown);
   const relatedBlogs = DISCOVERY_BLOGS.filter((item) => item.slug !== blog.slug).slice(
     0,
     3,
@@ -294,11 +275,11 @@ export default function DiscoveryBlogDetails() {
 
         <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-5xl pb-10">
           <Link
-            to="/discovery"
+            to="/blogs"
             className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-brand-blue-600 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Discovery
+            Back to Blogs
           </Link>
 
           <article className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
@@ -323,11 +304,10 @@ export default function DiscoveryBlogDetails() {
 
                 {(spotifyUrl || youtubeUrl) && (
                   <section className="mt-8 pt-6 border-t border-slate-200">
-                    <div className="flex items-center justify-between gap-4 mb-3">
-                      <h3 className="text-base md:text-lg font-semibold text-[#2F3C96]">
-                        Listen or Watch Episode
-                      </h3>
-
+                    <h3 className="text-base md:text-lg font-semibold text-[#2F3C96] mb-4">
+                      Listen or Watch Episode
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-3">
                       {spotifyUrl && (
                         <a
                           href={spotifyUrl}
@@ -338,21 +318,17 @@ export default function DiscoveryBlogDetails() {
                           Listen on Spotify
                         </a>
                       )}
+                      {youtubeUrl && (
+                        <a
+                          href={youtubeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2F3C96] text-white text-sm font-medium hover:bg-brand-blue-600 transition-colors shrink-0"
+                        >
+                          Watch on YouTube
+                        </a>
+                      )}
                     </div>
-
-                    {youtubeEmbedUrl && (
-                      <div className="mt-4 aspect-video w-full rounded-xl overflow-hidden border border-slate-200">
-                        <iframe
-                          src={youtubeEmbedUrl}
-                          title={`${blog.title} YouTube episode`}
-                          className="w-full h-full"
-                          loading="lazy"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          referrerPolicy="strict-origin-when-cross-origin"
-                          allowFullScreen
-                        />
-                      </div>
-                    )}
                   </section>
                 )}
               </div>
@@ -367,7 +343,7 @@ export default function DiscoveryBlogDetails() {
               {relatedBlogs.map((item) => (
                 <Link
                   key={item.slug}
-                  to={`/discovery/blogs/${item.slug}`}
+                  to={`/blogs/${item.slug}`}
                   className="bg-white border border-slate-200 rounded-xl p-4 hover:border-[#2F3C96]/40 hover:shadow-sm transition-all"
                 >
                   <p className="text-xs text-slate-500 mb-1">{item.category}</p>

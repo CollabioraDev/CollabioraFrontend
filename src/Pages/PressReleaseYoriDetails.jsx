@@ -155,7 +155,7 @@ export default function PressReleaseYoriDetails() {
     );
   }
 
-  if (!markdown) return <Navigate to="/discovery" replace />;
+  if (!markdown) return <Navigate to="/blogs" replace />;
 
   return (
     <Layout>
@@ -164,11 +164,11 @@ export default function PressReleaseYoriDetails() {
 
         <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-5xl pb-10">
           <Link
-            to="/discovery"
+            to="/blogs"
             className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-brand-blue-600 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Discovery
+            Back to Blogs
           </Link>
 
           <article className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">

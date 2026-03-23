@@ -2,6 +2,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
+/* Global UI scale: target roughly between browser 125%-150% */
+:root {
+  --site-scale: 1.15;
+  font-size: calc(16px * var(--site-scale));
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --site-scale: 1.05;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --site-scale: 1.05;
+  }
+}
+
 /* Apply Inter font globally */
 * {
   font-family: 'Inter', sans-serif;

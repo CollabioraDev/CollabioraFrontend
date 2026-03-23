@@ -2,12 +2,17 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { DISCOVERY_BLOGS } from "../data/discoveryBlogs.js";
 
-export default function DiscoveryBlogsSection() {
+export default function DiscoveryBlogsSection({
+  title = "Blogs",
+  showSectionTitle = true,
+}) {
   return (
     <section className="mb-8">
-      <div className="mb-5">
-        <h2 className="text-2xl font-bold text-[#2F3C96]">Blogs</h2>
-      </div>
+      {showSectionTitle && (
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold text-[#2F3C96]">{title}</h2>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {DISCOVERY_BLOGS.map((blog) => (
@@ -38,7 +43,7 @@ export default function DiscoveryBlogsSection() {
               </p>
 
               <Link
-                to={`/discovery/blogs/${blog.slug}`}
+                to={`/blogs/${blog.slug}`}
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2F3C96] hover:text-brand-blue-600 mt-auto"
               >
                 Read full blog
