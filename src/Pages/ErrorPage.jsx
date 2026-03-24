@@ -21,7 +21,7 @@ export default function ErrorPage() {
 
       <section className="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-12 sm:pb-16 z-10">
         <div className="max-w-xl w-full flex flex-col items-center text-center">
-          {/* Yori outline on deep blue circle */}
+                                                                                                            {/* Sad Yori full illustration */}
           <motion.div
             initial={{ opacity: 0, scale: 0.85, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -31,21 +31,13 @@ export default function ErrorPage() {
             }}
             className="relative mb-6"
           >
-            <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="inline-flex items-center justify-center rounded-full bg-brand-blue-700 p-4 sm:p-5 shadow-lg"
-            >
+            <div className="inline-flex items-center justify-center rounded-2xl p-3 sm:p-4">
               <img
-                src="/sad-yori-face.png"
+                src="/sad-yori-full.png"
                 alt="Yori – collabiora's friendly assistant"
-                className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
+                className="max-h-44 sm:max-h-52 w-auto object-contain object-bottom"
               />
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* 404 badge */}
@@ -75,7 +67,7 @@ export default function ErrorPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             className="text-[#787878] text-base sm:text-lg max-w-sm mx-auto mb-8"
           >
-            We couldn’t find what you’re looking for. No worries — we’ll get you back on track.
+            We couldn’t find what you’re looking for. No worries, we’ll get you back on track.
           </motion.p>
 
           {/* CTA */}
