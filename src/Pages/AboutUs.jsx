@@ -26,11 +26,6 @@ export default function AboutUs() {
       description: "Open, understandable research for everyone",
     },
     {
-      icon: <Heart className="w-4 h-4" />,
-      title: "Ethics",
-      description: "Integrity at every step",
-    },
-    {
       icon: <Users className="w-4 h-4" />,
       title: "Collaboration",
       description: "Bringing researchers, clinicians, and patients together",
