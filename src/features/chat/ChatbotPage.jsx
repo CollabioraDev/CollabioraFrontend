@@ -2941,8 +2941,13 @@ export default function YoriAI() {
                 </button>
               </div>
             </div>
-            <p className="mt-1 text-center text-[10px] sm:text-[11px] text-slate-400">
-              Yori can make mistakes. Verify important information.
+            <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
+              Yori is an AI-powered health information tool. The content
+              provided is for informational and educational purposes only and
+              does not constitute medical advice. Always consult a qualified
+              healthcare professional for diagnosis, treatment, or medical
+              decisions. Your information will never be sold or used for
+              commercial purposes.
             </p>
           </div>
         </main>

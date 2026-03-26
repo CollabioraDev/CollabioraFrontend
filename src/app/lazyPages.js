@@ -11,6 +11,9 @@ export const OnboardingNew = React.lazy(() =>
 );
 
 export const Landing = React.lazy(() => import("../Pages/Landing.jsx"));
+export const YoriGuestLandingPage = React.lazy(() =>
+  import("../Pages/YoriGuestLandingPage.jsx"),
+);
 export const Explore = React.lazy(() => import("../Pages/Explore.jsx"));
 export const SignIn = React.lazy(() => import("../Pages/SignIn.jsx"));
 export const DashboardPatient = React.lazy(() =>

@@ -30,7 +30,7 @@ export default function Navbar() {
   const location = useLocation();
   const [isAtTop, setIsAtTop] = useState(true);
 
-  // Check if we're on the landing page
+  // Check if we're on the landing page (`/` = Yori guest preview)
   const isLandingPage = location.pathname === "/";
 
   // Check if we're on a dashboard page
@@ -97,7 +97,7 @@ export default function Navbar() {
   // Determine navigation items based on route and auth state
   // About/Contact/Sign-in/Onboarding + NOT signed in: About Us, FAQ, Contact (basic options)
   // About/Contact/Sign-in/Onboarding + signed in: Explore, Forums, Discovery
-  // Landing page + NOT signed in: About Us, FAQ, Contact
+  // `/` (Yori guest) + NOT signed in: single Explore → `/explore` (public page), not the signed-in dropdown
   // Explore: Explore, Forums, Discovery
   // When signed in (other pages): Dashboard, Explore, Forums, Discovery
   const getNavItems = () => {
@@ -133,7 +133,7 @@ export default function Navbar() {
       return ["Explore", "Forums", "Discovery"];
     }
     if (isLandingPage && !user) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["Explore"];
     }
     if (isSignInOrExplorePage) {
       return ["Explore", "Forums", "Discovery"];
@@ -567,7 +567,9 @@ export default function Navbar() {
       >
         {/* Logo */}
         <PrefetchLink
-          to={user ? "/yori" : "/"}
+          to={
+            user ? "/yori" : isLandingPage ? "/home" : "/"
+          }
           className="group relative flex items-center"
         >
           {/* Logo Image */}
@@ -615,8 +617,32 @@ export default function Navbar() {
               const route =
                 routeMap[item] || `/${item.toLowerCase().replace(/\s+/g, "-")}`;
 
-              // Handle Explore dropdown separately
+              // Handle Explore dropdown separately (guest Yori `/` uses a single link to public Explore page)
               if (item === "Explore") {
+                if (isLandingPage && !user) {
+                  return (
+                    <Fragment key={`${item}-guest-landing`}>
+                      <PrefetchLink
+                        to="/explore"
+                        className="relative group transition-all py-2"
+                        data-tour="nav-explore"
+                      >
+                        <span className="relative z-10 text-[#2F3C96] transition-colors duration-200 group-hover:text-[#B8A5D5]">
+                          {item}
+                        </span>
+                        <span
+                          className="absolute bottom-0 left-0 h-[3px] w-0 rounded-full bg-[#2F3C96] transition-all duration-300 group-hover:w-full"
+                        />
+                      </PrefetchLink>
+                      {index < navItems.length - 1 && (
+                        <div
+                          className="h-6 w-px"
+                          style={{ backgroundColor: "#D0C4E2" }}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                }
                 return (
                   <Fragment key={item}>
                     <div
@@ -1299,6 +1325,17 @@ export default function Navbar() {
                     )}
                   </AnimatePresence>
                 </div>
+              ) : isLandingPage ? (
+                <motion.button
+                  type="button"
+                  onClick={() => navigate("/onboarding")}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  Get Started
+                </motion.button>
               ) : (
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -1416,6 +1453,49 @@ export default function Navbar() {
               <GlobalSearch />
             </div> */}
 
+            {/* `/` Yori guest: Explore → /explore (matches desktop nav item) */}
+            {!user && isLandingPage && (
+              <div
+                className="space-y-1.5 pb-3 border-b"
+                style={{ borderColor: "#D0C4E2" }}
+              >
+                <PrefetchLink
+                  to="/explore"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                  style={{ color: "#2F3C96" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E8E0EF";
+                    e.currentTarget.style.color = "#474F97";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#2F3C96";
+                  }}
+                >
+                  <span
+                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </span>
+                  Explore
+                </PrefetchLink>
+              </div>
+            )}
+
             {/* Mobile menu - signed-in users only see account actions */}
             {user ? (
               <div
@@ -1516,6 +1596,18 @@ export default function Navbar() {
                   }}
                 >
                   Sign out
+                </button>
+              ) : isLandingPage ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    navigate("/onboarding");
+                  }}
+                  className="w-full text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96" }}
+                >
+                  Get Started
                 </button>
               ) : (
                 <PrefetchLink

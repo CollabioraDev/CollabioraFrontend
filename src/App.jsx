@@ -17,10 +17,15 @@ import { FloatingChatbot, LandingNavbar, Navbar } from "./app/lazyPages.js";
 const AppContent = () => {
   const location = useLocation();
   const [showChatbot, setShowChatbot] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
   const isVerifyEmailPage = location.pathname === "/verify-email";
   const isAdminPage = location.pathname.startsWith("/admin");
   const isErrorPage = location.pathname === "/404";
   const isHomePage = location.pathname === "/";
+  const isMarketingHome = location.pathname === "/home";
   const isSignInPage = location.pathname === "/signin";
   const isOnboardingPage = location.pathname === "/onboarding";
   const isEditProfilePage = location.pathname === "/profile";
@@ -102,11 +107,12 @@ const AppContent = () => {
     <div>
       {showLayout && (
         <Suspense fallback={null}>
-          {isHomePage ? <LandingNavbar /> : <Navbar />}
+          {isMarketingHome ? <LandingNavbar /> : <Navbar />}
         </Suspense>
       )}
       {showLayout &&
         showChatbot &&
+        !isHomePage &&
         !isSignInPage &&
         !isYoriPage &&
         !isMeetingPage &&

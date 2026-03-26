@@ -34,6 +34,7 @@ import {
   Forums,
   HowItWorks,
   Landing,
+  YoriGuestLandingPage,
   ManageTrials,
   MeetingRoom,
   Notifications,
@@ -61,10 +62,11 @@ export function AppRoutes() {
         path="/"
         element={
           <AuthenticatedRedirect>
-            <Landing />
+            <YoriGuestLandingPage />
           </AuthenticatedRedirect>
         }
       />
+      <Route path="/home" element={<Landing />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<ContactUs />} />

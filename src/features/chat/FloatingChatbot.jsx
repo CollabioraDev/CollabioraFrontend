@@ -23,7 +23,19 @@ import {
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
 import { getDisplayName } from "../../utils/researcherDisplayName.js";
+import {
+  getGuestTrialCount,
+  incrementGuestTrialAfterMessage,
+  MAX_GUEST_TRIALS,
+} from "../../utils/yoriGuestTrials.js";
+import {
+  loadGuestChatMessages,
+  saveGuestChatMessages,
+  restoreGuestGeneralMessages,
+  YORI_GUEST_CHAT_STORAGE_KEY,
+} from "../../utils/yoriGuestChatStorage.js";
 
 // Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
 const IORA_STORAGE_KEY = "collabiora_iora_chat";
@@ -1325,6 +1337,7 @@ const FloatingChatbot = () => {
   const [isLoaderShowing, setIsLoaderShowing] = useState(false); // Hide chatbot when multi-step loader is showing
   const [chatTab, setChatTab] = useState("yori"); // 'yori' | 'meetings'
   const [meetingRequests, setMeetingRequests] = useState([]);
+  const [guestChatHydrated, setGuestChatHydrated] = useState(false);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
@@ -1457,15 +1470,19 @@ const FloatingChatbot = () => {
 
     // If navigating away from detail pages OR switching between different detail pages
     if ((wasOnDetailPage && !isNowOnDetailPage) || switchedDetailPages) {
-      // Clear chat history completely
-      setMessages([DEFAULT_GREETING]);
+      // Signed-in: reset greeting; guest: restore persisted general chat (separate from IORA key)
+      setMessages(
+        user
+          ? [DEFAULT_GREETING]
+          : restoreGuestGeneralMessages([DEFAULT_GREETING]),
+      );
       setContext(null);
       setSuggestions([]);
       setInput("");
       setIsLoading(false);
       abortControllerRef.current?.abort();
-      // Clear saved chat for detail pages
-      if (wasOnDetailPage) {
+      // Clear saved chat for detail pages (signed-in only — never guest storage)
+      if (wasOnDetailPage && user) {
         try {
           localStorage.removeItem(IORA_STORAGE_KEY);
         } catch (e) {
@@ -1493,7 +1510,7 @@ const FloatingChatbot = () => {
 
     // Update the last detail page ID
     lastDetailPageIdRef.current = currentDetailPageId;
-  }, [location.pathname, isTrialPage, isPublicationPage, currentDetailPageId]);
+  }, [location.pathname, isTrialPage, isPublicationPage, currentDetailPageId, user]);
 
   // Generate context-specific questions based on type and item
   const generateContextQuestions = (type, item) => {
@@ -1548,6 +1565,56 @@ const FloatingChatbot = () => {
     saveChat(messages, isOpen);
   }, [messages, isOpen, hydrated, user, isTrialPage, isPublicationPage]);
 
+  // Guest-only persistence (separate localStorage key from signed-in IORA chat)
+  useEffect(() => {
+    if (user) {
+      setGuestChatHydrated(true);
+      return;
+    }
+    if (isTrialPage || isPublicationPage) {
+      setGuestChatHydrated(true);
+      return;
+    }
+    const loaded = loadGuestChatMessages();
+    if (loaded !== null) {
+      setMessages(loaded.length > 0 ? loaded : []);
+    }
+    setGuestChatHydrated(true);
+  }, [user, isTrialPage, isPublicationPage]);
+
+  useEffect(() => {
+    if (user) return;
+    if (!guestChatHydrated) return;
+    if (isTrialPage || isPublicationPage) return;
+    saveGuestChatMessages(messages);
+  }, [messages, user, guestChatHydrated, isTrialPage, isPublicationPage]);
+
+  useEffect(() => {
+    if (user) return;
+    const onGuestChatSync = () => {
+      if (isTrialPage || isPublicationPage) return;
+      const loaded = loadGuestChatMessages();
+      if (loaded === null) return;
+      setMessages((prev) => {
+        try {
+          if (JSON.stringify(prev) === JSON.stringify(loaded)) return prev;
+        } catch {
+          /* ignore */
+        }
+        return loaded;
+      });
+    };
+    window.addEventListener("yoriGuestChatUpdated", onGuestChatSync);
+    const onStorage = (e) => {
+      if (e.key === YORI_GUEST_CHAT_STORAGE_KEY) onGuestChatSync();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("yoriGuestChatUpdated", onGuestChatSync);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [user, isTrialPage, isPublicationPage]);
+
   // Optimized scrolling - debounced and only when necessary
   useEffect(() => {
     if (isOpen && !isMinimized) {
@@ -1592,9 +1659,9 @@ const FloatingChatbot = () => {
     };
     const handleLogout = () => {
       localStorage.removeItem(IORA_STORAGE_KEY);
-      setMessages([DEFAULT_GREETING]);
       setSuggestions([]);
       checkUser();
+      // Guest thread is restored from `collabiora_yori_guest_chat_v1` when user becomes null (see guest hydrate effect)
     };
     const handleStorageChange = (e) => {
       // Listen for user/token changes in localStorage (includes email verification)
@@ -1700,6 +1767,16 @@ const FloatingChatbot = () => {
   ) => {
     if (!messageText.trim() || isLoading) return;
 
+    if (!user) {
+      if (getGuestTrialCount() >= MAX_GUEST_TRIALS) {
+        toast.error(
+          "You've used your free Yori messages. Sign up to keep chatting.",
+        );
+        navigate("/signin");
+        return;
+      }
+    }
+
     // Use component context if available, otherwise use message context
     // If on detail page but no context set yet, create minimal context (will be enriched by backend)
     // IMPORTANT: Only use context if it matches the current page ID (prevent cross-page context)
@@ -1742,6 +1819,7 @@ const FloatingChatbot = () => {
           groundingSources: null,
         },
       ]);
+      if (!user) incrementGuestTrialAfterMessage();
       return;
     }
     setIsLoading(true);
@@ -1939,6 +2017,7 @@ const FloatingChatbot = () => {
           }
         }
       }
+      if (!user) incrementGuestTrialAfterMessage();
     } catch (error) {
       if (error.name === "AbortError") {
         console.log("Request aborted");
@@ -2055,6 +2134,10 @@ const FloatingChatbot = () => {
   };
 
   const handleOpen = () => {
+    if (!user) {
+      navigate("/");
+      return;
+    }
     setIsMinimized(false);
     setIsSideCollapsed(false);
     setIsOpen(true);
@@ -2737,8 +2820,13 @@ const FloatingChatbot = () => {
                           )}
                         </button>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2 text-center">
-                        Yori can make mistakes. Verify important information.
+                      <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
+                        Yori is an AI-powered health information tool. The content
+                        provided is for informational and educational purposes only
+                        and does not constitute medical advice. Always consult a
+                        qualified healthcare professional for diagnosis,
+                        treatment, or medical decisions. Your information will never
+                        be sold or used for commercial purposes.
                       </p>
                     </div>
                   </>
