@@ -37,9 +37,6 @@ export default function Footer() {
               <br />
               Health Decisions
             </p>
-            <p className="text-xs leading-relaxed" style={{ color: "#787878" }}>
-              Making health research transparent, ethical, and accessible to everyone. Join the movement to humanize science.
-            </p>
           </div>
 
           {/* Quick Links */}

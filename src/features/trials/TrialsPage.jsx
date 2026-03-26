@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import {
@@ -59,6 +59,42 @@ import {
   MAX_FREE_SEARCHES,
 } from "../../utils/searchLimit.js";
 import { loadTutorialSampleTrials } from "../../utils/tutorialSampleData.js";
+
+/** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
+function buildGmailComposeUrl(toEmails, subject, body) {
+  const to = encodeURIComponent(toEmails.filter(Boolean).join(","));
+  return (
+    "https://mail.google.com/mail/?view=cm&fs=1&to=" +
+    to +
+    "&su=" +
+    encodeURIComponent(subject) +
+    "&body=" +
+    encodeURIComponent(body)
+  );
+}
+
+/** Emails from trial contacts and site locations (e.g. collabiora / curated trials). */
+function collectTrialContactEmails(trial) {
+  if (!trial) return [];
+  const out = [];
+  const seen = new Set();
+  for (const c of trial.contacts || []) {
+    const e = typeof c?.email === "string" ? c.email.trim() : "";
+    if (e && !seen.has(e.toLowerCase())) {
+      seen.add(e.toLowerCase());
+      out.push(e);
+    }
+  }
+  for (const loc of trial.locations || []) {
+    const e =
+      typeof loc?.contactEmail === "string" ? loc.contactEmail.trim() : "";
+    if (e && !seen.has(e.toLowerCase())) {
+      seen.add(e.toLowerCase());
+      out.push(e);
+    }
+  }
+  return out;
+}
 
 export default function Trials() {
   const navigate = useNavigate();
@@ -139,6 +175,7 @@ export default function Trials() {
   const [simplifiedTrialSummaries, setSimplifiedTrialSummaries] = useState(
     new Map(),
   ); // Cache of simplified trial titles
+  const [claimingPi, setClaimingPi] = useState(false);
 
   // Helper function to sort trials by match percentage (highest first)
   const sortTrialsByMatch = (trials) => {
@@ -1487,6 +1524,71 @@ export default function Trials() {
       .filter((condition) => condition && condition !== "[object Object]");
   }
 
+  function getCuratedTrialMongoId(trial) {
+    const raw = trial?.id || trial?._id;
+    if (!raw) return null;
+    const s = String(raw);
+    return s.startsWith("cura-") ? s.slice(5) : null;
+  }
+
+  async function claimCuratedPiAsMe(trial) {
+    const mongoId = getCuratedTrialMongoId(trial);
+    if (!mongoId) {
+      toast.error("Could not identify this trial");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please sign in");
+      return;
+    }
+    setClaimingPi(true);
+    try {
+      const res = await apiFetch(`/api/curated-trials/${mongoId}/claim-pi`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Claim failed");
+      }
+      toast.success("This trial is linked to your profile");
+      setDetailsModal((prev) => {
+        if (!prev.trial) return prev;
+        const u = JSON.parse(localStorage.getItem("user") || "{}");
+        const uid = String(u._id || u.id);
+        const selfEntry = {
+          userId: uid,
+          displayName: u.username || "You",
+          handle: u.handle || null,
+          picture: u.picture || null,
+          profilePath: `/collabiora-expert/profile/${uid}`,
+          claimed: true,
+          matchReason: "claimed",
+          matchedEmail: u.email,
+        };
+        const pis = [...(prev.trial.piOnPlatform || [])];
+        const idx = pis.findIndex((p) => p.userId === uid);
+        if (idx >= 0) {
+          pis[idx] = { ...pis[idx], ...selfEntry, claimed: true };
+        } else {
+          pis.push(selfEntry);
+        }
+        return {
+          ...prev,
+          trial: {
+            ...prev.trial,
+            viewerPiClaim: { linked: true, claimed: true, canClaim: false },
+            piOnPlatform: pis,
+          },
+        };
+      });
+    } catch (e) {
+      toast.error(e.message || "Could not link trial");
+    } finally {
+      setClaimingPi(false);
+    }
+  }
+
   async function openDetailsModal(trial) {
     // Mark as read when modal opens
     if (isSignedIn) {
@@ -1856,22 +1958,39 @@ export default function Trials() {
     }
   }
 
-  function openEmailClient() {
+  /** Step 3 (after draft): Gmail compose like ContactUs + copy To / Subject / body to clipboard. */
+  function openGmailComposeTrialModerator() {
     if (!contactStepsModal.trial) return;
-    const contact = contactStepsModal.trial.contacts?.[0];
-    if (!contact?.email) {
+    const emails = collectTrialContactEmails(contactStepsModal.trial);
+    if (emails.length === 0) {
       toast.error("No email address available");
       return;
     }
+    const draft = (contactStepsModal.generatedEmail || "").trim();
+    if (!draft) {
+      toast.error("Generate an email draft first");
+      return;
+    }
 
-    const subject = encodeURIComponent(
-      `Interest in Clinical Trial: ${contactStepsModal.trial.title}`,
-    );
-    const body = encodeURIComponent(contactStepsModal.generatedEmail || "");
-    window.open(
-      `mailto:${contact.email}?subject=${subject}&body=${body}`,
-      "_blank",
-    );
+    const subject = `Interest in Clinical Trial: ${contactStepsModal.trial.title}`;
+    const gmailUrl = buildGmailComposeUrl(emails, subject, draft);
+    const clipboardText = `To: ${emails.join(", ")}\n\nSubject: ${subject}\n\n${draft}`;
+
+    const openGmail = () =>
+      window.open(gmailUrl, "_blank", "noopener,noreferrer");
+
+    navigator.clipboard
+      .writeText(clipboardText)
+      .then(() => {
+        toast.success(
+          "Opened Gmail — addresses and draft copied to clipboard",
+        );
+        openGmail();
+      })
+      .catch(() => {
+        toast.error("Could not copy to clipboard");
+        openGmail();
+      });
   }
 
   async function generateMessage() {
@@ -3076,6 +3195,28 @@ export default function Trials() {
                                       "Untitled Trial"}
                                 </span>
                               </h3>
+                              {trial.sourceRegistry === "cura-link" &&
+                                trial.piOnPlatform?.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                                    <span
+                                      className="text-xs font-medium"
+                                      style={{ color: "#787878" }}
+                                    >
+                                      PI on collabiora:
+                                    </span>
+                                    {trial.piOnPlatform.slice(0, 3).map((pi) => (
+                                      <Link
+                                        key={pi.userId}
+                                        to={pi.profilePath}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-xs font-semibold underline-offset-2 hover:underline"
+                                        style={{ color: "#2F3C96" }}
+                                      >
+                                        {pi.displayName}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                )}
                             </div>
 
                             {/* Description/Details Preview */}
@@ -3740,6 +3881,108 @@ export default function Trials() {
                   </div>
                 </div>
 
+                {/* Principal investigator — UCLA curated trials */}
+                {detailsModal.trial.sourceRegistry === "cura-link" &&
+                  (detailsModal.trial.principalInvestigator ||
+                    (detailsModal.trial.piOnPlatform &&
+                      detailsModal.trial.piOnPlatform.length > 0) ||
+                    detailsModal.trial.viewerPiClaim?.canClaim ||
+                    detailsModal.trial.viewerPiClaim?.claimed) && (
+                    <div
+                      className="rounded-xl p-5 border shadow-sm mt-6"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(245, 242, 248, 1), rgba(232, 233, 242, 1))",
+                        borderColor: "#D0C4E2",
+                      }}
+                    >
+                      <h4
+                        className="font-bold mb-3 flex items-center gap-2 text-base"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        <User
+                          className="w-5 h-5"
+                          style={{ color: "#2F3C96" }}
+                        />
+                        Principal investigator
+                      </h4>
+                      {detailsModal.trial.principalInvestigator && (
+                        <p
+                          className="text-sm leading-relaxed whitespace-pre-line mb-3"
+                          style={{ color: "#787878" }}
+                        >
+                          {detailsModal.trial.principalInvestigator}
+                        </p>
+                      )}
+                      {detailsModal.trial.piOnPlatform &&
+                        detailsModal.trial.piOnPlatform.length > 0 && (
+                          <div className="space-y-2">
+                            <p
+                              className="text-xs font-semibold uppercase tracking-wide"
+                              style={{ color: "#787878" }}
+                            >
+                              On collabiora
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {detailsModal.trial.piOnPlatform.map((pi) => (
+                                <Link
+                                  key={pi.userId}
+                                  to={pi.profilePath}
+                                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors bg-white hover:bg-indigo-50"
+                                  style={{
+                                    color: "#2F3C96",
+                                    borderColor: "#D0C4E2",
+                                  }}
+                                >
+                                  {pi.picture ? (
+                                    <img
+                                      src={pi.picture}
+                                      alt=""
+                                      className="w-7 h-7 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <User className="w-4 h-4 shrink-0" />
+                                  )}
+                                  <span>{pi.displayName}</span>
+                                  {pi.claimed && (
+                                    <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                      Verified
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      {userProfile?.researcher !== undefined &&
+                        isSignedIn &&
+                        detailsModal.trial.viewerPiClaim?.canClaim && (
+                          <button
+                            type="button"
+                            disabled={claimingPi}
+                            onClick={() =>
+                              claimCuratedPiAsMe(detailsModal.trial)
+                            }
+                            className="mt-4 w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-60"
+                            style={{ backgroundColor: "#2F3C96" }}
+                          >
+                            {claimingPi ? "Linking…" : "This is me (I'm the PI)"}
+                          </button>
+                        )}
+                      {userProfile?.researcher !== undefined &&
+                        isSignedIn &&
+                        detailsModal.trial.viewerPiClaim?.linked &&
+                        detailsModal.trial.viewerPiClaim?.claimed && (
+                          <p
+                            className="mt-3 text-sm font-medium"
+                            style={{ color: "#059669" }}
+                          >
+                            This trial is linked to your researcher profile.
+                          </p>
+                        )}
+                    </div>
+                  )}
+
                 {/* 1. Study Purpose */}
                 {(detailsModal.trial.simplifiedDetails?.studyPurpose ||
                   detailsModal.trial.description ||
@@ -4146,8 +4389,8 @@ export default function Trials() {
                   </div>
                 )}
 
-                {/* 3. Contact Information */}
-                {detailsModal.trial.contacts?.length > 0 && (
+                {/* 3. Contact Information — contacts and/or site location emails (curated / collabiora) */}
+                {collectTrialContactEmails(detailsModal.trial).length > 0 && (
                   <div
                     className="bg-gradient-to-br rounded-xl p-5 border shadow-sm"
                     style={{
@@ -4163,7 +4406,8 @@ export default function Trials() {
                       Contact Information
                     </h4>
                     <div className="space-y-3">
-                      {detailsModal.trial.contacts.map((contact, i) => (
+                      {detailsModal.trial.contacts?.some((c) => c?.email?.trim())
+                        ? detailsModal.trial.contacts.map((contact, i) => (
                         <div
                           key={i}
                           className="bg-white rounded-lg p-4 border shadow-sm"
@@ -4235,7 +4479,47 @@ export default function Trials() {
                             )}
                           </div>
                         </div>
-                      ))}
+                      ))
+                        : (detailsModal.trial.locations || [])
+                            .filter((loc) => loc?.contactEmail?.trim())
+                            .map((loc, idx) => (
+                              <div
+                                key={`loc-email-${idx}`}
+                                className="bg-white rounded-lg p-4 border shadow-sm"
+                                style={{
+                                  borderColor: "rgba(232, 232, 232, 1)",
+                                }}
+                              >
+                                {loc.facility && (
+                                  <div
+                                    className="font-bold mb-3 text-base flex items-center gap-2"
+                                    style={{ color: "#2F3C96" }}
+                                  >
+                                    <MapPin
+                                      className="w-4 h-4"
+                                      style={{ color: "#787878" }}
+                                    />
+                                    {loc.facility}
+                                  </div>
+                                )}
+                                <div className="space-y-2">
+                                  <a
+                                    href={`mailto:${loc.contactEmail}`}
+                                    className="flex items-center gap-2 text-sm font-medium transition-colors"
+                                    style={{ color: "#2F3C96" }}
+                                    onMouseEnter={(e) =>
+                                      (e.target.style.color = "#253075")
+                                    }
+                                    onMouseLeave={(e) =>
+                                      (e.target.style.color = "#2F3C96")
+                                    }
+                                  >
+                                    <Mail className="w-4 h-4" />
+                                    {loc.contactEmail}
+                                  </a>
+                                </div>
+                              </div>
+                            ))}
                     </div>
                   </div>
                 )}
@@ -4272,8 +4556,8 @@ export default function Trials() {
                   </div>
                 )}
 
-                {/* Help me contact Trial Moderator button */}
-                {detailsModal.trial.contacts?.length > 0 && (
+                {/* Help me contact Trial Moderator — any contact or site location email (incl. curated) */}
+                {collectTrialContactEmails(detailsModal.trial).length > 0 && (
                   <div className="mt-4">
                     <button
                       onClick={() => {
@@ -4535,8 +4819,9 @@ export default function Trials() {
                   </div>
                 </div>
 
-                {contactInfoModal.trial.contacts &&
-                contactInfoModal.trial.contacts.length > 0 ? (
+                {contactInfoModal.trial.contacts?.some((c) =>
+                  c?.email?.trim(),
+                ) ? (
                   <div className="space-y-4">
                     {contactInfoModal.trial.contacts.map((contact, i) => (
                       <div
@@ -4615,6 +4900,46 @@ export default function Trials() {
                       </div>
                     ))}
                   </div>
+                ) : collectTrialContactEmails(contactInfoModal.trial).length >
+                  0 ? (
+                  <div className="space-y-4">
+                    {(contactInfoModal.trial.locations || [])
+                      .filter((loc) => loc?.contactEmail?.trim())
+                      .map((loc, idx) => (
+                        <div
+                          key={`cinfo-loc-${idx}`}
+                          className="bg-gray-50 rounded-lg p-4 border"
+                          style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                        >
+                          {loc.facility && (
+                            <div
+                              className="font-bold mb-3 text-base flex items-center gap-2"
+                              style={{ color: "#2F3C96" }}
+                            >
+                              <MapPin
+                                className="w-4 h-4"
+                                style={{ color: "#787878" }}
+                              />
+                              {loc.facility}
+                            </div>
+                          )}
+                          <a
+                            href={`mailto:${loc.contactEmail}`}
+                            className="flex items-center gap-2 text-sm font-medium transition-colors"
+                            style={{ color: "#2F3C96" }}
+                            onMouseEnter={(e) =>
+                              (e.target.style.color = "#253075")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.target.style.color = "#2F3C96")
+                            }
+                          >
+                            <Mail className="w-4 h-4" />
+                            {loc.contactEmail}
+                          </a>
+                        </div>
+                      ))}
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -4680,40 +5005,48 @@ export default function Trials() {
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => {
-                      setContactStepsModal({
-                        open: true,
-                        trial: contactInfoModal.trial,
-                        currentStep: 1,
-                        generatedEmail: "",
-                        generating: false,
-                        copied: false,
-                      });
-                    }}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all"
-                    style={{
-                      color: "#2F3C96",
-                      backgroundColor: "rgba(208, 196, 226, 0.2)",
-                      border: "1px solid rgba(208, 196, 226, 0.3)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor =
-                        "rgba(208, 196, 226, 0.3)";
-                      e.target.style.color = "#253075";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor =
-                        "rgba(208, 196, 226, 0.2)";
-                      e.target.style.color = "#2F3C96";
-                    }}
-                  >
-                    <Info className="w-4 h-4" />
-                    Help me contact Trial Moderator
-                  </button>
+                  {collectTrialContactEmails(contactInfoModal.trial).length >
+                    0 && (
+                    <button
+                      onClick={() => {
+                        setContactStepsModal({
+                          open: true,
+                          trial: contactInfoModal.trial,
+                          currentStep: 1,
+                          generatedEmail: "",
+                          generating: false,
+                          copied: false,
+                        });
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all"
+                      style={{
+                        color: "#2F3C96",
+                        backgroundColor: "rgba(208, 196, 226, 0.2)",
+                        border: "1px solid rgba(208, 196, 226, 0.3)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor =
+                          "rgba(208, 196, 226, 0.3)";
+                        e.target.style.color = "#253075";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor =
+                          "rgba(208, 196, 226, 0.2)";
+                        e.target.style.color = "#2F3C96";
+                      }}
+                    >
+                      <Info className="w-4 h-4" />
+                      Help me contact Trial Moderator
+                    </button>
+                  )}
                   <button
                     onClick={closeContactInfoModal}
-                    className="flex-1 px-6 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-all"
+                    className={`${
+                      collectTrialContactEmails(contactInfoModal.trial)
+                        .length > 0
+                        ? "flex-1"
+                        : "w-full"
+                    } px-6 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-all`}
                   >
                     Close
                   </button>
@@ -5117,6 +5450,32 @@ export default function Trials() {
                                 ),
                               )}
                             </div>
+                          ) : collectTrialContactEmails(contactStepsModal.trial)
+                              .length > 0 ? (
+                            <div className="space-y-2">
+                              {(contactStepsModal.trial.locations || [])
+                                .filter((loc) => loc?.contactEmail?.trim())
+                                .map((loc, idx) => (
+                                  <div
+                                    key={`step2-loc-${idx}`}
+                                    className="bg-indigo-50 rounded-lg p-3 border border-indigo-200"
+                                  >
+                                    {loc.facility && (
+                                      <div className="font-bold mb-2 text-sm flex items-center gap-2 text-indigo-900">
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        {loc.facility}
+                                      </div>
+                                    )}
+                                    <a
+                                      href={`mailto:${loc.contactEmail}`}
+                                      className="flex items-center gap-2 text-xs font-medium transition-colors text-indigo-700 hover:text-indigo-900"
+                                    >
+                                      <Mail className="w-3.5 h-3.5" />
+                                      {loc.contactEmail}
+                                    </a>
+                                  </div>
+                                ))}
+                            </div>
                           ) : (
                             <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                               <p className="text-xs text-gray-600">
@@ -5164,16 +5523,17 @@ export default function Trials() {
                     <div className="flex-1 pb-4">
                       <h3
                         className={`font-bold text-sm mb-1.5 ${
-                          contactStepsModal.currentStep === 3
+                          contactStepsModal.currentStep >= 3
                             ? "text-indigo-900"
                             : "text-slate-700"
                         }`}
                       >
                         Step 3: Draft Your Email
                       </h3>
-                      {contactStepsModal.currentStep === 3 && (
+                      {contactStepsModal.currentStep >= 3 && (
                         <div className="space-y-2 mt-2">
-                          {!contactStepsModal.generatedEmail ? (
+                          {contactStepsModal.currentStep === 3 &&
+                          !contactStepsModal.generatedEmail ? (
                             <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
                               <p className="text-xs text-slate-700 mb-3">
                                 Click the button below to generate a
@@ -5217,15 +5577,29 @@ export default function Trials() {
                                 )}
                               </button>
                             </div>
-                          ) : (
+                          ) : null}
+                          {contactStepsModal.generatedEmail ? (
                             <div className="space-y-2">
                               <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-                                <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center justify-between mb-1.5 gap-2">
                                   <label className="text-xs font-semibold text-indigo-900">
                                     Generated Email Draft
                                   </label>
-                                  <div className="flex gap-2">
+                                  <div className="flex flex-wrap gap-2 justify-end">
                                     <button
+                                      type="button"
+                                      onClick={openGmailComposeTrialModerator}
+                                      className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border transition-all text-white border-indigo-600 hover:opacity-95"
+                                      style={{
+                                        backgroundColor: "#2F3C96",
+                                      }}
+                                    >
+                                      <Mail className="w-3 h-3" />
+                                      Open in Gmail
+                                      <ExternalLink className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      type="button"
                                       onClick={copyGeneratedEmail}
                                       className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-white hover:bg-indigo-100 text-indigo-700 rounded border border-indigo-200 transition-all"
                                     >
@@ -5237,7 +5611,7 @@ export default function Trials() {
                                       ) : (
                                         <>
                                           <Copy className="w-3 h-3" />
-                                          Copy
+                                          Copy draft
                                         </>
                                       )}
                                     </button>
@@ -5250,7 +5624,7 @@ export default function Trials() {
                                 </div>
                               </div>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       )}
                     </div>

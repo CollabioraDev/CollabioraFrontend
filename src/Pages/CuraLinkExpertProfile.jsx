@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Heart,
@@ -132,6 +132,7 @@ export default function CollabioraExpertProfile() {
   const [interestsModalOpen, setInterestsModalOpen] = useState(false);
   const [mobileMoreInfoOpen, setMobileMoreInfoOpen] = useState(false);
   const [publicationsToShow, setPublicationsToShow] = useState(5);
+  const [claimedTrialsToShow, setClaimedTrialsToShow] = useState(5);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -1855,6 +1856,102 @@ export default function CollabioraExpertProfile() {
               )}
             </div>
           )}
+
+          {/* PI-claimed clinical trials (UCLA curated) */}
+          {profile.claimedCuratedTrials &&
+            profile.claimedCuratedTrials.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md border border-[rgba(232,232,232,1)] p-4 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-[#2F3C96] flex items-center gap-2">
+                      <Beaker className="w-4 h-4 text-[#2F3C96]" />
+                      Clinical trials (PI)
+                    </h2>
+                    <p className="text-xs text-[#787878] mt-1">
+                      Trials this researcher has linked as principal investigator
+                    </p>
+                  </div>
+                  <span className="text-xs text-[#787878]">
+                    {profile.claimedCuratedTrials.length}{" "}
+                    {profile.claimedCuratedTrials.length === 1
+                      ? "trial"
+                      : "trials"}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {profile.claimedCuratedTrials
+                    .slice(0, claimedTrialsToShow)
+                    .map((ct) => (
+                      <div
+                        key={ct.curatedTrialId || ct.id}
+                        className="border border-[rgba(232,232,232,1)] rounded-xl p-4 hover:border-[rgba(163,167,203,1)] hover:shadow-lg transition-all bg-white"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="font-bold text-[#2F3C96] text-sm leading-snug line-clamp-2 flex-1 min-w-0">
+                            {ct.title}
+                          </h3>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mb-4">
+                          {ct.status && (
+                            <span className="inline-flex items-center px-2 py-0.5 bg-[rgba(209,211,229,1)] text-[#2F3C96] text-[10px] font-medium rounded">
+                              {String(ct.status).replace(/_/g, " ")}
+                            </span>
+                          )}
+                          {ct.phase && ct.phase !== "N/A" && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border bg-slate-50 text-[#787878] border-[rgba(232,232,232,1)]">
+                              {ct.phase}
+                            </span>
+                          )}
+                          {ct.externalStudyCode && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border bg-indigo-50 text-indigo-800 border-indigo-100">
+                              {ct.externalStudyCode}
+                            </span>
+                          )}
+                        </div>
+                        {ct.conditions && ct.conditions.length > 0 && (
+                          <p className="text-xs text-[#787878] line-clamp-2 mb-4">
+                            {ct.conditions.slice(0, 4).join(" · ")}
+                            {ct.conditions.length > 4 ? "…" : ""}
+                          </p>
+                        )}
+                        <div className="pt-3 border-t border-slate-100">
+                          <Link
+                            to={`/trial/${encodeURIComponent(ct.id)}`}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 w-full sm:w-auto bg-[#2F3C96] text-white rounded-lg text-xs font-semibold hover:bg-[#253075] transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View trial
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                {profile.claimedCuratedTrials.length > claimedTrialsToShow && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setClaimedTrialsToShow((prev) =>
+                          Math.min(
+                            prev + 5,
+                            profile.claimedCuratedTrials.length,
+                          ),
+                        )
+                      }
+                      className="px-4 py-2 text-sm font-semibold text-[#2F3C96] border border-[#2F3C96] rounded-lg hover:bg-[rgba(47,60,150,0.08)] transition-colors"
+                    >
+                      Show more (
+                      {Math.min(
+                        5,
+                        profile.claimedCuratedTrials.length -
+                          claimedTrialsToShow,
+                      )}{" "}
+                      more)
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
           {/* Academic profiles: ResearchGate & Academia.edu — below Publications */}
           {(profile.researchGate || profile.academiaEdu) && (
