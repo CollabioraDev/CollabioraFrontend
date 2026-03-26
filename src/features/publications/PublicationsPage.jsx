@@ -2168,10 +2168,7 @@ export default function Publications() {
           </div>
 
           {/* Search Bar - prominent, full-width, moved up */}
-          <div
-            className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in"
-            data-tour="publications-search-bar"
-          >
+          <div className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in">
             <BorderBeam
               duration={10}
               size={100}
@@ -2228,8 +2225,11 @@ export default function Publications() {
                 </div>
               )}
 
-              {/* Full-width search row: longer search bar + actions */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full">
+              {/* Full-width search row: longer search bar + actions (tour highlights this row only, not the whole card) */}
+              <div
+                className="flex flex-col sm:flex-row gap-3 w-full"
+                data-tour="publications-search-bar"
+              >
                 <div className="flex-1 min-w-0 w-full">
                   <SmartSearchInput
                     value={q}

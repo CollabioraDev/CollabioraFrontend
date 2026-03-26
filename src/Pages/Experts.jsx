@@ -1768,10 +1768,7 @@ export default function Experts() {
 
           {/* Search Bar - Explore Mode */}
           {viewMode === "explore" && (
-            <div
-              className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in"
-              data-tour="experts-search-bar"
-            >
+            <div className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in">
               <BorderBeam
                 duration={10}
                 size={100}
@@ -1784,8 +1781,11 @@ export default function Experts() {
                 className="from-transparent via-[#D0C4E2] to-transparent"
               />
               <div className="flex flex-col gap-3">
-                {/* Main Search Inputs */}
-                <div className="flex flex-col md:flex-row gap-2">
+                {/* Main Search Inputs (tour highlights this row only) */}
+                <div
+                  className="flex flex-col md:flex-row gap-2"
+                  data-tour="experts-search-bar"
+                >
                   <SmartSearchInput
                     value={diseaseOfInterest}
                     onChange={setDiseaseOfInterest}

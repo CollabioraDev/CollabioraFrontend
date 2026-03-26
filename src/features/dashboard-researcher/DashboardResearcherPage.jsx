@@ -481,7 +481,10 @@ export default function DashboardResearcher() {
         title: "Meet Yori!",
         content:
           "That's me! Click anytime to ask questions about trials, publications, or your dashboard. I'm here to help with your research.",
-        placement: "left",
+        placement: "top",
+        allowTargetClick: true,
+        spotlightShape: "circle",
+        spotlightPadding: 18,
       },
     ],
     [],
@@ -3075,6 +3078,7 @@ export default function DashboardResearcher() {
         pageId="dashboard-researcher"
         steps={DASHBOARD_RESEARCHER_TUTORIAL_STEPS}
         enabled={showDashboardTutorial}
+        centerTooltip
         onStepChange={handleDashboardResearcherTutorialStepChange}
         onComplete={() => setForceShowTutorial(false)}
       />

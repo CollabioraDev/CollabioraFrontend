@@ -2416,10 +2416,7 @@ export default function Trials() {
           </div>
 
           {/* Search Bar */}
-          <div
-            className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in"
-            data-tour="trials-search-bar"
-          >
+          <div className="bg-white rounded-xl shadow-lg p-5 mb-4 border border-slate-200 animate-fade-in">
             <BorderBeam
               duration={10}
               size={100}
@@ -2476,7 +2473,10 @@ export default function Trials() {
                 </div>
               )}
 
-              <div className="flex flex-col md:flex-row gap-2">
+              <div
+                className="flex flex-col md:flex-row gap-2"
+                data-tour="trials-search-bar"
+              >
                 <SmartSearchInput
                   value={q}
                   onChange={setQ}

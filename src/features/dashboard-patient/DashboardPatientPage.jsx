@@ -503,7 +503,10 @@ export default function DashboardPatient() {
         title: "Meet Yori!",
         content:
           "That's me! Click anytime to ask questions about trials, publications, or your dashboard. I'm here to help you navigate your health research journey.",
-        placement: "left",
+        placement: "top",
+        allowTargetClick: true,
+        spotlightShape: "circle",
+        spotlightPadding: 18,
       },
     ],
     [],
@@ -3186,6 +3189,7 @@ export default function DashboardPatient() {
         pageId="dashboard"
         steps={DASHBOARD_TUTORIAL_STEPS}
         enabled={showDashboardTutorial}
+        centerTooltip
         onStepChange={handleDashboardTutorialStepChange}
         onComplete={() => setForceShowTutorial(false)}
       />
@@ -3199,6 +3203,15 @@ export default function DashboardPatient() {
       <div className="px-4 sm:px-6 md:px-8 lg:px-12 mx-auto max-w-7xl pt-14 pb-12 relative rounded-t-3xl bg-[#F7F8FC] sm:bg-transparent">
         {/* Main Content Section - Block-based layout */}
         <div className="mt-6 mb-8">
+          <div className="mb-4 sm:mb-6 max-w-3xl" data-tour="dashboard-welcome">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Dashboard
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Your home for recommendations and quick access to trials, library,
+              and experts.
+            </p>
+          </div>
           {/* Category blocks - clear cards for easy navigation (compact on mobile) */}
           <div
             className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4 pt-4 sm:pt-8 mb-4 sm:mb-8"

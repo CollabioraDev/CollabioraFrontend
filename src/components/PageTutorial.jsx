@@ -81,15 +81,23 @@ function rectEquals(a, b) {
 /**
  * PageTutorial - Interactive walkthrough with Yori branding
  * @param {string} pageId - Unique ID for tracking (e.g. 'publications')
- * @param {Array<{target: string, title: string, content: string, placement?: string, waitForAction?: boolean}>} steps
+ * @param {Array<{target: string, title: string, content: string, placement?: string, waitForAction?: boolean, centerTooltip?: boolean}>} steps
  * @param {boolean} enabled - Whether to show
  * @param {() => void} onComplete - Called when tour finishes
  * @param {(stepIndex: number) => void} onStepChange - Called when step changes
+ * @param {boolean} [centerTooltip=true] - Keep the tooltip card in the center; target is ring-highlighted only
  * 
  * Steps with waitForAction: true require the user to click the target. Use
  * window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT)) to advance.
  */
-function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
+function PageTutorial({
+  pageId,
+  steps,
+  enabled,
+  onComplete,
+  onStepChange,
+  centerTooltip: centerTooltipProp = true,
+}) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [targetRect, setTargetRect] = useState(null);
@@ -146,13 +154,19 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
       if (!step?.target) setTargetRect(null);
       return;
     }
+    setTargetRect(null);
     setHighlightReady(false);
 
     let cancelled = false;
-    const tryResolve = (tries = 8) => {
+    const tryResolve = (tries = 12) => {
       const el = getVisibleTarget(step.target);
       if (el) {
         targetElRef.current = el;
+        try {
+          el.scrollIntoView({ block: "nearest", behavior: "smooth", inline: "nearest" });
+        } catch {
+          /* ignore */
+        }
         requestAnimationFrame(() => {
           if (!cancelled) {
             updateTargetRect();
@@ -162,9 +176,13 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
         return;
       }
       if (tries > 0) {
-        setTimeout(() => tryResolve(tries - 1), 40);
+        setTimeout(() => tryResolve(tries - 1), 50);
       } else {
         targetElRef.current = null;
+        if (!cancelled) {
+          setTargetRect(null);
+          setHighlightReady(true);
+        }
       }
     };
     tryResolve();
@@ -248,11 +266,91 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
     onComplete?.();
   };
 
+  const handlePrevRef = useRef(handlePrev);
+  handlePrevRef.current = handlePrev;
+  const handleSkipRef = useRef(handleSkip);
+  handleSkipRef.current = handleSkip;
+
+  useEffect(() => {
+    if (!isActive) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        handleSkipRef.current();
+        return;
+      }
+      if (step?.waitForAction) return;
+      if (e.key === "ArrowRight" || e.key === "Enter") {
+        e.preventDefault();
+        const s = step;
+        if (s?.actionLabel && s?.onAction) {
+          const result = s.onAction(currentStep);
+          if (result?.then) {
+            result.then(() =>
+              window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT)),
+            );
+          } else {
+            window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT));
+          }
+        } else {
+          handleNextRef.current();
+        }
+        return;
+      }
+      if (e.key === "ArrowLeft" && currentStep > 0) {
+        e.preventDefault();
+        handlePrevRef.current();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [isActive, step, currentStep]);
+
   const placement = step?.placement || "bottom";
+  const useCenterTooltip =
+    step?.centerTooltip !== undefined ? step.centerTooltip : centerTooltipProp;
   const tooltipPosition = useMemo(
-    () => getTooltipPosition(targetRect, placement),
-    [targetRect, placement]
+    () => getTooltipPosition(targetRect, placement, useCenterTooltip),
+    [targetRect, placement, useCenterTooltip],
   );
+
+  const spotlightRingStyle = useMemo(() => {
+    if (!step?.target || !targetRect || !highlightReady) return null;
+    const padding = step.spotlightPadding ?? 8;
+    const shape = step.spotlightShape || "rect";
+    const ringGlow =
+      "0 0 0 2px #2F3C96, 0 0 0 6px rgba(47,60,150,0.18), 0 8px 28px rgba(47,60,150,0.28)";
+    if (shape === "circle") {
+      const size = Math.max(targetRect.width, targetRect.height) + padding * 2;
+      const top = targetRect.top + targetRect.height / 2 - size / 2;
+      const left = targetRect.left + targetRect.width / 2 - size / 2;
+      return {
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: size / 2,
+        border: "2px solid #5B6BC7",
+        boxShadow: ringGlow,
+        background: "transparent",
+      };
+    }
+    return {
+      top: `${targetRect.top - padding}px`,
+      left: `${targetRect.left - padding}px`,
+      width: `${targetRect.width + padding * 2}px`,
+      height: `${targetRect.height + padding * 2}px`,
+      borderRadius: 12,
+      border: "2px solid #5B6BC7",
+      boxShadow: ringGlow,
+      background: "transparent",
+    };
+  }, [step?.target, step?.spotlightPadding, step?.spotlightShape, targetRect, highlightReady]);
+
+  /** Invisible panels block stray clicks; no full-page color wash. */
+  const blockPointerTint = "transparent";
+  const showTargetCutout =
+    Boolean(step?.target && targetRect && highlightReady);
 
   if (!isActive || !step) return null;
 
@@ -265,43 +363,47 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.12 }}
       >
-        {/* Backdrop overlay - use cutout when waitForAction or allowTargetClick */}
-        {(step.waitForAction || step.allowTargetClick) &&
-        targetRect &&
-        highlightReady ? (
+        {/* Transparent click-blockers around target (no tint on the page) */}
+        {showTargetCutout ? (
           <>
             <motion.div
-              className="absolute left-0 right-0 top-0 bg-black/50 pointer-events-auto"
-              style={{ height: Math.max(0, targetRect.top) }}
+              className="absolute left-0 right-0 top-0 pointer-events-auto"
+              style={{
+                height: Math.max(0, targetRect.top),
+                backgroundColor: blockPointerTint,
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             />
             <motion.div
-              className="absolute left-0 right-0 bottom-0 bg-black/50 pointer-events-auto"
+              className="absolute left-0 right-0 bottom-0 pointer-events-auto"
               style={{
                 top: targetRect.top + targetRect.height,
                 height: Math.max(0, window.innerHeight - targetRect.top - targetRect.height),
+                backgroundColor: blockPointerTint,
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             />
             <motion.div
-              className="absolute top-0 bottom-0 left-0 bg-black/50 pointer-events-auto"
+              className="absolute left-0 pointer-events-auto"
               style={{
-                width: targetRect.left,
-                top: 0,
-                bottom: 0,
-                height: "100vh",
+                top: targetRect.top,
+                width: Math.max(0, targetRect.left),
+                height: Math.max(0, targetRect.height),
+                backgroundColor: blockPointerTint,
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             />
             <motion.div
-              className="absolute top-0 bottom-0 right-0 bg-black/50 pointer-events-auto"
+              className="absolute pointer-events-auto"
               style={{
+                top: targetRect.top,
                 left: targetRect.left + targetRect.width,
                 width: Math.max(0, window.innerWidth - targetRect.left - targetRect.width),
-                height: "100vh",
+                height: Math.max(0, targetRect.height),
+                backgroundColor: blockPointerTint,
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -309,7 +411,8 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
           </>
         ) : (
           <motion.div
-            className="absolute inset-0 bg-black/50 pointer-events-auto"
+            className="absolute inset-0 pointer-events-auto"
+            style={{ backgroundColor: blockPointerTint }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -317,47 +420,13 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
           />
         )}
 
-        {/* Spotlight cutout around target */}
-        {step.target && targetRect && highlightReady && (
+        {/* Blue ring on target only */}
+        {spotlightRingStyle && (
           <motion.div
-            className="absolute pointer-events-none"
-            style={() => {
-              const padding = step.spotlightPadding ?? 8;
-              const shape = step.spotlightShape || "rect";
-
-              if (shape === "circle") {
-                const size =
-                  Math.max(targetRect.width, targetRect.height) + padding * 2;
-                const top = targetRect.top + targetRect.height / 2 - size / 2;
-                const left = targetRect.left + targetRect.width / 2 - size / 2;
-                return {
-                  top: `${top}px`,
-                  left: `${left}px`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  borderRadius: size / 2,
-                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
-                  border: "2px solid #2F3C96",
-                };
-              }
-
-              return {
-                top: targetRect.top - padding + "px",
-                left: targetRect.left - padding + "px",
-                width: targetRect.width + padding * 2 + "px",
-                height: targetRect.height + padding * 2 + "px",
-                borderRadius: 12,
-                boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)",
-                border: "2px solid #2F3C96",
-              };
-            }}
+            className="absolute pointer-events-none z-[1]"
+            style={spotlightRingStyle}
             initial={{ opacity: 0, scale: 0.99 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              boxShadow:
-                "0 0 0 9999px rgba(0,0,0,0.5), 0 0 24px rgba(47,60,150,0.35)",
-            }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{
               duration: 0.18,
               scale: { type: "spring", stiffness: 400, damping: 30 },
@@ -367,16 +436,18 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
 
         {/* Yori-styled tooltip card - smooth position transitions between steps */}
         <motion.div
-          className="absolute z-[9999] max-w-sm tour-pointer-events"
+          className="absolute z-[9999] max-w-sm tour-pointer-events max-h-[min(85vh,520px)] flex flex-col"
           animate={{ opacity: 1 }}
           transition={{ duration: 0.1 }}
           style={{
             ...tooltipPosition,
-            transition: "left 0.15s ease-out, top 0.15s ease-out, right 0.15s ease-out",
+            transition: useCenterTooltip
+              ? "transform 0.15s ease-out"
+              : "left 0.15s ease-out, top 0.15s ease-out, right 0.15s ease-out",
           }}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl border-2 border-[#D1D3E5] overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl border-2 border-[#D1D3E5] overflow-hidden flex flex-col min-h-0 flex-1"
             style={{
               boxShadow:
                 "0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(47,60,150,0.1)",
@@ -413,7 +484,7 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
             </div>
 
             {/* Content */}
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-3 overflow-y-auto min-h-0">
               <div>
                 <h4 className="font-semibold text-slate-800 mb-1">{step.title}</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
@@ -501,12 +572,22 @@ function PageTutorial({ pageId, steps, enabled, onComplete, onStepChange }) {
   );
 }
 
-function getTooltipPosition(targetRect, placement) {
+function getTooltipPosition(targetRect, placement, centerTooltip) {
   const padding = 16;
   const tooltipWidth = 384;
   const tooltipHeight = 280;
 
-  // Centered overlay when no target (welcome step)
+  // Centered card: reference area is highlighted; instructions stay readable in the middle of the viewport
+  if (centerTooltip) {
+    return {
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "min(384px, calc(100vw - 2rem))",
+    };
+  }
+
+  // Anchored tooltip (legacy): position near target
   if (!targetRect) {
     return {
       top: "50%",
@@ -516,9 +597,6 @@ function getTooltipPosition(targetRect, placement) {
     };
   }
 
-  // targetRect from getBoundingClientRect is viewport-relative (scroll not added in our updateTargetRect - we use scrollY/scrollX)
-  // Actually we added scrollY/scrollX in updateTargetRect, so it's document coords. For fixed position we need viewport.
-  // Recompute: getBoundingClientRect already gives viewport coords. Let's use that.
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const cx = targetRect.left + targetRect.width / 2;
