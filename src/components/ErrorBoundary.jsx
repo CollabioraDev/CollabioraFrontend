@@ -30,7 +30,7 @@ function ErrorFallbackView({ onGoHome }) {
           >
             <div className="inline-flex items-center justify-center rounded-2xl bg-brand-blue-700 p-3 sm:p-4 shadow-lg">
               <img
-                src="/sad-yori-full.png"
+                src="/sad-yori-full.webp"
                 alt="Yori – collabiora's friendly assistant"
                 className="max-h-44 sm:max-h-52 w-auto object-contain object-bottom"
               />

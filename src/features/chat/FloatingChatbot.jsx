@@ -2240,7 +2240,7 @@ const FloatingChatbot = () => {
           >
             <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
-                src="/Yorisidepeak.png"
+                src="/Yorisidepeak.webp"
                 alt="Yori"
                 className="h-full w-full object-contain"
               />
@@ -2261,7 +2261,7 @@ const FloatingChatbot = () => {
           >
             <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
-                src="/Yorisidepeak.png"
+                src="/Yorisidepeak.webp"
                 alt="Yori"
                 className="h-full w-full object-contain"
               />
@@ -2292,7 +2292,7 @@ const FloatingChatbot = () => {
             <div className="relative flex items-center gap-3 pl-14 sm:pl-16">
               <div className="absolute -left-2 -top-0 w-14 h-14 sm:w-16 sm:h-16 pointer-events-none drop-shadow-[0_8px_14px_rgba(47,60,150,0.45)]">
                 <img
-                  src="/Yori's Face Outline.png"
+                  src="/Yori's Face Outline.webp"
                   alt="Yori"
                   className="w-full h-full object-contain"
                 />

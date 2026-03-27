@@ -428,8 +428,8 @@ export default function YoriGuestLandingPage() {
                                 index === messages.length - 1 &&
                                 !message.content &&
                                 !message.searchResults
-                                  ? "/yori-thinking.png"
-                                  : "/Yorisidepeak.png"
+                                  ? "/yori-thinking.webp"
+                                  : "/Yorisidepeak.webp"
                               }
                               alt="Yori"
                               className="h-full w-full object-contain"

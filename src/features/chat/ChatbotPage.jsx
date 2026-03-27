@@ -2732,8 +2732,8 @@ export default function YoriAI() {
                               !message.trialDetails &&
                               !message.publicationDetails &&
                               !message.communityResults
-                                ? "/yori-thinking.png"
-                                : "/Yorisidepeak.png"
+                                ? "/yori-thinking.webp"
+                                : "/Yorisidepeak.webp"
                             }
                             alt="Yori"
                             className="h-full w-full object-contain"

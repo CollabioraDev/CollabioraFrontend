@@ -21,7 +21,7 @@ export default function ErrorPage() {
 
       <section className="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-12 sm:pb-16 z-10">
         <div className="max-w-xl w-full flex flex-col items-center text-center">
-                                                                                                            {/* Sad Yori full illustration */}
+          {/* Sad Yori full illustration */}
           <motion.div
             initial={{ opacity: 0, scale: 0.85, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function ErrorPage() {
           >
             <div className="inline-flex items-center justify-center rounded-2xl p-3 sm:p-4">
               <img
-                src="/sad-yori-full.png"
+                src="/sad-yori-full.webp"
                 alt="Yori – collabiora's friendly assistant"
                 className="max-h-44 sm:max-h-52 w-auto object-contain object-bottom"
               />
@@ -67,7 +67,8 @@ export default function ErrorPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             className="text-[#787878] text-base sm:text-lg max-w-sm mx-auto mb-8"
           >
-            We couldn’t find what you’re looking for. No worries, we’ll get you back on track.
+            We couldn’t find what you’re looking for. No worries, we’ll get you
+            back on track.
           </motion.p>
 
           {/* CTA */}
@@ -80,7 +81,7 @@ export default function ErrorPage() {
               to="/"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-purple-200 text-[#2F3C96] font-semibold text-base shadow-lg shadow-[#D0C4E2]/40 hover:shadow-xl hover:bg-brand-purple-300 hover:text-[#1C2454] active:scale-[0.98] transition-all duration-200"
             >
-                Back to home
+              Back to home
             </Link>
           </motion.div>
         </div>
