@@ -49,6 +49,7 @@ import {
   Download,
   Menu,
   X,
+  Send,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
@@ -419,6 +420,11 @@ const SECTIONS = [
     icon: Mail,
   },
   {
+    id: "researcher-invites",
+    label: "Researcher Invites",
+    icon: Send,
+  },
+  {
     id: "onboarding-cleanup",
     label: "Onboarding Cleanup",
     icon: AlertTriangle,
@@ -435,7 +441,13 @@ const SIDEBAR_GROUPS = [
   { title: "SUPPORT", items: ["reviews", "page-feedback", "contacts"] },
   {
     title: "OTHERS",
-    items: ["weekly-mailer", "onboarding-cleanup", "meeting-requests", "profile-reminders"],
+    items: [
+      "weekly-mailer",
+      "researcher-invites",
+      "onboarding-cleanup",
+      "meeting-requests",
+      "profile-reminders",
+    ],
   },
 ];
 
@@ -556,6 +568,19 @@ export default function AdminDashboard() {
   const [sendingWeeklyMailer, setSendingWeeklyMailer] = useState(false);
   const [weeklyMailerSearchQuery, setWeeklyMailerSearchQuery] = useState("");
   const [weeklyMailerPipeline, setWeeklyMailerPipeline] = useState([]);
+  // Researcher invite mailer (external researchers; tags + optional last name each)
+  const [researcherInviteDraftEmail, setResearcherInviteDraftEmail] =
+    useState("");
+  const [researcherInviteDraftLastName, setResearcherInviteDraftLastName] =
+    useState("");
+  const [researcherInviteRecipients, setResearcherInviteRecipients] =
+    useState([]);
+  const [sendingResearcherInvites, setSendingResearcherInvites] =
+    useState(false);
+  const [researcherInvitePipeline, setResearcherInvitePipeline] = useState([]);
+  const [researcherInviteLogs, setResearcherInviteLogs] = useState([]);
+  const [loadingResearcherInviteLogs, setLoadingResearcherInviteLogs] =
+    useState(false);
   // Overview stats
   const [overviewStats, setOverviewStats] = useState(null);
   const [loadingOverviewStats, setLoadingOverviewStats] = useState(false);
@@ -694,6 +719,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchResearcherInviteLogs = async () => {
+    try {
+      setLoadingResearcherInviteLogs(true);
+      const { token, headers } = getAuth();
+      if (!token) return;
+      const res = await fetch(`${base}/api/admin/researcher-invites/logs`, {
+        headers,
+      });
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      setResearcherInviteLogs(Array.isArray(data.logs) ? data.logs : []);
+    } catch (error) {
+      console.error("Failed to load researcher invite logs:", error);
+      toast.error("Failed to load invite history");
+    } finally {
+      setLoadingResearcherInviteLogs(false);
+    }
+  };
+
   useEffect(() => {
     const adminToken = localStorage.getItem("adminToken");
     if (!adminToken) {
@@ -764,6 +808,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "profile-reminders") {
       fetchProfileReminderData();
+    }
+    if (activeSection === "researcher-invites") {
+      fetchResearcherInviteLogs();
     }
   }, [activeSection]);
 
@@ -1242,6 +1289,155 @@ export default function AdminDashboard() {
       toast.error(e?.message || "Failed to send weekly mailer");
     } finally {
       setSendingWeeklyMailer(false);
+    }
+  };
+
+  const addResearcherInviteRecipient = () => {
+    const email = researcherInviteDraftEmail.trim();
+    const lastName = researcherInviteDraftLastName.trim();
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      toast.error("Enter an email address.");
+      return;
+    }
+    if (!emailRe.test(email)) {
+      toast.error("Invalid email address.");
+      return;
+    }
+    if (researcherInviteRecipients.length >= 10) {
+      toast.error("Maximum 10 emails per batch.");
+      return;
+    }
+    const lower = email.toLowerCase();
+    if (
+      researcherInviteRecipients.some(
+        (r) => r.email.toLowerCase() === lower,
+      )
+    ) {
+      toast.error("That email is already in the list.");
+      return;
+    }
+    const id =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `r-${Date.now()}-${Math.random()}`;
+    setResearcherInviteRecipients((prev) => [
+      ...prev,
+      { id, email, lastName },
+    ]);
+    setResearcherInviteDraftEmail("");
+    setResearcherInviteDraftLastName("");
+  };
+
+  const removeResearcherInviteRecipient = (id) => {
+    if (sendingResearcherInvites) return;
+    setResearcherInviteRecipients((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleSendResearcherInvites = async () => {
+    if (researcherInviteRecipients.length === 0) {
+      toast.error("Add at least one email address.");
+      return;
+    }
+
+    const emails = researcherInviteRecipients.map((r) => r.email);
+    const lastNames = researcherInviteRecipients.map((r) => r.lastName || "");
+
+    const { token, headers } = getAuth();
+    if (!token) return;
+
+    const jobId =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `job-${Date.now()}`;
+
+    const pipelineInit = emails.map((email, idx) => ({
+      idx,
+      email,
+      lastName: lastNames[idx] || "",
+      status: "pending",
+      message: "",
+    }));
+    setResearcherInvitePipeline(pipelineInit);
+    setSendingResearcherInvites(true);
+
+    try {
+      let sentCount = 0;
+      let errorCount = 0;
+      for (let i = 0; i < emails.length; i++) {
+        const email = emails[i];
+        const lastName = lastNames[i] || "";
+        setResearcherInvitePipeline((prev) =>
+          prev.map((entry) =>
+            entry.idx === i
+              ? {
+                  ...entry,
+                  status: "sending",
+                  message: `Sending (${i + 1}/${emails.length})...`,
+                }
+              : entry,
+          ),
+        );
+        try {
+          const res = await fetch(
+            `${base}/api/admin/researcher-invites/send-one`,
+            {
+              method: "POST",
+              headers: { ...headers, "Content-Type": "application/json" },
+              body: JSON.stringify({ email, lastName, jobId }),
+            },
+          );
+          if (handleAdminAuthFailure(res)) return;
+          const data = await res.json();
+          if (!res.ok || !data.ok) {
+            errorCount += 1;
+            setResearcherInvitePipeline((prev) =>
+              prev.map((entry) =>
+                entry.idx === i
+                  ? {
+                      ...entry,
+                      status: "error",
+                      message: data?.error || "Failed to send",
+                    }
+                  : entry,
+              ),
+            );
+            continue;
+          }
+          sentCount += 1;
+          setResearcherInvitePipeline((prev) =>
+            prev.map((entry) =>
+              entry.idx === i
+                ? { ...entry, status: "sent", message: "Sent" }
+                : entry,
+            ),
+          );
+        } catch (err) {
+          errorCount += 1;
+          setResearcherInvitePipeline((prev) =>
+            prev.map((entry) =>
+              entry.idx === i
+                ? {
+                    ...entry,
+                    status: "error",
+                    message: err?.message || "Request failed",
+                  }
+                : entry,
+            ),
+          );
+        }
+      }
+      toast.success(
+        `Researcher invites finished. Sent: ${sentCount}, errors: ${errorCount}`,
+      );
+      await fetchResearcherInviteLogs();
+      if (errorCount === 0 && sentCount > 0) {
+        setResearcherInviteRecipients([]);
+      }
+    } catch (e) {
+      toast.error(e?.message || "Failed to send invites");
+    } finally {
+      setSendingResearcherInvites(false);
     }
   };
 
@@ -7205,6 +7401,305 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeSection === "researcher-invites" && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
+                  <p className="text-sm text-brand-gray mb-1">
+                    Send outreach emails to external researchers using the same
+                    Azure mail as the rest of Collabiora. Profile link in the
+                    message:{" "}
+                    <a
+                      href="https://www.collabiora.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-royal-blue font-medium underline break-all"
+                    >
+                      https://www.collabiora.com/
+                    </a>
+                  </p>
+                  <p className="text-xs text-brand-gray/80 mb-4">
+                    Add up to 10 recipients. Optional last name per row for
+                    &quot;Dear Dr. [Last Name]&quot;; if omitted, the greeting
+                    uses &quot;Dear Doctor,&quot;.
+                  </p>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-end">
+                      <div className="flex-1 min-w-[200px]">
+                        <label className="block text-xs font-semibold text-brand-gray uppercase mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          value={researcherInviteDraftEmail}
+                          onChange={(e) =>
+                            setResearcherInviteDraftEmail(e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addResearcherInviteRecipient();
+                            }
+                          }}
+                          placeholder="researcher@university.edu"
+                          disabled={sendingResearcherInvites}
+                          className="w-full px-2.5 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white font-mono"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-[140px] sm:max-w-[200px]">
+                        <label className="block text-xs font-semibold text-brand-gray uppercase mb-1">
+                          Last name (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={researcherInviteDraftLastName}
+                          onChange={(e) =>
+                            setResearcherInviteDraftLastName(e.target.value)
+                          }
+                          placeholder="Smith"
+                          disabled={sendingResearcherInvites}
+                          className="w-full px-2.5 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addResearcherInviteRecipient}
+                        disabled={
+                          sendingResearcherInvites ||
+                          researcherInviteRecipients.length >= 10
+                        }
+                        className="shrink-0 px-3 py-2 text-sm rounded-lg border border-[rgba(208,196,226,0.6)] bg-white text-brand-royal-blue font-medium hover:bg-brand-royal-blue/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {researcherInviteRecipients.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-brand-gray uppercase mb-2">
+                          Selected ({researcherInviteRecipients.length}/10)
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {researcherInviteRecipients.map((r) => (
+                            <span
+                              key={r.id}
+                              className="inline-flex items-center gap-1.5 max-w-full rounded-full border border-[rgba(47,60,150,0.2)] bg-[rgba(232,224,239,0.45)] pl-3 pr-1 py-1 text-xs text-[#2F3C96]"
+                            >
+                              <span className="min-w-0 truncate font-mono">
+                                {r.email}
+                                {r.lastName ? (
+                                  <span className="text-brand-gray font-sans">
+                                    {" "}
+                                    · Dr. {r.lastName}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeResearcherInviteRecipient(r.id)
+                                }
+                                disabled={sendingResearcherInvites}
+                                className="shrink-0 rounded-full p-1 text-brand-gray hover:bg-white/80 hover:text-rose-600 disabled:opacity-40"
+                                title="Remove"
+                                aria-label={`Remove ${r.email}`}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={handleSendResearcherInvites}
+                      disabled={
+                        sendingResearcherInvites ||
+                        researcherInviteRecipients.length === 0
+                      }
+                      className="px-3 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue rounded-lg hover:bg-brand-royal-blue/20 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {sendingResearcherInvites ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      Send invites ({researcherInviteRecipients.length})
+                    </button>
+                  </div>
+
+                  {researcherInvitePipeline.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-[rgba(208,196,226,0.35)] bg-slate-50/80 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-brand-gray uppercase">
+                          Sending progress
+                        </p>
+                        <p className="text-xs text-brand-gray">
+                          {researcherInvitePipeline.filter(
+                            (e) => e.status === "sent",
+                          ).length}{" "}
+                          sent •{" "}
+                          {researcherInvitePipeline.filter(
+                            (e) => e.status === "error",
+                          ).length}{" "}
+                          errors
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        {researcherInvitePipeline.map((entry) => {
+                          const isSending = entry.status === "sending";
+                          const isSent = entry.status === "sent";
+                          const isError = entry.status === "error";
+                          const pillClass = isSent
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                            : isError
+                              ? "bg-rose-50 text-rose-800 border-rose-200"
+                              : isSending
+                                ? "bg-blue-50 text-blue-800 border-blue-200"
+                                : "bg-slate-50 text-slate-700 border-slate-200";
+
+                          return (
+                            <div
+                              key={entry.idx}
+                              className="flex items-start justify-between gap-3 rounded-lg border border-[rgba(208,196,226,0.35)] bg-white p-2.5"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-[#2F3C96] truncate">
+                                  {entry.idx + 1}. {entry.email}
+                                </p>
+                                {entry.lastName ? (
+                                  <p className="text-[11px] text-brand-gray truncate">
+                                    Dr. {entry.lastName}
+                                  </p>
+                                ) : null}
+                                {!!entry.message && (
+                                  <p className="text-[11px] text-brand-gray mt-1">
+                                    {entry.message}
+                                  </p>
+                                )}
+                              </div>
+                              <div
+                                className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}
+                              >
+                                {isSending ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : isSent ? (
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                ) : isError ? (
+                                  <XCircle className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Mail className="w-3.5 h-3.5" />
+                                )}
+                                <span className="capitalize">
+                                  {entry.status}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[#2F3C96]">
+                        Sent invites (history)
+                      </h3>
+                      <p className="text-xs text-brand-gray mt-0.5">
+                        All researcher invite sends from this admin tool (newest
+                        first).
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fetchResearcherInviteLogs()}
+                      disabled={loadingResearcherInviteLogs}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {loadingResearcherInviteLogs ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      Refresh
+                    </button>
+                  </div>
+
+                  {loadingResearcherInviteLogs &&
+                  researcherInviteLogs.length === 0 ? (
+                    <div className="flex justify-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : researcherInviteLogs.length === 0 ? (
+                    <p className="text-sm text-brand-gray text-center py-8">
+                      No invites sent yet.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-lg border border-[rgba(208,196,226,0.35)]">
+                      <table className="w-full min-w-[640px] text-sm text-left">
+                        <thead>
+                          <tr className="bg-slate-50/90 text-xs uppercase text-brand-gray border-b border-[rgba(208,196,226,0.35)]">
+                            <th className="py-2 px-3 font-semibold">When</th>
+                            <th className="py-2 px-3 font-semibold">Email</th>
+                            <th className="py-2 px-3 font-semibold">
+                              Last name
+                            </th>
+                            <th className="py-2 px-3 font-semibold">Status</th>
+                            <th className="py-2 px-3 font-semibold">Admin</th>
+                            <th className="py-2 px-3 font-semibold">Note</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {researcherInviteLogs.map((row) => (
+                            <tr
+                              key={row._id}
+                              className="border-b border-[rgba(208,196,226,0.25)] last:border-0"
+                            >
+                              <td className="py-2 px-3 text-xs text-brand-gray whitespace-nowrap">
+                                {row.createdAt
+                                  ? new Date(row.createdAt).toLocaleString()
+                                  : "—"}
+                              </td>
+                              <td className="py-2 px-3 text-xs font-mono text-[#2F3C96] break-all">
+                                {row.email}
+                              </td>
+                              <td className="py-2 px-3 text-xs text-brand-gray">
+                                {row.lastName || "—"}
+                              </td>
+                              <td className="py-2 px-3">
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    row.status === "sent"
+                                      ? "bg-emerald-50 text-emerald-800"
+                                      : "bg-rose-50 text-rose-800"
+                                  }`}
+                                >
+                                  {row.status}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-xs text-brand-gray">
+                                {row.adminEmail || row.adminUsername || "—"}
+                              </td>
+                              <td className="py-2 px-3 text-xs text-rose-700 max-w-[200px]">
+                                {row.errorMessage || "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

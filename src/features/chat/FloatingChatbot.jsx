@@ -1302,13 +1302,15 @@ const saveChat = (messages, isOpen) => {
 // Rotating phrases for the speech bubble when chatbot is closed
 const SPEECH_BUBBLE_PHRASES = [
   { primary: "Hi, I'm Yori", secondary: null },
-  { primary: "How can I help you?", secondary: null },
+  { primary: "Ask me anything", secondary: null },
 ];
 
 const FloatingChatbot = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isLandingPage = location.pathname === "/";
+  // Marketing pages: `/` (guest Yori) and `/home` (Landing.jsx) — same bottom offset on mobile
+  const isLandingPage =
+    location.pathname === "/" || location.pathname === "/home";
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isSideCollapsed, setIsSideCollapsed] = useState(false);
@@ -2156,9 +2158,10 @@ const FloatingChatbot = () => {
     location.pathname === "/trials";
   const isLowerOnPublicPages = isLandingPage || (isGuest && isGuestBrowsePage);
   const mobileBottomOffsetClass = isLowerOnPublicPages
-    ? "bottom-4"
-    : "bottom-24";
-  const desktopBottomOffsetClass = "sm:bottom-4";
+    ? "bottom-[max(1rem,env(safe-area-inset-bottom,0px))]"
+    : "bottom-[calc(6rem+env(safe-area-inset-bottom,0px))]";
+  const desktopBottomOffsetClass =
+    "sm:bottom-[max(1rem,env(safe-area-inset-bottom,0px))]";
   const closedBotPositionClass = `${mobileBottomOffsetClass} ${desktopBottomOffsetClass}`;
   const openChatPositionClass = `${mobileBottomOffsetClass} ${desktopBottomOffsetClass}`;
   const showMobileCollapsedDock = isOpen && isMobileView && isSideCollapsed;
@@ -2170,20 +2173,19 @@ const FloatingChatbot = () => {
       {/* Floating Chat Button - constrained on mobile so it doesn't go off screen */}
       {!isOpen && !showClosedMobileCollapsedDock && (
         <div
-          className={`fixed right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:right-6 z-50 flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto ${closedBotPositionClass}`}
+          className={`fixed right-4 left-auto w-fit max-w-[calc(100vw-2rem)] sm:right-6 z-[100] flex flex-col items-end gap-2 pointer-events-none [&>*]:pointer-events-auto drop-shadow-[0_10px_28px_rgba(47,60,150,0.22)] ${closedBotPositionClass}`}
         >
-          {/* Speech Bubble - rotates between "Hi, I'm Yori" and "How can I help you?" */}
+          {/* Speech Bubble - rotates between "Hi, I'm Yori" and "Ask me anything" */}
           {(() => {
-            const phrase = SPEECH_BUBBLE_PHRASES[speechPhraseIndex];
-            const hasSecondary = !!phrase?.secondary;
-            const primary = phrase?.primary ?? "";
             return (
-              <div className="relative mr-3 max-w-[calc(100vw-7rem)] sm:max-w-[calc(100%-4rem)] bg-[#E8D5FF] border-2 border-[#2F3C96] rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg min-h-[2.25rem] sm:min-h-[3rem] flex items-center justify-center pointer-events-auto shrink-0">
-                <p className="text-[10px] sm:text-xs font-semibold text-[#2F3C96] leading-tight text-center">
+              <div className="relative mr-2 w-max max-w-[min(13.5rem,calc(100vw-6rem))] bg-[#E8D5FF] border border-[#2F3C96] rounded-lg px-2 py-1 sm:px-2.5 sm:py-1 shadow-md flex items-center justify-center pointer-events-auto shrink-0">
+                <p className="text-[9px] sm:text-[11px] font-semibold text-[#2F3C96] leading-snug text-center">
                   {isTrialPage || isPublicationPage || context ? (
-                    "I'm here to help explain this"
+                    <span className="block max-w-[min(13.5rem,calc(100vw-6rem))]">
+                      I'm here to help explain this
+                    </span>
                   ) : (
-                    <span className="inline-block min-w-0 sm:min-w-[10.5rem]">
+                    <span className="inline-block whitespace-nowrap">
                       {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].secondary ? (
                         <>
                           {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].primary}
@@ -2197,8 +2199,8 @@ const FloatingChatbot = () => {
                   )}
                 </p>
                 {/* Speech bubble tail */}
-                <div className="absolute bottom-[-8px] right-12 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-[#2F3C96]"></div>
-                <div className="absolute bottom-[-6px] right-12 w-0 h-0 border-l-7 border-r-7 border-t-7 border-l-transparent border-r-transparent border-t-[#E8D5FF]"></div>
+                <div className="absolute bottom-[-6px] right-10 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-[#2F3C96]"></div>
+                <div className="absolute bottom-[-5px] right-10 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-[#E8D5FF]"></div>
               </div>
             );
           })()}
@@ -2222,7 +2224,7 @@ const FloatingChatbot = () => {
 
       {showClosedMobileCollapsedDock && (
         <div
-          className={`fixed right-0 left-auto z-50 ${closedBotPositionClass}`}
+          className={`fixed right-0 left-auto z-[100] ${closedBotPositionClass}`}
         >
           <button
             type="button"
@@ -2243,7 +2245,7 @@ const FloatingChatbot = () => {
 
       {showMobileCollapsedDock && (
         <div
-          className={`fixed right-0 left-auto z-50 ${openChatPositionClass}`}
+          className={`fixed right-0 left-auto z-[100] ${openChatPositionClass}`}
         >
           <button
             type="button"
@@ -2265,7 +2267,7 @@ const FloatingChatbot = () => {
       {/* Chat Window - reduced on mobile so it clears the bottom navigation */}
       {isOpen && !showMobileCollapsedDock && (
         <div
-          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-50 flex flex-col overflow-visible ${openChatPositionClass} ${
+          className={`fixed left-4 right-4 sm:left-auto sm:right-6 bg-white rounded-2xl shadow-2xl border border-slate-200/80 z-[100] flex flex-col overflow-visible ${openChatPositionClass} ${
             isMinimized
               ? "w-[calc(100vw-2rem)] sm:w-80 h-16"
               : "w-[calc(100vw-2rem)] sm:w-96 h-[min(460px,calc(100vh-8.5rem))] sm:h-[min(600px,calc(100vh-2rem))]"
