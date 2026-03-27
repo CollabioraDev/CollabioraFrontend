@@ -166,6 +166,12 @@ export default function CuratedTrialsManage() {
                 Refresh
               </Button>
               <Link
+                to="/curate-trials?tab=template"
+                className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+              >
+                Structured template
+              </Link>
+              <Link
                 to="/curate-trials"
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-[#2F3C96] hover:bg-slate-50 hover:border-indigo-200 transition-colors"
               >
@@ -297,6 +303,7 @@ export default function CuratedTrialsManage() {
               <TrialPreviewDetail
                 t={draft}
                 onPatch={(patch) => setDraft((d) => patchDraft(d, patch))}
+                showMetadataFields
               />
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <Button

@@ -1,5 +1,14 @@
 export const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+/** Saved on each curated trial. `ucla` appears in UCLA site listings; `general` is stored without UCLA scope (not shown on Trials UCLA filter yet). */
+export const CURATE_INSTITUTION_OPTIONS = [
+  {
+    value: "ucla",
+    label: "University of California, Los Angeles",
+  },
+  { value: "general", label: "Any" },
+];
+
 export const PLACEHOLDER = `NEULARK — NEU-411 (LRRK2 Inhibitor, Phase 2)
 
 NEU-411-PD201 Recruiting Phase 2

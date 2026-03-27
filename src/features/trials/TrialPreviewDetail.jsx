@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import {
   FileText,
   Activity,
@@ -20,7 +20,41 @@ import {
   parseContactsLines,
   splitCriteria,
 } from "./curateTrialsUtils.js";
-export function TrialPreviewDetail({ t, onPatch }) {
+
+function enrollmentLabel(status) {
+  if (status == null || status === "") return "N/A";
+  const s = String(status).toUpperCase();
+  if (s === "RECRUITING") return "Open";
+  if (s === "CLOSED") return "Closed";
+  return String(status).replace(/_/g, " ");
+}
+
+const PHASE_OPTIONS = [
+  ["", "—"],
+  ["PHASE1", "Phase 1"],
+  ["PHASE2", "Phase 2"],
+  ["PHASE3", "Phase 3"],
+  ["PHASE4", "Phase 4"],
+  ["EARLY_PHASE1", "Early Phase 1"],
+  ["NA", "N/A"],
+];
+
+const STATUS_OPTIONS = [
+  ["RECRUITING", "Recruiting"],
+  ["NOT_YET_RECRUITING", "Not yet recruiting"],
+  ["ACTIVE_NOT_RECRUITING", "Active, not recruiting"],
+  ["CLOSED", "Closed"],
+  ["COMPLETED", "Completed"],
+  ["TERMINATED", "Terminated"],
+  ["WITHDRAWN", "Withdrawn"],
+];
+
+export function TrialPreviewDetail({
+  t,
+  onPatch,
+  showAllSections = false,
+  showMetadataFields = false,
+}) {
   const [expanded, setExpanded] = useState(true);
   const [editing, setEditing] = useState({
     studyPurpose: false,
@@ -42,6 +76,12 @@ export function TrialPreviewDetail({ t, onPatch }) {
   const contactsLine = (t.contacts || [])
     .map((c) => [c.name, c.email, c.role].filter(Boolean).join(" | "))
     .join("\n");
+
+  const emptyHint = (
+    <span className="block text-sm text-slate-400 italic">
+      No content yet — click Edit to add.
+    </span>
+  );
 
   function patch(partial) {
     if (typeof onPatch === "function") onPatch(partial);
@@ -67,6 +107,68 @@ export function TrialPreviewDetail({ t, onPatch }) {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {showMetadataFields && typeof onPatch === "function" && (
+        <div className="px-5 pt-4 pb-3 space-y-3 border-b border-slate-100 bg-slate-50/60">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Trial title <span className="text-rose-600">*</span>
+            </label>
+            <input
+              className={editFieldClass}
+              placeholder="Full study title as it should appear on the listing"
+              value={t.title || ""}
+              onChange={(e) => patch({ title: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                External study code (optional)
+              </label>
+              <input
+                className={`${editFieldClass} font-mono text-xs`}
+                placeholder="e.g. CL301"
+                value={t.externalStudyCode || ""}
+                onChange={(e) =>
+                  patch({ externalStudyCode: e.target.value.trim() })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                Phase
+              </label>
+              <select
+                className={editFieldClass}
+                value={t.phase || ""}
+                onChange={(e) => patch({ phase: e.target.value })}
+              >
+                {PHASE_OPTIONS.map(([val, lab]) => (
+                  <option key={val || "none"} value={val}>
+                    {lab}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                Recruitment status
+              </label>
+              <select
+                className={editFieldClass}
+                value={t.status || ""}
+                onChange={(e) => patch({ status: e.target.value })}
+              >
+                {STATUS_OPTIONS.map(([val, lab]) => (
+                  <option key={val} value={val}>
+                    {lab}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Card header â€” always visible */}
       <div className="p-5 pb-4">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -129,7 +231,7 @@ export function TrialPreviewDetail({ t, onPatch }) {
       {expanded && (
         <div className="px-5 pb-5 space-y-4 border-t border-slate-100 pt-4">
           {/* Study Purpose */}
-          {(t.studyPurpose || t.description) && (
+          {(t.studyPurpose || t.description || showAllSections) && (
             <Section
               icon={FileText}
               title="Study Purpose"
@@ -151,14 +253,14 @@ export function TrialPreviewDetail({ t, onPatch }) {
                   className="text-sm leading-relaxed whitespace-pre-line"
                   style={{ color: "#787878" }}
                 >
-                  {t.studyPurpose || t.description}
+                  {t.studyPurpose || t.description || emptyHint}
                 </p>
               )}
             </Section>
           )}
 
           {/* What Happens */}
-          {t.whatHappens && (
+          {(t.whatHappens || showAllSections) && (
             <Section
               icon={Activity}
               title="What Happens"
@@ -180,14 +282,14 @@ export function TrialPreviewDetail({ t, onPatch }) {
                   className="text-sm leading-relaxed whitespace-pre-line"
                   style={{ color: "#787878" }}
                 >
-                  {t.whatHappens}
+                  {t.whatHappens || emptyHint}
                 </p>
               )}
             </Section>
           )}
 
           {/* Risks & Benefits */}
-          {t.risksAndBenefits && (
+          {(t.risksAndBenefits || showAllSections) && (
             <Section
               icon={Info}
               title="Potential Risks & Benefits"
@@ -209,14 +311,14 @@ export function TrialPreviewDetail({ t, onPatch }) {
                   className="text-sm leading-relaxed whitespace-pre-line"
                   style={{ color: "#787878" }}
                 >
-                  {t.risksAndBenefits}
+                  {t.risksAndBenefits || emptyHint}
                 </p>
               )}
             </Section>
           )}
 
           {/* Who Can Join â€” eligibility overview + inc/exc */}
-          {(t.whoCanJoin || hasInclusion || hasExclusion) && (
+          {(t.whoCanJoin || hasInclusion || hasExclusion || showAllSections) && (
             <Section
               icon={ListChecks}
               title="Who Can Join (Eligibility)"
@@ -383,9 +485,7 @@ export function TrialPreviewDetail({ t, onPatch }) {
                     </span>
                   </div>
                   <p className="text-sm font-bold" style={{ color: "#2F3C96" }}>
-                    {t.status === "RECRUITING"
-                      ? "Open"
-                      : (t.status || "N/A").replace(/_/g, " ")}
+                    {enrollmentLabel(t.status)}
                   </p>
                 </div>
               </div>
@@ -406,7 +506,7 @@ export function TrialPreviewDetail({ t, onPatch }) {
               )}
 
               {/* Inclusion */}
-              {hasInclusion && (
+              {(hasInclusion || showAllSections) && (
                 <div className="mb-3">
                   <h5
                     className="font-semibold mb-2 flex items-center gap-2 text-sm"
@@ -426,14 +526,14 @@ export function TrialPreviewDetail({ t, onPatch }) {
                       className="text-sm leading-relaxed whitespace-pre-line"
                       style={{ color: "#787878" }}
                     >
-                      {incText}
+                      {incText || (showAllSections ? "—" : "")}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Exclusion */}
-              {hasExclusion && (
+              {(hasExclusion || showAllSections) && (
                 <div>
                   <h5
                     className="font-semibold mb-2 flex items-center gap-2 text-sm"
@@ -453,7 +553,7 @@ export function TrialPreviewDetail({ t, onPatch }) {
                       className="text-sm leading-relaxed whitespace-pre-line"
                       style={{ color: "#787878" }}
                     >
-                      {excText}
+                      {excText || (showAllSections ? "—" : "")}
                     </p>
                   </div>
                 </div>
@@ -462,7 +562,7 @@ export function TrialPreviewDetail({ t, onPatch }) {
           )}
 
           {/* Conditions */}
-          {t.conditions?.length > 0 && (
+          {(t.conditions?.length > 0 || showAllSections) && (
             <Section
               icon={Activity}
               title="Conditions"
@@ -493,21 +593,27 @@ export function TrialPreviewDetail({ t, onPatch }) {
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                {t.conditions.map((c, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border"
-                    style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
-                  >
-                    {c}
-                  </span>
-                ))}
+                {(t.conditions || []).length === 0 && showAllSections ? (
+                  <p className="text-sm text-slate-400 italic">
+                    No conditions — click Edit to add (comma-separated).
+                  </p>
+                ) : (
+                  (t.conditions || []).map((c, i) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 bg-white text-sm font-medium rounded-lg border"
+                      style={{ color: "#2F3C96", borderColor: "#D0C4E2" }}
+                    >
+                      {c}
+                    </span>
+                  ))
+                )}
               </div>
             </Section>
           )}
 
           {/* Contacts */}
-          {t.contacts?.length > 0 && (
+          {(t.contacts?.length > 0 || showAllSections) && (
             <Section
               icon={Mail}
               title="Contact Information"
@@ -531,50 +637,59 @@ export function TrialPreviewDetail({ t, onPatch }) {
                 </div>
               )}
               <div className="space-y-3">
-                {t.contacts.map((c, i) => (
-                  <div
-                    key={i}
-                    className="bg-white rounded-lg p-4 border shadow-sm"
-                    style={{ borderColor: "rgba(232,232,232,1)" }}
-                  >
-                    {c.name && (
-                      <p
-                        className="font-bold text-sm mb-1"
-                        style={{ color: "#2F3C96" }}
-                      >
-                        {c.name}
-                      </p>
-                    )}
-                    {c.role && (
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border mb-2"
-                        style={{
-                          color: "#2F3C96",
-                          borderColor: "#D0C4E2",
-                          backgroundColor: "rgba(208,196,226,0.15)",
-                        }}
-                      >
-                        {c.role}
-                      </span>
-                    )}
-                    {c.email && (
-                      <a
-                        href={`mailto:${c.email}`}
-                        className="flex items-center gap-2 text-sm font-medium transition-colors"
-                        style={{ color: "#2F3C96" }}
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        {c.email}
-                      </a>
-                    )}
-                  </div>
-                ))}
+                {(t.contacts || []).length === 0 && showAllSections ? (
+                  <p className="text-sm text-slate-400 italic">
+                    No contacts — click Edit and add one line per person:{" "}
+                    <span className="font-mono text-xs">
+                      Name | email | role
+                    </span>
+                  </p>
+                ) : (
+                  (t.contacts || []).map((c, i) => (
+                    <div
+                      key={i}
+                      className="bg-white rounded-lg p-4 border shadow-sm"
+                      style={{ borderColor: "rgba(232,232,232,1)" }}
+                    >
+                      {c.name && (
+                        <p
+                          className="font-bold text-sm mb-1"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          {c.name}
+                        </p>
+                      )}
+                      {c.role && (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border mb-2"
+                          style={{
+                            color: "#2F3C96",
+                            borderColor: "#D0C4E2",
+                            backgroundColor: "rgba(208,196,226,0.15)",
+                          }}
+                        >
+                          {c.role}
+                        </span>
+                      )}
+                      {c.email && (
+                        <a
+                          href={`mailto:${c.email}`}
+                          className="flex items-center gap-2 text-sm font-medium transition-colors"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          {c.email}
+                        </a>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </Section>
           )}
 
           {/* Keywords */}
-          {keywords.length > 0 && (
+          {(keywords.length > 0 || showAllSections) && (
             <div>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -604,19 +719,25 @@ export function TrialPreviewDetail({ t, onPatch }) {
                 </div>
               )}
               <div className="flex flex-wrap gap-2">
-                {keywords.map((kw, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2.5 py-1 rounded-full border font-medium"
-                    style={{
-                      backgroundColor: "rgba(208,196,226,0.2)",
-                      color: "#2F3C96",
-                      borderColor: "rgba(208,196,226,0.6)",
-                    }}
-                  >
-                    {kw}
-                  </span>
-                ))}
+                {keywords.length === 0 && showAllSections ? (
+                  <p className="text-sm text-slate-400 italic">
+                    No keywords — click Edit to add (comma-separated).
+                  </p>
+                ) : (
+                  keywords.map((kw, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-2.5 py-1 rounded-full border font-medium"
+                      style={{
+                        backgroundColor: "rgba(208,196,226,0.2)",
+                        color: "#2F3C96",
+                        borderColor: "rgba(208,196,226,0.6)",
+                      }}
+                    >
+                      {kw}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
           )}

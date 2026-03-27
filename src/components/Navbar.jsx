@@ -43,6 +43,13 @@ export default function Navbar() {
   // On admin routes, show only the logo (no nav links, no Sign In)
   const isAdminRoute = location.pathname.startsWith("/admin");
 
+  // Curate site-listed trials: logo only (same as admin bar)
+  const isCurateTrialsRoute =
+    location.pathname === "/curate-trials" ||
+    location.pathname.startsWith("/curate-trials/");
+
+  const isLogoOnlyNav = isAdminRoute || isCurateTrialsRoute;
+
   // About Us, Contact, Sign In, Onboarding: for non-signed-in show basic nav (About Us, FAQ, Contact); for signed-in show Explore, Forums, Discovery
   const isSimpleNavPage =
     location.pathname === "/about" ||
@@ -576,7 +583,7 @@ export default function Navbar() {
         </PrefetchLink>
 
         {/* Desktop Nav - hidden on admin routes only (onboarding shows Explore, Forums, Discovery) */}
-        {!isAdminRoute && (
+        {!isLogoOnlyNav && (
           <nav className="hidden sm:flex items-center gap-6 text-[15px] font-semibold">
             {navItems.map((item, index) => {
               // Map navigation items to their routes
@@ -1308,7 +1315,7 @@ export default function Navbar() {
         )}
 
         {/* Mobile Hamburger - hidden on admin routes only */}
-        {!isAdminRoute && (
+        {!isLogoOnlyNav && (
           <div className="sm:hidden flex items-center gap-2">
             {/* Notification Bell for Mobile */}
             {user && (

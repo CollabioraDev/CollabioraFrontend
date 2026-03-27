@@ -610,9 +610,7 @@ export default function OnboardingNew() {
     );
     if (!canonical) return;
     const key = buildNormalizedKey(canonical);
-    const alreadyAdded = conditions.some(
-      (c) => buildNormalizedKey(c) === key,
-    );
+    const alreadyAdded = conditions.some((c) => buildNormalizedKey(c) === key);
     if (!alreadyAdded) {
       setConditions((prev) => [...prev, canonical].slice(0, 15));
       setConditionInput("");
@@ -767,9 +765,7 @@ export default function OnboardingNew() {
         "application/pdf",
       ];
       if (!validTypes.includes(file.type)) {
-        setError(
-          "Please upload an image (JPEG, PNG, GIF, WebP) or PDF file",
-        );
+        setError("Please upload an image (JPEG, PNG, GIF, WebP) or PDF file");
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
@@ -1361,7 +1357,7 @@ export default function OnboardingNew() {
                           </span>
                         )}
                         <img
-                          src="/medic.png"
+                          src="/medic.webp"
                           alt=""
                           className="w-16 h-16 object-contain"
                           aria-hidden
@@ -1396,7 +1392,7 @@ export default function OnboardingNew() {
                           </span>
                         )}
                         <img
-                          src="/patient-caregiver.png"
+                          src="/patient-caregiver.webp"
                           alt=""
                           className="w-16 h-16 object-contain"
                           aria-hidden
@@ -1827,8 +1823,7 @@ export default function OnboardingNew() {
                         onClick={() =>
                           firstName?.trim() &&
                           lastName?.trim() &&
-                          (isMedicalProfessional !== false ||
-                            handle?.trim()) &&
+                          (isMedicalProfessional !== false || handle?.trim()) &&
                           goToStep(4)
                         }
                         disabled={
@@ -2958,7 +2953,7 @@ export default function OnboardingNew() {
                   }}
                 >
                   {loading ? "Setting up…" : "Skip for now"}
-        </button>
+                </button>
               </div>
             )}
           </div>

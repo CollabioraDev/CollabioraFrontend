@@ -1,3 +1,30 @@
+/** Default object for the structured template (same fields as parsed curated trials). */
+export function createEmptyTemplateTrial() {
+  return {
+    institutionKey: "ucla",
+    title: "",
+    externalStudyCode: "",
+    status: "RECRUITING",
+    phase: "",
+    studyPurpose: "",
+    whatHappens: "",
+    risksAndBenefits: "",
+    whoCanJoin: "",
+    eligibility: {
+      gender: "",
+      minimumAge: "",
+      maximumAge: "",
+      criteria: "",
+    },
+    inclusionCriteria: "",
+    exclusionCriteria: "",
+    contacts: [],
+    searchKeywords: [],
+    previewKeywords: [],
+    conditions: [],
+  };
+}
+
 export function getStatusColor(status) {
   const s = (status || "").toUpperCase();
   if (s === "RECRUITING") return "bg-green-100 text-green-800 border-green-200";

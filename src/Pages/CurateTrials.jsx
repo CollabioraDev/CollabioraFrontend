@@ -5,4 +5,5 @@ export {
   buildEligibilityCriteriaFromParts,
   parseContactsLines,
   getStatusColor,
+  createEmptyTemplateTrial,
 } from "../features/trials/curateTrialsUtils.js";
