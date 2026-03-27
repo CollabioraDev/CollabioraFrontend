@@ -73,6 +73,7 @@ const TrustedNetworksMarquee = () => {
         href={network.linkUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={network.name}
         className="flex items-center justify-center transition-all hover:scale-105"
         style={{
           textDecoration: "none",

@@ -27,7 +27,8 @@ export default function HeroIllustration() {
         style={{
           width: 260,
           height: 260,
-          background: "radial-gradient(circle, #7C3AED 0%, #2F3C96 60%, transparent 100%)",
+          background:
+            "radial-gradient(circle, #7C3AED 0%, #2F3C96 60%, transparent 100%)",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
@@ -64,16 +65,21 @@ export default function HeroIllustration() {
       </svg>
 
       {/* Floating minimal pills */}
-      <Pill label="✦ Clinical Trials"    delay={0.6} className="top-8  left-4"   />
-      <Pill label="✦ Treatments"         delay={0.75} className="top-8  right-4" />
-      <Pill label="✦ Research"           delay={0.9} className="bottom-10 left-8" />
-      <Pill label="✦ Connect"            delay={1.05} className="bottom-10 right-8" />
+      <Pill label="✦ Clinical Trials" delay={0.6} className="top-8  left-4" />
+      <Pill label="✦ Treatments" delay={0.75} className="top-8  right-4" />
+      <Pill label="✦ Research" delay={0.9} className="bottom-10 left-8" />
+      <Pill label="✦ Connect" delay={1.05} className="bottom-10 right-8" />
 
       {/* Bot mascot */}
       <motion.div
         initial={{ opacity: 0, scale: 0.85, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3, type: "spring", stiffness: 110 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.3,
+          type: "spring",
+          stiffness: 110,
+        }}
         className="relative z-10 flex flex-col items-center"
       >
         {/* Chat bubble */}
@@ -86,7 +92,8 @@ export default function HeroIllustration() {
         >
           {/* typing dots animation on load then settle to text */}
           <span className="text-[13px] font-bold" style={{ color: "#2F3C96" }}>
-            I found <span style={{ color: "#7C3AED" }}>3 matches</span> for you! ✨
+            I found <span style={{ color: "#7C3AED" }}>3 matches</span> for you!
+            ✨
           </span>
           {/* bubble tail */}
           <span
@@ -104,7 +111,7 @@ export default function HeroIllustration() {
 
         {/* Bot image */}
         <motion.img
-          src="/bot.png"
+          src="/bot.webp"
           alt="Yori the AI health assistant"
           className="relative w-36 h-36 object-contain drop-shadow-2xl"
           animate={{ y: [0, -6, 0] }}

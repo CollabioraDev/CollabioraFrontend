@@ -18,7 +18,7 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <img
-                src="/logo1.png"
+                src="/logo1.webp"
                 alt="collabiora Logo"
                 className="h-6 w-auto"
               />

@@ -67,14 +67,21 @@ function downloadAsText(content, filename) {
 function escapeCsvCell(val) {
   if (val == null) return "";
   const s = String(val).trim();
-  if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+  if (
+    s.includes(",") ||
+    s.includes('"') ||
+    s.includes("\n") ||
+    s.includes("\r")
+  ) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
   return s;
 }
 
 function downloadAsCsv(content, filename) {
-  const blob = new Blob(["\uFEFF" + content], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\uFEFF" + content], {
+    type: "text/csv;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -84,15 +91,27 @@ function downloadAsCsv(content, filename) {
 }
 
 function exportExpertsAsTxt(experts) {
-  const lines = ["collabiora – Experts / Researchers Export", "Generated: " + new Date().toLocaleString(), ""];
+  const lines = [
+    "collabiora – Experts / Researchers Export",
+    "Generated: " + new Date().toLocaleString(),
+    "",
+  ];
   experts.forEach((e, i) => {
-    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    const loc = e.location
+      ? e.location.city
+        ? `${e.location.city}, ${e.location.country}`
+        : e.location.country
+      : "";
     lines.push(`${i + 1}. ${e.name || "—"}`);
     if (e.email) lines.push(`   Email: ${e.email}`);
     lines.push(`   Verified: ${e.isVerified ? "Yes" : "No"}`);
     if (loc) lines.push(`   Location: ${loc}`);
-    if (e.specialties?.length) lines.push(`   Specialties: ${e.specialties.join(", ")}`);
-    if (e.accountCreated) lines.push(`   Account created: ${new Date(e.accountCreated).toLocaleDateString()}`);
+    if (e.specialties?.length)
+      lines.push(`   Specialties: ${e.specialties.join(", ")}`);
+    if (e.accountCreated)
+      lines.push(
+        `   Account created: ${new Date(e.accountCreated).toLocaleDateString()}`,
+      );
     lines.push("");
   });
   downloadAsText(lines.join("\n"), "experts-export.txt");
@@ -110,49 +129,103 @@ function exportExpertsAsPdf(experts) {
   y += 10;
   doc.setFontSize(10);
   experts.forEach((e, i) => {
-    if (y > 270) { doc.addPage(); y = 15; }
-    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    if (y > 270) {
+      doc.addPage();
+      y = 15;
+    }
+    const loc = e.location
+      ? e.location.city
+        ? `${e.location.city}, ${e.location.country}`
+        : e.location.country
+      : "";
     doc.setFont("helvetica", "bold");
     doc.text(`${i + 1}. ${(e.name || "—").substring(0, 60)}`, 14, y);
     y += 5;
     doc.setFont("helvetica", "normal");
-    if (e.email) { doc.text(`Email: ${e.email.substring(0, 80)}`, 14, y); y += 5; }
-    doc.text(`Verified: ${e.isVerified ? "Yes" : "No"}`, 14, y); y += 5;
-    if (loc) { doc.text(`Location: ${loc.substring(0, 80)}`, 14, y); y += 5; }
-    if (e.specialties?.length) { doc.text(`Specialties: ${e.specialties.join(", ").substring(0, 100)}`, 14, y); y += 5; }
-    if (e.accountCreated) { doc.text(`Account created: ${new Date(e.accountCreated).toLocaleDateString()}`, 14, y); y += 5; }
+    if (e.email) {
+      doc.text(`Email: ${e.email.substring(0, 80)}`, 14, y);
+      y += 5;
+    }
+    doc.text(`Verified: ${e.isVerified ? "Yes" : "No"}`, 14, y);
+    y += 5;
+    if (loc) {
+      doc.text(`Location: ${loc.substring(0, 80)}`, 14, y);
+      y += 5;
+    }
+    if (e.specialties?.length) {
+      doc.text(
+        `Specialties: ${e.specialties.join(", ").substring(0, 100)}`,
+        14,
+        y,
+      );
+      y += 5;
+    }
+    if (e.accountCreated) {
+      doc.text(
+        `Account created: ${new Date(e.accountCreated).toLocaleDateString()}`,
+        14,
+        y,
+      );
+      y += 5;
+    }
     y += 4;
   });
   doc.save("experts-export.pdf");
 }
 
 function exportExpertsAsCsv(experts) {
-  const headers = ["#", "Name", "Email", "Verified", "Location", "Specialties", "Account created"];
+  const headers = [
+    "#",
+    "Name",
+    "Email",
+    "Verified",
+    "Location",
+    "Specialties",
+    "Account created",
+  ];
   const rows = experts.map((e, i) => {
-    const loc = e.location ? (e.location.city ? `${e.location.city}, ${e.location.country}` : e.location.country) : "";
+    const loc = e.location
+      ? e.location.city
+        ? `${e.location.city}, ${e.location.country}`
+        : e.location.country
+      : "";
     return [
       i + 1,
       e.name || "",
       e.email || "",
       e.isVerified ? "Yes" : "No",
       loc,
-      (e.specialties && e.specialties.length) ? e.specialties.join("; ") : "",
+      e.specialties && e.specialties.length ? e.specialties.join("; ") : "",
       e.accountCreated ? new Date(e.accountCreated).toLocaleDateString() : "",
-    ].map(escapeCsvCell).join(",");
+    ]
+      .map(escapeCsvCell)
+      .join(",");
   });
   const csv = [headers.map(escapeCsvCell).join(","), ...rows].join("\r\n");
   downloadAsCsv(csv, "experts-export.csv");
 }
 
 function exportPatientsAsTxt(patients) {
-  const lines = ["collabiora – Patients Export", "Generated: " + new Date().toLocaleString(), ""];
+  const lines = [
+    "collabiora – Patients Export",
+    "Generated: " + new Date().toLocaleString(),
+    "",
+  ];
   patients.forEach((p, i) => {
-    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    const loc = p.location
+      ? p.location.city
+        ? `${p.location.city}, ${p.location.country}`
+        : p.location.country
+      : "";
     lines.push(`${i + 1}. ${p.name || "—"}`);
     if (p.email) lines.push(`   Email: ${p.email}`);
     if (loc) lines.push(`   Location: ${loc}`);
-    if (p.conditions?.length) lines.push(`   Conditions: ${p.conditions.join(", ")}`);
-    if (p.accountCreated) lines.push(`   Account created: ${new Date(p.accountCreated).toLocaleDateString()}`);
+    if (p.conditions?.length)
+      lines.push(`   Conditions: ${p.conditions.join(", ")}`);
+    if (p.accountCreated)
+      lines.push(
+        `   Account created: ${new Date(p.accountCreated).toLocaleDateString()}`,
+      );
     lines.push("");
   });
   downloadAsText(lines.join("\n"), "patients-export.txt");
@@ -169,33 +242,73 @@ function exportPatientsAsPdf(patients) {
   y += 10;
   doc.setFontSize(10);
   patients.forEach((p, i) => {
-    if (y > 270) { doc.addPage(); y = 15; }
-    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    if (y > 270) {
+      doc.addPage();
+      y = 15;
+    }
+    const loc = p.location
+      ? p.location.city
+        ? `${p.location.city}, ${p.location.country}`
+        : p.location.country
+      : "";
     doc.setFont("helvetica", "bold");
     doc.text(`${i + 1}. ${(p.name || "—").substring(0, 60)}`, 14, y);
     y += 5;
     doc.setFont("helvetica", "normal");
-    if (p.email) { doc.text(`Email: ${p.email.substring(0, 80)}`, 14, y); y += 5; }
-    if (loc) { doc.text(`Location: ${loc.substring(0, 80)}`, 14, y); y += 5; }
-    if (p.conditions?.length) { doc.text(`Conditions: ${p.conditions.join(", ").substring(0, 100)}`, 14, y); y += 5; }
-    if (p.accountCreated) { doc.text(`Account created: ${new Date(p.accountCreated).toLocaleDateString()}`, 14, y); y += 5; }
+    if (p.email) {
+      doc.text(`Email: ${p.email.substring(0, 80)}`, 14, y);
+      y += 5;
+    }
+    if (loc) {
+      doc.text(`Location: ${loc.substring(0, 80)}`, 14, y);
+      y += 5;
+    }
+    if (p.conditions?.length) {
+      doc.text(
+        `Conditions: ${p.conditions.join(", ").substring(0, 100)}`,
+        14,
+        y,
+      );
+      y += 5;
+    }
+    if (p.accountCreated) {
+      doc.text(
+        `Account created: ${new Date(p.accountCreated).toLocaleDateString()}`,
+        14,
+        y,
+      );
+      y += 5;
+    }
     y += 4;
   });
   doc.save("patients-export.pdf");
 }
 
 function exportPatientsAsCsv(patients) {
-  const headers = ["#", "Name", "Email", "Location", "Conditions", "Account created"];
+  const headers = [
+    "#",
+    "Name",
+    "Email",
+    "Location",
+    "Conditions",
+    "Account created",
+  ];
   const rows = patients.map((p, i) => {
-    const loc = p.location ? (p.location.city ? `${p.location.city}, ${p.location.country}` : p.location.country) : "";
+    const loc = p.location
+      ? p.location.city
+        ? `${p.location.city}, ${p.location.country}`
+        : p.location.country
+      : "";
     return [
       i + 1,
       p.name || "",
       p.email || "",
       loc,
-      (p.conditions && p.conditions.length) ? p.conditions.join("; ") : "",
+      p.conditions && p.conditions.length ? p.conditions.join("; ") : "",
       p.accountCreated ? new Date(p.accountCreated).toLocaleDateString() : "",
-    ].map(escapeCsvCell).join(",");
+    ]
+      .map(escapeCsvCell)
+      .join(",");
   });
   const csv = [headers.map(escapeCsvCell).join(","), ...rows].join("\r\n");
   downloadAsCsv(csv, "patients-export.csv");
@@ -562,9 +675,8 @@ export default function AdminDashboard() {
   const [patientSortBy, setPatientSortBy] = useState("accountCreated");
   const [patientOrder, setPatientOrder] = useState("desc");
   // Weekly mailer
-  const [weeklyMailerSelectedUserIds, setWeeklyMailerSelectedUserIds] = useState(
-    [],
-  );
+  const [weeklyMailerSelectedUserIds, setWeeklyMailerSelectedUserIds] =
+    useState([]);
   const [sendingWeeklyMailer, setSendingWeeklyMailer] = useState(false);
   const [weeklyMailerSearchQuery, setWeeklyMailerSearchQuery] = useState("");
   const [weeklyMailerPipeline, setWeeklyMailerPipeline] = useState([]);
@@ -573,8 +685,9 @@ export default function AdminDashboard() {
     useState("");
   const [researcherInviteDraftLastName, setResearcherInviteDraftLastName] =
     useState("");
-  const [researcherInviteRecipients, setResearcherInviteRecipients] =
-    useState([]);
+  const [researcherInviteRecipients, setResearcherInviteRecipients] = useState(
+    [],
+  );
   const [sendingResearcherInvites, setSendingResearcherInvites] =
     useState(false);
   const [researcherInvitePipeline, setResearcherInvitePipeline] = useState([]);
@@ -1310,9 +1423,7 @@ export default function AdminDashboard() {
     }
     const lower = email.toLowerCase();
     if (
-      researcherInviteRecipients.some(
-        (r) => r.email.toLowerCase() === lower,
-      )
+      researcherInviteRecipients.some((r) => r.email.toLowerCase() === lower)
     ) {
       toast.error("That email is already in the list.");
       return;
@@ -1321,10 +1432,7 @@ export default function AdminDashboard() {
       typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `r-${Date.now()}-${Math.random()}`;
-    setResearcherInviteRecipients((prev) => [
-      ...prev,
-      { id, email, lastName },
-    ]);
+    setResearcherInviteRecipients((prev) => [...prev, { id, email, lastName }]);
     setResearcherInviteDraftEmail("");
     setResearcherInviteDraftLastName("");
   };
@@ -2896,8 +3004,12 @@ export default function AdminDashboard() {
   const verifiedCount = experts.filter((e) => e.isVerified).length;
   const unverifiedCount = experts.filter((e) => !e.isVerified).length;
 
-  const activeSectionLabel = SECTIONS.find((s) => s.id === activeSection)?.label ?? "Dashboard";
-  const adminEmail = typeof localStorage !== "undefined" ? localStorage.getItem("adminEmail") || "" : "";
+  const activeSectionLabel =
+    SECTIONS.find((s) => s.id === activeSection)?.label ?? "Dashboard";
+  const adminEmail =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("adminEmail") || ""
+      : "";
 
   return (
     <Layout>
@@ -2916,7 +3028,7 @@ export default function AdminDashboard() {
           <div className="shrink-0 px-4 py-3 flex items-center gap-3 border-b border-brand-purple-200">
             <div className="w-9 h-9 rounded-lg bg-brand-royal-blue/10 flex items-center justify-center shrink-0">
               <img
-                src="/logo1.png"
+                src="/logo1.webp"
                 alt="collabiora"
                 className="h-5 w-5 object-contain"
               />
@@ -2925,9 +3037,14 @@ export default function AdminDashboard() {
               <span className="font-semibold text-brand-royal-blue text-sm block truncate">
                 collabiora
               </span>
-              <span className="text-[11px] text-brand-royal-blue/80 font-medium block">Admin</span>
+              <span className="text-[11px] text-brand-royal-blue/80 font-medium block">
+                Admin
+              </span>
               {adminEmail ? (
-                <span className="text-[10px] text-brand-royal-blue/70 truncate block mt-0.5" title={adminEmail}>
+                <span
+                  className="text-[10px] text-brand-royal-blue/70 truncate block mt-0.5"
+                  title={adminEmail}
+                >
                   {adminEmail}
                 </span>
               ) : null}
@@ -2959,8 +3076,12 @@ export default function AdminDashboard() {
                               : "text-brand-royal-blue/90 hover:bg-brand-purple-200/70 hover:text-brand-royal-blue"
                           }`}
                         >
-                          <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-brand-royal-blue/80"}`} />
-                          <span className="flex-1 truncate">{section.label}</span>
+                          <Icon
+                            className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-brand-royal-blue/80"}`}
+                          />
+                          <span className="flex-1 truncate">
+                            {section.label}
+                          </span>
                         </button>
                       </li>
                     );
@@ -2982,7 +3103,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 ml-0 md:ml-60 relative">
+        <div className="flex-1 min-w-0 ml-0 md:ml-60 relative">
           {/* Top bar — section title (site colour) + mobile menu button */}
           <header className="sticky top-0 z-10 h-14 shrink-0 flex items-center gap-3 px-4 md:px-6 bg-brand-purple-100/95 backdrop-blur-sm border-b border-brand-purple-200/80 shadow-[0_1px_0_0_rgba(0,0,0,0.04)]">
             <button
@@ -2991,9 +3112,15 @@ export default function AdminDashboard() {
               className="md:hidden p-2 -ml-1 rounded-lg text-brand-royal-blue hover:bg-brand-purple-200/70 transition-colors"
               aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {sidebarOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </button>
-            <h1 className="text-base md:text-lg font-semibold text-brand-royal-blue truncate flex-1 min-w-0">{activeSectionLabel}</h1>
+            <h1 className="text-base md:text-lg font-semibold text-brand-royal-blue truncate flex-1 min-w-0">
+              {activeSectionLabel}
+            </h1>
           </header>
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {activeSection === "overview" &&
@@ -3015,9 +3142,7 @@ export default function AdminDashboard() {
                   : 0;
                 const pendingOver3Count = experts.filter(
                   (e) =>
-                    !e.isVerified &&
-                    e.pendingDays != null &&
-                    e.pendingDays > 3,
+                    !e.isVerified && e.pendingDays != null && e.pendingDays > 3,
                 ).length;
                 const signupsOverTime = overviewStats?.signupsOverTime || [];
                 const engagementOverTime =
@@ -3113,7 +3238,8 @@ export default function AdminDashboard() {
                               </p>
                               <p className="text-sm text-brand-gray">
                                 New joiners (
-                                {overviewStats?.currentMonthLabel ?? "this month"}
+                                {overviewStats?.currentMonthLabel ??
+                                  "this month"}
                                 )
                               </p>
                             </div>
@@ -3228,7 +3354,8 @@ export default function AdminDashboard() {
                               <p className="text-xs text-brand-gray mb-3">
                                 New signups per calendar month. Current month
                                 matches &quot;New joiners (
-                                {overviewStats?.currentMonthLabel ?? "this month"}
+                                {overviewStats?.currentMonthLabel ??
+                                  "this month"}
                                 )&quot; above.
                               </p>
                               <table className="w-full min-w-[320px] text-sm">
@@ -3464,7 +3591,8 @@ export default function AdminDashboard() {
                             <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
                               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
                                 Patients (
-                                {overviewStats?.currentMonthLabel ?? "this month"}
+                                {overviewStats?.currentMonthLabel ??
+                                  "this month"}
                                 )
                               </h3>
                               <div className="space-y-1 text-sm">
@@ -3551,7 +3679,8 @@ export default function AdminDashboard() {
                       Profile completion reminders
                     </h2>
                     <p className="text-xs text-slate-600">
-                      Track automated reminder emails for patients and researchers.
+                      Track automated reminder emails for patients and
+                      researchers.
                     </p>
                   </div>
                   <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1 py-0.5 text-xs">
@@ -3624,7 +3753,8 @@ export default function AdminDashboard() {
                       {profileReminderStats?.incompleteResearchers ?? "—"}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-1">
-                      Completed: {profileReminderStats?.completeResearchers ?? 0}
+                      Completed:{" "}
+                      {profileReminderStats?.completeResearchers ?? 0}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -3661,15 +3791,33 @@ export default function AdminDashboard() {
                     <table className="min-w-full text-xs">
                       <thead className="bg-slate-50 text-slate-500 border-b border-slate-200/80">
                         <tr>
-                          <th className="px-3 py-2 text-left font-medium">Email</th>
-                          <th className="px-3 py-2 text-left font-medium">Role</th>
-                          <th className="px-3 py-2 text-left font-medium">Email verified</th>
-                          <th className="px-3 py-2 text-left font-medium">Completion</th>
-                          <th className="px-3 py-2 text-left font-medium">Missing steps</th>
-                          <th className="px-3 py-2 text-left font-medium">Last stage</th>
-                          <th className="px-3 py-2 text-left font-medium">Account created</th>
-                          <th className="px-3 py-2 text-left font-medium">Last reminder</th>
-                          <th className="px-3 py-2 text-left font-medium">Status</th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Email
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Role
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Email verified
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Completion
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Missing steps
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Last stage
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Account created
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Last reminder
+                          </th>
+                          <th className="px-3 py-2 text-left font-medium">
+                            Status
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -3684,7 +3832,10 @@ export default function AdminDashboard() {
                           </tr>
                         )}
                         {profileReminderLogs.map((row) => (
-                          <tr key={row._id} className="border-t border-slate-100">
+                          <tr
+                            key={row._id}
+                            className="border-t border-slate-100"
+                          >
                             <td className="px-3 py-2 text-slate-800 break-all">
                               {row.email || "—"}
                             </td>
@@ -3727,7 +3878,9 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-3 py-2 text-slate-500">
                               {row.userCreatedAt
-                                ? new Date(row.userCreatedAt).toLocaleDateString()
+                                ? new Date(
+                                    row.userCreatedAt,
+                                  ).toLocaleDateString()
                                 : "—"}
                             </td>
                             <td className="px-3 py-2 text-slate-500">
@@ -3953,7 +4106,8 @@ export default function AdminDashboard() {
                   <p className="text-xs md:text-sm text-brand-gray">
                     Review and verify expert profiles
                     <span className="ml-1 md:ml-2 font-semibold text-brand-royal-blue">
-                      · {(overviewStats?.totalResearchers ?? experts.length)} researchers
+                      · {overviewStats?.totalResearchers ?? experts.length}{" "}
+                      researchers
                     </span>
                   </p>
                 </div>
@@ -4051,7 +4205,9 @@ export default function AdminDashboard() {
                                 {expert.email && (
                                   <div className="flex items-center gap-1.5 min-w-0">
                                     <Mail className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
-                                    <span className="truncate">{expert.email}</span>
+                                    <span className="truncate">
+                                      {expert.email}
+                                    </span>
                                   </div>
                                 )}
                                 {expert.accountCreated && (
@@ -4078,7 +4234,9 @@ export default function AdminDashboard() {
                                   expert.specialties.length > 0 && (
                                     <div className="flex items-center gap-1.5 min-w-0">
                                       <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0 text-brand-royal-blue/70" />
-                                      <span className="line-clamp-1">{expert.specialties.join(", ")}</span>
+                                      <span className="line-clamp-1">
+                                        {expert.specialties.join(", ")}
+                                      </span>
                                     </div>
                                   )}
                                 {expert.bio && (
@@ -4222,7 +4380,9 @@ export default function AdminDashboard() {
                                 </h3>
                                 <p className="text-xs md:text-sm text-amber-600">
                                   {expertsWithDocuments.length} researcher
-                                  {expertsWithDocuments.length !== 1 ? "s" : ""}{" "}
+                                  {expertsWithDocuments.length !== 1
+                                    ? "s"
+                                    : ""}{" "}
                                   need document review
                                 </p>
                               </div>
@@ -4370,7 +4530,8 @@ export default function AdminDashboard() {
                                   Need your attention
                                 </h3>
                                 <p className="text-xs md:text-sm text-brand-gray">
-                                  {expertsNeedingAttention.length} pending verification
+                                  {expertsNeedingAttention.length} pending
+                                  verification
                                 </p>
                               </div>
                             </div>
@@ -4420,196 +4581,202 @@ export default function AdminDashboard() {
                 <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
                   <p className="text-xs md:text-sm text-brand-gray">
                     <span className="font-semibold text-brand-royal-blue">
-                      {(overviewStats?.totalPatients ?? patients.length)} patients
+                      {overviewStats?.totalPatients ?? patients.length} patients
                     </span>
                   </p>
                 </div>
                 <div className="p-3 md:p-6">
-                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs md:text-sm font-medium text-brand-gray shrink-0">Sort:</span>
-                    <select
-                      value={patientSortBy}
-                      onChange={(e) => setPatientSortBy(e.target.value)}
-                      className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
-                    >
-                      <option value="accountCreated">Date</option>
-                      <option value="name">Name</option>
-                      <option value="activity">Activity</option>
-                    </select>
-                    <select
-                      value={patientOrder}
-                      onChange={(e) => setPatientOrder(e.target.value)}
-                      className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
-                    >
-                      <option value="desc">Newest first</option>
-                      <option value="asc">Oldest first</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-[rgba(208,196,226,0.3)]">
-                    <span className="text-xs md:text-sm font-medium text-brand-gray flex items-center gap-1.5 shrink-0">
-                      <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand-royal-blue" />
-                      Export:
-                    </span>
-                    <Button
-                      onClick={() => exportPatientsAsTxt(patients)}
-                      disabled={patients.length === 0}
-                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
-                    >
-                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      TXT
-                    </Button>
-                    <Button
-                      onClick={() => exportPatientsAsPdf(patients)}
-                      disabled={patients.length === 0}
-                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
-                    >
-                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      PDF
-                    </Button>
-                    <Button
-                      onClick={() => exportPatientsAsCsv(patients)}
-                      disabled={patients.length === 0}
-                      className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
-                    >
-                      <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      CSV
-                    </Button>
-                  </div>
-                </div>
-
-                {loadingPatients ? (
-                  <div className="flex justify-center py-8 md:py-12">
-                    <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin text-brand-royal-blue" />
-                  </div>
-                ) : patients.length === 0 ? (
-                  <div className="text-center py-8 md:py-12 rounded-lg border border-brand-purple-200/40 bg-brand-purple-50/30">
-                    <UserCircle className="w-12 h-12 md:w-16 md:h-16 text-brand-gray mx-auto mb-3 md:mb-4" />
-                    <p className="text-sm md:text-base text-brand-gray">No patients found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 md:space-y-4">
-                    {patients.map((patient) => (
-                      <div
-                        key={patient.userId}
-                        className="bg-slate-50/80 md:bg-[#F5F5F5] rounded-lg p-3 md:p-4 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all"
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs md:text-sm font-medium text-brand-gray shrink-0">
+                        Sort:
+                      </span>
+                      <select
+                        value={patientSortBy}
+                        onChange={(e) => setPatientSortBy(e.target.value)}
+                        className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
                       >
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-base md:text-lg font-semibold text-[#2F3C96] mb-1.5 md:mb-2">
-                              {patient.name}
-                            </h3>
-                            <div className="space-y-1 text-xs md:text-sm text-brand-gray">
-                              {patient.email && (
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-4 h-4 shrink-0" />
-                                  <span>{patient.email}</span>
-                                </div>
-                              )}
-                              {patient.accountCreated && (
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4 shrink-0" />
-                                  <span>
-                                    Account created:{" "}
-                                    {new Date(
-                                      patient.accountCreated,
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              )}
-                              {patient.location && (
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="w-4 h-4 shrink-0" />
-                                  <span>
-                                    {patient.location.city
-                                      ? `${patient.location.city}, ${patient.location.country}`
-                                      : patient.location.country}
-                                  </span>
-                                </div>
-                              )}
-                              {patient.conditions &&
-                                patient.conditions.length > 0 && (
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <Briefcase className="w-4 h-4 shrink-0" />
-                                    <span>{patient.conditions.join(", ")}</span>
+                        <option value="accountCreated">Date</option>
+                        <option value="name">Name</option>
+                        <option value="activity">Activity</option>
+                      </select>
+                      <select
+                        value={patientOrder}
+                        onChange={(e) => setPatientOrder(e.target.value)}
+                        className="px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white flex-1 min-w-0 max-w-[140px]"
+                      >
+                        <option value="desc">Newest first</option>
+                        <option value="asc">Oldest first</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-[rgba(208,196,226,0.3)]">
+                      <span className="text-xs md:text-sm font-medium text-brand-gray flex items-center gap-1.5 shrink-0">
+                        <Download className="w-3.5 h-3.5 md:w-4 md:h-4 text-brand-royal-blue" />
+                        Export:
+                      </span>
+                      <Button
+                        onClick={() => exportPatientsAsTxt(patients)}
+                        disabled={patients.length === 0}
+                        className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        TXT
+                      </Button>
+                      <Button
+                        onClick={() => exportPatientsAsPdf(patients)}
+                        disabled={patients.length === 0}
+                        className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        PDF
+                      </Button>
+                      <Button
+                        onClick={() => exportPatientsAsCsv(patients)}
+                        disabled={patients.length === 0}
+                        className="px-2.5 py-1 text-xs md:text-sm bg-white border border-[rgba(208,196,226,0.5)] text-brand-royal-blue hover:bg-brand-purple-50 rounded-lg flex items-center gap-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                        CSV
+                      </Button>
+                    </div>
+                  </div>
+
+                  {loadingPatients ? (
+                    <div className="flex justify-center py-8 md:py-12">
+                      <Loader2 className="w-6 h-6 md:w-8 md:h-8 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : patients.length === 0 ? (
+                    <div className="text-center py-8 md:py-12 rounded-lg border border-brand-purple-200/40 bg-brand-purple-50/30">
+                      <UserCircle className="w-12 h-12 md:w-16 md:h-16 text-brand-gray mx-auto mb-3 md:mb-4" />
+                      <p className="text-sm md:text-base text-brand-gray">
+                        No patients found
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 md:space-y-4">
+                      {patients.map((patient) => (
+                        <div
+                          key={patient.userId}
+                          className="bg-slate-50/80 md:bg-[#F5F5F5] rounded-lg p-3 md:p-4 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-base md:text-lg font-semibold text-[#2F3C96] mb-1.5 md:mb-2">
+                                {patient.name}
+                              </h3>
+                              <div className="space-y-1 text-xs md:text-sm text-brand-gray">
+                                {patient.email && (
+                                  <div className="flex items-center gap-2">
+                                    <Mail className="w-4 h-4 shrink-0" />
+                                    <span>{patient.email}</span>
                                   </div>
                                 )}
-                            </div>
-                            {(patient.threadCount > 0 ||
-                              patient.replyCount > 0 ||
-                              patient.postCount > 0 ||
-                              patient.commentCount > 0 ||
-                              patient.communityCount > 0) && (
-                              <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[rgba(208,196,226,0.4)] text-xs text-brand-royal-blue">
-                                {(patient.threadCount ?? 0) > 0 && (
-                                  <span
-                                    className="flex items-center gap-1"
-                                    title="Forum threads started"
-                                  >
-                                    <MessageSquare className="w-3.5 h-3.5" />{" "}
-                                    {patient.threadCount} threads
-                                  </span>
+                                {patient.accountCreated && (
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 shrink-0" />
+                                    <span>
+                                      Account created:{" "}
+                                      {new Date(
+                                        patient.accountCreated,
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
                                 )}
-                                {(patient.replyCount ?? 0) > 0 && (
-                                  <span
-                                    className="flex items-center gap-1"
-                                    title="Forum replies"
-                                  >
-                                    <MessageCircle className="w-3.5 h-3.5" />{" "}
-                                    {patient.replyCount} replies
-                                  </span>
+                                {patient.location && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 shrink-0" />
+                                    <span>
+                                      {patient.location.city
+                                        ? `${patient.location.city}, ${patient.location.country}`
+                                        : patient.location.country}
+                                    </span>
+                                  </div>
                                 )}
-                                {(patient.postCount ?? 0) > 0 && (
-                                  <span
-                                    className="flex items-center gap-1"
-                                    title="Community posts"
-                                  >
-                                    <FileText className="w-3.5 h-3.5" />{" "}
-                                    {patient.postCount} posts
-                                  </span>
-                                )}
-                                {(patient.commentCount ?? 0) > 0 && (
-                                  <span
-                                    className="flex items-center gap-1"
-                                    title="Comments on posts"
-                                  >
-                                    <Hash className="w-3.5 h-3.5" />{" "}
-                                    {patient.commentCount} comments
-                                  </span>
-                                )}
-                                {(patient.communityCount ?? 0) > 0 && (
-                                  <span
-                                    className="flex items-center gap-1"
-                                    title="Communities joined"
-                                  >
-                                    <Users className="w-3.5 h-3.5" />{" "}
-                                    {patient.communityCount} communities
-                                  </span>
-                                )}
+                                {patient.conditions &&
+                                  patient.conditions.length > 0 && (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Briefcase className="w-4 h-4 shrink-0" />
+                                      <span>
+                                        {patient.conditions.join(", ")}
+                                      </span>
+                                    </div>
+                                  )}
                               </div>
-                            )}
-                          </div>
-                          <div className="shrink-0 sm:pt-0 pt-1 border-t sm:border-t-0 border-[rgba(208,196,226,0.3)]">
-                            <Button
-                              onClick={() =>
-                                handleDeletePatient(patient.userId)
-                              }
-                              disabled={deletingPatientId === patient.userId}
-                              className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center justify-center gap-1.5"
-                            >
-                              {deletingPatientId === patient.userId ? (
-                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                              {(patient.threadCount > 0 ||
+                                patient.replyCount > 0 ||
+                                patient.postCount > 0 ||
+                                patient.commentCount > 0 ||
+                                patient.communityCount > 0) && (
+                                <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[rgba(208,196,226,0.4)] text-xs text-brand-royal-blue">
+                                  {(patient.threadCount ?? 0) > 0 && (
+                                    <span
+                                      className="flex items-center gap-1"
+                                      title="Forum threads started"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />{" "}
+                                      {patient.threadCount} threads
+                                    </span>
+                                  )}
+                                  {(patient.replyCount ?? 0) > 0 && (
+                                    <span
+                                      className="flex items-center gap-1"
+                                      title="Forum replies"
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5" />{" "}
+                                      {patient.replyCount} replies
+                                    </span>
+                                  )}
+                                  {(patient.postCount ?? 0) > 0 && (
+                                    <span
+                                      className="flex items-center gap-1"
+                                      title="Community posts"
+                                    >
+                                      <FileText className="w-3.5 h-3.5" />{" "}
+                                      {patient.postCount} posts
+                                    </span>
+                                  )}
+                                  {(patient.commentCount ?? 0) > 0 && (
+                                    <span
+                                      className="flex items-center gap-1"
+                                      title="Comments on posts"
+                                    >
+                                      <Hash className="w-3.5 h-3.5" />{" "}
+                                      {patient.commentCount} comments
+                                    </span>
+                                  )}
+                                  {(patient.communityCount ?? 0) > 0 && (
+                                    <span
+                                      className="flex items-center gap-1"
+                                      title="Communities joined"
+                                    >
+                                      <Users className="w-3.5 h-3.5" />{" "}
+                                      {patient.communityCount} communities
+                                    </span>
+                                  )}
+                                </div>
                               )}
-                              Delete
-                            </Button>
+                            </div>
+                            <div className="shrink-0 sm:pt-0 pt-1 border-t sm:border-t-0 border-[rgba(208,196,226,0.3)]">
+                              <Button
+                                onClick={() =>
+                                  handleDeletePatient(patient.userId)
+                                }
+                                disabled={deletingPatientId === patient.userId}
+                                className="w-full sm:w-auto px-3 py-2 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center justify-center gap-1.5"
+                              >
+                                {deletingPatientId === patient.userId ? (
+                                  <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                )}
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -4618,221 +4785,228 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
                 <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
                   <p className="text-xs md:text-sm text-brand-gray">
-                    <span className="font-semibold text-brand-royal-blue">Forums</span>
-                    {" "}· Categories & threads
+                    <span className="font-semibold text-brand-royal-blue">
+                      Forums
+                    </span>{" "}
+                    · Categories & threads
                   </p>
                 </div>
                 <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
-                      <h3 className="text-sm md:text-base font-semibold text-brand-gray">
-                        Categories
-                      </h3>
-                      {forumCategories.length > 0 &&
-                        selectedForumCategoryIds.length > 0 && (
-                          <Button
-                            onClick={handleBulkDeleteForumCategories}
-                            disabled={bulkDeletingForums}
-                            className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
-                          >
-                            {bulkDeletingForums ? (
-                              <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            )}
-                            Delete ({selectedForumCategoryIds.length})
-                          </Button>
-                        )}
-                    </div>
-                    {loadingForums ? (
-                      <div className="flex justify-center py-4 md:py-6">
-                        <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin text-brand-royal-blue" />
+                  <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
+                        <h3 className="text-sm md:text-base font-semibold text-brand-gray">
+                          Categories
+                        </h3>
+                        {forumCategories.length > 0 &&
+                          selectedForumCategoryIds.length > 0 && (
+                            <Button
+                              onClick={handleBulkDeleteForumCategories}
+                              disabled={bulkDeletingForums}
+                              className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
+                            >
+                              {bulkDeletingForums ? (
+                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                              )}
+                              Delete ({selectedForumCategoryIds.length})
+                            </Button>
+                          )}
                       </div>
-                    ) : forumCategories.length === 0 ? (
-                      <p className="text-brand-gray text-xs md:text-sm">
-                        No forum categories.
-                      </p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)]">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedForumCategoryIds(
+                      {loadingForums ? (
+                        <div className="flex justify-center py-4 md:py-6">
+                          <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin text-brand-royal-blue" />
+                        </div>
+                      ) : forumCategories.length === 0 ? (
+                        <p className="text-brand-gray text-xs md:text-sm">
+                          No forum categories.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)]">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedForumCategoryIds(
+                                  selectedForumCategoryIds.length ===
+                                    forumCategories.length
+                                    ? []
+                                    : forumCategories.map((c) => c._id),
+                                )
+                              }
+                              className="shrink-0 text-brand-royal-blue hover:opacity-80"
+                              title={
                                 selectedForumCategoryIds.length ===
-                                  forumCategories.length
-                                  ? []
-                                  : forumCategories.map((c) => c._id),
-                              )
-                            }
-                            className="shrink-0 text-brand-royal-blue hover:opacity-80"
-                            title={
-                              selectedForumCategoryIds.length ===
-                              forumCategories.length
-                                ? "Deselect all"
-                                : "Select all"
-                            }
-                          >
-                            {selectedForumCategoryIds.length ===
-                            forumCategories.length ? (
-                              <CheckSquare className="w-4 h-4" />
-                            ) : (
-                              <Square className="w-4 h-4" />
-                            )}
-                          </button>
-                          <span className="text-xs font-medium text-brand-gray">
-                            Select all
-                          </span>
-                        </li>
-                        {forumCategories.map((cat) => (
-                          <li
-                            key={cat._id}
-                            className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelectedForumCategoryIds((prev) =>
-                                  prev.includes(cat._id)
-                                    ? prev.filter((id) => id !== cat._id)
-                                    : [...prev, cat._id],
-                                )
+                                forumCategories.length
+                                  ? "Deselect all"
+                                  : "Select all"
                               }
-                              className="shrink-0 text-brand-royal-blue hover:opacity-80"
-                              title="Toggle selection"
                             >
-                              {selectedForumCategoryIds.includes(cat._id) ? (
-                                <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                              {selectedForumCategoryIds.length ===
+                              forumCategories.length ? (
+                                <CheckSquare className="w-4 h-4" />
                               ) : (
-                                <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                <Square className="w-4 h-4" />
                               )}
                             </button>
-                            <span className="font-medium text-[#2F3C96] text-sm md:text-base flex-1 min-w-0 truncate">
-                              {cat.name}
+                            <span className="text-xs font-medium text-brand-gray">
+                              Select all
                             </span>
-                            <span className="text-[10px] md:text-xs text-brand-gray shrink-0">
-                              {cat.threadCount ?? 0}
-                            </span>
-                            <Button
-                              onClick={() => handleDeleteForumCategory(cat._id)}
-                              disabled={deletingForumId === cat._id}
-                              className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
-                            >
-                              {deletingForumId === cat._id ? (
-                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                              )}
-                            </Button>
                           </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
-                      <h3 className="text-sm md:text-base font-semibold text-brand-gray">
-                        Threads
-                      </h3>
-                      {forumThreads.length > 0 &&
-                        selectedForumThreadIds.length > 0 && (
-                          <Button
-                            onClick={handleBulkDeleteForumThreads}
-                            disabled={bulkDeletingThreads}
-                            className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
-                          >
-                            {bulkDeletingThreads ? (
-                              <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            )}
-                            Delete ({selectedForumThreadIds.length})
-                          </Button>
-                        )}
+                          {forumCategories.map((cat) => (
+                            <li
+                              key={cat._id}
+                              className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedForumCategoryIds((prev) =>
+                                    prev.includes(cat._id)
+                                      ? prev.filter((id) => id !== cat._id)
+                                      : [...prev, cat._id],
+                                  )
+                                }
+                                className="shrink-0 text-brand-royal-blue hover:opacity-80"
+                                title="Toggle selection"
+                              >
+                                {selectedForumCategoryIds.includes(cat._id) ? (
+                                  <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                ) : (
+                                  <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                )}
+                              </button>
+                              <span className="font-medium text-[#2F3C96] text-sm md:text-base flex-1 min-w-0 truncate">
+                                {cat.name}
+                              </span>
+                              <span className="text-[10px] md:text-xs text-brand-gray shrink-0">
+                                {cat.threadCount ?? 0}
+                              </span>
+                              <Button
+                                onClick={() =>
+                                  handleDeleteForumCategory(cat._id)
+                                }
+                                disabled={deletingForumId === cat._id}
+                                className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              >
+                                {deletingForumId === cat._id ? (
+                                  <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                )}
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    {forumThreads.length === 0 && !loadingForums ? (
-                      <p className="text-brand-gray text-xs md:text-sm">No threads.</p>
-                    ) : (
-                      <ul className="space-y-1.5 max-h-64 md:max-h-96 overflow-y-auto">
-                        <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)] sticky top-0 bg-white/95 z-10">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedForumThreadIds(
-                                selectedForumThreadIds.length ===
-                                  forumThreads.length
-                                  ? []
-                                  : forumThreads.map((th) => th._id),
-                              )
-                            }
-                            className="shrink-0 text-brand-royal-blue hover:opacity-80"
-                            title={
-                              selectedForumThreadIds.length ===
-                              forumThreads.length
-                                ? "Deselect all"
-                                : "Select all"
-                            }
-                          >
-                            {selectedForumThreadIds.length ===
-                            forumThreads.length ? (
-                              <CheckSquare className="w-4 h-4" />
-                            ) : (
-                              <Square className="w-4 h-4" />
-                            )}
-                          </button>
-                          <span className="text-xs font-medium text-brand-gray">
-                            Select all
-                          </span>
-                        </li>
-                        {forumThreads.map((t) => (
-                          <li
-                            key={t._id}
-                            className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelectedForumThreadIds((prev) =>
-                                  prev.includes(t._id)
-                                    ? prev.filter((id) => id !== t._id)
-                                    : [...prev, t._id],
-                                )
-                              }
-                              className="shrink-0 text-brand-royal-blue hover:opacity-80"
-                              title="Toggle selection"
-                            >
-                              {selectedForumThreadIds.includes(t._id) ? (
-                                <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                              ) : (
-                                <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                              )}
-                            </button>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-[#2F3C96] text-sm md:text-base truncate">
-                                {t.title}
-                              </p>
-                              <p className="text-[10px] md:text-xs text-brand-gray">
-                                {t.categoryId?.name ?? "—"} · {t.replyCount ?? 0}
-                              </p>
-                            </div>
+                    <div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2 md:mb-3">
+                        <h3 className="text-sm md:text-base font-semibold text-brand-gray">
+                          Threads
+                        </h3>
+                        {forumThreads.length > 0 &&
+                          selectedForumThreadIds.length > 0 && (
                             <Button
-                              onClick={() => handleDeleteThread(t._id)}
-                              disabled={deletingThreadId === t._id}
-                              className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              onClick={handleBulkDeleteForumThreads}
+                              disabled={bulkDeletingThreads}
+                              className="px-2.5 py-1 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
                             >
-                              {deletingThreadId === t._id ? (
+                              {bulkDeletingThreads ? (
                                 <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
                               ) : (
                                 <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                               )}
+                              Delete ({selectedForumThreadIds.length})
                             </Button>
+                          )}
+                      </div>
+                      {forumThreads.length === 0 && !loadingForums ? (
+                        <p className="text-brand-gray text-xs md:text-sm">
+                          No threads.
+                        </p>
+                      ) : (
+                        <ul className="space-y-1.5 max-h-64 md:max-h-96 overflow-y-auto">
+                          <li className="flex items-center gap-2 px-2.5 md:px-3 py-1.5 md:py-2 border-b border-[rgba(208,196,226,0.4)] sticky top-0 bg-white/95 z-10">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSelectedForumThreadIds(
+                                  selectedForumThreadIds.length ===
+                                    forumThreads.length
+                                    ? []
+                                    : forumThreads.map((th) => th._id),
+                                )
+                              }
+                              className="shrink-0 text-brand-royal-blue hover:opacity-80"
+                              title={
+                                selectedForumThreadIds.length ===
+                                forumThreads.length
+                                  ? "Deselect all"
+                                  : "Select all"
+                              }
+                            >
+                              {selectedForumThreadIds.length ===
+                              forumThreads.length ? (
+                                <CheckSquare className="w-4 h-4" />
+                              ) : (
+                                <Square className="w-4 h-4" />
+                              )}
+                            </button>
+                            <span className="text-xs font-medium text-brand-gray">
+                              Select all
+                            </span>
                           </li>
-                        ))}
-                      </ul>
-                    )}
+                          {forumThreads.map((t) => (
+                            <li
+                              key={t._id}
+                              className="flex items-center gap-2 bg-white/50 rounded-lg p-2 md:p-3 border border-[rgba(208,196,226,0.4)]"
+                            >
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedForumThreadIds((prev) =>
+                                    prev.includes(t._id)
+                                      ? prev.filter((id) => id !== t._id)
+                                      : [...prev, t._id],
+                                  )
+                                }
+                                className="shrink-0 text-brand-royal-blue hover:opacity-80"
+                                title="Toggle selection"
+                              >
+                                {selectedForumThreadIds.includes(t._id) ? (
+                                  <CheckSquare className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                ) : (
+                                  <Square className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                )}
+                              </button>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-[#2F3C96] text-sm md:text-base truncate">
+                                  {t.title}
+                                </p>
+                                <p className="text-[10px] md:text-xs text-brand-gray">
+                                  {t.categoryId?.name ?? "—"} ·{" "}
+                                  {t.replyCount ?? 0}
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => handleDeleteThread(t._id)}
+                                disabled={deletingThreadId === t._id}
+                                className="px-1.5 py-1 md:px-2 md:py-1.5 text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              >
+                                {deletingThreadId === t._id ? (
+                                  <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                                )}
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                </div>
                 </div>
               </div>
             )}
@@ -4841,238 +5015,247 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
                 <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
                   <p className="text-xs md:text-sm text-brand-gray">
-                    <span className="font-semibold text-brand-royal-blue">Discovery</span>
-                    {" "}· Click row to expand · Delete requires confirmation
+                    <span className="font-semibold text-brand-royal-blue">
+                      Discovery
+                    </span>{" "}
+                    · Click row to expand · Delete requires confirmation
                   </p>
                 </div>
                 <div className="p-3 md:p-6">
-                <p className="text-xs md:text-sm text-brand-gray mb-3 md:mb-4 sr-only md:not-sr-only">
-                  Compact list. Click a row to expand full content.
-                </p>
-                {loadingPosts ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
-                  </div>
-                ) : posts.length === 0 ? (
-                  <p className="text-brand-gray">No posts.</p>
-                ) : (
-                  <div className="space-y-0 divide-y divide-[rgba(208,196,226,0.3)] border border-[rgba(208,196,226,0.4)] rounded-lg overflow-hidden">
-                    {posts.map((post) => {
-                      const content = post.content || "(No content)";
-                      const truncated =
-                        content.length > 120
-                          ? content.slice(0, 120) + "…"
-                          : content;
-                      const isExpanded = postExpanded[post._id];
-                      const hasAttachment =
-                        post.attachments && post.attachments.length > 0;
-                      const authorName = post.authorUserId?.username ?? "—";
-                      const role = post.authorRole || post.postType || "—";
-                      const dateStr = post.createdAt
-                        ? new Date(post.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "—";
-                      const toggleExpanded = () =>
-                        setPostExpanded((prev) => ({
-                          ...prev,
-                          [post._id]: !prev[post._id],
-                        }));
+                  <p className="text-xs md:text-sm text-brand-gray mb-3 md:mb-4 sr-only md:not-sr-only">
+                    Compact list. Click a row to expand full content.
+                  </p>
+                  {loadingPosts ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : posts.length === 0 ? (
+                    <p className="text-brand-gray">No posts.</p>
+                  ) : (
+                    <div className="space-y-0 divide-y divide-[rgba(208,196,226,0.3)] border border-[rgba(208,196,226,0.4)] rounded-lg overflow-hidden">
+                      {posts.map((post) => {
+                        const content = post.content || "(No content)";
+                        const truncated =
+                          content.length > 120
+                            ? content.slice(0, 120) + "…"
+                            : content;
+                        const isExpanded = postExpanded[post._id];
+                        const hasAttachment =
+                          post.attachments && post.attachments.length > 0;
+                        const authorName = post.authorUserId?.username ?? "—";
+                        const role = post.authorRole || post.postType || "—";
+                        const dateStr = post.createdAt
+                          ? new Date(post.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )
+                          : "—";
+                        const toggleExpanded = () =>
+                          setPostExpanded((prev) => ({
+                            ...prev,
+                            [post._id]: !prev[post._id],
+                          }));
 
-                      return (
-                        <div
-                          key={post._id}
-                          className="bg-white hover:bg-gray-50/50 transition-colors"
-                        >
-                          <div className="flex items-start gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5">
-                            <button
-                              type="button"
-                              onClick={toggleExpanded}
-                              className="flex-1 min-w-0 text-left"
-                            >
-                              <p className="text-sm text-gray-800 truncate max-w-[calc(100%-2.5rem)]">
-                                {truncated}
-                              </p>
-                              <p className="text-xs text-brand-gray mt-0.5">
-                                {authorName} · {String(role)} · {dateStr}
-                                {hasAttachment && " · Has attachment"}
-                              </p>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePost(post._id);
-                              }}
-                              disabled={deletingPostId === post._id}
-                              className="shrink-0 p-2 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 transition-colors"
-                              title="Delete post"
-                            >
-                              {deletingPostId === post._id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                          {isExpanded && (
-                            <div className="px-4 pb-3 pt-0 border-t border-[rgba(208,196,226,0.25)]">
-                              <div className="bg-brand-light-gray rounded-lg p-3 border border-[rgba(208,196,226,0.3)] mt-2">
-                                <p className="text-sm text-[#2F3C96] whitespace-pre-wrap break-words">
-                                  {content}
+                        return (
+                          <div
+                            key={post._id}
+                            className="bg-white hover:bg-gray-50/50 transition-colors"
+                          >
+                            <div className="flex items-start gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5">
+                              <button
+                                type="button"
+                                onClick={toggleExpanded}
+                                className="flex-1 min-w-0 text-left"
+                              >
+                                <p className="text-sm text-gray-800 truncate max-w-[calc(100%-2.5rem)]">
+                                  {truncated}
                                 </p>
-                              </div>
-                              {hasAttachment && (
-                                <div className="mt-2">
-                                  <p className="text-xs font-semibold text-brand-gray mb-1.5">
-                                    Attachments
-                                  </p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {post.attachments.map((att, idx) => {
-                                      const url = att.url || "";
-                                      const name = att.name || "";
-                                      const isPdf =
-                                        att.type === "file" &&
-                                        (url.toLowerCase().endsWith(".pdf") ||
-                                          name.toLowerCase().includes(".pdf"));
-                                      const isVideo =
-                                        att.type === "file" &&
-                                        (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(
-                                          url,
-                                        ) ||
-                                          /\.(mp4|webm|ogg|mov)(\?|$)/i.test(
-                                            name,
-                                          ));
-                                      const isImage =
-                                        att.type === "image" ||
-                                        /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(
-                                          url,
-                                        ) ||
-                                        /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(
-                                          name,
-                                        );
-                                      if (isImage) {
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="rounded-lg overflow-hidden border border-[rgba(208,196,226,0.3)] bg-brand-light-gray shrink-0"
-                                          >
-                                            <a
-                                              href={url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="block"
-                                            >
-                                              <img
-                                                src={url}
-                                                alt={name || "Attachment"}
-                                                className="max-h-40 w-auto object-contain"
-                                              />
-                                            </a>
-                                            {name && (
-                                              <p className="text-xs text-brand-gray p-1 truncate max-w-[180px]">
-                                                {name}
-                                              </p>
-                                            )}
-                                          </div>
-                                        );
-                                      }
-                                      if (isVideo) {
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="rounded-lg overflow-hidden border border-[rgba(208,196,226,0.3)] bg-black shrink-0 max-w-xs"
-                                          >
-                                            <video
-                                              src={url}
-                                              controls
-                                              className="max-h-40 w-full"
-                                              preload="metadata"
-                                            >
-                                              Your browser does not support the
-                                              video tag.
-                                            </video>
-                                            {name && (
-                                              <p className="text-xs text-brand-gray p-1 truncate">
-                                                {name}
-                                              </p>
-                                            )}
-                                          </div>
-                                        );
-                                      }
-                                      if (isPdf) {
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="rounded-lg border border-[rgba(208,196,226,0.3)] bg-brand-light-gray p-2 shrink-0"
-                                          >
-                                            <a
-                                              href={url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-brand-royal-blue hover:underline text-sm font-medium flex items-center gap-1"
-                                            >
-                                              <FileText className="w-4 h-4" />
-                                              {name || "View PDF"}
-                                            </a>
-                                          </div>
-                                        );
-                                      }
-                                      return (
-                                        <div
-                                          key={idx}
-                                          className="rounded-lg border border-[rgba(208,196,226,0.3)] bg-brand-light-gray p-2"
-                                        >
-                                          <a
-                                            href={url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-brand-royal-blue hover:underline text-sm"
-                                          >
-                                            {name || "Open file"}
-                                          </a>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
+                                <p className="text-xs text-brand-gray mt-0.5">
+                                  {authorName} · {String(role)} · {dateStr}
+                                  {hasAttachment && " · Has attachment"}
+                                </p>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeletePost(post._id);
+                                }}
+                                disabled={deletingPostId === post._id}
+                                className="shrink-0 p-2 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 transition-colors"
+                                title="Delete post"
+                              >
+                                {deletingPostId === post._id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {!loadingPosts &&
-                  posts.length > 0 &&
-                  postsPagination.pages > 1 && (
-                    <div className="flex gap-2 justify-center pt-4 items-center">
-                      <Button
-                        disabled={postsPagination.page <= 1}
-                        onClick={() =>
-                          fetchAdminPosts(postsPagination.page - 1)
-                        }
-                        className="px-3 py-1.5 text-sm"
-                      >
-                        Previous
-                      </Button>
-                      <span className="text-sm text-brand-gray">
-                        Page {postsPagination.page} of {postsPagination.pages}
-                      </span>
-                      <Button
-                        disabled={postsPagination.page >= postsPagination.pages}
-                        onClick={() =>
-                          fetchAdminPosts(postsPagination.page + 1)
-                        }
-                        className="px-3 py-1.5 text-sm"
-                      >
-                        Next
-                      </Button>
+                            {isExpanded && (
+                              <div className="px-4 pb-3 pt-0 border-t border-[rgba(208,196,226,0.25)]">
+                                <div className="bg-brand-light-gray rounded-lg p-3 border border-[rgba(208,196,226,0.3)] mt-2">
+                                  <p className="text-sm text-[#2F3C96] whitespace-pre-wrap break-words">
+                                    {content}
+                                  </p>
+                                </div>
+                                {hasAttachment && (
+                                  <div className="mt-2">
+                                    <p className="text-xs font-semibold text-brand-gray mb-1.5">
+                                      Attachments
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {post.attachments.map((att, idx) => {
+                                        const url = att.url || "";
+                                        const name = att.name || "";
+                                        const isPdf =
+                                          att.type === "file" &&
+                                          (url.toLowerCase().endsWith(".pdf") ||
+                                            name
+                                              .toLowerCase()
+                                              .includes(".pdf"));
+                                        const isVideo =
+                                          att.type === "file" &&
+                                          (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(
+                                            url,
+                                          ) ||
+                                            /\.(mp4|webm|ogg|mov)(\?|$)/i.test(
+                                              name,
+                                            ));
+                                        const isImage =
+                                          att.type === "image" ||
+                                          /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(
+                                            url,
+                                          ) ||
+                                          /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(
+                                            name,
+                                          );
+                                        if (isImage) {
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className="rounded-lg overflow-hidden border border-[rgba(208,196,226,0.3)] bg-brand-light-gray shrink-0"
+                                            >
+                                              <a
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="block"
+                                              >
+                                                <img
+                                                  src={url}
+                                                  alt={name || "Attachment"}
+                                                  className="max-h-40 w-auto object-contain"
+                                                />
+                                              </a>
+                                              {name && (
+                                                <p className="text-xs text-brand-gray p-1 truncate max-w-[180px]">
+                                                  {name}
+                                                </p>
+                                              )}
+                                            </div>
+                                          );
+                                        }
+                                        if (isVideo) {
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className="rounded-lg overflow-hidden border border-[rgba(208,196,226,0.3)] bg-black shrink-0 max-w-xs"
+                                            >
+                                              <video
+                                                src={url}
+                                                controls
+                                                className="max-h-40 w-full"
+                                                preload="metadata"
+                                              >
+                                                Your browser does not support
+                                                the video tag.
+                                              </video>
+                                              {name && (
+                                                <p className="text-xs text-brand-gray p-1 truncate">
+                                                  {name}
+                                                </p>
+                                              )}
+                                            </div>
+                                          );
+                                        }
+                                        if (isPdf) {
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className="rounded-lg border border-[rgba(208,196,226,0.3)] bg-brand-light-gray p-2 shrink-0"
+                                            >
+                                              <a
+                                                href={url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-brand-royal-blue hover:underline text-sm font-medium flex items-center gap-1"
+                                              >
+                                                <FileText className="w-4 h-4" />
+                                                {name || "View PDF"}
+                                              </a>
+                                            </div>
+                                          );
+                                        }
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="rounded-lg border border-[rgba(208,196,226,0.3)] bg-brand-light-gray p-2"
+                                          >
+                                            <a
+                                              href={url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-brand-royal-blue hover:underline text-sm"
+                                            >
+                                              {name || "Open file"}
+                                            </a>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+                  {!loadingPosts &&
+                    posts.length > 0 &&
+                    postsPagination.pages > 1 && (
+                      <div className="flex gap-2 justify-center pt-4 items-center">
+                        <Button
+                          disabled={postsPagination.page <= 1}
+                          onClick={() =>
+                            fetchAdminPosts(postsPagination.page - 1)
+                          }
+                          className="px-3 py-1.5 text-sm"
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-brand-gray">
+                          Page {postsPagination.page} of {postsPagination.pages}
+                        </span>
+                        <Button
+                          disabled={
+                            postsPagination.page >= postsPagination.pages
+                          }
+                          onClick={() =>
+                            fetchAdminPosts(postsPagination.page + 1)
+                          }
+                          className="px-3 py-1.5 text-sm"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
                 </div>
               </div>
             )}
@@ -5081,829 +5264,843 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
                 <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
                   <p className="text-xs md:text-sm text-brand-gray">
-                    <span className="font-semibold text-brand-royal-blue">Community</span>
-                    {" "}· Patient & researcher communities
+                    <span className="font-semibold text-brand-royal-blue">
+                      Community
+                    </span>{" "}
+                    · Patient & researcher communities
                   </p>
                 </div>
                 <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                {/* Tabs: Patient Communities | Researcher Communities */}
-                <div className="flex gap-0 border-b border-[rgba(208,196,226,0.5)] -mx-3 md:mx-0 px-3 md:px-0">
-                  <button
-                    type="button"
-                    onClick={() => setCommunityManagementTab("patient")}
-                    className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px ${
-                      communityManagementTab === "patient"
-                        ? "text-brand-royal-blue border-brand-royal-blue"
-                        : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
-                    }`}
-                  >
-                    Patient
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCommunityManagementTab("researcher")}
-                    className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
-                      communityManagementTab === "researcher"
-                        ? "text-brand-royal-blue border-brand-royal-blue"
-                        : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
-                    }`}
-                  >
-                    <FlaskConical className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                    Researcher
-                  </button>
-                </div>
+                  {/* Tabs: Patient Communities | Researcher Communities */}
+                  <div className="flex gap-0 border-b border-[rgba(208,196,226,0.5)] -mx-3 md:mx-0 px-3 md:px-0">
+                    <button
+                      type="button"
+                      onClick={() => setCommunityManagementTab("patient")}
+                      className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px ${
+                        communityManagementTab === "patient"
+                          ? "text-brand-royal-blue border-brand-royal-blue"
+                          : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
+                      }`}
+                    >
+                      Patient
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCommunityManagementTab("researcher")}
+                      className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold text-xs md:text-sm transition-all border-b-2 -mb-px flex items-center gap-1.5 ${
+                        communityManagementTab === "researcher"
+                          ? "text-brand-royal-blue border-brand-royal-blue"
+                          : "text-brand-gray border-transparent hover:text-brand-royal-blue/80"
+                      }`}
+                    >
+                      <FlaskConical className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      Researcher
+                    </button>
+                  </div>
 
-                {communityManagementTab === "patient" && (
-                  <>
-                    {/* Forum categories (for Health Forums page grouping) */}
-                    <div>
-                      <h3 className="font-semibold text-brand-gray mb-3">
-                        Forum categories (Health Forums)
-                      </h3>
-                      <p className="text-sm text-brand-gray mb-3">
-                        Categories group patient communities on the Health
-                        Forums page. Create categories, then assign them when
-                        creating/editing a patient community.
-                      </p>
-                      {loadingCommunityCategories ? (
-                        <div className="flex justify-center py-4">
-                          <Loader2 className="w-5 h-5 animate-spin text-brand-royal-blue" />
-                        </div>
-                      ) : (
-                        <>
-                          <form
-                            onSubmit={handleCreateCommunityCategory}
-                            className="flex flex-wrap items-end gap-3 mb-4"
-                          >
-                            <input
-                              type="text"
-                              placeholder="Category name (e.g. Neurology)"
-                              value={newCommunityCategory.name}
-                              onChange={(e) =>
-                                setNewCommunityCategory((p) => ({
-                                  ...p,
-                                  name: e.target.value,
-                                }))
-                              }
-                              className="px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-w-[180px]"
-                            />
-                            <label className="flex items-center gap-2 text-sm text-brand-gray">
+                  {communityManagementTab === "patient" && (
+                    <>
+                      {/* Forum categories (for Health Forums page grouping) */}
+                      <div>
+                        <h3 className="font-semibold text-brand-gray mb-3">
+                          Forum categories (Health Forums)
+                        </h3>
+                        <p className="text-sm text-brand-gray mb-3">
+                          Categories group patient communities on the Health
+                          Forums page. Create categories, then assign them when
+                          creating/editing a patient community.
+                        </p>
+                        {loadingCommunityCategories ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-brand-royal-blue" />
+                          </div>
+                        ) : (
+                          <>
+                            <form
+                              onSubmit={handleCreateCommunityCategory}
+                              className="flex flex-wrap items-end gap-3 mb-4"
+                            >
                               <input
-                                type="checkbox"
-                                checked={newCommunityCategory.defaultOpen}
+                                type="text"
+                                placeholder="Category name (e.g. Neurology)"
+                                value={newCommunityCategory.name}
                                 onChange={(e) =>
                                   setNewCommunityCategory((p) => ({
                                     ...p,
-                                    defaultOpen: e.target.checked,
+                                    name: e.target.value,
                                   }))
                                 }
-                                className="rounded"
+                                className="px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-w-[180px]"
                               />
-                              Open by default
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Heading color (#2F3C96)"
-                              value={newCommunityCategory.headingColor}
-                              onChange={(e) =>
-                                setNewCommunityCategory((p) => ({
-                                  ...p,
-                                  headingColor: e.target.value,
-                                }))
-                              }
-                              className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                            />
-                            <Button
-                              type="submit"
-                              disabled={creatingCommunityCategory}
-                              className="px-3 py-2 bg-brand-royal-blue text-white rounded-lg text-sm font-medium hover:bg-brand-blue-600 disabled:opacity-50"
-                            >
-                              {creatingCommunityCategory ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Plus className="w-4 h-4" />
-                              )}
-                              <span className="ml-1">Add category</span>
-                            </Button>
-                          </form>
-                          {communityCategories.length === 0 ? (
-                            <p className="text-brand-gray text-sm">
-                              No categories yet. Add one above.
-                            </p>
-                          ) : (
-                            <ul className="space-y-2">
-                              {communityCategories.map((cat) => (
-                                <li
-                                  key={cat._id}
-                                  className="flex items-center justify-between gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
-                                >
-                                  <span className="font-medium text-brand-royal-blue">
-                                    {cat.name}
-                                  </span>
-                                  <span className="text-xs text-brand-gray">
-                                    ({cat.communityCount ?? 0} communities) ·{" "}
-                                    {cat.defaultOpen
-                                      ? "Open by default"
-                                      : "Collapsed"}
-                                  </span>
-                                  <Button
-                                    onClick={() =>
-                                      handleDeleteCommunityCategory(cat._id)
-                                    }
-                                    className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                              <label className="flex items-center gap-2 text-sm text-brand-gray">
+                                <input
+                                  type="checkbox"
+                                  checked={newCommunityCategory.defaultOpen}
+                                  onChange={(e) =>
+                                    setNewCommunityCategory((p) => ({
+                                      ...p,
+                                      defaultOpen: e.target.checked,
+                                    }))
+                                  }
+                                  className="rounded"
+                                />
+                                Open by default
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Heading color (#2F3C96)"
+                                value={newCommunityCategory.headingColor}
+                                onChange={(e) =>
+                                  setNewCommunityCategory((p) => ({
+                                    ...p,
+                                    headingColor: e.target.value,
+                                  }))
+                                }
+                                className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                              />
+                              <Button
+                                type="submit"
+                                disabled={creatingCommunityCategory}
+                                className="px-3 py-2 bg-brand-royal-blue text-white rounded-lg text-sm font-medium hover:bg-brand-blue-600 disabled:opacity-50"
+                              >
+                                {creatingCommunityCategory ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                                <span className="ml-1">Add category</span>
+                              </Button>
+                            </form>
+                            {communityCategories.length === 0 ? (
+                              <p className="text-brand-gray text-sm">
+                                No categories yet. Add one above.
+                              </p>
+                            ) : (
+                              <ul className="space-y-2">
+                                {communityCategories.map((cat) => (
+                                  <li
+                                    key={cat._id}
+                                    className="flex items-center justify-between gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </>
-                      )}
-                    </div>
+                                    <span className="font-medium text-brand-royal-blue">
+                                      {cat.name}
+                                    </span>
+                                    <span className="text-xs text-brand-gray">
+                                      ({cat.communityCount ?? 0} communities) ·{" "}
+                                      {cat.defaultOpen
+                                        ? "Open by default"
+                                        : "Collapsed"}
+                                    </span>
+                                    <Button
+                                      onClick={() =>
+                                        handleDeleteCommunityCategory(cat._id)
+                                      }
+                                      className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </>
+                        )}
+                      </div>
 
-                    {/* Community proposals (pending review) - patient proposals */}
-                    <div>
-                      <h3 className="font-semibold text-brand-gray mb-3">
-                        Community proposals (pending review)
-                      </h3>
-                      {loadingCommunityProposals ? (
-                        <div className="flex justify-center py-6">
-                          <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
-                        </div>
-                      ) : communityProposals.filter(
-                          (p) => p.status === "pending",
-                        ).length === 0 ? (
-                        <p className="text-brand-gray text-sm">
-                          No pending proposals.
-                        </p>
-                      ) : (
-                        <ul className="space-y-4">
-                          {communityProposals
-                            .filter((p) => p.status === "pending")
-                            .map((p) => {
-                              const displayThumbnail =
-                                approvalThumbnailOverride[p._id] ??
-                                p.thumbnailUrl;
-                              return (
-                                <li
-                                  key={p._id}
-                                  className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]"
-                                >
-                                  <div className="flex flex-col sm:flex-row gap-4">
-                                    <div className="shrink-0 flex items-start gap-3">
-                                      <label className="shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
-                                        {approvalThumbnailUploading[p._id] ? (
-                                          <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
-                                        ) : displayThumbnail ? (
-                                          <img
-                                            src={displayThumbnail}
-                                            alt=""
-                                            className="w-full h-full rounded-lg object-cover"
+                      {/* Community proposals (pending review) - patient proposals */}
+                      <div>
+                        <h3 className="font-semibold text-brand-gray mb-3">
+                          Community proposals (pending review)
+                        </h3>
+                        {loadingCommunityProposals ? (
+                          <div className="flex justify-center py-6">
+                            <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                          </div>
+                        ) : communityProposals.filter(
+                            (p) => p.status === "pending",
+                          ).length === 0 ? (
+                          <p className="text-brand-gray text-sm">
+                            No pending proposals.
+                          </p>
+                        ) : (
+                          <ul className="space-y-4">
+                            {communityProposals
+                              .filter((p) => p.status === "pending")
+                              .map((p) => {
+                                const displayThumbnail =
+                                  approvalThumbnailOverride[p._id] ??
+                                  p.thumbnailUrl;
+                                return (
+                                  <li
+                                    key={p._id}
+                                    className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]"
+                                  >
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                      <div className="shrink-0 flex items-start gap-3">
+                                        <label className="shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
+                                          {approvalThumbnailUploading[p._id] ? (
+                                            <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
+                                          ) : displayThumbnail ? (
+                                            <img
+                                              src={displayThumbnail}
+                                              alt=""
+                                              className="w-full h-full rounded-lg object-cover"
+                                            />
+                                          ) : (
+                                            <>
+                                              <Plus className="w-6 h-6 text-brand-gray" />
+                                              <span className="text-xs text-brand-gray mt-1">
+                                                Thumbnail
+                                              </span>
+                                            </>
+                                          )}
+                                          <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                              handleProposalThumbnailChange(
+                                                p._id,
+                                                e,
+                                              )
+                                            }
+                                            disabled={
+                                              !!approvalThumbnailUploading[
+                                                p._id
+                                              ]
+                                            }
                                           />
-                                        ) : (
-                                          <>
-                                            <Plus className="w-6 h-6 text-brand-gray" />
-                                            <span className="text-xs text-brand-gray mt-1">
-                                              Thumbnail
-                                            </span>
-                                          </>
-                                        )}
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          className="hidden"
-                                          onChange={(e) =>
-                                            handleProposalThumbnailChange(
+                                        </label>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="font-medium text-brand-royal-blue">
+                                            {p.title}
+                                          </p>
+                                          {p.description && (
+                                            <p className="text-sm text-brand-gray mt-1 line-clamp-2">
+                                              {p.description}
+                                            </p>
+                                          )}
+                                          <p className="text-xs text-brand-gray mt-2">
+                                            Proposed by{" "}
+                                            {p.proposedBy?.username ?? "—"} (
+                                            {p.proposedByRole ?? "—"}) ·{" "}
+                                            {p.createdAt
+                                              ? new Date(
+                                                  p.createdAt,
+                                                ).toLocaleDateString()
+                                              : "—"}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                                        <Button
+                                          onClick={() =>
+                                            handleApproveProposal(
                                               p._id,
-                                              e,
+                                              displayThumbnail || undefined,
                                             )
                                           }
                                           disabled={
-                                            !!approvalThumbnailUploading[p._id]
+                                            approvingProposalId === p._id
                                           }
-                                        />
-                                      </label>
-                                      <div className="min-w-0 flex-1">
-                                        <p className="font-medium text-brand-royal-blue">
-                                          {p.title}
-                                        </p>
-                                        {p.description && (
-                                          <p className="text-sm text-brand-gray mt-1 line-clamp-2">
-                                            {p.description}
-                                          </p>
-                                        )}
-                                        <p className="text-xs text-brand-gray mt-2">
-                                          Proposed by{" "}
-                                          {p.proposedBy?.username ?? "—"} (
-                                          {p.proposedByRole ?? "—"}) ·{" "}
-                                          {p.createdAt
-                                            ? new Date(
-                                                p.createdAt,
-                                              ).toLocaleDateString()
-                                            : "—"}
-                                        </p>
+                                          className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5"
+                                        >
+                                          {approvingProposalId === p._id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : null}
+                                          Approve
+                                        </Button>
+                                        <Button
+                                          onClick={() =>
+                                            handleRejectProposal(p._id)
+                                          }
+                                          disabled={
+                                            rejectingProposalId === p._id
+                                          }
+                                          className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
+                                        >
+                                          {rejectingProposalId === p._id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : null}
+                                          Reject
+                                        </Button>
                                       </div>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                                      <Button
-                                        onClick={() =>
-                                          handleApproveProposal(
-                                            p._id,
-                                            displayThumbnail || undefined,
-                                          )
-                                        }
-                                        disabled={approvingProposalId === p._id}
-                                        className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5"
-                                      >
-                                        {approvingProposalId === p._id ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : null}
-                                        Approve
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          handleRejectProposal(p._id)
-                                        }
-                                        disabled={rejectingProposalId === p._id}
-                                        className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
-                                      >
-                                        {rejectingProposalId === p._id ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : null}
-                                        Reject
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </li>
-                              );
-                            })}
-                        </ul>
-                      )}
-                    </div>
+                                  </li>
+                                );
+                              })}
+                          </ul>
+                        )}
+                      </div>
 
-                    <form
-                      onSubmit={handleCreateCommunity}
-                      className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)] space-y-3"
-                    >
-                      <h3 className="font-semibold text-brand-gray">
-                        Create new patient community
-                      </h3>
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        value={newCommunity.name}
-                        onChange={(e) =>
-                          setNewCommunity((p) => ({
-                            ...p,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                        required
-                      />
-                      <textarea
-                        placeholder="Description"
-                        value={newCommunity.description}
-                        onChange={(e) =>
-                          setNewCommunity((p) => ({
-                            ...p,
-                            description: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px]"
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-brand-gray mb-1.5">
-                          Category (Health Forums grouping)
-                        </label>
-                        <select
-                          value={newCommunity.categoryId}
+                      <form
+                        onSubmit={handleCreateCommunity}
+                        className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)] space-y-3"
+                      >
+                        <h3 className="font-semibold text-brand-gray">
+                          Create new patient community
+                        </h3>
+                        <input
+                          type="text"
+                          placeholder="Name"
+                          value={newCommunity.name}
                           onChange={(e) =>
                             setNewCommunity((p) => ({
                               ...p,
-                              categoryId: e.target.value,
+                              name: e.target.value,
                             }))
                           }
                           className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                        >
-                          <option value="">— None —</option>
-                          {communityCategories.map((cat) => (
-                            <option key={cat._id} value={cat._id}>
-                              {cat.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-brand-gray mb-1.5">
-                          Icon (SVG code, optional)
-                        </label>
+                          required
+                        />
                         <textarea
-                          placeholder='Paste SVG code, e.g. <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">...</svg>'
-                          value={newCommunity.iconSvg}
+                          placeholder="Description"
+                          value={newCommunity.description}
                           onChange={(e) =>
                             setNewCommunity((p) => ({
                               ...p,
-                              iconSvg: e.target.value,
+                              description: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px] font-mono text-sm"
-                          rows={3}
+                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px]"
                         />
-                        <p className="text-xs text-brand-gray mt-1">
-                          Use currentColor for stroke/fill to inherit site
-                          colour.
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-brand-gray mb-1.5">
-                          Colour (hex, optional)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="#2F3C96"
-                          value={newCommunity.color}
-                          onChange={(e) =>
-                            setNewCommunity((p) => ({
-                              ...p,
-                              color: e.target.value,
-                            }))
-                          }
-                          className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-brand-gray mb-1.5">
-                          Thumbnail (optional)
-                        </label>
-                        <div className="flex items-start gap-3">
-                          <label className="shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
-                            {newCommunityThumbnailUploading ? (
-                              <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
-                            ) : newCommunity.thumbnailUrl ? (
-                              <img
-                                src={newCommunity.thumbnailUrl}
-                                alt="Thumbnail"
-                                className="w-full h-full rounded-lg object-cover"
-                              />
-                            ) : (
-                              <>
-                                <Plus className="w-6 h-6 text-brand-gray" />
-                                <span className="text-xs text-brand-gray mt-1">
-                                  Upload
-                                </span>
-                              </>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleNewCommunityThumbnailChange}
-                              disabled={newCommunityThumbnailUploading}
-                            />
+                        <div>
+                          <label className="block text-sm font-medium text-brand-gray mb-1.5">
+                            Category (Health Forums grouping)
                           </label>
-                          <p className="text-xs text-brand-gray">
-                            Add a cover image for the community.
+                          <select
+                            value={newCommunity.categoryId}
+                            onChange={(e) =>
+                              setNewCommunity((p) => ({
+                                ...p,
+                                categoryId: e.target.value,
+                              }))
+                            }
+                            className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                          >
+                            <option value="">— None —</option>
+                            {communityCategories.map((cat) => (
+                              <option key={cat._id} value={cat._id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-brand-gray mb-1.5">
+                            Icon (SVG code, optional)
+                          </label>
+                          <textarea
+                            placeholder='Paste SVG code, e.g. <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">...</svg>'
+                            value={newCommunity.iconSvg}
+                            onChange={(e) =>
+                              setNewCommunity((p) => ({
+                                ...p,
+                                iconSvg: e.target.value,
+                              }))
+                            }
+                            className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px] font-mono text-sm"
+                            rows={3}
+                          />
+                          <p className="text-xs text-brand-gray mt-1">
+                            Use currentColor for stroke/fill to inherit site
+                            colour.
                           </p>
                         </div>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={creatingCommunity}
-                        className="inline-flex items-center justify-center gap-2 min-h-[42px] px-5 py-2.5 bg-brand-royal-blue text-white font-semibold text-sm rounded-xl hover:bg-brand-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-md hover:shadow-lg"
-                      >
-                        {creatingCommunity ? (
-                          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                        ) : (
-                          <Plus className="w-4 h-4 shrink-0" />
-                        )}
-                        <span>Create patient community</span>
-                      </button>
-                    </form>
-                    <div>
-                      <h3 className="font-semibold text-brand-gray mb-3">
-                        Patient communities
-                      </h3>
-                      {loadingCommunities ? (
-                        <div className="flex justify-center py-6">
-                          <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                        <div>
+                          <label className="block text-sm font-medium text-brand-gray mb-1.5">
+                            Colour (hex, optional)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="#2F3C96"
+                            value={newCommunity.color}
+                            onChange={(e) =>
+                              setNewCommunity((p) => ({
+                                ...p,
+                                color: e.target.value,
+                              }))
+                            }
+                            className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                          />
                         </div>
-                      ) : communities.filter(
-                          (c) => (c.communityType || "patient") === "patient",
-                        ).length === 0 ? (
-                        <p className="text-brand-gray text-sm">
-                          No patient communities.
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {communities
-                            .filter(
-                              (c) =>
-                                (c.communityType || "patient") === "patient",
-                            )
-                            .map((c) => (
-                              <li
-                                key={c._id}
-                                className="bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
-                              >
-                                {editingCommunityId === c._id ? (
-                                  <form
-                                    onSubmit={handleUpdateCommunity}
-                                    className="space-y-3"
-                                  >
-                                    <input
-                                      type="text"
-                                      placeholder="Name"
-                                      value={editCommunity.name}
-                                      onChange={(e) =>
-                                        setEditCommunity((p) => ({
-                                          ...p,
-                                          name: e.target.value,
-                                        }))
-                                      }
-                                      className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                                    />
-                                    <textarea
-                                      placeholder="Description"
-                                      value={editCommunity.description}
-                                      onChange={(e) =>
-                                        setEditCommunity((p) => ({
-                                          ...p,
-                                          description: e.target.value,
-                                        }))
-                                      }
-                                      className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[60px]"
-                                    />
-                                    <div>
-                                      <label className="block text-xs font-medium text-brand-gray mb-1">
-                                        Category
-                                      </label>
-                                      <select
-                                        value={editCommunity.categoryId || ""}
+                        <div>
+                          <label className="block text-sm font-medium text-brand-gray mb-1.5">
+                            Thumbnail (optional)
+                          </label>
+                          <div className="flex items-start gap-3">
+                            <label className="shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
+                              {newCommunityThumbnailUploading ? (
+                                <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
+                              ) : newCommunity.thumbnailUrl ? (
+                                <img
+                                  src={newCommunity.thumbnailUrl}
+                                  alt="Thumbnail"
+                                  className="w-full h-full rounded-lg object-cover"
+                                />
+                              ) : (
+                                <>
+                                  <Plus className="w-6 h-6 text-brand-gray" />
+                                  <span className="text-xs text-brand-gray mt-1">
+                                    Upload
+                                  </span>
+                                </>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleNewCommunityThumbnailChange}
+                                disabled={newCommunityThumbnailUploading}
+                              />
+                            </label>
+                            <p className="text-xs text-brand-gray">
+                              Add a cover image for the community.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={creatingCommunity}
+                          className="inline-flex items-center justify-center gap-2 min-h-[42px] px-5 py-2.5 bg-brand-royal-blue text-white font-semibold text-sm rounded-xl hover:bg-brand-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-md hover:shadow-lg"
+                        >
+                          {creatingCommunity ? (
+                            <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                          ) : (
+                            <Plus className="w-4 h-4 shrink-0" />
+                          )}
+                          <span>Create patient community</span>
+                        </button>
+                      </form>
+                      <div>
+                        <h3 className="font-semibold text-brand-gray mb-3">
+                          Patient communities
+                        </h3>
+                        {loadingCommunities ? (
+                          <div className="flex justify-center py-6">
+                            <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                          </div>
+                        ) : communities.filter(
+                            (c) => (c.communityType || "patient") === "patient",
+                          ).length === 0 ? (
+                          <p className="text-brand-gray text-sm">
+                            No patient communities.
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {communities
+                              .filter(
+                                (c) =>
+                                  (c.communityType || "patient") === "patient",
+                              )
+                              .map((c) => (
+                                <li
+                                  key={c._id}
+                                  className="bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
+                                >
+                                  {editingCommunityId === c._id ? (
+                                    <form
+                                      onSubmit={handleUpdateCommunity}
+                                      className="space-y-3"
+                                    >
+                                      <input
+                                        type="text"
+                                        placeholder="Name"
+                                        value={editCommunity.name}
                                         onChange={(e) =>
                                           setEditCommunity((p) => ({
                                             ...p,
-                                            categoryId: e.target.value,
+                                            name: e.target.value,
                                           }))
                                         }
                                         className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                                      >
-                                        <option value="">— None —</option>
-                                        {communityCategories.map((cat) => (
-                                          <option key={cat._id} value={cat._id}>
-                                            {cat.name}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-medium text-brand-gray mb-1">
-                                        Icon SVG
-                                      </label>
+                                      />
                                       <textarea
-                                        value={editCommunity.iconSvg}
+                                        placeholder="Description"
+                                        value={editCommunity.description}
                                         onChange={(e) =>
                                           setEditCommunity((p) => ({
                                             ...p,
-                                            iconSvg: e.target.value,
+                                            description: e.target.value,
                                           }))
                                         }
-                                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[70px] font-mono text-sm"
-                                        rows={2}
+                                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[60px]"
                                       />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-medium text-brand-gray mb-1">
-                                        Colour
-                                      </label>
-                                      <input
-                                        type="text"
-                                        value={editCommunity.color}
-                                        onChange={(e) =>
-                                          setEditCommunity((p) => ({
-                                            ...p,
-                                            color: e.target.value,
-                                          }))
-                                        }
-                                        className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                                      />
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        type="submit"
-                                        disabled={updatingCommunity}
-                                        className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
-                                      >
-                                        {updatingCommunity ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : null}{" "}
-                                        Save
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        onClick={() => {
-                                          setEditingCommunityId(null);
-                                          setEditCommunity({
-                                            name: "",
-                                            description: "",
-                                            categoryId: "",
-                                            iconSvg: "",
-                                            color: "#2F3C96",
-                                          });
-                                        }}
-                                        className="px-3 py-1.5 text-sm bg-brand-gray-100 text-brand-gray rounded-lg"
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </form>
-                                ) : (
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      {c.coverImage || c.image ? (
-                                        <img
-                                          src={c.coverImage || c.image}
-                                          alt=""
-                                          className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
+                                      <div>
+                                        <label className="block text-xs font-medium text-brand-gray mb-1">
+                                          Category
+                                        </label>
+                                        <select
+                                          value={editCommunity.categoryId || ""}
+                                          onChange={(e) =>
+                                            setEditCommunity((p) => ({
+                                              ...p,
+                                              categoryId: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                                        >
+                                          <option value="">— None —</option>
+                                          {communityCategories.map((cat) => (
+                                            <option
+                                              key={cat._id}
+                                              value={cat._id}
+                                            >
+                                              {cat.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-brand-gray mb-1">
+                                          Icon SVG
+                                        </label>
+                                        <textarea
+                                          value={editCommunity.iconSvg}
+                                          onChange={(e) =>
+                                            setEditCommunity((p) => ({
+                                              ...p,
+                                              iconSvg: e.target.value,
+                                            }))
+                                          }
+                                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[70px] font-mono text-sm"
+                                          rows={2}
                                         />
-                                      ) : (
-                                        <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
-                                          <Users className="w-5 h-5 text-brand-royal-blue/60" />
-                                        </div>
-                                      )}
-                                      <span className="font-medium text-brand-royal-blue truncate">
-                                        {c.name}
-                                      </span>
-                                      <span className="text-xs text-brand-gray shrink-0">
-                                        ({c.memberCount ?? 0} members,{" "}
-                                        {c.threadCount ?? 0} threads)
-                                      </span>
-                                    </div>
-                                    <div className="flex gap-1 shrink-0 flex-wrap">
-                                      <Button
-                                        onClick={() => {
-                                          setEditingIconCommunityId(c._id);
-                                          setEditingIconSvg(c.iconSvg || "");
-                                          setEditingIconCommunityName(
-                                            c.name || "",
-                                          );
-                                        }}
-                                        className="px-2 py-1.5 text-sm bg-brand-purple-100 text-brand-royal-blue hover:bg-brand-purple-200 rounded-lg"
-                                        title="Edit SVG icon only"
-                                      >
-                                        Edit icon
-                                      </Button>
-                                      <Button
-                                        onClick={() => {
-                                          setEditingCommunityId(c._id);
-                                          setEditCommunity({
-                                            name: c.name || "",
-                                            description: c.description || "",
-                                            categoryId:
-                                              c.categoryId?.toString?.() || "",
-                                            iconSvg: c.iconSvg || "",
-                                            color: c.color || "#2F3C96",
-                                          });
-                                        }}
-                                        className="px-2 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue hover:bg-brand-royal-blue/20 rounded-lg"
-                                      >
-                                        Edit
-                                      </Button>
-                                      <Button
-                                        onClick={() =>
-                                          handleDeleteCommunity(c._id)
-                                        }
-                                        disabled={deletingCommunityId === c._id}
-                                        className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
-                                      >
-                                        {deletingCommunityId === c._id ? (
-                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-medium text-brand-gray mb-1">
+                                          Colour
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={editCommunity.color}
+                                          onChange={(e) =>
+                                            setEditCommunity((p) => ({
+                                              ...p,
+                                              color: e.target.value,
+                                            }))
+                                          }
+                                          className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                                        />
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <Button
+                                          type="submit"
+                                          disabled={updatingCommunity}
+                                          className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
+                                        >
+                                          {updatingCommunity ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : null}{" "}
+                                          Save
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingCommunityId(null);
+                                            setEditCommunity({
+                                              name: "",
+                                              description: "",
+                                              categoryId: "",
+                                              iconSvg: "",
+                                              color: "#2F3C96",
+                                            });
+                                          }}
+                                          className="px-3 py-1.5 text-sm bg-brand-gray-100 text-brand-gray rounded-lg"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </form>
+                                  ) : (
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        {c.coverImage || c.image ? (
+                                          <img
+                                            src={c.coverImage || c.image}
+                                            alt=""
+                                            className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
+                                          />
                                         ) : (
-                                          <Trash2 className="w-4 h-4" />
+                                          <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
+                                            <Users className="w-5 h-5 text-brand-royal-blue/60" />
+                                          </div>
                                         )}
-                                      </Button>
+                                        <span className="font-medium text-brand-royal-blue truncate">
+                                          {c.name}
+                                        </span>
+                                        <span className="text-xs text-brand-gray shrink-0">
+                                          ({c.memberCount ?? 0} members,{" "}
+                                          {c.threadCount ?? 0} threads)
+                                        </span>
+                                      </div>
+                                      <div className="flex gap-1 shrink-0 flex-wrap">
+                                        <Button
+                                          onClick={() => {
+                                            setEditingIconCommunityId(c._id);
+                                            setEditingIconSvg(c.iconSvg || "");
+                                            setEditingIconCommunityName(
+                                              c.name || "",
+                                            );
+                                          }}
+                                          className="px-2 py-1.5 text-sm bg-brand-purple-100 text-brand-royal-blue hover:bg-brand-purple-200 rounded-lg"
+                                          title="Edit SVG icon only"
+                                        >
+                                          Edit icon
+                                        </Button>
+                                        <Button
+                                          onClick={() => {
+                                            setEditingCommunityId(c._id);
+                                            setEditCommunity({
+                                              name: c.name || "",
+                                              description: c.description || "",
+                                              categoryId:
+                                                c.categoryId?.toString?.() ||
+                                                "",
+                                              iconSvg: c.iconSvg || "",
+                                              color: c.color || "#2F3C96",
+                                            });
+                                          }}
+                                          className="px-2 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue hover:bg-brand-royal-blue/20 rounded-lg"
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          onClick={() =>
+                                            handleDeleteCommunity(c._id)
+                                          }
+                                          disabled={
+                                            deletingCommunityId === c._id
+                                          }
+                                          className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg"
+                                        >
+                                          {deletingCommunityId === c._id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                          )}
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                              </li>
-                            ))}
-                        </ul>
-                      )}
-                    </div>
-
-                    {/* Edit icon only modal */}
-                    {editingIconCommunityId && (
-                      <div
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-                        onClick={() =>
-                          !updatingIconOnly &&
-                          (setEditingIconCommunityId(null),
-                          setEditingIconSvg(""),
-                          setEditingIconCommunityName(""))
-                        }
-                      >
-                        <div
-                          className="bg-white rounded-xl shadow-lg max-w-lg w-full p-5 border border-brand-gray-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <h4 className="font-semibold text-brand-royal-blue mb-1">
-                            Edit icon (SVG)
-                          </h4>
-                          <p className="text-sm text-brand-gray mb-3">
-                            {editingIconCommunityName}
-                          </p>
-                          <form onSubmit={handleUpdateCommunityIconOnly}>
-                            <textarea
-                              value={editingIconSvg}
-                              onChange={(e) =>
-                                setEditingIconSvg(e.target.value)
-                              }
-                              placeholder="Paste SVG code (use currentColor for stroke/fill)"
-                              className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[120px] font-mono text-sm"
-                              rows={5}
-                            />
-                            <div className="flex gap-2 mt-3">
-                              <Button
-                                type="submit"
-                                disabled={updatingIconOnly}
-                                className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
-                              >
-                                {updatingIconOnly ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : null}{" "}
-                                Save icon
-                              </Button>
-                              <Button
-                                type="button"
-                                onClick={() => {
-                                  setEditingIconCommunityId(null);
-                                  setEditingIconSvg("");
-                                  setEditingIconCommunityName("");
-                                }}
-                                className="px-3 py-1.5 text-sm bg-brand-gray-100 text-brand-gray rounded-lg"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {communityManagementTab === "researcher" && (
-                  <>
-                    <p className="text-sm text-brand-gray">
-                      Researcher communities are for scientific discussions and
-                      research topics. Only admins can create them.
-                    </p>
-                    <form
-                      onSubmit={handleCreateResearcherCommunity}
-                      className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)] space-y-3"
-                    >
-                      <h3 className="font-semibold text-brand-gray flex items-center gap-2">
-                        <FlaskConical className="w-4 h-4" />
-                        Create new researcher community
-                      </h3>
-                      <input
-                        type="text"
-                        placeholder="Name (e.g. Basic & Pre-clinical Research)"
-                        value={newResearcherCommunity.name}
-                        onChange={(e) =>
-                          setNewResearcherCommunity((p) => ({
-                            ...p,
-                            name: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
-                        required
-                      />
-                      <textarea
-                        placeholder="Description (e.g. Molecular biology, animal models, gene editing, cell signaling)"
-                        value={newResearcherCommunity.description}
-                        onChange={(e) =>
-                          setNewResearcherCommunity((p) => ({
-                            ...p,
-                            description: e.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px]"
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-brand-gray mb-1.5">
-                          Thumbnail (optional)
-                        </label>
-                        <div className="flex items-start gap-3">
-                          <label className="shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
-                            {newResearcherCommunityThumbnailUploading ? (
-                              <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
-                            ) : newResearcherCommunity.thumbnailUrl ? (
-                              <img
-                                src={newResearcherCommunity.thumbnailUrl}
-                                alt="Thumbnail"
-                                className="w-full h-full rounded-lg object-cover"
-                              />
-                            ) : (
-                              <>
-                                <Plus className="w-6 h-6 text-brand-gray" />
-                                <span className="text-xs text-brand-gray mt-1">
-                                  Upload
-                                </span>
-                              </>
-                            )}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={
-                                handleNewResearcherCommunityThumbnailChange
-                              }
-                              disabled={
-                                newResearcherCommunityThumbnailUploading
-                              }
-                            />
-                          </label>
-                          <p className="text-xs text-brand-gray">
-                            Add a cover image for the researcher community.
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={creatingResearcherCommunity}
-                        className="inline-flex items-center justify-center gap-2 min-h-[42px] px-5 py-2.5 bg-brand-royal-blue text-white font-semibold text-sm rounded-xl hover:bg-brand-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-md hover:shadow-lg"
-                      >
-                        {creatingResearcherCommunity ? (
-                          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                        ) : (
-                          <FlaskConical className="w-4 h-4 shrink-0" />
+                                  )}
+                                </li>
+                              ))}
+                          </ul>
                         )}
-                        <span>Create researcher community</span>
-                      </button>
-                    </form>
-                    <div>
-                      <h3 className="font-semibold text-brand-gray mb-3">
-                        Researcher communities
-                      </h3>
-                      {loadingCommunities ? (
-                        <div className="flex justify-center py-6">
-                          <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
-                        </div>
-                      ) : communities.filter(
-                          (c) => c.communityType === "researcher",
-                        ).length === 0 ? (
-                        <p className="text-brand-gray text-sm">
-                          No researcher communities. Create one above.
-                        </p>
-                      ) : (
-                        <ul className="space-y-2">
-                          {communities
-                            .filter((c) => c.communityType === "researcher")
-                            .map((c) => (
-                              <li
-                                key={c._id}
-                                className="flex items-center justify-between gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
-                              >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  {c.coverImage || c.image ? (
-                                    <img
-                                      src={c.coverImage || c.image}
-                                      alt=""
-                                      className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
-                                    />
-                                  ) : (
-                                    <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
-                                      <FlaskConical className="w-5 h-5 text-brand-royal-blue/60" />
-                                    </div>
-                                  )}
-                                  <span className="font-medium text-brand-royal-blue truncate">
-                                    {c.name}
-                                  </span>
-                                  <span className="text-xs text-brand-gray shrink-0">
-                                    ({c.memberCount ?? 0} members,{" "}
-                                    {c.threadCount ?? 0} threads)
-                                  </span>
-                                </div>
+                      </div>
+
+                      {/* Edit icon only modal */}
+                      {editingIconCommunityId && (
+                        <div
+                          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                          onClick={() =>
+                            !updatingIconOnly &&
+                            (setEditingIconCommunityId(null),
+                            setEditingIconSvg(""),
+                            setEditingIconCommunityName(""))
+                          }
+                        >
+                          <div
+                            className="bg-white rounded-xl shadow-lg max-w-lg w-full p-5 border border-brand-gray-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <h4 className="font-semibold text-brand-royal-blue mb-1">
+                              Edit icon (SVG)
+                            </h4>
+                            <p className="text-sm text-brand-gray mb-3">
+                              {editingIconCommunityName}
+                            </p>
+                            <form onSubmit={handleUpdateCommunityIconOnly}>
+                              <textarea
+                                value={editingIconSvg}
+                                onChange={(e) =>
+                                  setEditingIconSvg(e.target.value)
+                                }
+                                placeholder="Paste SVG code (use currentColor for stroke/fill)"
+                                className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[120px] font-mono text-sm"
+                                rows={5}
+                              />
+                              <div className="flex gap-2 mt-3">
                                 <Button
-                                  onClick={() => handleDeleteCommunity(c._id)}
-                                  disabled={deletingCommunityId === c._id}
-                                  className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                                  type="submit"
+                                  disabled={updatingIconOnly}
+                                  className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
                                 >
-                                  {deletingCommunityId === c._id ? (
+                                  {updatingIconOnly ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-4 h-4" />
-                                  )}
+                                  ) : null}{" "}
+                                  Save icon
                                 </Button>
-                              </li>
-                            ))}
-                        </ul>
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingIconCommunityId(null);
+                                    setEditingIconSvg("");
+                                    setEditingIconCommunityName("");
+                                  }}
+                                  className="px-3 py-1.5 text-sm bg-brand-gray-100 text-brand-gray rounded-lg"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                       )}
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
+
+                  {communityManagementTab === "researcher" && (
+                    <>
+                      <p className="text-sm text-brand-gray">
+                        Researcher communities are for scientific discussions
+                        and research topics. Only admins can create them.
+                      </p>
+                      <form
+                        onSubmit={handleCreateResearcherCommunity}
+                        className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)] space-y-3"
+                      >
+                        <h3 className="font-semibold text-brand-gray flex items-center gap-2">
+                          <FlaskConical className="w-4 h-4" />
+                          Create new researcher community
+                        </h3>
+                        <input
+                          type="text"
+                          placeholder="Name (e.g. Basic & Pre-clinical Research)"
+                          value={newResearcherCommunity.name}
+                          onChange={(e) =>
+                            setNewResearcherCommunity((p) => ({
+                              ...p,
+                              name: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
+                          required
+                        />
+                        <textarea
+                          placeholder="Description (e.g. Molecular biology, animal models, gene editing, cell signaling)"
+                          value={newResearcherCommunity.description}
+                          onChange={(e) =>
+                            setNewResearcherCommunity((p) => ({
+                              ...p,
+                              description: e.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[80px]"
+                        />
+                        <div>
+                          <label className="block text-sm font-medium text-brand-gray mb-1.5">
+                            Thumbnail (optional)
+                          </label>
+                          <div className="flex items-start gap-3">
+                            <label className="shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
+                              {newResearcherCommunityThumbnailUploading ? (
+                                <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
+                              ) : newResearcherCommunity.thumbnailUrl ? (
+                                <img
+                                  src={newResearcherCommunity.thumbnailUrl}
+                                  alt="Thumbnail"
+                                  className="w-full h-full rounded-lg object-cover"
+                                />
+                              ) : (
+                                <>
+                                  <Plus className="w-6 h-6 text-brand-gray" />
+                                  <span className="text-xs text-brand-gray mt-1">
+                                    Upload
+                                  </span>
+                                </>
+                              )}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={
+                                  handleNewResearcherCommunityThumbnailChange
+                                }
+                                disabled={
+                                  newResearcherCommunityThumbnailUploading
+                                }
+                              />
+                            </label>
+                            <p className="text-xs text-brand-gray">
+                              Add a cover image for the researcher community.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={creatingResearcherCommunity}
+                          className="inline-flex items-center justify-center gap-2 min-h-[42px] px-5 py-2.5 bg-brand-royal-blue text-white font-semibold text-sm rounded-xl hover:bg-brand-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-md hover:shadow-lg"
+                        >
+                          {creatingResearcherCommunity ? (
+                            <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                          ) : (
+                            <FlaskConical className="w-4 h-4 shrink-0" />
+                          )}
+                          <span>Create researcher community</span>
+                        </button>
+                      </form>
+                      <div>
+                        <h3 className="font-semibold text-brand-gray mb-3">
+                          Researcher communities
+                        </h3>
+                        {loadingCommunities ? (
+                          <div className="flex justify-center py-6">
+                            <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                          </div>
+                        ) : communities.filter(
+                            (c) => c.communityType === "researcher",
+                          ).length === 0 ? (
+                          <p className="text-brand-gray text-sm">
+                            No researcher communities. Create one above.
+                          </p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {communities
+                              .filter((c) => c.communityType === "researcher")
+                              .map((c) => (
+                                <li
+                                  key={c._id}
+                                  className="flex items-center justify-between gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    {c.coverImage || c.image ? (
+                                      <img
+                                        src={c.coverImage || c.image}
+                                        alt=""
+                                        className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
+                                        <FlaskConical className="w-5 h-5 text-brand-royal-blue/60" />
+                                      </div>
+                                    )}
+                                    <span className="font-medium text-brand-royal-blue truncate">
+                                      {c.name}
+                                    </span>
+                                    <span className="text-xs text-brand-gray shrink-0">
+                                      ({c.memberCount ?? 0} members,{" "}
+                                      {c.threadCount ?? 0} threads)
+                                    </span>
+                                  </div>
+                                  <Button
+                                    onClick={() => handleDeleteCommunity(c._id)}
+                                    disabled={deletingCommunityId === c._id}
+                                    className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                                  >
+                                    {deletingCommunityId === c._id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -5912,85 +6109,87 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 overflow-hidden">
                 <div className="px-4 md:px-6 py-3 border-b border-brand-purple-200/40 bg-brand-purple-50/30">
                   <p className="text-xs md:text-sm text-brand-gray">
-                    <span className="font-semibold text-brand-royal-blue">Work Moderation</span>
-                    {" "}· Pending submissions
+                    <span className="font-semibold text-brand-royal-blue">
+                      Work Moderation
+                    </span>{" "}
+                    · Pending submissions
                   </p>
                 </div>
                 <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-                {loadingWorkSubmissions ? (
-                  <div className="flex justify-center py-6">
-                    <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
-                  </div>
-                ) : workSubmissions.filter((s) => s.status === "pending")
-                    .length === 0 ? (
-                  <p className="text-brand-gray text-sm">
-                    No pending work submissions.
-                  </p>
-                ) : (
-                  <ul className="space-y-3">
-                    {workSubmissions
-                      .filter((s) => s.status === "pending")
-                      .map((s) => (
-                        <li
-                          key={s._id}
-                          className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]"
-                        >
-                          <div className="flex flex-col gap-2">
-                            <p className="font-semibold text-brand-royal-blue">
-                              {s.title}{" "}
-                              <span className="text-xs font-medium text-brand-gray">
-                                ({s.type})
-                              </span>
-                            </p>
-                            <p className="text-xs text-brand-gray">
-                              Submitted by{" "}
-                              {s.submittedBy?.username || "Unknown"} (
-                              {s.submittedBy?.email || "—"})
-                            </p>
-                            {s.type === "publication" ? (
-                              <p className="text-sm text-brand-gray">
-                                {s.journal ? `Journal: ${s.journal} · ` : ""}
-                                {s.year ? `Year: ${s.year}` : ""}
+                  {loadingWorkSubmissions ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : workSubmissions.filter((s) => s.status === "pending")
+                      .length === 0 ? (
+                    <p className="text-brand-gray text-sm">
+                      No pending work submissions.
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {workSubmissions
+                        .filter((s) => s.status === "pending")
+                        .map((s) => (
+                          <li
+                            key={s._id}
+                            className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]"
+                          >
+                            <div className="flex flex-col gap-2">
+                              <p className="font-semibold text-brand-royal-blue">
+                                {s.title}{" "}
+                                <span className="text-xs font-medium text-brand-gray">
+                                  ({s.type})
+                                </span>
                               </p>
-                            ) : (
-                              <p className="text-sm text-brand-gray">
-                                {s.phase ? `Phase: ${s.phase} · ` : ""}
-                                {s.trialStatus
-                                  ? `Status: ${s.trialStatus}`
-                                  : ""}
+                              <p className="text-xs text-brand-gray">
+                                Submitted by{" "}
+                                {s.submittedBy?.username || "Unknown"} (
+                                {s.submittedBy?.email || "—"})
                               </p>
-                            )}
-                            <div className="flex gap-2 pt-1">
-                              <Button
-                                onClick={() =>
-                                  handleApproveWorkSubmission(s._id)
-                                }
-                                disabled={approvingWorkSubmissionId === s._id}
-                                className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5"
-                              >
-                                {approvingWorkSubmissionId === s._id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : null}
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() =>
-                                  handleRejectWorkSubmission(s._id)
-                                }
-                                disabled={rejectingWorkSubmissionId === s._id}
-                                className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
-                              >
-                                {rejectingWorkSubmissionId === s._id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : null}
-                                Reject
-                              </Button>
+                              {s.type === "publication" ? (
+                                <p className="text-sm text-brand-gray">
+                                  {s.journal ? `Journal: ${s.journal} · ` : ""}
+                                  {s.year ? `Year: ${s.year}` : ""}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-brand-gray">
+                                  {s.phase ? `Phase: ${s.phase} · ` : ""}
+                                  {s.trialStatus
+                                    ? `Status: ${s.trialStatus}`
+                                    : ""}
+                                </p>
+                              )}
+                              <div className="flex gap-2 pt-1">
+                                <Button
+                                  onClick={() =>
+                                    handleApproveWorkSubmission(s._id)
+                                  }
+                                  disabled={approvingWorkSubmissionId === s._id}
+                                  className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5"
+                                >
+                                  {approvingWorkSubmissionId === s._id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : null}
+                                  Approve
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    handleRejectWorkSubmission(s._id)
+                                  }
+                                  disabled={rejectingWorkSubmissionId === s._id}
+                                  className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
+                                >
+                                  {rejectingWorkSubmissionId === s._id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : null}
+                                  Reject
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        </li>
-                      ))}
-                  </ul>
-                )}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             )}
@@ -7187,8 +7386,9 @@ export default function AdminDashboard() {
             {activeSection === "weekly-mailer" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
                 <p className="text-sm text-brand-gray mb-4">
-                  Search patients, select who should receive the weekly digest, then send.
-                  The email is personalized using your backend pipeline.
+                  Search patients, select who should receive the weekly digest,
+                  then send. The email is personalized using your backend
+                  pipeline.
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -7197,7 +7397,9 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       value={weeklyMailerSearchQuery}
-                      onChange={(e) => setWeeklyMailerSearchQuery(e.target.value)}
+                      onChange={(e) =>
+                        setWeeklyMailerSearchQuery(e.target.value)
+                      }
                       placeholder="Search users (name, email, condition)..."
                       className="w-full px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
                       disabled={sendingWeeklyMailer}
@@ -7267,15 +7469,24 @@ export default function AdminDashboard() {
                         Sending pipeline
                       </p>
                       <p className="text-xs text-brand-gray">
-                        {weeklyMailerPipeline.filter(
-                          (e) => e.status === "sent",
-                        ).length} sent •{" "}
-                        {weeklyMailerPipeline.filter(
-                          (e) => e.status === "skipped",
-                        ).length} skipped •{" "}
-                        {weeklyMailerPipeline.filter(
-                          (e) => e.status === "error",
-                        ).length} errors
+                        {
+                          weeklyMailerPipeline.filter(
+                            (e) => e.status === "sent",
+                          ).length
+                        }{" "}
+                        sent •{" "}
+                        {
+                          weeklyMailerPipeline.filter(
+                            (e) => e.status === "skipped",
+                          ).length
+                        }{" "}
+                        skipped •{" "}
+                        {
+                          weeklyMailerPipeline.filter(
+                            (e) => e.status === "error",
+                          ).length
+                        }{" "}
+                        errors
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -7328,9 +7539,7 @@ export default function AdminDashboard() {
                               ) : (
                                 <Mail className="w-3.5 h-3.5" />
                               )}
-                              <span className="capitalize">
-                                {entry.status}
-                              </span>
+                              <span className="capitalize">{entry.status}</span>
                             </div>
                           </div>
                         );
@@ -7542,13 +7751,17 @@ export default function AdminDashboard() {
                           Sending progress
                         </p>
                         <p className="text-xs text-brand-gray">
-                          {researcherInvitePipeline.filter(
-                            (e) => e.status === "sent",
-                          ).length}{" "}
+                          {
+                            researcherInvitePipeline.filter(
+                              (e) => e.status === "sent",
+                            ).length
+                          }{" "}
                           sent •{" "}
-                          {researcherInvitePipeline.filter(
-                            (e) => e.status === "error",
-                          ).length}{" "}
+                          {
+                            researcherInvitePipeline.filter(
+                              (e) => e.status === "error",
+                            ).length
+                          }{" "}
                           errors
                         </p>
                       </div>
@@ -8082,7 +8295,7 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-        </main>
+        </div>
       </div>
     </Layout>
   );

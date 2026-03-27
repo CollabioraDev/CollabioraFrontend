@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PrefetchLink from "./PrefetchLink.jsx";
-import { motion, AnimatePresence } from "framer-motion";
 import GlobalSearch from "./GlobalSearch";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { listenForMessages } from "../utils/crossTabSync.js";
@@ -535,18 +534,9 @@ export default function Navbar() {
   };
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        duration: 0.8,
-        ease: "easeOut",
-        delay: 0.1,
-      }}
-    >
-      <motion.div
-        className={`pointer-events-auto flex items-center justify-between transition-all duration-300 ease-out w-full relative ${
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none ui-fade-in">
+      <div
+        className={`pointer-events-auto flex items-center justify-between w-full relative ${
           isAtTop
             ? "px-6 lg:px-8 py-4 bg-transparent border-transparent shadow-none"
             : "px-6 lg:px-8 py-3 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-lg"
@@ -567,30 +557,20 @@ export default function Navbar() {
       >
         {/* Logo */}
         <PrefetchLink
-          to={
-            user ? "/yori" : isLandingPage ? "/home" : "/"
-          }
+          to={user ? "/yori" : isLandingPage ? "/home" : "/"}
           className="group relative flex items-center"
         >
           {/* Logo Image */}
-          <motion.img
-            src={"/logo.png"}
+          <img
+            src={"/logo.webp"}
             alt="collabiora Logo"
-            className="w-auto relative z-10"
-            animate={{
-              height: isAtTop ? "3.5rem" : "3rem",
-            }}
+            className={`w-auto relative z-10 ${isAtTop ? "h-14" : "h-12"}`}
             style={{
               width: "auto",
               maxWidth: "none",
               filter: isAtTop
                 ? "drop-shadow(0 4px 8px rgba(47, 60, 150, 0.2))"
                 : "drop-shadow(0 2px 4px rgba(47, 60, 150, 0.15))",
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
             }}
           />
         </PrefetchLink>
@@ -630,9 +610,7 @@ export default function Navbar() {
                         <span className="relative z-10 text-[#2F3C96] transition-colors duration-200 group-hover:text-[#B8A5D5]">
                           {item}
                         </span>
-                        <span
-                          className="absolute bottom-0 left-0 h-[3px] w-0 rounded-full bg-[#2F3C96] transition-all duration-300 group-hover:w-full"
-                        />
+                        <span className="absolute bottom-0 left-0 h-[3px] w-0 rounded-full bg-[#2F3C96] transition-all duration-300 group-hover:w-full" />
                       </PrefetchLink>
                       {index < navItems.length - 1 && (
                         <div
@@ -694,101 +672,95 @@ export default function Navbar() {
                       </button>
 
                       {/* Explore Dropdown Menu */}
-                      <AnimatePresence>
-                        {isExploreDropdownOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -5, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -5, scale: 0.98 }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
-                            className="absolute top-full left-0 pt-2 w-48 backdrop-blur-xl rounded-2xl shadow-2xl border py-2 z-50"
-                            style={{
-                              backgroundColor: "rgba(245, 242, 248, 0.98)",
-                              borderColor: "#D0C4E2",
-                            }}
-                          >
-                            {[
-                              {
-                                label: publicationsNavLabel,
-                                route: publicationsNavRoute,
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747S17.5 6.253 12 6.253z"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                              {
-                                label: expertsNavLabel,
-                                route: "/experts",
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                              {
-                                label: trialsNavLabel,
-                                route: "/trials",
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                            ].map((subItem) => (
-                              <PrefetchLink
-                                key={subItem.label}
-                                to={subItem.route}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-150 rounded-lg mx-1"
-                                style={{ color: "#2F3C96" }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor =
-                                    "#E8E0EF";
-                                  e.currentTarget.style.color = "#474F97";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor =
-                                    "transparent";
-                                  e.currentTarget.style.color = "#2F3C96";
-                                }}
-                              >
-                                {subItem.icon}
-                                <span>{subItem.label}</span>
-                              </PrefetchLink>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {isExploreDropdownOpen && (
+                        <div
+                          className="absolute top-full left-0 pt-2 w-48 backdrop-blur-xl rounded-2xl shadow-2xl border py-2 z-50 ui-fade-in-fast"
+                          style={{
+                            backgroundColor: "rgba(245, 242, 248, 0.98)",
+                            borderColor: "#D0C4E2",
+                          }}
+                        >
+                          {[
+                            {
+                              label: publicationsNavLabel,
+                              route: publicationsNavRoute,
+                              icon: (
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747S17.5 6.253 12 6.253z"
+                                  />
+                                </svg>
+                              ),
+                            },
+                            {
+                              label: expertsNavLabel,
+                              route: "/experts",
+                              icon: (
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                                  />
+                                </svg>
+                              ),
+                            },
+                            {
+                              label: trialsNavLabel,
+                              route: "/trials",
+                              icon: (
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                              ),
+                            },
+                          ].map((subItem) => (
+                            <PrefetchLink
+                              key={subItem.label}
+                              to={subItem.route}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-150 rounded-lg mx-1"
+                              style={{ color: "#2F3C96" }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#E8E0EF";
+                                e.currentTarget.style.color = "#474F97";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "transparent";
+                                e.currentTarget.style.color = "#2F3C96";
+                              }}
+                            >
+                              {subItem.icon}
+                              <span>{subItem.label}</span>
+                            </PrefetchLink>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {/* Vertical separator */}
                     {index < navItems.length - 1 && (
@@ -852,19 +824,15 @@ export default function Navbar() {
               {/* Notification Bell */}
               {user && (
                 <div className="relative" ref={notificationRef}>
-                  <motion.button
+                  <button
+                    type="button"
                     onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="w-11 h-11 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border backdrop-blur-sm"
+                    className="w-11 h-11 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border backdrop-blur-sm hover:bg-[rgba(232,224,239,0.8)]"
                     style={{
                       backgroundColor: "",
                       borderColor: "rgba(47, 60, 150, 0.2)",
                       color: "#2F3C96",
                     }}
-                    whileHover={{
-                      scale: 1.1,
-                      backgroundColor: "rgba(232, 224, 239, 0.8)",
-                    }}
-                    whileTap={{ scale: 0.95 }}
                   >
                     <IconBell className="w-5 h-5" stroke={1.75} />
                     {/* Notification dot indicator */}
@@ -873,238 +841,227 @@ export default function Navbar() {
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
-                  </motion.button>
+                  </button>
 
-                  <AnimatePresence>
-                    {isNotificationOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-3 w-80 backdrop-blur-xl rounded-2xl shadow-2xl border py-4 z-50 overflow-hidden"
-                        style={{
-                          backgroundColor: "rgba(245, 242, 248, 0.95)",
-                          borderColor: "#D0C4E2",
-                        }}
+                  {isNotificationOpen && (
+                    <div
+                      className="absolute right-0 mt-3 w-80 backdrop-blur-xl rounded-2xl shadow-2xl border py-4 z-50 overflow-hidden ui-fade-in-fast"
+                      style={{
+                        backgroundColor: "rgba(245, 242, 248, 0.95)",
+                        borderColor: "#D0C4E2",
+                      }}
+                    >
+                      <div
+                        className="px-4 pb-3 border-b flex items-center justify-between"
+                        style={{ borderColor: "#D0C4E2" }}
                       >
-                        <div
-                          className="px-4 pb-3 border-b flex items-center justify-between"
-                          style={{ borderColor: "#D0C4E2" }}
+                        <h3
+                          className="text-lg font-bold"
+                          style={{ color: "#2F3C96" }}
                         >
-                          <h3
-                            className="text-lg font-bold"
-                            style={{ color: "#2F3C96" }}
-                          >
-                            Notifications
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {unreadCount > 0 && (
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    const base =
-                                      import.meta.env.VITE_API_URL ||
-                                      "http://localhost:5000";
-                                    const userId = user?._id || user?.id;
-                                    if (userId) {
-                                      await fetch(
-                                        `${base}/api/insights/${userId}/read-all`,
-                                        {
-                                          method: "PATCH",
-                                        },
-                                      );
-                                      setNotifications((prev) =>
-                                        prev.map((n) => ({ ...n, read: true })),
-                                      );
-                                      setUnreadCount(0);
-                                    }
-                                  } catch (error) {
-                                    console.error(
-                                      "Error clearing notifications:",
-                                      error,
-                                    );
-                                  }
-                                }}
-                                className="text-xs font-medium px-2 py-1 rounded transition-colors hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
-                                style={{ color: "#787878" }}
-                              >
-                                Clear All
-                              </button>
-                            )}
+                          Notifications
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          {unreadCount > 0 && (
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                setIsNotificationOpen(false);
-                                navigate("/notifications");
+                                try {
+                                  const base =
+                                    import.meta.env.VITE_API_URL ||
+                                    "http://localhost:5000";
+                                  const userId = user?._id || user?.id;
+                                  if (userId) {
+                                    await fetch(
+                                      `${base}/api/insights/${userId}/read-all`,
+                                      {
+                                        method: "PATCH",
+                                      },
+                                    );
+                                    setNotifications((prev) =>
+                                      prev.map((n) => ({ ...n, read: true })),
+                                    );
+                                    setUnreadCount(0);
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Error clearing notifications:",
+                                    error,
+                                  );
+                                }
                               }}
                               className="text-xs font-medium px-2 py-1 rounded transition-colors hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
                               style={{ color: "#787878" }}
                             >
-                              View All
+                              Clear All
                             </button>
-                          </div>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsNotificationOpen(false);
+                              navigate("/notifications");
+                            }}
+                            className="text-xs font-medium px-2 py-1 rounded transition-colors hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
+                            style={{ color: "#787878" }}
+                          >
+                            View All
+                          </button>
                         </div>
-                        {notificationsLoading ? (
-                          <div className="px-4 py-8 flex items-center justify-center">
-                            <div className="w-6 h-6 border-2 border-[#2F3C96] border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        ) : notifications.length === 0 ? (
-                          <div className="px-4 py-8 flex flex-col items-center justify-center">
-                            <div
-                              className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                              style={{ backgroundColor: "#E8E0EF" }}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-8 h-8"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                style={{ color: "#2F3C96" }}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                                />
-                              </svg>
-                            </div>
-                            <p
-                              className="font-medium text-center"
+                      </div>
+                      {notificationsLoading ? (
+                        <div className="px-4 py-8 flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-[#2F3C96] border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="px-4 py-8 flex flex-col items-center justify-center">
+                          <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                            style={{ backgroundColor: "#E8E0EF" }}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-8 h-8"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
                               style={{ color: "#2F3C96" }}
                             >
-                              No new notifications
-                            </p>
-                            <p
-                              className="text-sm mt-1 text-center mb-4"
-                              style={{ color: "#787878" }}
-                            >
-                              You're all caught up!
-                            </p>
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                              />
+                            </svg>
                           </div>
-                        ) : (
-                          <div className="max-h-[400px] overflow-y-auto">
-                            {notifications.slice(0, 10).map((notification) => (
-                              <div
-                                key={notification._id}
-                                className={`px-4 py-3 border-b transition-colors cursor-pointer ${
-                                  !notification.read ? "bg-[#E8E0EF]/30" : ""
-                                }`}
-                                style={{ borderColor: "#D0C4E2" }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor =
-                                    "#E8E0EF";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor =
-                                    !notification.read
-                                      ? "#E8E0EF/30"
-                                      : "transparent";
-                                }}
-                                onClick={async () => {
-                                  if (!notification.read) {
-                                    try {
-                                      const base =
-                                        import.meta.env.VITE_API_URL ||
-                                        "http://localhost:5000";
-                                      await fetch(
-                                        `${base}/api/insights/${notification._id}/read`,
-                                        {
-                                          method: "PATCH",
-                                        },
-                                      );
-                                      setNotifications((prev) =>
-                                        prev.map((n) =>
-                                          n._id === notification._id
-                                            ? { ...n, read: true }
-                                            : n,
-                                        ),
-                                      );
-                                      setUnreadCount((prev) =>
-                                        Math.max(0, prev - 1),
-                                      );
-                                    } catch (error) {
-                                      console.error(
-                                        "Error marking notification as read:",
-                                        error,
-                                      );
-                                    }
+                          <p
+                            className="font-medium text-center"
+                            style={{ color: "#2F3C96" }}
+                          >
+                            No new notifications
+                          </p>
+                          <p
+                            className="text-sm mt-1 text-center mb-4"
+                            style={{ color: "#787878" }}
+                          >
+                            You're all caught up!
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="max-h-[400px] overflow-y-auto">
+                          {notifications.slice(0, 10).map((notification) => (
+                            <div
+                              key={notification._id}
+                              className={`px-4 py-3 border-b transition-colors cursor-pointer ${
+                                !notification.read ? "bg-[#E8E0EF]/30" : ""
+                              }`}
+                              style={{ borderColor: "#D0C4E2" }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#E8E0EF";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  !notification.read
+                                    ? "#E8E0EF/30"
+                                    : "transparent";
+                              }}
+                              onClick={async () => {
+                                if (!notification.read) {
+                                  try {
+                                    const base =
+                                      import.meta.env.VITE_API_URL ||
+                                      "http://localhost:5000";
+                                    await fetch(
+                                      `${base}/api/insights/${notification._id}/read`,
+                                      {
+                                        method: "PATCH",
+                                      },
+                                    );
+                                    setNotifications((prev) =>
+                                      prev.map((n) =>
+                                        n._id === notification._id
+                                          ? { ...n, read: true }
+                                          : n,
+                                      ),
+                                    );
+                                    setUnreadCount((prev) =>
+                                      Math.max(0, prev - 1),
+                                    );
+                                  } catch (error) {
+                                    console.error(
+                                      "Error marking notification as read:",
+                                      error,
+                                    );
                                   }
-                                  setIsNotificationOpen(false);
-                                  navigate("/notifications");
-                                }}
+                                }
+                                setIsNotificationOpen(false);
+                                navigate("/notifications");
+                              }}
+                            >
+                              <p
+                                className="text-sm font-medium mb-1"
+                                style={{ color: "#2F3C96" }}
                               >
-                                <p
-                                  className="text-sm font-medium mb-1"
-                                  style={{ color: "#2F3C96" }}
-                                >
-                                  {(() => {
-                                    // Format notification message
-                                    if (
-                                      notification.type === "new_follower" &&
-                                      notification.relatedUserId
-                                    ) {
-                                      const followerUsername =
-                                        notification.relatedUserId?.username ||
-                                        notification.metadata
-                                          ?.followerUsername ||
-                                        "Someone";
-                                      const source =
-                                        notification.metadata?.source;
+                                {(() => {
+                                  // Format notification message
+                                  if (
+                                    notification.type === "new_follower" &&
+                                    notification.relatedUserId
+                                  ) {
+                                    const followerUsername =
+                                      notification.relatedUserId?.username ||
+                                      notification.metadata?.followerUsername ||
+                                      "Someone";
+                                    const source =
+                                      notification.metadata?.source;
 
-                                      if (source) {
-                                        // Format: "Ansh followed you through Forums"
-                                        return `${followerUsername} followed you through ${source}`;
-                                      }
-                                      return `${followerUsername} followed you`;
+                                    if (source) {
+                                      // Format: "Ansh followed you through Forums"
+                                      return `${followerUsername} followed you through ${source}`;
                                     }
-                                    return notification.message;
-                                  })()}
-                                </p>
-                                <p
-                                  className="text-xs"
-                                  style={{ color: "#787878" }}
-                                >
-                                  {new Date(
-                                    notification.createdAt,
-                                  ).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                  })}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                                    return `${followerUsername} followed you`;
+                                  }
+                                  return notification.message;
+                                })()}
+                              </p>
+                              <p
+                                className="text-xs"
+                                style={{ color: "#787878" }}
+                              >
+                                {new Date(
+                                  notification.createdAt,
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* User Menu or Sign In */}
               {user ? (
                 <div className="relative" ref={menuRef}>
-                  <motion.button
+                  <button
                     type="button"
                     onClick={() => setIsMenuOpen(!isDropdownOpen)}
                     aria-haspopup="menu"
                     aria-expanded={isDropdownOpen}
                     aria-label="Account menu"
-                    className="flex items-center gap-2 px-2 py-2 rounded-full shadow-md hover:shadow-lg transition-colors duration-200 border backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96]/40 focus-visible:ring-offset-2"
+                    className="flex items-center gap-2 px-2 py-2 rounded-full shadow-md hover:shadow-lg transition-colors duration-200 border backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96]/40 focus-visible:ring-offset-2 hover:bg-[rgba(232,224,239,0.8)]"
                     style={{
                       backgroundColor: "",
                       borderColor: "rgba(47, 60, 150, 0.2)",
                     }}
-                    whileHover={{
-                      backgroundColor: "rgba(232, 224, 239, 0.8)",
-                    }}
-                    whileTap={{ scale: 1 }}
                   >
                     {/* Profile Avatar — fixed box + overflow clip stops image jump on open/click */}
                     {user?.picture && !imageError ? (
@@ -1172,175 +1129,160 @@ export default function Navbar() {
                         d="M19 9l-7 7-7-7"
                       />
                     </svg>
-                  </motion.button>
+                  </button>
 
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-3 w-52 backdrop-blur-xl rounded-2xl shadow-2xl border py-2 z-50 overflow-hidden"
-                        style={{
-                          backgroundColor: "rgba(245, 242, 248, 0.95)",
-                          borderColor: "#D0C4E2",
+                  {isDropdownOpen && (
+                    <div
+                      className="absolute right-0 mt-3 w-52 backdrop-blur-xl rounded-2xl shadow-2xl border py-2 z-50 overflow-hidden ui-fade-in-fast"
+                      style={{
+                        backgroundColor: "rgba(245, 242, 248, 0.95)",
+                        borderColor: "#D0C4E2",
+                      }}
+                    >
+                      <PrefetchLink
+                        to="/profile"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
+                        style={{ color: "#2F3C96" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#E8E0EF";
+                          e.currentTarget.style.color = "#474F97";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.color = "#2F3C96";
                         }}
                       >
-                        <PrefetchLink
-                          to="/profile"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
-                          style={{ color: "#2F3C96" }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "#E8E0EF";
-                            e.currentTarget.style.color = "#474F97";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor =
-                              "transparent";
-                            e.currentTarget.style.color = "#2F3C96";
-                          }}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            />
-                          </svg>
-                          <span>My Profile</span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4 ml-auto"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </PrefetchLink>
-                        <PrefetchLink
-                          to="/favorites"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
-                          style={{ color: "#2F3C96" }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#E8E0EF";
-                            e.target.style.color = "#474F97";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                            e.target.style.color = "#2F3C96";
-                          }}
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                        <span>My Profile</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 ml-auto"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                          </svg>
-                          <span>Favorites</span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4 ml-auto"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </PrefetchLink>
-                        <hr
-                          className="my-2"
-                          style={{ borderColor: "#D0C4E2" }}
-                        />
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm font-medium transition-all duration-200"
-                          style={{ color: "#dc2626" }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#fee2e2";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                          }}
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </PrefetchLink>
+                      <PrefetchLink
+                        to="/favorites"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
+                        style={{ color: "#2F3C96" }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#E8E0EF";
+                          e.target.style.color = "#474F97";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "transparent";
+                          e.target.style.color = "#2F3C96";
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                          </svg>
-                          <span>SignOut</span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-4 h-4 ml-auto"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                          />
+                        </svg>
+                        <span>Favorites</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 ml-auto"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </PrefetchLink>
+                      <hr className="my-2" style={{ borderColor: "#D0C4E2" }} />
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm font-medium transition-all duration-200"
+                        style={{ color: "#dc2626" }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = "#fee2e2";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                          />
+                        </svg>
+                        <span>SignOut</span>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-4 h-4 ml-auto"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : isLandingPage ? (
-                <motion.button
+                <button
                   type="button"
                   onClick={() => navigate("/onboarding")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                   className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
                   Get Started
-                </motion.button>
+                </button>
               ) : (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <div>
                   <PrefetchLink
                     to="/signin"
                     className="px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-2 text-white"
@@ -1359,7 +1301,7 @@ export default function Navbar() {
                   >
                     Sign In
                   </PrefetchLink>
-                </motion.div>
+                </div>
               )}
             </div>
           </nav>
@@ -1370,19 +1312,15 @@ export default function Navbar() {
           <div className="sm:hidden flex items-center gap-2">
             {/* Notification Bell for Mobile */}
             {user && (
-              <motion.button
+              <button
+                type="button"
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                className="w-10 h-10 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border backdrop-blur-sm relative"
+                className="w-10 h-10 rounded-full shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center border backdrop-blur-sm relative hover:bg-[rgba(232,224,239,0.8)]"
                 style={{
                   backgroundColor: "rgba(245, 242, 248, 0.7)",
                   borderColor: "rgba(47, 60, 150, 0.2)",
                   color: "#2F3C96",
                 }}
-                whileHover={{
-                  scale: 1.1,
-                  backgroundColor: "rgba(232, 224, 239, 0.8)",
-                }}
-                whileTap={{ scale: 0.95 }}
               >
                 <IconBell className="w-5 h-5" stroke={1.75} />
                 {/* Notification dot indicator */}
@@ -1391,7 +1329,7 @@ export default function Navbar() {
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
-              </motion.button>
+              </button>
             )}
 
             <button
@@ -1432,380 +1370,362 @@ export default function Navbar() {
             </button>
           </div>
         )}
-      </motion.div>
+      </div>
 
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            ref={mobileMenuRef}
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="pointer-events-auto absolute top-20 left-4 right-4 mx-auto rounded-2xl backdrop-blur-2xl border shadow-2xl py-4 px-4 flex flex-col items-stretch gap-2.5 sm:hidden z-50 max-h-[70vh] overflow-y-auto"
-            style={{
-              backgroundColor: "rgba(245, 242, 248, 0.95)",
-              borderColor: "#D0C4E2",
-            }}
-          >
-            {/* Global Search - Mobile */}
-            {/* <div className="pb-4 border-b" style={{ borderColor: "#D0C4E2" }}>
+      {isMenuOpen && (
+        <div
+          ref={mobileMenuRef}
+          className="pointer-events-auto absolute top-20 left-4 right-4 mx-auto rounded-2xl backdrop-blur-2xl border shadow-2xl py-4 px-4 flex flex-col items-stretch gap-2.5 sm:hidden z-50 max-h-[70vh] overflow-y-auto ui-fade-in-fast"
+          style={{
+            backgroundColor: "rgba(245, 242, 248, 0.95)",
+            borderColor: "#D0C4E2",
+          }}
+        >
+          {/* Global Search - Mobile */}
+          {/* <div className="pb-4 border-b" style={{ borderColor: "#D0C4E2" }}>
               <GlobalSearch />
             </div> */}
 
-            {/* `/` Yori guest: Explore → /explore (matches desktop nav item) */}
-            {!user && isLandingPage && (
-              <div
-                className="space-y-1.5 pb-3 border-b"
-                style={{ borderColor: "#D0C4E2" }}
+          {/* `/` Yori guest: Explore → /explore (matches desktop nav item) */}
+          {!user && isLandingPage && (
+            <div
+              className="space-y-1.5 pb-3 border-b"
+              style={{ borderColor: "#D0C4E2" }}
+            >
+              <PrefetchLink
+                to="/explore"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                style={{ color: "#2F3C96" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#E8E0EF";
+                  e.currentTarget.style.color = "#474F97";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#2F3C96";
+                }}
               >
-                <PrefetchLink
-                  to="/explore"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
-                  style={{ color: "#2F3C96" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#E8E0EF";
-                    e.currentTarget.style.color = "#474F97";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#2F3C96";
-                  }}
+                <span
+                  className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                  style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
                 >
-                  <span
-                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
-                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </span>
-                  Explore
-                </PrefetchLink>
-              </div>
-            )}
-
-            {/* Mobile menu - signed-in users only see account actions */}
-            {user ? (
-              <div
-                className="space-y-1.5 pb-3 border-b"
-                style={{ borderColor: "#D0C4E2" }}
-              >
-                <PrefetchLink
-                  to="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
-                  style={{ color: "#2F3C96" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#E8E0EF";
-                    e.currentTarget.style.color = "#474F97";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#2F3C96";
-                  }}
-                >
-                  <span
-                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
-                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </span>
-                  My Profile
-                </PrefetchLink>
-
-                <PrefetchLink
-                  to="/favorites"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
-                  style={{ color: "#2F3C96" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#E8E0EF";
-                    e.currentTarget.style.color = "#474F97";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#2F3C96";
-                  }}
-                >
-                  <span
-                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
-                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </span>
-                  Favourites
-                </PrefetchLink>
-              </div>
-            ) : null}
-
-            {/* Auth Button */}
-            <div className="pt-1.5">
-              {user ? (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                  style={{
-                    background: "linear-gradient(135deg, #dc2626, #ef4444)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background =
-                      "linear-gradient(135deg, #ef4444, #dc2626)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background =
-                      "linear-gradient(135deg, #dc2626, #ef4444)";
-                  }}
-                >
-                  Sign out
-                </button>
-              ) : isLandingPage ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    navigate("/onboarding");
-                  }}
-                  className="w-full text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
-                  style={{ backgroundColor: "#2F3C96" }}
-                >
-                  Get Started
-                </button>
-              ) : (
-                <PrefetchLink
-                  to="/signin"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                  style={{
-                    background: "linear-gradient(135deg, #2F3C96, #474F97)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background =
-                      "linear-gradient(135deg, #474F97, #2F3C96)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background =
-                      "linear-gradient(135deg, #2F3C96, #474F97)";
-                  }}
-                >
-                  Sign In
-                </PrefetchLink>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Mobile Notification Dropdown */}
-      <AnimatePresence>
-        {isNotificationOpen && user && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="pointer-events-auto absolute top-24 right-4 left-4 mx-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-indigo-200/60 shadow-2xl py-6 px-6 sm:hidden z-50"
-          >
-            <div className="px-2 pb-4 border-b border-indigo-200/60 mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-800">Notifications</h3>
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        const base =
-                          import.meta.env.VITE_API_URL ||
-                          "http://localhost:5000";
-                        const userId = user?._id || user?.id;
-                        if (userId) {
-                          await fetch(
-                            `${base}/api/insights/${userId}/read-all`,
-                            {
-                              method: "PATCH",
-                            },
-                          );
-                          setNotifications((prev) =>
-                            prev.map((n) => ({ ...n, read: true })),
-                          );
-                          setUnreadCount(0);
-                        }
-                      } catch (error) {
-                        console.error("Error clearing notifications:", error);
-                      }
-                    }}
-                    className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
-                  >
-                    Clear All
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsNotificationOpen(false);
-                    navigate("/notifications");
-                  }}
-                  className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
-                >
-                  View All
-                </button>
-              </div>
-            </div>
-            {notificationsLoading ? (
-              <div className="px-2 py-8 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="px-2 py-8 flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
                   <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-10 h-10 text-indigo-400"
+                    className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth="2"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                </div>
-                <p className="text-gray-600 font-semibold text-center text-lg">
-                  No new notifications
-                </p>
-                <p className="text-sm text-gray-400 mt-2 text-center mb-4">
-                  You're all caught up!
-                </p>
-              </div>
-            ) : (
-              <div className="max-h-[400px] overflow-y-auto">
-                {notifications.slice(0, 10).map((notification) => (
-                  <div
-                    key={notification._id}
-                    className={`px-2 py-3 border-b transition-colors cursor-pointer ${
-                      !notification.read ? "bg-indigo-50" : ""
-                    }`}
-                    style={{ borderColor: "#D0C4E2" }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#E8E0EF";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = !notification.read
-                        ? "#E8E0EF/30"
-                        : "transparent";
-                    }}
-                    onClick={async () => {
-                      if (!notification.read) {
-                        try {
-                          const base =
-                            import.meta.env.VITE_API_URL ||
-                            "http://localhost:5000";
-                          await fetch(
-                            `${base}/api/insights/${notification._id}/read`,
-                            {
-                              method: "PATCH",
-                            },
-                          );
-                          setNotifications((prev) =>
-                            prev.map((n) =>
-                              n._id === notification._id
-                                ? { ...n, read: true }
-                                : n,
-                            ),
-                          );
-                          setUnreadCount((prev) => Math.max(0, prev - 1));
-                        } catch (error) {
-                          console.error(
-                            "Error marking notification as read:",
-                            error,
-                          );
-                        }
-                      }
-                      setIsNotificationOpen(false);
-                      navigate("/notifications");
-                    }}
-                  >
-                    <p className="text-sm font-medium mb-1 text-gray-800">
-                      {(() => {
-                        // Format notification message
-                        if (
-                          notification.type === "new_follower" &&
-                          notification.relatedUserId
-                        ) {
-                          const followerUsername =
-                            notification.relatedUserId?.username ||
-                            notification.metadata?.followerUsername ||
-                            "Someone";
-                          const source = notification.metadata?.source;
+                </span>
+                Explore
+              </PrefetchLink>
+            </div>
+          )}
 
-                          if (source) {
-                            // Format: "Ansh followed you through Forums"
-                            return `${followerUsername} followed you through ${source}`;
-                          }
-                          return `${followerUsername} followed you`;
-                        }
-                        return notification.message;
-                      })()}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(notification.createdAt).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        },
-                      )}
-                    </p>
-                  </div>
-                ))}
-              </div>
+          {/* Mobile menu - signed-in users only see account actions */}
+          {user ? (
+            <div
+              className="space-y-1.5 pb-3 border-b"
+              style={{ borderColor: "#D0C4E2" }}
+            >
+              <PrefetchLink
+                to="/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                style={{ color: "#2F3C96" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#E8E0EF";
+                  e.currentTarget.style.color = "#474F97";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#2F3C96";
+                }}
+              >
+                <span
+                  className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                  style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </span>
+                My Profile
+              </PrefetchLink>
+
+              <PrefetchLink
+                to="/favorites"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                style={{ color: "#2F3C96" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#E8E0EF";
+                  e.currentTarget.style.color = "#474F97";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#2F3C96";
+                }}
+              >
+                <span
+                  className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                  style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                </span>
+                Favourites
+              </PrefetchLink>
+            </div>
+          ) : null}
+
+          {/* Auth Button */}
+          <div className="pt-1.5">
+            {user ? (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #dc2626, #ef4444)",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #ef4444, #dc2626)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #dc2626, #ef4444)";
+                }}
+              >
+                Sign out
+              </button>
+            ) : isLandingPage ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  navigate("/onboarding");
+                }}
+                className="w-full text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                style={{ backgroundColor: "#2F3C96" }}
+              >
+                Get Started
+              </button>
+            ) : (
+              <PrefetchLink
+                to="/signin"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center justify-center w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #2F3C96, #474F97)",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #474F97, #2F3C96)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #2F3C96, #474F97)";
+                }}
+              >
+                Sign In
+              </PrefetchLink>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Notification Dropdown */}
+      {isNotificationOpen && user && (
+        <div className="pointer-events-auto absolute top-24 right-4 left-4 mx-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-indigo-200/60 shadow-2xl py-6 px-6 sm:hidden z-50 ui-fade-in-fast">
+          <div className="px-2 pb-4 border-b border-indigo-200/60 mb-4 flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-800">Notifications</h3>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    try {
+                      const base =
+                        import.meta.env.VITE_API_URL || "http://localhost:5000";
+                      const userId = user?._id || user?.id;
+                      if (userId) {
+                        await fetch(`${base}/api/insights/${userId}/read-all`, {
+                          method: "PATCH",
+                        });
+                        setNotifications((prev) =>
+                          prev.map((n) => ({ ...n, read: true })),
+                        );
+                        setUnreadCount(0);
+                      }
+                    } catch (error) {
+                      console.error("Error clearing notifications:", error);
+                    }
+                  }}
+                  className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
+                >
+                  Clear All
+                </button>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsNotificationOpen(false);
+                  navigate("/notifications");
+                }}
+                className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
+              >
+                View All
+              </button>
+            </div>
+          </div>
+          {notificationsLoading ? (
+            <div className="px-2 py-8 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="px-2 py-8 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-10 h-10 text-indigo-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-semibold text-center text-lg">
+                No new notifications
+              </p>
+              <p className="text-sm text-gray-400 mt-2 text-center mb-4">
+                You're all caught up!
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto">
+              {notifications.slice(0, 10).map((notification) => (
+                <div
+                  key={notification._id}
+                  className={`px-2 py-3 border-b transition-colors cursor-pointer ${
+                    !notification.read ? "bg-indigo-50" : ""
+                  }`}
+                  style={{ borderColor: "#D0C4E2" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E8E0EF";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = !notification.read
+                      ? "#E8E0EF/30"
+                      : "transparent";
+                  }}
+                  onClick={async () => {
+                    if (!notification.read) {
+                      try {
+                        const base =
+                          import.meta.env.VITE_API_URL ||
+                          "http://localhost:5000";
+                        await fetch(
+                          `${base}/api/insights/${notification._id}/read`,
+                          {
+                            method: "PATCH",
+                          },
+                        );
+                        setNotifications((prev) =>
+                          prev.map((n) =>
+                            n._id === notification._id
+                              ? { ...n, read: true }
+                              : n,
+                          ),
+                        );
+                        setUnreadCount((prev) => Math.max(0, prev - 1));
+                      } catch (error) {
+                        console.error(
+                          "Error marking notification as read:",
+                          error,
+                        );
+                      }
+                    }
+                    setIsNotificationOpen(false);
+                    navigate("/notifications");
+                  }}
+                >
+                  <p className="text-sm font-medium mb-1 text-gray-800">
+                    {(() => {
+                      // Format notification message
+                      if (
+                        notification.type === "new_follower" &&
+                        notification.relatedUserId
+                      ) {
+                        const followerUsername =
+                          notification.relatedUserId?.username ||
+                          notification.metadata?.followerUsername ||
+                          "Someone";
+                        const source = notification.metadata?.source;
+
+                        if (source) {
+                          // Format: "Ansh followed you through Forums"
+                          return `${followerUsername} followed you through ${source}`;
+                        }
+                        return `${followerUsername} followed you`;
+                      }
+                      return notification.message;
+                    })()}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(notification.createdAt).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      },
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </header>
   );
 }

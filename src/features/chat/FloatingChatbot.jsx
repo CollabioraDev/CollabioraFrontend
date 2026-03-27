@@ -1512,7 +1512,13 @@ const FloatingChatbot = () => {
 
     // Update the last detail page ID
     lastDetailPageIdRef.current = currentDetailPageId;
-  }, [location.pathname, isTrialPage, isPublicationPage, currentDetailPageId, user]);
+  }, [
+    location.pathname,
+    isTrialPage,
+    isPublicationPage,
+    currentDetailPageId,
+    user,
+  ]);
 
   // Generate context-specific questions based on type and item
   const generateContextQuestions = (type, item) => {
@@ -2208,7 +2214,7 @@ const FloatingChatbot = () => {
             onClick={handleOpen}
             className="flex items-center justify-center group bg-cover bg-center rounded-lg overflow-hidden"
             style={{
-              backgroundImage: "url(/bot.png)",
+              backgroundImage: "url(/bot.webp)",
               width: "80px",
               height: "90px",
 
@@ -2383,7 +2389,6 @@ const FloatingChatbot = () => {
           {!isMinimized &&
             (isGuest ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80 rounded-b-2xl">
-              
                 <p className="text-slate-800 font-semibold mb-1">
                   Sign in to use Yori at its fullest
                 </p>
@@ -2823,12 +2828,13 @@ const FloatingChatbot = () => {
                         </button>
                       </div>
                       <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-                        Yori is an AI-powered health information tool. The content
-                        provided is for informational and educational purposes only
-                        and does not constitute medical advice. Always consult a
-                        qualified healthcare professional for diagnosis,
-                        treatment, or medical decisions. Your information will never
-                        be sold or used for commercial purposes.
+                        Yori is an AI-powered health information tool. The
+                        content provided is for informational and educational
+                        purposes only and does not constitute medical advice.
+                        Always consult a qualified healthcare professional for
+                        diagnosis, treatment, or medical decisions. Your
+                        information will never be sold or used for commercial
+                        purposes.
                       </p>
                     </div>
                   </>

@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, X } from "lucide-react";
 
@@ -10,7 +16,9 @@ const STORAGE_PREFIX = "curlink_tutorial";
 export function useTutorialCompleted(pageId) {
   const [completed, setCompleted] = useState(() => {
     try {
-      return localStorage.getItem(`${STORAGE_PREFIX}_${pageId}_completed`) === "true";
+      return (
+        localStorage.getItem(`${STORAGE_PREFIX}_${pageId}_completed`) === "true"
+      );
     } catch {
       return false;
     }
@@ -34,7 +42,7 @@ export function markTutorialCompleted(pageId) {
     localStorage.setItem(`${STORAGE_PREFIX}_${pageId}_completed`, "true");
     localStorage.setItem(
       `${STORAGE_PREFIX}_${pageId}_completedAt`,
-      new Date().toISOString()
+      new Date().toISOString(),
     );
     return true;
   } catch {
@@ -86,7 +94,7 @@ function rectEquals(a, b) {
  * @param {() => void} onComplete - Called when tour finishes
  * @param {(stepIndex: number) => void} onStepChange - Called when step changes
  * @param {boolean} [centerTooltip=true] - Keep the tooltip card in the center; target is ring-highlighted only
- * 
+ *
  * Steps with waitForAction: true require the user to click the target. Use
  * window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT)) to advance.
  */
@@ -141,7 +149,10 @@ function PageTutorial({
       const el = all[i];
       const rect = el.getBoundingClientRect();
       const style = getComputedStyle(el);
-      const hidden = style.display === "none" || style.visibility === "hidden" || style.opacity === "0";
+      const hidden =
+        style.display === "none" ||
+        style.visibility === "hidden" ||
+        style.opacity === "0";
       if (!hidden && rect.width > 0 && rect.height > 0) return el;
     }
     return all[0] || null;
@@ -163,7 +174,11 @@ function PageTutorial({
       if (el) {
         targetElRef.current = el;
         try {
-          el.scrollIntoView({ block: "nearest", behavior: "smooth", inline: "nearest" });
+          el.scrollIntoView({
+            block: "nearest",
+            behavior: "smooth",
+            inline: "nearest",
+          });
         } catch {
           /* ignore */
         }
@@ -230,7 +245,8 @@ function PageTutorial({
       handleNextRef.current();
     };
     window.addEventListener(TUTORIAL_ADVANCE_EVENT, handleAdvance);
-    return () => window.removeEventListener(TUTORIAL_ADVANCE_EVENT, handleAdvance);
+    return () =>
+      window.removeEventListener(TUTORIAL_ADVANCE_EVENT, handleAdvance);
   }, [isActive, step?.waitForAction, step?.actionLabel]);
 
   const handleNext = useCallback(() => {
@@ -345,12 +361,19 @@ function PageTutorial({
       boxShadow: ringGlow,
       background: "transparent",
     };
-  }, [step?.target, step?.spotlightPadding, step?.spotlightShape, targetRect, highlightReady]);
+  }, [
+    step?.target,
+    step?.spotlightPadding,
+    step?.spotlightShape,
+    targetRect,
+    highlightReady,
+  ]);
 
   /** Invisible panels block stray clicks; no full-page color wash. */
   const blockPointerTint = "transparent";
-  const showTargetCutout =
-    Boolean(step?.target && targetRect && highlightReady);
+  const showTargetCutout = Boolean(
+    step?.target && targetRect && highlightReady,
+  );
 
   if (!isActive || !step) return null;
 
@@ -379,7 +402,10 @@ function PageTutorial({
               className="absolute left-0 right-0 bottom-0 pointer-events-auto"
               style={{
                 top: targetRect.top + targetRect.height,
-                height: Math.max(0, window.innerHeight - targetRect.top - targetRect.height),
+                height: Math.max(
+                  0,
+                  window.innerHeight - targetRect.top - targetRect.height,
+                ),
                 backgroundColor: blockPointerTint,
               }}
               initial={{ opacity: 0 }}
@@ -401,7 +427,10 @@ function PageTutorial({
               style={{
                 top: targetRect.top,
                 left: targetRect.left + targetRect.width,
-                width: Math.max(0, window.innerWidth - targetRect.left - targetRect.width),
+                width: Math.max(
+                  0,
+                  window.innerWidth - targetRect.left - targetRect.width,
+                ),
                 height: Math.max(0, targetRect.height),
                 backgroundColor: blockPointerTint,
               }}
@@ -462,7 +491,7 @@ function PageTutorial({
             >
               <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-white/20 backdrop-blur-sm ring-2 ring-white/30 flex items-center justify-center">
                 <img
-                  src="/bot.png"
+                  src="/bot.webp"
                   alt="Yori"
                   className="w-full h-full object-contain"
                   style={{ objectPosition: "55% 50%" }}
@@ -486,7 +515,9 @@ function PageTutorial({
             {/* Content */}
             <div className="p-4 space-y-3 overflow-y-auto min-h-0">
               <div>
-                <h4 className="font-semibold text-slate-800 mb-1">{step.title}</h4>
+                <h4 className="font-semibold text-slate-800 mb-1">
+                  {step.title}
+                </h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   {step.content}
                 </p>
@@ -542,10 +573,14 @@ function PageTutorial({
                           const result = step.onAction(currentStep);
                           if (result?.then) {
                             result.then(() =>
-                              window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT))
+                              window.dispatchEvent(
+                                new CustomEvent(TUTORIAL_ADVANCE_EVENT),
+                              ),
                             );
                           } else {
-                            window.dispatchEvent(new CustomEvent(TUTORIAL_ADVANCE_EVENT));
+                            window.dispatchEvent(
+                              new CustomEvent(TUTORIAL_ADVANCE_EVENT),
+                            );
                           }
                         } else {
                           handleNext();
@@ -602,7 +637,10 @@ function getTooltipPosition(targetRect, placement, centerTooltip) {
   const cx = targetRect.left + targetRect.width / 2;
   const cy = targetRect.top + targetRect.height / 2;
 
-  const left = Math.max(padding, Math.min(vw - tooltipWidth - padding, cx - tooltipWidth / 2));
+  const left = Math.max(
+    padding,
+    Math.min(vw - tooltipWidth - padding, cx - tooltipWidth / 2),
+  );
   const topBottom = targetRect.top + targetRect.height + padding;
   const topTop = targetRect.top - tooltipHeight - padding;
 

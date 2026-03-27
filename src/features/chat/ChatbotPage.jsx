@@ -534,134 +534,136 @@ const TrialCard = React.memo(
         ? trial.simplifiedSummary
         : trial.summary || "";
 
-  return (
-    <div
-      className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
-      style={{
-        backgroundColor: "rgba(255, 255, 255, 0.98)",
-        borderColor: "rgba(47, 60, 150, 0.2)",
-      }}
-    >
-      {userId && onSave && (
-        <button
-          type="button"
-          onClick={() =>
-            onSave("trial", {
-              id: trial.nctId || trial.id,
-              nctId: trial.nctId || trial.id,
-              title: trial.title,
-              simplifiedTitle: trial.simplifiedTitle,
-              url: trial.url,
-            })
-          }
-          className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
-          style={{ color: "#2F3C96" }}
-          aria-label="Save trial"
-        >
-          <Heart className="w-4 h-4" />
-        </button>
-      )}
-      <div className="p-4">
-        <div className="flex items-start gap-2.5 mb-2">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))",
-            }}
+    return (
+      <div
+        className="relative rounded-xl border shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
+        style={{
+          backgroundColor: "rgba(255, 255, 255, 0.98)",
+          borderColor: "rgba(47, 60, 150, 0.2)",
+        }}
+      >
+        {userId && onSave && (
+          <button
+            type="button"
+            onClick={() =>
+              onSave("trial", {
+                id: trial.nctId || trial.id,
+                nctId: trial.nctId || trial.id,
+                title: trial.title,
+                simplifiedTitle: trial.simplifiedTitle,
+                url: trial.url,
+              })
+            }
+            className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
+            style={{ color: "#2F3C96" }}
+            aria-label="Save trial"
           >
-            <Microscope className="w-4 h-4" style={{ color: "#2F3C96" }} />
-          </div>
-          <div className="flex-1 min-w-0 pr-8">
-            <h4
-              className="font-bold text-sm leading-snug line-clamp-2"
-              style={{ color: "#2F3C96" }}
-            >
-              {displayTitle}
-            </h4>
-          </div>
-        </div>
-        {trial.conditions && trial.conditions !== "Not specified" && (
-          <p className="text-xs text-slate-600 line-clamp-1 mb-1">
-            <span className="font-medium text-slate-700">Condition:</span>{" "}
-            {trial.conditions}
-          </p>
+            <Heart className="w-4 h-4" />
+          </button>
         )}
-        {(trial.status || (trial.phase && trial.phase !== "Not specified")) && (
-          <div className="flex items-center gap-1.5 flex-wrap mb-2">
-            {trial.status && (
-              <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium"
-                style={{
-                  backgroundColor: "rgba(208, 196, 226, 0.35)",
-                  color: "#2F3C96",
-                  border: "1px solid rgba(47, 60, 150, 0.2)",
-                }}
-              >
-                {trial.status}
-              </span>
-            )}
-            {trial.phase && trial.phase !== "Not specified" && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
-                {trial.phase}
-              </span>
-            )}
-          </div>
-        )}
-        {trial.locations && trial.locations !== "Not specified" && (
-          <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
-            <MapPin
-              className="w-3.5 h-3.5 shrink-0 mt-0.5"
-              style={{ color: "#2F3C96" }}
-            />
-            <span>
-              <span className="font-medium text-slate-700">Location:</span>{" "}
-              {trial.locations}
-            </span>
-          </p>
-        )}
-        {summary && summary !== "No summary available" && (
-          <p
-            className="text-xs leading-relaxed text-slate-600 mb-3 line-clamp-3"
-            style={{
-              WebkitLineClamp: 3,
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {summary}
-          </p>
-        )}
-        <div className="flex items-center gap-2 flex-wrap">
-          {trial.nctId && (
-            <Link
-              to={`/trial/${encodeURIComponent(trial.nctId)}`}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+        <div className="p-4">
+          <div className="flex items-start gap-2.5 mb-2">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
               style={{
-                color: "#2F3C96",
-                backgroundColor: "rgba(208, 196, 226, 0.25)",
-                borderColor: "rgba(47, 60, 150, 0.25)",
+                background:
+                  "linear-gradient(135deg, rgba(208, 196, 226, 0.4), rgba(209, 211, 229, 0.5))",
               }}
             >
-              View full Trial <ExternalLink className="w-3 h-3" />
-            </Link>
+              <Microscope className="w-4 h-4" style={{ color: "#2F3C96" }} />
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <h4
+                className="font-bold text-sm leading-snug line-clamp-2"
+                style={{ color: "#2F3C96" }}
+              >
+                {displayTitle}
+              </h4>
+            </div>
+          </div>
+          {trial.conditions && trial.conditions !== "Not specified" && (
+            <p className="text-xs text-slate-600 line-clamp-1 mb-1">
+              <span className="font-medium text-slate-700">Condition:</span>{" "}
+              {trial.conditions}
+            </p>
           )}
-          {onAskAbout && (
-            <button
-              type="button"
-              onClick={() => onAskAbout(trial, "trial")}
-              className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
-              style={{ color: "#2F3C96" }}
+          {(trial.status ||
+            (trial.phase && trial.phase !== "Not specified")) && (
+            <div className="flex items-center gap-1.5 flex-wrap mb-2">
+              {trial.status && (
+                <span
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                  style={{
+                    backgroundColor: "rgba(208, 196, 226, 0.35)",
+                    color: "#2F3C96",
+                    border: "1px solid rgba(47, 60, 150, 0.2)",
+                  }}
+                >
+                  {trial.status}
+                </span>
+              )}
+              {trial.phase && trial.phase !== "Not specified" && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-700 border border-slate-200">
+                  {trial.phase}
+                </span>
+              )}
+            </div>
+          )}
+          {trial.locations && trial.locations !== "Not specified" && (
+            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
+              <MapPin
+                className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                style={{ color: "#2F3C96" }}
+              />
+              <span>
+                <span className="font-medium text-slate-700">Location:</span>{" "}
+                {trial.locations}
+              </span>
+            </p>
+          )}
+          {summary && summary !== "No summary available" && (
+            <p
+              className="text-xs leading-relaxed text-slate-600 mb-3 line-clamp-3"
+              style={{
+                WebkitLineClamp: 3,
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
             >
-              <MessageSquare className="w-3 h-3" /> Ask about this
-            </button>
+              {summary}
+            </p>
           )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {trial.nctId && (
+              <Link
+                to={`/trial/${encodeURIComponent(trial.nctId)}`}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
+                View full Trial <ExternalLink className="w-3 h-3" />
+              </Link>
+            )}
+            {onAskAbout && (
+              <button
+                type="button"
+                onClick={() => onAskAbout(trial, "trial")}
+                className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                style={{ color: "#2F3C96" }}
+              >
+                <MessageSquare className="w-3 h-3" /> Ask about this
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 const ExpertCard = React.memo(({ expert, onAskAbout }) => {
   const profileUrl =
@@ -1824,9 +1826,7 @@ export default function YoriAI() {
       first
         ? `Find experts in ${first}`
         : "Find experts in my area of interest",
-      first
-        ? `Latest research on ${first}`
-        : "Latest research on my condition",
+      first ? `Latest research on ${first}` : "Latest research on my condition",
       "What communities can I join on collabiora?",
     ];
   }, [userConditions]);
@@ -2016,9 +2016,12 @@ export default function YoriAI() {
         setInput("");
         setSidebarOpen(false);
 
-        const response = await fetchWithAuthRetry(`${apiBase}/api/chatbot/sessions`, {
-          method: "POST",
-        });
+        const response = await fetchWithAuthRetry(
+          `${apiBase}/api/chatbot/sessions`,
+          {
+            method: "POST",
+          },
+        );
         const data = await readJsonSafely(response);
         if (!response.ok) {
           if (response.status === 401) {
@@ -2029,9 +2032,7 @@ export default function YoriAI() {
         }
         newChat = normalizeSession({ ...data.session, loaded: true });
         setChatSessions((prev) => {
-          const mapped = prev.map((s) =>
-            s.id === tempChatId ? newChat : s,
-          );
+          const mapped = prev.map((s) => (s.id === tempChatId ? newChat : s));
           const seen = new Set();
           return mapped
             .filter((s) => {
@@ -2041,9 +2042,7 @@ export default function YoriAI() {
             })
             .sort((a, b) => b.updatedAt - a.updatedAt);
         });
-        setActiveChatId((prev) =>
-          prev === tempChatId ? newChat.id : prev,
-        );
+        setActiveChatId((prev) => (prev === tempChatId ? newChat.id : prev));
       } else {
         newChat = createChatSession();
         setChatSessions((prev) =>
@@ -2617,7 +2616,7 @@ export default function YoriAI() {
         </aside>
 
         {/* Main chat area */}
-        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
           {/* Header - aligned with global layout */}
           <div className="relative flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
             <div className="relative flex items-center gap-3 min-w-0 flex-1">
@@ -2661,7 +2660,7 @@ export default function YoriAI() {
                 {/* Hero */}
                 <div className="mb-3 text-center sm:mb-6 yori-section-enter yori-delay-1">
                   <img
-                    src="/bot.png"
+                    src="/bot.webp"
                     alt="Yori"
                     className="mx-auto mb-2 h-14 w-14 sm:mb-3 sm:h-24 sm:w-24 object-contain"
                   />
@@ -2950,7 +2949,7 @@ export default function YoriAI() {
               commercial purposes.
             </p>
           </div>
-        </main>
+        </div>
       </div>
 
       {/* Join Beta Program Modal (shown on /yori for signed-in users) */}
@@ -2972,7 +2971,9 @@ export default function YoriAI() {
                   className="text-xs leading-relaxed"
                   style={{ color: "#555" }}
                 >
-                 Get early access to new collabiora features and help shape what comes next. Join as a beta user to preview updates, test improvements, and share your feedback.
+                  Get early access to new collabiora features and help shape
+                  what comes next. Join as a beta user to preview updates, test
+                  improvements, and share your feedback.
                 </p>
               </div>
               <button
@@ -3069,7 +3070,8 @@ export default function YoriAI() {
             </div>
 
             <p className="text-[11px]" style={{ color: "#777" }}>
-            We’ll only use your email to share beta updates, research invites, and opportunities to give feedback.
+              We’ll only use your email to share beta updates, research invites,
+              and opportunities to give feedback.
             </p>
           </div>
         </div>

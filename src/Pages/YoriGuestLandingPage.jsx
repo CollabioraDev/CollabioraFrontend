@@ -21,6 +21,9 @@ const SAMPLE_PROMPTS = [
   "What are common vitamin deficiencies?",
 ];
 
+const YORI_DISCLAIMER =
+  "Yori is an AI-powered health information tool. The content provided is for informational and educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis, treatment, or medical decisions. Your information will never be sold or used for commercial purposes.";
+
 /** Same markdown styling as ChatbotPage.jsx */
 const markdownComponents = {
   h1: ({ children }) => (
@@ -112,6 +115,7 @@ export default function YoriGuestLandingPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [trialCount, setTrialCount] = useState(() => getGuestTrialCount());
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -300,92 +304,35 @@ export default function YoriGuestLandingPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen pt-18 pb-3 sm:pt-16 sm:pb-0 yori-page-enter">
-      {/* Same animated background as ChatbotPage */}
+    <div className="relative min-h-screen pt-18 pb-3 sm:pt-16 sm:pb-0 ui-fade-in">
+      {/* Same gradient background as marketing home — static blobs (no pan/zoom) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-b from-[#F5F2F8] via-white to-[#E8E0EF]">
         <div
           className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-3xl"
           style={{
-            willChange: "transform",
-            transform: "translateZ(0)",
             background:
               "linear-gradient(to bottom right, rgba(208, 196, 226, 0.3), rgba(47, 60, 150, 0.2), rgba(208, 196, 226, 0.25))",
-            animation: "yori-blob-float 20s ease-in-out infinite",
           }}
         />
         <div
           className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-3xl"
           style={{
-            willChange: "transform",
-            transform: "translateZ(0)",
-            animationDelay: "1s",
             background:
               "linear-gradient(to top right, rgba(47, 60, 150, 0.25), rgba(208, 196, 226, 0.2), rgba(47, 60, 150, 0.3))",
-            animation: "yori-blob-float-reverse 18s ease-in-out infinite",
           }}
         />
         <div
-          className="absolute top-1/4 left-1/2 w-[300px] h-[300px] rounded-full blur-3xl"
+          className="absolute top-1/4 left-1/2 w-[300px] h-[300px] rounded-full blur-3xl opacity-70"
           style={{
-            willChange: "transform, opacity",
-            transform: "translateZ(0)",
-            animationDelay: "0.5s",
             background:
               "linear-gradient(to bottom right, rgba(208, 196, 226, 0.2), rgba(208, 196, 226, 0.25))",
-            animation: "yori-blob-pulse 8s ease-in-out infinite",
           }}
         />
       </div>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        @keyframes yori-blob-float {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        @keyframes yori-blob-float-reverse {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(-30px, 50px) scale(0.9); }
-          66% { transform: translate(20px, -20px) scale(1.1); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        @keyframes yori-blob-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.15); opacity: 0.8; }
-        }
-        @keyframes yori-fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes yori-rise {
-          from { opacity: 0; transform: translateY(24px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .yori-page-enter {
-          animation: yori-fade-in 0.45s ease-out both;
-        }
-        .yori-section-enter {
-          opacity: 0;
-          animation: yori-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .yori-delay-1 { animation-delay: 0.08s; }
-        .yori-delay-2 { animation-delay: 0.18s; }
-        .yori-delay-3 { animation-delay: 0.28s; }
-        .yori-main-enter {
-          animation: yori-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-        }
-        .yori-message-enter {
-          animation: yori-rise 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-      `,
-        }}
-      />
 
       {/* Taller shell on mobile: was pb-19 + h-[calc(100dvh-9.25rem)] stacking extra empty band below the card */}
       <div className="relative mx-auto flex h-[calc(100dvh-5.25rem)] sm:h-[calc(100vh-4rem)] max-w-[1500px] px-1.5 py-1.5 sm:px-4 sm:py-4">
-        <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur">
           <div className="relative flex h-14 items-center gap-2 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
             <div className="min-w-0 flex-1 pr-1">
               <p className="truncate text-sm font-semibold text-[#2F3C96]">
@@ -426,9 +373,9 @@ export default function YoriGuestLandingPage() {
           >
             {!hasUserMessages ? (
               <div className="flex min-h-full flex-col items-center justify-center px-1 py-2 sm:px-2 sm:py-0 sm:pb-10">
-                <div className="mb-3 text-center sm:mb-6 yori-section-enter yori-delay-1">
+                <div className="mb-3 text-center sm:mb-6">
                   <img
-                    src="/bot.png"
+                    src="/bot.webp"
                     alt="Yori"
                     className="mx-auto mb-2 h-14 w-14 sm:mb-3 sm:h-24 sm:w-24 object-contain"
                   />
@@ -437,7 +384,7 @@ export default function YoriGuestLandingPage() {
                   </h1>
                 </div>
 
-                <div className="w-full max-w-2xl mx-auto yori-section-enter yori-delay-3">
+                <div className="w-full max-w-2xl mx-auto">
                   <div className="flex flex-wrap gap-2 justify-center">
                     {SAMPLE_PROMPTS.map((q) => (
                       <button
@@ -473,7 +420,7 @@ export default function YoriGuestLandingPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-start gap-0 yori-message-enter">
+                        <div className="flex items-start gap-0">
                           <div className="relative z-10 mt-2 -mr-2 flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center">
                             <img
                               src={
@@ -492,7 +439,9 @@ export default function YoriGuestLandingPage() {
                             {message.content && (
                               <div className="rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-3 sm:px-5 sm:py-4">
                                 <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
-                                  <ReactMarkdown components={markdownComponents}>
+                                  <ReactMarkdown
+                                    components={markdownComponents}
+                                  >
                                     {message.content}
                                   </ReactMarkdown>
                                 </div>
@@ -596,18 +545,66 @@ export default function YoriGuestLandingPage() {
                   </button>
                 </div>
               </div>
-              <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-                Yori is an AI-powered health information tool. The content
-                provided is for informational and educational purposes only and
-                does not constitute medical advice. Always consult a qualified
-                healthcare professional for diagnosis, treatment, or medical
-                decisions. Your information will never be sold or used for
-                commercial purposes.
+              <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
+                {YORI_DISCLAIMER}
               </p>
+              <div className="sm:hidden mt-2 flex justify-center px-1">
+                <button
+                  type="button"
+                  onClick={() => setDisclaimerOpen(true)}
+                  className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
+                >
+                  View disclaimer
+                </button>
+              </div>
             </div>
           )}
-        </main>
+        </div>
       </div>
+
+      {disclaimerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/50"
+          onClick={() => setDisclaimerOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="yori-disclaimer-title"
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border-2 border-t bg-white p-5 shadow-2xl max-h-[min(85vh,520px)] overflow-y-auto sm:max-h-[85vh]"
+            style={{ borderColor: "#D0C4E2" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2
+                id="yori-disclaimer-title"
+                className="text-base font-bold text-[#2F3C96] pr-2"
+              >
+                Disclaimer
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDisclaimerOpen(false)}
+                className="shrink-0 rounded-lg p-1.5 text-[#2F3C96] hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
+                aria-label="Close disclaimer"
+              >
+                <X className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {YORI_DISCLAIMER}
+            </p>
+            <button
+              type="button"
+              onClick={() => setDisclaimerOpen(false)}
+              className="mt-5 w-full rounded-xl py-3 text-sm font-semibold text-white"
+              style={{ backgroundColor: "#2F3C96" }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

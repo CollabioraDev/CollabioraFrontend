@@ -460,3 +460,21 @@
     opacity: 0;
   }
 }
+
+/* Opacity-only fades for route shells / nav (cheap compositor-friendly animation) */
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ui-fade-in {
+  animation: ui-fade-in 0.35s ease-out both;
+}
+
+.ui-fade-in-fast {
+  animation: ui-fade-in 0.2s ease-out both;
+}

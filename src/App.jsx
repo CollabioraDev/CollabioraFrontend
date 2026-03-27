@@ -191,7 +191,9 @@ const AppContent = () => {
         }}
       />
       <Suspense fallback={<RouteFallback />}>
-        <AppRoutes />
+        <main id="main-content">
+          <AppRoutes />
+        </main>
       </Suspense>
       {showLayout && isMobile && isSignedIn && (
         <MobileBottomNav isPatient={isPatient} />

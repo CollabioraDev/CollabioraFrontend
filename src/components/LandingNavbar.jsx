@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard } from "lucide-react";
-import { getDisplayName } from "../utils/researcherDisplayName.js";
 
 export default function LandingNavbar() {
   const [user, setUser] = useState(null);
@@ -69,20 +67,18 @@ export default function LandingNavbar() {
   const getDashboardPath = () =>
     user ? `/dashboard/${user.role || "patient"}` : "/dashboard/patient";
 
-  const displayName = user?.name || user?.username || "there";
-  const firstName = displayName.split(" ")[0];
-  const welcomeName =
-    user?.role === "researcher" ? getDisplayName(user, "there") : firstName;
+  const logoHeightClass = isMobile
+    ? isAtTop
+      ? "h-14"
+      : "h-10"
+    : isAtTop
+      ? "h-[4.5rem]"
+      : "h-14";
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-    >
-      <motion.div
-        className={`pointer-events-auto flex items-center justify-between transition-all duration-300 ease-out w-full ${
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none ui-fade-in">
+      <div
+        className={`pointer-events-auto flex items-center justify-between w-full ${
           isAtTop
             ? "px-6 lg:px-10 py-4 bg-transparent border-transparent shadow-none"
             : "px-6 lg:px-10 py-3"
@@ -102,21 +98,17 @@ export default function LandingNavbar() {
         }
       >
         {/* ── Logo (bigger on landing) ── */}
-        <Link to={user ? "/yori" : "/"} className="flex items-center">
-          <motion.img
-            src="/logo.png"
+        <Link
+          to={user ? "/yori" : "/"}
+          className="flex items-center"
+          aria-label="collabiora home"
+        >
+          <img
+            src="/logo.webp"
             alt="collabiora"
-            animate={{
-              height: isMobile
-                ? isAtTop
-                  ? "3.5rem"
-                  : "2.5rem"
-                : isAtTop
-                  ? "4.5rem"
-                  : "3.5rem",
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-auto"
+            width={842}
+            height={704}
+            className={`w-auto ${logoHeightClass}`}
             style={{
               filter: isAtTop
                 ? "drop-shadow(0 6px 12px rgba(47, 60, 150, 0.25))"
@@ -126,39 +118,33 @@ export default function LandingNavbar() {
         </Link>
 
         {/* ── Right side: CTA that appears after hero ── */}
-        <div className="flex items-center">
-          <AnimatePresence mode="wait">
-            {isPastHero && (
-              <motion.div
-                key="cta"
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-              >
-                {!user ? (
-                  <button
-                    onClick={() => navigate("/onboarding")}
-                    className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
-                    style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
-                  >
-                    Get Started
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => navigate(getDashboardPath())}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
-                    style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
-                  </button>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="flex items-center min-h-[2.75rem]">
+          {isPastHero && (
+            <div className="ui-fade-in-fast">
+              {!user ? (
+                <button
+                  type="button"
+                  onClick={() => navigate("/onboarding")}
+                  className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  Get Started
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate(getDashboardPath())}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </button>
+              )}
+            </div>
+          )}
         </div>
-      </motion.div>
-    </motion.header>
+      </div>
+    </header>
   );
 }

@@ -201,7 +201,7 @@ export default function Landing() {
       : userStats.forumsParticipated || 0;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen ui-fade-in">
       {/* Animated Background */}
       <AnimatedBackground isMobile={isMobile} />
 
@@ -209,12 +209,7 @@ export default function Landing() {
       <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-24  sm:pt-20 sm:pb-10 md:pt-28 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
         <div className="max-w-5xl relative z-10 w-full mx-auto flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-10 lg:gap-20">
           {/* ── LEFT: Headline + bullets ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex-1 flex flex-col justify-center items-center lg:items-start w-full"
-          >
+          <div className="flex-1 flex flex-col justify-center items-center lg:items-start w-full">
             <div className="max-w-xl w-full text-center lg:text-left space-y-8">
               <h1
                 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight"
@@ -240,11 +235,8 @@ export default function Landing() {
                     icon: <Users className="w-4 h-4" />,
                   },
                 ].map(({ text, icon }, idx) => (
-                  <motion.li
+                  <li
                     key={idx}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.15 + idx * 0.1 }}
                     className="flex items-center gap-4 text-left w-full"
                   >
                     <div
@@ -259,20 +251,14 @@ export default function Landing() {
                     >
                       {text}
                     </span>
-                  </motion.li>
+                  </li>
                 ))}
               </ul>
             </div>
-          </motion.div>
+          </div>
 
           {/* ── Vertical Separator (desktop only) ── */}
-          <motion.div
-            initial={{ opacity: 0, scaleY: 0 }}
-            animate={{ opacity: 1, scaleY: 1 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-            className="hidden lg:block flex-shrink-0 self-stretch"
-            style={{ originY: "50%" }}
-          >
+          <div className="hidden lg:block flex-shrink-0 self-stretch">
             <div
               className="w-px h-full mx-auto"
               style={{
@@ -281,24 +267,20 @@ export default function Landing() {
                 minHeight: 200,
               }}
             />
-          </motion.div>
+          </div>
 
           {/* ── RIGHT: Hero illustration + CTAs ── */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex-shrink-0 w-full max-w-[320px] lg:max-w-[380px] flex flex-col justify-center gap-6 items-center lg:items-end"
-          >
+          <div className="flex-shrink-0 w-full max-w-[320px] lg:max-w-[380px] flex flex-col justify-center gap-6 items-center lg:items-end">
             {/* Hero illustration — centered on mobile, right-aligned on desktop */}
             <div className="w-full max-w-[280px] lg:max-w-[320px] flex justify-center lg:justify-end lg:mr-7 ">
-              <motion.img
-                src="/hero-bg.png"
+              <img
+                src="/hero-bg.webp"
                 alt="Connect with healthcare and research"
+                width={1536}
+                height={1024}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-auto max-h-[240px] md:max-h-[280px] lg:max-h-[320px] object-contain object-center"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.25 }}
               />
             </div>
             {!user ? (
@@ -392,11 +374,7 @@ export default function Landing() {
 
             {/* Add to Home Screen - mobile only */}
             {showAddToHomeButton && (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-center lg:justify-start"
-              >
+              <div className="flex justify-center lg:justify-start">
                 <button
                   type="button"
                   onClick={handleAddToHomeClick}
@@ -410,9 +388,9 @@ export default function Landing() {
                   <Smartphone className="w-4 h-4" />
                   Add to Home Screen
                 </button>
-              </motion.div>
+              </div>
             )}
-          </motion.div>
+          </div>
         </div>
       </section>
 
