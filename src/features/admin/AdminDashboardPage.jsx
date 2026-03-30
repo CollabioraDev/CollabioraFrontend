@@ -29,6 +29,7 @@ import {
   Hash,
   Info,
   FlaskConical,
+  BookOpen,
   Eye,
   ExternalLink,
   FileCheck,
@@ -517,6 +518,7 @@ function getSurveyFromReview(review) {
 
 const SECTIONS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "active-users", label: "Active users", icon: Activity },
   { id: "search", label: "Search", icon: Search },
   { id: "experts", label: "Experts", icon: User },
   { id: "patients", label: "Patients", icon: UserCircle },
@@ -551,7 +553,7 @@ const SECTIONS = [
 ];
 
 const SIDEBAR_GROUPS = [
-  { title: "MENU", items: ["overview", "work"] },
+  { title: "MENU", items: ["overview", "active-users", "work"] },
   {
     title: "MANAGEMENT",
     items: ["search", "experts", "patients", "forums", "posts", "community"],
@@ -577,6 +579,9 @@ export default function AdminDashboard() {
   const [updating, setUpdating] = useState({});
   const [searchStats, setSearchStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [searchChannelAnalytics, setSearchChannelAnalytics] = useState(null);
+  const [loadingSearchChannels, setLoadingSearchChannels] = useState(false);
+  const [searchChannelAudience, setSearchChannelAudience] = useState("all");
   const [resetting, setResetting] = useState({
     deviceTokens: false,
     ipLimits: false,
@@ -779,6 +784,8 @@ export default function AdminDashboard() {
   const [loadingProfileReminders, setLoadingProfileReminders] = useState(false);
   const [profileReminderRoleFilter, setProfileReminderRoleFilter] =
     useState("all");
+  const [activeUserAnalytics, setActiveUserAnalytics] = useState(null);
+  const [loadingActiveUsers, setLoadingActiveUsers] = useState(false);
 
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -875,7 +882,9 @@ export default function AdminDashboard() {
       return;
     }
     fetchExperts();
-    fetchSearchStats();
+    if (activeSection === "search") {
+      fetchSearchStats();
+    }
     if (activeSection === "reviews") {
       fetchReviews();
       fetchReviewStats();
@@ -940,6 +949,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "researcher-invites") {
       fetchResearcherInviteLogs();
+    }
+    if (activeSection === "active-users") {
+      fetchActiveUserStats();
     }
   }, [activeSection]);
 
@@ -2049,6 +2061,72 @@ export default function AdminDashboard() {
       toast.error("Failed to load search statistics");
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const fetchSearchChannelAnalytics = async () => {
+    setLoadingSearchChannels(true);
+    try {
+      const adminToken = localStorage.getItem("adminToken");
+      if (!adminToken) return;
+
+      const response = await fetch(
+        `${base}/api/admin/analytics/search-channels?days=30&audience=${encodeURIComponent(
+          searchChannelAudience,
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        },
+      );
+
+      if (handleAdminAuthFailure(response)) return;
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch search channel metrics");
+      }
+
+      const data = await response.json();
+      setSearchChannelAnalytics(data);
+    } catch (error) {
+      console.error("Error fetching search channel analytics:", error);
+      toast.error("Failed to load search vs chat metrics");
+    } finally {
+      setLoadingSearchChannels(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection !== "search") return;
+    fetchSearchChannelAnalytics();
+  }, [activeSection, searchChannelAudience]);
+
+  const fetchActiveUserStats = async () => {
+    setLoadingActiveUsers(true);
+    try {
+      const adminToken = localStorage.getItem("adminToken");
+      if (!adminToken) return;
+
+      const response = await fetch(`${base}/api/admin/analytics/active-users`, {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      if (handleAdminAuthFailure(response)) return;
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch active user metrics");
+      }
+
+      const data = await response.json();
+      setActiveUserAnalytics(data);
+    } catch (error) {
+      console.error("Error fetching active user analytics:", error);
+      toast.error("Failed to load active user metrics");
+    } finally {
+      setLoadingActiveUsers(false);
     }
   };
 
@@ -3998,21 +4076,444 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {activeSection === "search" && (
-              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
-                <div className="flex items-center justify-end mb-4">
+            {activeSection === "active-users" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-end">
                   <Button
-                    onClick={fetchSearchStats}
-                    disabled={loadingStats}
+                    onClick={fetchActiveUserStats}
+                    disabled={loadingActiveUsers}
                     className="flex items-center gap-2 px-3 py-1.5 bg-brand-royal-blue hover:bg-brand-blue-600 text-white rounded-lg text-sm transition-all disabled:opacity-50"
                   >
-                    {loadingStats ? (
+                    {loadingActiveUsers ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}
                     Refresh
                   </Button>
+                </div>
+
+                {loadingActiveUsers && !activeUserAnalytics ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                  </div>
+                ) : activeUserAnalytics ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          DAU (today, UTC)
+                        </p>
+                        <p className="text-3xl font-bold text-brand-royal-blue">
+                          {activeUserAnalytics.summary?.dauToday ?? 0}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Distinct users with at least one activity signal today
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          WAU (rolling 7d)
+                        </p>
+                        <p className="text-3xl font-bold text-emerald-700">
+                          {activeUserAnalytics.summary?.wau ?? 0}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Distinct users active on any of the last 7 UTC days
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          MAU (rolling 30d)
+                        </p>
+                        <p className="text-3xl font-bold text-violet-700">
+                          {activeUserAnalytics.summary?.mau ?? 0}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Distinct users active on any of the last 30 UTC days
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                        Today&apos;s DAU by role (UTC)
+                      </p>
+                      <div className="flex flex-wrap gap-6 text-sm">
+                        <span>
+                          <span className="text-slate-500">Patients:</span>{" "}
+                          <span className="font-semibold text-brand-royal-blue">
+                            {activeUserAnalytics.dauTodayByRole?.patient ?? 0}
+                          </span>
+                        </span>
+                        <span>
+                          <span className="text-slate-500">Researchers:</span>{" "}
+                          <span className="font-semibold text-brand-royal-blue">
+                            {activeUserAnalytics.dauTodayByRole?.researcher ??
+                              0}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-brand-royal-blue mb-1 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5" />
+                        Daily active users (UTC)
+                      </h3>
+                      <p className="text-xs text-slate-500 mb-4">
+                        From{" "}
+                        {activeUserAnalytics.trackingStartedDate ?? "—"} through
+                        today — only days with tracking data (no backfilled
+                        history).
+                      </p>
+                      <div className="grid grid-cols-1 gap-2 max-h-[min(70vh,520px)] overflow-y-auto pr-1">
+                        {(() => {
+                          const series = activeUserAnalytics.dailySeries || [];
+                          const max = Math.max(
+                            1,
+                            ...series.map((d) => d.count || 0),
+                          );
+                          return series.map((row) => (
+                            <div
+                              key={row.date}
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <span className="w-[88px] shrink-0 text-slate-500 tabular-nums">
+                                {row.date}
+                              </span>
+                              <div className="flex-1 h-6 bg-slate-100 rounded overflow-hidden">
+                                <div
+                                  className="h-full bg-brand-royal-blue/80 rounded-sm transition-all min-w-[2px]"
+                                  style={{
+                                    width: `${Math.max(
+                                      4,
+                                      (row.count / max) * 100,
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="w-10 text-right font-semibold text-slate-700 tabular-nums">
+                                {row.count}
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400">
+                      As of{" "}
+                      {activeUserAnalytics.summary?.asOf
+                        ? new Date(
+                            activeUserAnalytics.summary.asOf,
+                          ).toLocaleString()
+                        : "—"}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-500">No data.</p>
+                )}
+              </div>
+            )}
+
+            {activeSection === "search" && (
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="search-channel-audience"
+                      className="text-xs font-medium text-brand-gray whitespace-nowrap"
+                    >
+                      Audience
+                    </label>
+                    <select
+                      id="search-channel-audience"
+                      value={searchChannelAudience}
+                      onChange={(e) =>
+                        setSearchChannelAudience(e.target.value)
+                      }
+                      className="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-800 min-w-[200px]"
+                    >
+                      <option value="all">
+                        All (signed in + guests)
+                      </option>
+                      <option value="signed_in">Signed in only</option>
+                      <option value="guest">Guests only</option>
+                    </select>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      fetchSearchStats();
+                      fetchSearchChannelAnalytics();
+                    }}
+                    disabled={loadingStats || loadingSearchChannels}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-brand-royal-blue hover:bg-brand-blue-600 text-white rounded-lg text-sm transition-all disabled:opacity-50"
+                  >
+                    {loadingStats || loadingSearchChannels ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Refresh
+                  </Button>
+                </div>
+
+                <div className="mb-6 space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BarChart3 className="w-5 h-5 text-brand-royal-blue" />
+                      <h3 className="font-semibold text-brand-gray text-base">
+                        Page search vs Yori (chatbot)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-brand-gray mb-3 max-w-3xl">
+                      {searchChannelAudience === "all" && (
+                        <>
+                          <span className="font-medium text-slate-700">
+                            Everyone
+                          </span>{" "}
+                          — signed-in users (unlimited search on Trials,
+                          Publications, Experts) plus guests on the free tier.
+                          Guest uniques use{" "}
+                          <code className="text-[11px] bg-slate-100 px-1 rounded">
+                            x-device-id
+                          </code>{" "}
+                          when present; guests without a device id are counted in
+                          events but not in distinct actors.
+                        </>
+                      )}
+                      {searchChannelAudience === "signed_in" && (
+                        <>
+                          <span className="font-medium text-slate-700">
+                            Signed in only
+                          </span>{" "}
+                          — same cohort as unlimited search on the classic
+                          pages. Chatbot counts user messages when authenticated.
+                        </>
+                      )}
+                      {searchChannelAudience === "guest" && (
+                        <>
+                          <span className="font-medium text-slate-700">
+                            Guests only
+                          </span>{" "}
+                          — anonymous API usage (search limits apply). Distinct
+                          guests require{" "}
+                          <code className="text-[11px] bg-slate-100 px-1 rounded">
+                            x-device-id
+                          </code>
+                          .
+                        </>
+                      )}{" "}
+                      All views use{" "}
+                      <code className="text-[11px] bg-slate-100 px-1 rounded">
+                        POST /api/chatbot/chat
+                      </code>{" "}
+                      for Yori message events (filter applies the same way).
+                    </p>
+
+                    {loadingSearchChannels && !searchChannelAnalytics ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                      </div>
+                    ) : searchChannelAnalytics ? (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-blue-50/80 to-white p-4">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                              <FlaskConical className="w-4 h-4 text-blue-600" />
+                              Trials
+                            </div>
+                            <p className="text-2xl font-bold text-brand-royal-blue mt-1 tabular-nums">
+                              {searchChannelAnalytics.totalsLastPeriod?.trials
+                                ?.events ?? 0}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              distinct actors (range):{" "}
+                              {searchChannelAnalytics.totalsLastPeriod?.trials
+                                ?.uniqueUsersPeriod ?? 0}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-violet-50/80 to-white p-4">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                              <BookOpen className="w-4 h-4 text-violet-600" />
+                              Publications
+                            </div>
+                            <p className="text-2xl font-bold text-violet-700 mt-1 tabular-nums">
+                              {searchChannelAnalytics.totalsLastPeriod
+                                ?.publications?.events ?? 0}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              distinct actors (range):{" "}
+                              {searchChannelAnalytics.totalsLastPeriod
+                                ?.publications?.uniqueUsersPeriod ?? 0}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-emerald-50/80 to-white p-4">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                              <Users className="w-4 h-4 text-emerald-600" />
+                              Experts
+                            </div>
+                            <p className="text-2xl font-bold text-emerald-700 mt-1 tabular-nums">
+                              {searchChannelAnalytics.totalsLastPeriod?.experts
+                                ?.events ?? 0}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              distinct actors (range):{" "}
+                              {searchChannelAnalytics.totalsLastPeriod?.experts
+                                ?.uniqueUsersPeriod ?? 0}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-amber-50/80 to-white p-4">
+                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                              <MessageSquare className="w-4 h-4 text-amber-600" />
+                              Yori (chat)
+                            </div>
+                            <p className="text-2xl font-bold text-amber-700 mt-1 tabular-nums">
+                              {searchChannelAnalytics.totalsLastPeriod?.chatbot
+                                ?.events ?? 0}
+                            </p>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              distinct actors (range):{" "}
+                              {searchChannelAnalytics.totalsLastPeriod?.chatbot
+                                ?.uniqueUsersPeriod ?? 0}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                            Comparison (last {searchChannelAnalytics.days} days,
+                            UTC
+                            {searchChannelAudience === "all"
+                              ? " · all users"
+                              : searchChannelAudience === "signed_in"
+                                ? " · signed in"
+                                : " · guests"}
+                            )
+                          </p>
+                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                            <span>
+                              <span className="text-slate-500">
+                                Classic search (trials + publications + experts):
+                              </span>{" "}
+                              <span className="font-semibold tabular-nums">
+                                {searchChannelAnalytics.comparison
+                                  ?.classicSearchEvents ?? 0}{" "}
+                                events
+                              </span>
+                              {searchChannelAnalytics.comparison
+                                ?.classicShare != null && (
+                                <span className="text-slate-500 ml-1">
+                                  (
+                                  {(
+                                    (searchChannelAnalytics.comparison
+                                      .classicShare || 0) * 100
+                                  ).toFixed(1)}
+                                  %)
+                                </span>
+                              )}
+                            </span>
+                            <span>
+                              <span className="text-slate-500">
+                                Chatbot messages:
+                              </span>{" "}
+                              <span className="font-semibold tabular-nums text-amber-800">
+                                {searchChannelAnalytics.comparison
+                                  ?.chatbotEvents ?? 0}{" "}
+                                events
+                              </span>
+                              {searchChannelAnalytics.comparison?.chatbotShare !=
+                                null && (
+                                <span className="text-slate-500 ml-1">
+                                  (
+                                  {(
+                                    (searchChannelAnalytics.comparison
+                                      .chatbotShare || 0) * 100
+                                  ).toFixed(1)}
+                                  %)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 mt-2">
+                            Distinct users (any classic surface):{" "}
+                            <span className="font-medium text-slate-700">
+                              {searchChannelAnalytics.comparison
+                                ?.distinctUsersClassicAnyChannel ?? 0}
+                            </span>
+                            {" · "}
+                            Distinct chatbot actors:{" "}
+                            <span className="font-medium text-slate-700">
+                              {searchChannelAnalytics.comparison
+                                ?.distinctUsersChatbot ?? 0}
+                            </span>
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200/80 bg-white p-3 overflow-x-auto">
+                          <p className="text-xs font-semibold text-slate-600 mb-2">
+                            Daily events (UTC) — filtered by audience
+                          </p>
+                          <table className="w-full text-xs text-left border-collapse min-w-[520px]">
+                            <thead>
+                              <tr className="border-b border-slate-200 text-slate-500">
+                                <th className="py-2 pr-2 font-medium">Date</th>
+                                <th className="py-2 pr-2 font-medium text-right">
+                                  Trials
+                                </th>
+                                <th className="py-2 pr-2 font-medium text-right">
+                                  Publications
+                                </th>
+                                <th className="py-2 pr-2 font-medium text-right">
+                                  Experts
+                                </th>
+                                <th className="py-2 pr-2 font-medium text-right">
+                                  Chat
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(searchChannelAnalytics.series || [])
+                                .slice()
+                                .reverse()
+                                .slice(0, 14)
+                                .map((row) => (
+                                  <tr
+                                    key={row.date}
+                                    className="border-b border-slate-100 hover:bg-slate-50/80"
+                                  >
+                                    <td className="py-1.5 pr-2 text-slate-600 whitespace-nowrap">
+                                      {row.date}
+                                    </td>
+                                    <td className="py-1.5 pr-2 text-right tabular-nums">
+                                      {row.trials?.events ?? 0}
+                                    </td>
+                                    <td className="py-1.5 pr-2 text-right tabular-nums">
+                                      {row.publications?.events ?? 0}
+                                    </td>
+                                    <td className="py-1.5 pr-2 text-right tabular-nums">
+                                      {row.experts?.events ?? 0}
+                                    </td>
+                                    <td className="py-1.5 pr-2 text-right tabular-nums text-amber-800">
+                                      {row.chatbot?.events ?? 0}
+                                    </td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                          <p className="text-[11px] text-slate-400 mt-2">
+                            Showing last 14 UTC days (newest first). Range:{" "}
+                            {searchChannelAnalytics.range?.start} →{" "}
+                            {searchChannelAnalytics.range?.end}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        No search channel metrics yet. Data appears as users run
+                        searches and use the chatbot.
+                      </p>
+                    )}
                 </div>
 
                 {loadingStats ? (

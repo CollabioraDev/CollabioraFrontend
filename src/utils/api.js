@@ -176,6 +176,50 @@ export function startSessionAutoRefresh() {
   sessionRefreshTimer = window.setInterval(maybeRefresh, 5 * 60 * 1000);
 }
 
+const ACTIVITY_FLAG_KEY = "collabiora_activity_recorded_utc_day";
+
+/** One successful ping per user per UTC day; localStorage dedupes across tabs. */
+export function recordDailyPlatformActivity() {
+  if (typeof window === "undefined") return;
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  let userId;
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "null");
+    userId = u?._id || u?.id;
+  } catch {
+    return;
+  }
+  if (!userId) return;
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const flag = `${userId}|${todayUtc}`;
+  try {
+    if (localStorage.getItem(ACTIVITY_FLAG_KEY) === flag) return;
+  } catch {
+    return;
+  }
+
+  void fetch(`${base}/api/users/me/activity`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => {
+      if (res.ok) {
+        try {
+          localStorage.setItem(ACTIVITY_FLAG_KEY, flag);
+        } catch {
+          /* ignore */
+        }
+      }
+    })
+    .catch(() => {});
+}
+
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("token");
   

@@ -484,7 +484,7 @@ export default function CurateTrials() {
                 className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#2F3C96] hover:bg-indigo-50"
               >
                 <FileEdit className="w-4 h-4" />
-                Open in modal
+                Edit Trial
               </Button>
               <Button
                 type="button"

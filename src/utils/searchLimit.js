@@ -6,8 +6,8 @@
  */
 
 const MAX_FREE_SEARCHES = 6;
-const STORAGE_KEY = "curalink_search_count";
-const LAST_SYNC_KEY = "curalink_search_sync";
+const STORAGE_KEY = "collabiora_search_count";
+const LAST_SYNC_KEY = "collabiora_search_sync";
 const SYNC_INTERVAL = 5000; // Sync with backend every 5 seconds
 
 /**

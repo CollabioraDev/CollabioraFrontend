@@ -7,7 +7,7 @@ let broadcastChannel = null;
 
 // Initialize BroadcastChannel if available
 if (typeof BroadcastChannel !== "undefined") {
-  broadcastChannel = new BroadcastChannel("curalink-sync");
+  broadcastChannel = new BroadcastChannel("collabiora-sync");
 }
 
 /**
@@ -25,7 +25,7 @@ export function broadcastMessage(type, data = {}) {
 
   // Also trigger storage event as fallback
   // We'll use a custom key that changes to trigger the event
-  const syncKey = `curalink-sync-${type}-${Date.now()}`;
+  const syncKey = `collabiora-sync-${type}-${Date.now()}`;
   localStorage.setItem(syncKey, JSON.stringify(message));
   // Remove it immediately to avoid cluttering
   setTimeout(() => {
@@ -56,7 +56,7 @@ export function listenForMessages(callback) {
 
   // Listen via storage events (fallback)
   const storageHandler = (event) => {
-    if (event.key && event.key.startsWith("curalink-sync-")) {
+    if (event.key && event.key.startsWith("collabiora-sync-")) {
       try {
         const message = JSON.parse(event.newValue);
         if (message && message.type) {

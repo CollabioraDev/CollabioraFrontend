@@ -8,6 +8,7 @@ import MobileBottomNav from "./components/MobileBottomNav.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
 import {
   installAuthFetchInterceptor,
+  recordDailyPlatformActivity,
   startSessionAutoRefresh,
 } from "./utils/api.js";
 import { AppRoutes } from "./app/AppRoutes.jsx";
@@ -95,6 +96,11 @@ const AppContent = () => {
       window.removeEventListener("storage", syncUserState);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    recordDailyPlatformActivity();
+  }, [isSignedIn]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {

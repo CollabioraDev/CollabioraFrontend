@@ -312,13 +312,18 @@ const PageFooter = ({ report, pageNumber, totalPages }) => (
  * Renders professional medical report with collabiora branding
  * Each publication, trial, and expert appears on its own page
  */
-// Do not show Contact for global experts/collaborators (e.g. "Contact Request via CuraLink Admin")
+// Do not show Contact for global experts/collaborators (e.g. "Contact Request via Collabiora Admin")
 function shouldShowExpertContact(expert) {
   if (!expert) return false;
   if (expert.isGlobalExpert === true) return false;
   const c = (expert.contact || "").trim();
   if (!c || c === "Not specified") return false;
-  if (/curalink\s*admin|contact\s*request\s*via\s*curalink/i.test(c)) return false;
+  if (
+    /(?:curalink|collabiora)\s*admin|contact\s*request\s*via\s*(?:curalink|collabiora)/i.test(
+      c,
+    )
+  )
+    return false;
   return true;
 }
 

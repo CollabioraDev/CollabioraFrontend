@@ -52,7 +52,7 @@ export default function HowItWorks() {
               className="text-center pb-10 border-b border-border/60 md:pb-0 md:border-b-0 md:border-r md:pr-8 lg:pr-10"
             >
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                For Patients
+                General Public
               </h2>
               <div className="aspect-video w-full overflow-hidden rounded-xl bg-black/90">
                 <video
@@ -73,7 +73,7 @@ export default function HowItWorks() {
               className="text-center md:pl-8 lg:pl-10"
             >
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                For Researchers
+                Researchers
               </h2>
               <div className="aspect-video w-full overflow-hidden rounded-xl bg-black/90">
                 <video

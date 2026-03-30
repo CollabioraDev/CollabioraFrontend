@@ -198,6 +198,26 @@ export default function Footer() {
               >
                 <Youtube className="w-4 h-4" />
               </a>
+              <a
+                href="https://open.spotify.com/show/0TKK9WXPM4Hl8HAvjNgQKk?si=557f16d0c4054918"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors"
+                style={{ color: "#787878" }}
+                onMouseEnter={(e) => (e.target.style.color = "#D0C4E2")}
+                onMouseLeave={(e) => (e.target.style.color = "#787878")}
+                aria-label="Spotify — collabiora hot mic"
+              >
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.381-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.42C15.6 7.26 9.54 6.96 5.64 8.28c-.54.179-1.081-.12-1.26-.66-.18-.54.12-1.081.66-1.26C9.6 5.1 16.14 5.46 19.8 9.48c.421.6.119 1.2-.479 1.561z" />
+                </svg>
+              </a>
             </div>
           </div>
         </div>

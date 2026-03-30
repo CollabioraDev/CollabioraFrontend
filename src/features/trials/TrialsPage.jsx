@@ -1983,7 +1983,7 @@ export default function Trials() {
       .writeText(clipboardText)
       .then(() => {
         toast.success(
-          "Opened Gmail — addresses and draft copied to clipboard",
+          "Opened email app — addresses and draft copied to clipboard"
         );
         openGmail();
       })
@@ -3204,17 +3204,19 @@ export default function Trials() {
                                     >
                                       PI on collabiora:
                                     </span>
-                                    {trial.piOnPlatform.slice(0, 3).map((pi) => (
-                                      <Link
-                                        key={pi.userId}
-                                        to={pi.profilePath}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="text-xs font-semibold underline-offset-2 hover:underline"
-                                        style={{ color: "#2F3C96" }}
-                                      >
-                                        {pi.displayName}
-                                      </Link>
-                                    ))}
+                                    {trial.piOnPlatform
+                                      .slice(0, 3)
+                                      .map((pi) => (
+                                        <Link
+                                          key={pi.userId}
+                                          to={pi.profilePath}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="text-xs font-semibold underline-offset-2 hover:underline"
+                                          style={{ color: "#2F3C96" }}
+                                        >
+                                          {pi.displayName}
+                                        </Link>
+                                      ))}
                                   </div>
                                 )}
                             </div>
@@ -3966,7 +3968,9 @@ export default function Trials() {
                             className="mt-4 w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-60"
                             style={{ backgroundColor: "#2F3C96" }}
                           >
-                            {claimingPi ? "Linking…" : "This is me (I'm the PI)"}
+                            {claimingPi
+                              ? "Linking…"
+                              : "This is me (I'm the PI)"}
                           </button>
                         )}
                       {userProfile?.researcher !== undefined &&
@@ -4406,80 +4410,83 @@ export default function Trials() {
                       Contact Information
                     </h4>
                     <div className="space-y-3">
-                      {detailsModal.trial.contacts?.some((c) => c?.email?.trim())
+                      {detailsModal.trial.contacts?.some((c) =>
+                        c?.email?.trim(),
+                      )
                         ? detailsModal.trial.contacts.map((contact, i) => (
-                        <div
-                          key={i}
-                          className="bg-white rounded-lg p-4 border shadow-sm"
-                          style={{ borderColor: "rgba(232, 232, 232, 1)" }}
-                        >
-                          {contact.name && (
                             <div
-                              className="font-bold mb-3 text-base flex items-center gap-2"
-                              style={{ color: "#2F3C96" }}
+                              key={i}
+                              className="bg-white rounded-lg p-4 border shadow-sm"
+                              style={{ borderColor: "rgba(232, 232, 232, 1)" }}
                             >
-                              <User
-                                className="w-4 h-4"
-                                style={{ color: "#787878" }}
-                              />
-                              {contact.name}
-                            </div>
-                          )}
-                          {contact.role && (
-                            <div className="mb-2">
-                              <span
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
-                                style={{
-                                  color: "#2F3C96",
-                                  borderColor: "#D0C4E2",
-                                  backgroundColor: "rgba(208, 196, 226, 0.15)",
-                                }}
-                              >
-                                {contact.role}
-                              </span>
-                            </div>
-                          )}
-                          <div className="space-y-2">
-                            {contact.email && (
-                              <a
-                                href={`mailto:${contact.email}`}
-                                className="flex items-center gap-2 text-sm font-medium transition-colors"
-                                style={{ color: "#2F3C96" }}
-                                onMouseEnter={(e) =>
-                                  (e.target.style.color = "#253075")
-                                }
-                                onMouseLeave={(e) =>
-                                  (e.target.style.color = "#2F3C96")
-                                }
-                              >
-                                <Mail className="w-4 h-4" />
-                                {contact.email}
-                              </a>
-                            )}
-                            {contact.phone && (
-                              <div
-                                className="flex items-center gap-2 text-sm"
-                                style={{ color: "#787878" }}
-                              >
-                                <span style={{ color: "#2F3C96" }}>📞</span>
-                                <a
-                                  href={`tel:${contact.phone}`}
-                                  className="transition-colors"
-                                  style={{ color: "#787878" }}
-                                  onMouseEnter={(e) =>
-                                    (e.target.style.color = "#2F3C96")
-                                  }
-                                  onMouseLeave={(e) =>
-                                    (e.target.style.color = "#787878")
-                                  }
+                              {contact.name && (
+                                <div
+                                  className="font-bold mb-3 text-base flex items-center gap-2"
+                                  style={{ color: "#2F3C96" }}
                                 >
-                                  {contact.phone}
-                                </a>
+                                  <User
+                                    className="w-4 h-4"
+                                    style={{ color: "#787878" }}
+                                  />
+                                  {contact.name}
+                                </div>
+                              )}
+                              {contact.role && (
+                                <div className="mb-2">
+                                  <span
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border"
+                                    style={{
+                                      color: "#2F3C96",
+                                      borderColor: "#D0C4E2",
+                                      backgroundColor:
+                                        "rgba(208, 196, 226, 0.15)",
+                                    }}
+                                  >
+                                    {contact.role}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="space-y-2">
+                                {contact.email && (
+                                  <a
+                                    href={`mailto:${contact.email}`}
+                                    className="flex items-center gap-2 text-sm font-medium transition-colors"
+                                    style={{ color: "#2F3C96" }}
+                                    onMouseEnter={(e) =>
+                                      (e.target.style.color = "#253075")
+                                    }
+                                    onMouseLeave={(e) =>
+                                      (e.target.style.color = "#2F3C96")
+                                    }
+                                  >
+                                    <Mail className="w-4 h-4" />
+                                    {contact.email}
+                                  </a>
+                                )}
+                                {contact.phone && (
+                                  <div
+                                    className="flex items-center gap-2 text-sm"
+                                    style={{ color: "#787878" }}
+                                  >
+                                    <span style={{ color: "#2F3C96" }}>📞</span>
+                                    <a
+                                      href={`tel:${contact.phone}`}
+                                      className="transition-colors"
+                                      style={{ color: "#787878" }}
+                                      onMouseEnter={(e) =>
+                                        (e.target.style.color = "#2F3C96")
+                                      }
+                                      onMouseLeave={(e) =>
+                                        (e.target.style.color = "#787878")
+                                      }
+                                    >
+                                      {contact.phone}
+                                    </a>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      ))
+                            </div>
+                          ))
                         : (detailsModal.trial.locations || [])
                             .filter((loc) => loc?.contactEmail?.trim())
                             .map((loc, idx) => (
@@ -5042,8 +5049,8 @@ export default function Trials() {
                   <button
                     onClick={closeContactInfoModal}
                     className={`${
-                      collectTrialContactEmails(contactInfoModal.trial)
-                        .length > 0
+                      collectTrialContactEmails(contactInfoModal.trial).length >
+                      0
                         ? "flex-1"
                         : "w-full"
                     } px-6 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl transition-all`}
@@ -5570,10 +5577,7 @@ export default function Trials() {
                                     Generating Email...
                                   </>
                                 ) : (
-                                  <>
-                                    <Sparkles className="w-3.5 h-3.5" />
-                                    Generate Email Draft
-                                  </>
+                                  <>Generate Email Draft</>
                                 )}
                               </button>
                             </div>
@@ -5595,7 +5599,7 @@ export default function Trials() {
                                       }}
                                     >
                                       <Mail className="w-3 h-3" />
-                                      Open in Gmail
+                                      Open in email app
                                       <ExternalLink className="w-3 h-3" />
                                     </button>
                                     <button
