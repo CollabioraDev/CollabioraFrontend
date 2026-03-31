@@ -83,9 +83,14 @@ export default function Navbar() {
   // On explore page: show Explore (dropdown) + Forums + Discovery
   const isSignInOrExplorePage = location.pathname === "/explore";
 
-  // Blogs listing + single blog: same nav as Explore (Explore, Forums, Discovery)
+  // Blogs listing + single blog (+ /discovery/blogs/:slug alias): same nav as Explore
   const isBlogsPage =
-    location.pathname === "/blogs" || location.pathname.startsWith("/blogs/");
+    location.pathname === "/blogs" ||
+    location.pathname.startsWith("/blogs/") ||
+    location.pathname.startsWith("/discovery/blogs/");
+
+  // Press releases: same public content nav as blogs (not Trials / Publications / Experts)
+  const isPressReleasePage = location.pathname.startsWith("/press-releases/");
 
   // Trials, Publications/Library, Experts (including detail pages): for non-signed-in users, show same nav as Explore (Explore, Forums, Discovery)
   const isTrialsPublicationsOrExperts =
@@ -127,8 +132,8 @@ export default function Navbar() {
     if (isAuthCallbackPage) {
       return ["Explore", "Forums", "Discovery"];
     }
-    // Blogs page: Explore, Forums, Discovery (no Dashboard — match public content nav)
-    if (isBlogsPage) {
+    // Blogs + press releases: Explore, Forums, Discovery (no Dashboard — match Explore page)
+    if (isBlogsPage || isPressReleasePage) {
       return ["Explore", "Forums", "Discovery"];
     }
     // About Us, Contact, Sign In, Onboarding: basic nav for guests, app nav for signed-in
