@@ -9,7 +9,7 @@ export const DISCOVERY_BLOGS = [
     excerpt:
       "Why research literacy matters, how social media distorts science, and practical red flags to spot weak health claims.",
     image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=80",
+      "https://blog.hawaiiantel.com/hubfs/20220315_techview.jpg",
   },
   {
     slug: "hot-mic-ep-2-cancer-screening",
@@ -22,7 +22,7 @@ export const DISCOVERY_BLOGS = [
     excerpt:
       "A clear conversation on rising early-onset cancer risk, symptom advocacy, and making treatment choices aligned with your values.",
     image:
-      "https://images.unsplash.com/photo-1581595220892-b0739db3ba8c?auto=format&fit=crop&w=1400&q=80",
+      "https://www.uicc.org/sites/default/files/styles/hero_extra_large/public/2026-02/uicc_thematic-areas_gradient_fa_cancer-prevention.png.webp?itok=WilohmSR",
   },
   {
     slug: "hot-mic-ep-3-mental-health-adhd",

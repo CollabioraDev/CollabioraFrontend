@@ -67,7 +67,11 @@ const markdownComponents = {
   blockquote: ({ ...props }) => (
     <blockquote
       {...props}
-      className="border-l-4 border-[#2F3C96]/35 bg-indigo-50/40 px-4 py-2 rounded-r-md my-4 text-slate-700"
+      className="my-5 pl-4 pr-4 py-3.5 rounded-r-xl border-l-[3px] border-[#2F3C96]/40 bg-[#D0C4E2]/22 text-slate-800 text-[1.05rem] leading-relaxed shadow-sm"
+      style={{
+        boxShadow:
+          "inset 0 0 0 1px rgba(208, 196, 226, 0.45), 0 1px 2px rgba(47, 60, 150, 0.06)",
+      }}
     />
   ),
   ul: ({ ...props }) => (

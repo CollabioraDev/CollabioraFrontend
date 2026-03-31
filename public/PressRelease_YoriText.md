@@ -1,11 +1,9 @@
 # collabiora Files Provisional Patent for Yori
 ## Its AI-Powered Health Information Retrieval Agent
 
-**FOR IMMEDIATE RELEASE**
 
 March 17, 2026
 
-Contact: ssasikumar@collabiora.com | collabiora.com
 
 ---                                                     
 

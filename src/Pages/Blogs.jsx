@@ -150,7 +150,7 @@ export default function Blogs() {
                       <h3 className="text-[1.05rem] leading-6 font-semibold text-slate-900 mb-2 line-clamp-2">
                         {item.title}
                       </h3>
-                      <p className="text-sm leading-6 text-slate-600 mb-4 line-clamp-3">
+                      <p className="text-sm leading-6 text-slate-700 mb-4 line-clamp-3 pl-3 py-2.5 rounded-r-lg border-l-[3px] border-[#2F3C96]/35 bg-[#D0C4E2]/20 ring-1 ring-inset ring-[#D0C4E2]/45">
                         {item.excerpt}
                       </p>
                       <Link

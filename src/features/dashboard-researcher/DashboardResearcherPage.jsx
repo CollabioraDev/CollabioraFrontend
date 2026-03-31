@@ -80,6 +80,23 @@ import {
   buildCanonicalMapFromIcd11,
   resolveToCanonical,
 } from "../../utils/canonicalLabels.js";
+import {
+  formatPublicationMonthYear,
+  formatPublicationDateLine,
+} from "../../utils/formatPublicationDate.js";
+
+function sortTrialsByMatchThenRecency(a, b) {
+  const matchA = a.matchPercentage ?? 0;
+  const matchB = b.matchPercentage ?? 0;
+  if (matchB !== matchA) return matchB - matchA;
+  const dateA = a.lastUpdatePostDate
+    ? new Date(a.lastUpdatePostDate).getTime()
+    : 0;
+  const dateB = b.lastUpdatePostDate
+    ? new Date(b.lastUpdatePostDate).getTime()
+    : 0;
+  return dateB - dateA;
+}
 
 export default function DashboardResearcher() {
   const [data, setData] = useState({
@@ -870,7 +887,8 @@ export default function DashboardResearcher() {
       abortController = new AbortController();
       const signal = abortController.signal;
 
-      // Fetch data in parallel for faster load; limit global experts to 6
+      // Same recommendations pipeline as patient dashboard: /api/recommendations only (trials, publications, experts from backend).
+      // No parallel /api/search/trials — that could return [] and wipe good recommendation trials. No batch title simplification (researcher keeps original titles).
       const GLOBAL_EXPERTS_LIMIT = 6;
       const fetchData = async () => {
         const startTime = Date.now();
@@ -878,36 +896,22 @@ export default function DashboardResearcher() {
         let isCacheHit = false;
 
         try {
-          // Use same trials pipeline as Trials.jsx: fetch trials via /api/search/trials (userId + profile-derived q/location)
-          const trialsParams = new URLSearchParams();
-          trialsParams.set("userId", userId);
-          trialsParams.set("status", "RECRUITING");
-          trialsParams.set("recentMonths", "3");
-          trialsParams.set("page", "1");
-          trialsParams.set("pageSize", "9");
-
-          // Run all initial fetches in parallel
-          const [
-            recsResponse,
-            favResponse,
-            insightsResponse,
-            profileResponse,
-            trialsResponse,
-          ] = await Promise.all([
-            fetch(`${base}/api/recommendations/${userId}`, { signal }),
-            fetch(`${base}/api/favorites/${userId}`, { signal }),
-            fetch(`${base}/api/insights/${userId}?limit=0`, { signal }),
-            fetch(`${base}/api/profile/${userId}`, { signal }),
-            fetch(`${base}/api/search/trials?${trialsParams.toString()}`, {
-              signal,
-            }),
-          ]);
+          const recsResponse = await fetch(
+            `${base}/api/recommendations/${userId}`,
+            { signal },
+          );
 
           if (signal.aborted) return;
+
           const responseTime = Date.now() - startTime;
           isCacheHit = responseTime < 300;
 
-          // Process recommendations (main content)
+          const ancillaryRequests = Promise.allSettled([
+            fetch(`${base}/api/favorites/${userId}`, { signal }),
+            fetch(`${base}/api/insights/${userId}?limit=0`, { signal }),
+            fetch(`${base}/api/profile/${userId}`, { signal }),
+          ]);
+
           if (!recsResponse.ok) {
             if (signal.aborted) return;
             const errorText = await recsResponse
@@ -924,33 +928,23 @@ export default function DashboardResearcher() {
             setGlobalExperts([]);
           } else {
             const fetchedData = await recsResponse.json();
-            // Prefer trials from same pipeline as Trials.jsx (/api/search/trials); fallback to recommendations trials
-            let trialsList = fetchedData.trials || [];
-            if (trialsResponse?.ok) {
-              try {
-                const trialsData = await trialsResponse.json();
-                if (trialsData.results && Array.isArray(trialsData.results)) {
-                  trialsList = trialsData.results;
-                }
-              } catch (e) {
-                console.warn(
-                  "Dashboard: could not use search/trials response, using recommendations trials",
-                  e,
-                );
-              }
-            }
-            if (signal.aborted) return;
-            setData({
-              ...fetchedData,
-              trials: (trialsList || []).sort((a, b) => {
+            const trialsList = fetchedData.trials || [];
+            const sortedData = {
+              trials: (trialsList || []).sort(sortTrialsByMatchThenRecency),
+              publications: (fetchedData.publications || []).sort((a, b) => {
                 const matchA = a.matchPercentage ?? 0;
                 const matchB = b.matchPercentage ?? 0;
                 return matchB - matchA;
               }),
-            });
-            // Global collaborators (experts) already include matchPercentage from the
-            // deterministic pipeline + profile-based matching. Sort by match %
-            // and keep the top N, consistent with the patient dashboard.
+              experts: (fetchedData.experts || []).sort((a, b) => {
+                const matchA = a.matchPercentage ?? 0;
+                const matchB = b.matchPercentage ?? 0;
+                return matchB - matchA;
+              }),
+            };
+            if (signal.aborted) return;
+            setData(sortedData);
+
             const sortedGlobalExperts = (fetchedData.globalExperts || [])
               .sort((a, b) => {
                 const matchA = a.matchPercentage ?? 0;
@@ -962,52 +956,71 @@ export default function DashboardResearcher() {
             setGlobalExperts(sortedGlobalExperts);
           }
 
-          // Process favorites
-          try {
-            if (favResponse.ok) {
-              const favData = await favResponse.json();
-              setFavorites(favData.items || []);
-            }
-          } catch (error) {
-            console.error("Error fetching favorites:", error);
-          }
+          ancillaryRequests
+            .then(async ([favResult, insightsResult, profileResult]) => {
+              if (signal.aborted) return;
 
-          // Process insights
-          try {
-            if (insightsResponse.ok) {
-              const insightsData = await insightsResponse.json();
-              setInsights({ unreadCount: insightsData.unreadCount || 0 });
-            }
-          } catch (error) {
-            console.error("Error fetching insights:", error);
-          }
-
-          // Process profile (signature + ORCID deferred)
-          try {
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              const profile = profileData.profile || null;
-              setUserProfile(profile);
-
-              if (profile) {
-                const conditions =
-                  profile.patient?.conditions ||
-                  profile.researcher?.interests ||
-                  [];
-                const location =
-                  profile.patient?.location || profile.researcher?.location;
-                updateProfileSignature(conditions, location);
-                markDataFetched(generateProfileSignature(conditions, location));
-                if (profile.researcher?.orcid) {
-                  fetchOrcidStats(profile.researcher.orcid, userId);
+              try {
+                if (favResult.status === "fulfilled" && favResult.value.ok) {
+                  const favData = await favResult.value.json();
+                  if (signal.aborted) return;
+                  setFavorites(favData.items || []);
                 }
-
-                // Profile completeness check is handled by ProfileGuard in App.jsx
+              } catch (error) {
+                console.error("Error fetching favorites:", error);
               }
-            }
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-          }
+
+              try {
+                if (
+                  insightsResult.status === "fulfilled" &&
+                  insightsResult.value.ok
+                ) {
+                  const insightsData = await insightsResult.value.json();
+                  if (signal.aborted) return;
+                  setInsights({ unreadCount: insightsData.unreadCount || 0 });
+                }
+              } catch (error) {
+                console.error("Error fetching insights:", error);
+              }
+
+              try {
+                if (
+                  profileResult.status === "fulfilled" &&
+                  profileResult.value.ok
+                ) {
+                  const profileData = await profileResult.value.json();
+                  if (signal.aborted) return;
+                  const profile = profileData.profile || null;
+                  setUserProfile(profile);
+
+                  if (profile) {
+                    const conditions =
+                      profile.patient?.conditions ||
+                      profile.researcher?.interests ||
+                      [];
+                    const location =
+                      profile.patient?.location || profile.researcher?.location;
+                    updateProfileSignature(conditions, location);
+                    markDataFetched(
+                      generateProfileSignature(conditions, location),
+                    );
+                    if (profile.researcher?.orcid) {
+                      fetchOrcidStats(profile.researcher.orcid, userId);
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching profile:", error);
+              }
+            })
+            .catch((error) => {
+              if (error?.name !== "AbortError") {
+                console.error(
+                  "Error fetching ancillary dashboard data:",
+                  error,
+                );
+              }
+            });
         } catch (error) {
           if (error?.name === "AbortError") return;
           console.error("Error fetching dashboard data:", error);
@@ -1019,27 +1032,16 @@ export default function DashboardResearcher() {
         if (signal.aborted) return;
         const totalElapsedTime = Date.now() - startTime;
 
-        // Mark that user has loaded dashboard before in this session
         if (!hasLoadedBefore) {
           sessionStorage.setItem(firstLoadKey, "true");
         }
 
-        // Only apply minimum loading time for cache misses (first load)
-        // Cache hits should load instantly without skeleton loaders
         if (isCacheHit) {
-          // Cache hit - load immediately, no skeleton needed
           if (!signal.aborted) setLoading(false);
         } else {
-          // Cache miss - apply minimum loading time for smooth UX
-          // For first load, use longer delay for multi-step loader
-          // For subsequent loads, use shorter delay for simple spinner
-          const minLoadingTime = !hasLoadedBefore ? 1500 : 800; // 1.5s for first load, 0.8s for subsequent
-          const maxLoadingTime = !hasLoadedBefore ? 2000 : 1200; // 2s for first load, 1.2s for subsequent
-          const randomDelay =
-            Math.random() * (maxLoadingTime - minLoadingTime) + minLoadingTime;
-
-          if (totalElapsedTime < randomDelay) {
-            const remainingTime = randomDelay - totalElapsedTime;
+          const minLoadingTime = !hasLoadedBefore ? 250 : 150;
+          if (totalElapsedTime < minLoadingTime) {
+            const remainingTime = minLoadingTime - totalElapsedTime;
             setTimeout(() => {
               if (!signal.aborted) setLoading(false);
             }, remainingTime);
@@ -2363,10 +2365,9 @@ export default function DashboardResearcher() {
           : [];
       const userDisease = selectedTopics[0] || availableTopics[0] || "oncology";
       params.set("q", userDisease);
-      // Default to RECRUITING if no filter is set
-      params.set("status", trialFilter || "RECRUITING");
-      // Dashboard trials: only from last 3 months (same as recommendations)
-      params.set("recentMonths", "3");
+      // Dashboard: recruiting trials only (no time window)
+      params.set("status", "RECRUITING");
+      params.set("sortByDate", "true");
 
       // Add location (country only for trials)
       if (userLocation?.country) {
@@ -2381,12 +2382,9 @@ export default function DashboardResearcher() {
       );
       if (response.ok) {
         const fetchedData = await response.json();
-        // Sort by match percentage (descending)
-        const sortedTrials = (fetchedData.results || []).sort((a, b) => {
-          const matchA = a.matchPercentage ?? 0;
-          const matchB = b.matchPercentage ?? 0;
-          return matchB - matchA;
-        });
+        const sortedTrials = (fetchedData.results || []).sort(
+          sortTrialsByMatchThenRecency,
+        );
         setData((prev) => ({
           ...prev,
           trials: sortedTrials,
@@ -2446,12 +2444,20 @@ export default function DashboardResearcher() {
     }
   }
 
-  // Sort items by match percentage (descending)
+  // Sort by match % (descending); for trials, break ties by last registry update (newest first)
   function sortByMatchPercentage(items) {
     return [...items].sort((a, b) => {
       const matchA = a.matchPercentage ?? 0;
       const matchB = b.matchPercentage ?? 0;
-      return matchB - matchA;
+      if (matchB !== matchA) return matchB - matchA;
+      const dateA = a.lastUpdatePostDate
+        ? new Date(a.lastUpdatePostDate).getTime()
+        : 0;
+      const dateB = b.lastUpdatePostDate
+        ? new Date(b.lastUpdatePostDate).getTime()
+        : 0;
+      if (dateA || dateB) return dateB - dateA;
+      return 0;
     });
   }
 
@@ -2795,18 +2801,12 @@ export default function DashboardResearcher() {
     }
   }, [selectedCategory]);
 
-  // Effect to fetch filtered trials when filter changes or category is selected
+  // Fetch recruiting trials when Clinical Trials tab is selected (no status filter — always RECRUITING)
   useEffect(() => {
-    // Always fetch trials when trials category is selected (defaults to RECRUITING)
     if (selectedCategory === "trials" && user?._id) {
-      // If no filter is set, use RECRUITING as default
-      if (!trialFilter) {
-        setTrialFilter("RECRUITING");
-      }
-      // Fetch filtered trials
       fetchFilteredTrials();
     }
-  }, [trialFilter, selectedCategory, user?._id]);
+  }, [selectedCategory, user?._id]);
 
   // Loading states for multi-step loader (only shown on first load)
   const loadingStates = [
@@ -3460,33 +3460,6 @@ export default function DashboardResearcher() {
                 background: "linear-gradient(90deg, #2F3C96 0%, #D0C4E2 100%)",
               }}
             />
-            {selectedCategory !== "profile" &&
-              selectedCategory !== "forums" &&
-              selectedCategory !== "meetings" &&
-              selectedCategory !== "favorites" && (
-                <div className="mb-4 sm:mb-8 pt-0.5">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                    <div>
-                      <h2
-                        className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl xl:text-4xl bg-clip-text text-transparent"
-                        style={{
-                          backgroundImage:
-                            "linear-gradient(135deg, #2F3C96 0%, #4a5bb8 50%, #253075 100%)",
-                        }}
-                      >
-                        <span className="sm:hidden">Personalized For You</span>
-                        <span className="hidden sm:inline">
-                          Your Personalized Recommendations
-                        </span>
-                      </h2>
-                      <p className="text-xs text-slate-500 sm:hidden">
-                        Based on your activity
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
             {/* Grid of Items - Larger Cards - Full Width with 3 columns */}
             <div
               key={`content-${data.trials?.length ?? 0}-${data.publications?.length ?? 0}-${data.experts?.length ?? 0}`}
@@ -4912,8 +4885,7 @@ export default function DashboardResearcher() {
                                 >
                                   <Calendar className="w-3.5 h-3.5 mr-2 shrink-0" />
                                   <span>
-                                    {p.month && p.month + " "}
-                                    {p.year || ""}
+                                    {formatPublicationMonthYear(p.month, p.year)}
                                   </span>
                                 </div>
                               )}
@@ -7566,8 +7538,10 @@ export default function DashboardResearcher() {
                                           >
                                             <Calendar className="w-3.5 h-3.5 mr-2 shrink-0" />
                                             <span>
-                                              {p.month && p.month + " "}
-                                              {p.year || ""}
+                                              {formatPublicationMonthYear(
+                                                p.month,
+                                                p.year,
+                                              )}
                                             </span>
                                           </div>
                                         )}
@@ -9410,13 +9384,11 @@ export default function DashboardResearcher() {
                             className="text-sm font-semibold"
                             style={{ color: "#2F3C96" }}
                           >
-                            {publicationDetailsModal.publication.month
-                              ? `${publicationDetailsModal.publication.month} `
-                              : ""}
-                            {publicationDetailsModal.publication.day
-                              ? `${publicationDetailsModal.publication.day}, `
-                              : ""}
-                            {publicationDetailsModal.publication.year || "N/A"}
+                            {formatPublicationDateLine(
+                              publicationDetailsModal.publication.month,
+                              publicationDetailsModal.publication.year,
+                              publicationDetailsModal.publication.day,
+                            )}
                           </p>
                         </div>
                       )}

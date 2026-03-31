@@ -1,6 +1,5 @@
 # collabiora and Parkinson's Community Los Angeles Partner to Bring AI-Powered Health Information to Parkinson's Patients and Caregivers
 
-**FOR IMMEDIATE RELEASE**
 
 March 31, 2026
 

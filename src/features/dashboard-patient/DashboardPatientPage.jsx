@@ -81,6 +81,23 @@ import {
   buildCanonicalMapFromIcd11,
   resolveToCanonical,
 } from "../../utils/canonicalLabels.js";
+import {
+  formatPublicationMonthYear,
+  formatPublicationDateLine,
+} from "../../utils/formatPublicationDate.js";
+
+function sortTrialsByMatchThenRecency(a, b) {
+  const matchA = a.matchPercentage ?? 0;
+  const matchB = b.matchPercentage ?? 0;
+  if (matchB !== matchA) return matchB - matchA;
+  const dateA = a.lastUpdatePostDate
+    ? new Date(a.lastUpdatePostDate).getTime()
+    : 0;
+  const dateB = b.lastUpdatePostDate
+    ? new Date(b.lastUpdatePostDate).getTime()
+    : 0;
+  return dateB - dateA;
+}
 
 export default function DashboardPatient() {
   const [data, setData] = useState({
@@ -957,11 +974,7 @@ export default function DashboardPatient() {
             // trial pipeline work during initial dashboard load.
             const trialsList = fetchedData.trials || [];
             const sortedData = {
-              trials: (trialsList || []).sort((a, b) => {
-                const matchA = a.matchPercentage ?? 0;
-                const matchB = b.matchPercentage ?? 0;
-                return matchB - matchA;
-              }),
+              trials: (trialsList || []).sort(sortTrialsByMatchThenRecency),
               publications: (fetchedData.publications || []).sort((a, b) => {
                 const matchA = a.matchPercentage ?? 0;
                 const matchB = b.matchPercentage ?? 0;
@@ -2525,12 +2538,9 @@ export default function DashboardPatient() {
       const userDisease =
         selectedConditions[0] || availableConditions[0] || "oncology";
       params.set("q", userDisease);
-      // Only set status parameter if trialFilter is set (empty string means "all")
-      if (trialFilter) {
-        params.set("status", trialFilter);
-      }
-      // Dashboard trials: only from last 3 months (same as recommendations)
-      params.set("recentMonths", "3");
+      // Dashboard: recruiting trials only (no time window)
+      params.set("status", "RECRUITING");
+      params.set("sortByDate", "true");
 
       // Add location (country only for trials)
       if (userLocation?.country) {
@@ -2545,12 +2555,9 @@ export default function DashboardPatient() {
       );
       if (response.ok) {
         const fetchedData = await response.json();
-        // Sort by match percentage (descending)
-        const sortedTrials = (fetchedData.results || []).sort((a, b) => {
-          const matchA = a.matchPercentage ?? 0;
-          const matchB = b.matchPercentage ?? 0;
-          return matchB - matchA;
-        });
+        const sortedTrials = (fetchedData.results || []).sort(
+          sortTrialsByMatchThenRecency,
+        );
         setData((prev) => ({
           ...prev,
           trials: sortedTrials,
@@ -2829,12 +2836,20 @@ export default function DashboardPatient() {
     }
   }
 
-  // Sort items by match percentage (descending)
+  // Sort by match %; for trials, break ties by last registry update (newest first)
   function sortByMatchPercentage(items) {
     return [...items].sort((a, b) => {
       const matchA = a.matchPercentage ?? 0;
       const matchB = b.matchPercentage ?? 0;
-      return matchB - matchA;
+      if (matchB !== matchA) return matchB - matchA;
+      const dateA = a.lastUpdatePostDate
+        ? new Date(a.lastUpdatePostDate).getTime()
+        : 0;
+      const dateB = b.lastUpdatePostDate
+        ? new Date(b.lastUpdatePostDate).getTime()
+        : 0;
+      if (dateA || dateB) return dateB - dateA;
+      return 0;
     });
   }
 
@@ -3532,27 +3547,6 @@ export default function DashboardPatient() {
             className="rounded-2xl bg-white border-2 border-indigo-100/70 shadow-sm overflow-hidden p-4 sm:p-6 md:p-8"
             data-tour="dashboard-recommendations"
           >
-            {selectedCategory !== "forums" &&
-              selectedCategory !== "meetings" &&
-              selectedCategory !== "favorites" && (
-                <div className="mb-4 sm:mb-6">
-                  <h2
-                    className="text-xl font-bold mb-0.5 sm:mb-2 sm:text-2xl lg:text-3xl"
-                    style={{
-                      background: "linear-gradient(135deg, #2F3C96, #253075)",
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
-                    }}
-                  >
-                    <span className="sm:hidden">Personalized For You</span>
-                    <span className="hidden sm:inline">
-                      Your Personalized Recommendations
-                    </span>
-                  </h2>
-                </div>
-              )}
-
             {/* Mobile only: Medical Conditions as dropdown – block style (compact) */}
             <div className="sm:hidden rounded-xl bg-slate-50/80 border border-indigo-100/70 overflow-hidden mb-4">
               <button
@@ -4107,8 +4101,7 @@ export default function DashboardPatient() {
                               >
                                 <Calendar className="w-3.5 h-3.5 mr-2 shrink-0" />
                                 <span>
-                                  {p.month && p.month + " "}
-                                  {p.year || ""}
+                                  {formatPublicationMonthYear(p.month, p.year)}
                                 </span>
                               </div>
                             )}
@@ -5244,14 +5237,18 @@ export default function DashboardPatient() {
                                                             {pub.title}
                                                           </h5>
                                                           <div className="flex items-center gap-2 text-xs text-slate-600">
-                                                            {pub.year && (
+                                                            {(pub.year ||
+                                                              pub.month) && (
                                                               <span
                                                                 style={{
                                                                   color:
                                                                     "#2F3C96",
                                                                 }}
                                                               >
-                                                                {pub.year}
+                                                                {formatPublicationMonthYear(
+                                                                  pub.month,
+                                                                  pub.year,
+                                                                )}
                                                               </span>
                                                             )}
                                                             {pub.citations >
@@ -6700,8 +6697,10 @@ export default function DashboardPatient() {
                                           >
                                             <Calendar className="w-3.5 h-3.5 mr-2 shrink-0" />
                                             <span>
-                                              {p.month && p.month + " "}
-                                              {p.year || ""}
+                                              {formatPublicationMonthYear(
+                                                p.month,
+                                                p.year,
+                                              )}
                                             </span>
                                           </div>
                                         )}
@@ -8873,13 +8872,11 @@ export default function DashboardPatient() {
                             className="text-sm font-semibold"
                             style={{ color: "#2F3C96" }}
                           >
-                            {publicationDetailsModal.publication.month
-                              ? `${publicationDetailsModal.publication.month} `
-                              : ""}
-                            {publicationDetailsModal.publication.day
-                              ? `${publicationDetailsModal.publication.day}, `
-                              : ""}
-                            {publicationDetailsModal.publication.year || "N/A"}
+                            {formatPublicationDateLine(
+                              publicationDetailsModal.publication.month,
+                              publicationDetailsModal.publication.year,
+                              publicationDetailsModal.publication.day,
+                            )}
                           </p>
                         </div>
                       )}
@@ -10945,9 +10942,17 @@ export default function DashboardPatient() {
                                 <p className="font-medium text-slate-900 line-clamp-2">
                                   {pub.title}
                                 </p>
-                                {(pub.year || pub.journal) && (
+                                {(pub.year ||
+                                  pub.month ||
+                                  pub.journal) && (
                                   <p className="text-xs text-slate-600 mt-0.5">
-                                    {[pub.year, pub.journal]
+                                    {[
+                                      formatPublicationMonthYear(
+                                        pub.month,
+                                        pub.year,
+                                      ) || pub.year,
+                                      pub.journal,
+                                    ]
                                       .filter(Boolean)
                                       .join(" • ")}
                                   </p>
@@ -11321,14 +11326,17 @@ export default function DashboardPatient() {
                                 </p>
                               )}
                               <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-600">
-                                {pub.year && (
+                                {(pub.year || pub.month) && (
                                   <span
                                     style={{
                                       color: "#2F3C96",
                                       fontWeight: 600,
                                     }}
                                   >
-                                    {pub.year}
+                                    {formatPublicationMonthYear(
+                                      pub.month,
+                                      pub.year,
+                                    )}
                                   </span>
                                 )}
                                 {pub.citations > 0 && (
