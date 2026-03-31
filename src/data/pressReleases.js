@@ -1,5 +1,15 @@
 export const PRESS_RELEASES = [
   {
+    slug: "pcla-partnership",
+    title:
+      "collabiora and Parkinson's Community Los Angeles Partner to Bring AI-Powered Health Information to Parkinson's Patients and Caregivers",
+    category: "Press Release",
+    publishedAt: "March 31, 2026",
+    excerpt:
+      "collabiora partners with Parkinson's Community Los Angeles (PCLA) to launch a pilot bringing plain-language research explanations, clinical trial discovery, and specialist matching to the Parkinson's community in Los Angeles.",
+    route: "/press-releases/pcla-partnership",
+  },
+  {
     slug: "yori",
     title: "collabiora Files Provisional Patent for Yori",
     category: "Press Release",

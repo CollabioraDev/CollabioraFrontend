@@ -5,6 +5,7 @@ import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import DiscoveryBlogsSection from "../components/DiscoveryBlogsSection.jsx";
 import { PRESS_RELEASES } from "../data/pressReleases.js";
+import { DEFAULT_PAGE_TITLE } from "../constants/siteMeta.js";
 
 function upsertMetaTag({ name, content, property = null }) {
   if (typeof document === "undefined") return;
@@ -81,7 +82,7 @@ export default function Blogs() {
     });
 
     return () => {
-      document.title = "collabiora | Health Research Made Simple";
+      document.title = DEFAULT_PAGE_TITLE;
     };
   }, []);
 

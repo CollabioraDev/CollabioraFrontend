@@ -101,6 +101,9 @@ export const DiscoveryBlogDetails = React.lazy(() =>
 export const PressReleaseYoriDetails = React.lazy(() =>
   import("../Pages/PressReleaseYoriDetails.jsx"),
 );
+export const PressReleasePCLADetails = React.lazy(() =>
+  import("../Pages/PressReleasePCLADetails.jsx"),
+);
 export const Notifications = React.lazy(() =>
   import("../Pages/Notifications.jsx"),
 );

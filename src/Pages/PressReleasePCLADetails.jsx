@@ -76,12 +76,12 @@ const markdownComponents = {
   li: ({ ...props }) => <li {...props} className="leading-7" />,
 };
 
-export default function PressReleaseYoriDetails() {
+export default function PressReleasePCLADetails() {
   const [markdown, setMarkdown] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const pressMarkdownUrl = "/PressRelease_YoriText.md";
+    const pressMarkdownUrl = "/PressRelease_PCLA_Partnership.md";
 
     async function load() {
       try {
@@ -101,14 +101,15 @@ export default function PressReleaseYoriDetails() {
   }, []);
 
   useEffect(() => {
-    const title = "collabiora Files Provisional Patent for Yori";
+    const title =
+      "collabiora and Parkinson's Community Los Angeles Partner to Bring AI-Powered Health Information to Parkinson's Patients and Caregivers";
     const description =
-      "Press release: collabiora announces the filing of a provisional patent application for Yori, its AI-powered health information retrieval agent.";
+      "Press release: collabiora partners with Parkinson's Community Los Angeles (PCLA) to launch a pilot bringing AI-powered health information to the Parkinson's community in Los Angeles.";
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const canonicalUrl = origin
-      ? `${origin}/press-releases/yori`
-      : "/press-releases/yori";
+      ? `${origin}/press-releases/pcla-partnership`
+      : "/press-releases/pcla-partnership";
 
     document.title = `${title} | collabiora`;
     upsertMetaTag({ name: "description", content: description });
@@ -124,13 +125,13 @@ export default function PressReleaseYoriDetails() {
     upsertMetaTag({ name: "twitter:description", content: description });
 
     upsertJsonLdScript({
-      scriptId: "pressrelease-yori-jsonld",
+      scriptId: "pressrelease-pcla-jsonld",
       json: {
         "@context": "https://schema.org",
         "@type": "NewsArticle",
         headline: title,
         description,
-        datePublished: "2026-03-17",
+        datePublished: "2026-03-31",
         mainEntityOfPage: canonicalUrl,
         url: canonicalUrl,
         articleSection: "Press Release",
@@ -182,4 +183,3 @@ export default function PressReleaseYoriDetails() {
     </Layout>
   );
 }
-

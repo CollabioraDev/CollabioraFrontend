@@ -8,6 +8,7 @@ import {
   getDiscoveryBlogBySlug,
   DISCOVERY_BLOGS,
 } from "../data/discoveryBlogs.js";
+import { DEFAULT_PAGE_TITLE } from "../constants/siteMeta.js";
 
 function extractMediaUrls(markdown) {
   if (!markdown) return { spotifyUrl: "", youtubeUrl: "" };
@@ -211,7 +212,7 @@ export default function DiscoveryBlogDetails() {
     });
 
     return () => {
-      document.title = "collabiora | Health Research Made Simple";
+      document.title = DEFAULT_PAGE_TITLE;
     };
   }, [blog]);
 

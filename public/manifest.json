@@ -1,6 +1,7 @@
 {
   "name": "collabiora",
   "short_name": "collabiora",
+  "description": "Take charge of your health with collabiora — plain-language health research, clinical trials, and experts in one place.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

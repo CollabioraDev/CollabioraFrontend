@@ -40,6 +40,7 @@ import {
   Notifications,
   OnboardingNew,
   OrcidCallback,
+  PressReleasePCLADetails,
   PressReleaseYoriDetails,
   PrivacyPolicyAndTerms,
   PublicationDetails,
@@ -146,6 +147,10 @@ export function AppRoutes() {
       <Route
         path="/discovery/blogs/:slug"
         element={<DiscoveryBlogDetails />}
+      />
+      <Route
+        path="/press-releases/pcla-partnership"
+        element={<PressReleasePCLADetails />}
       />
       <Route
         path="/press-releases/yori"
