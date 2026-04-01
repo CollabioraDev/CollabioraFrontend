@@ -1983,7 +1983,7 @@ export default function Trials() {
       .writeText(clipboardText)
       .then(() => {
         toast.success(
-          "Opened email app — addresses and draft copied to clipboard"
+          "Opened email app — addresses and draft copied to clipboard",
         );
         openGmail();
       })

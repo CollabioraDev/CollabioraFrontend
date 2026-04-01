@@ -177,8 +177,52 @@ export default function Experts() {
     return 0;
   };
 
-  const sortExpertsByCitations = (list) => {
+  /** Topic works count — align with deterministicExperts rankAuthorsByMetrics tie-break. */
+  const getTopicWorksCount = (expert) =>
+    expert.metrics?.topicWorksCount ??
+    expert.topicWorksCount ??
+    expert.works?.length ??
+    0;
+
+  /**
+   * Single sort for initial search and after "Load more": matches backend order for
+   * deterministic experts (scores.final + tie-breakers). Platform profiles without
+   * scores fall back to citations + match %.
+   */
+  const sortExpertsUnified = (list) => {
+    const EPS = 0.001;
     return [...list].sort((a, b) => {
+      const aHasScore = a.scores?.final != null;
+      const bHasScore = b.scores?.final != null;
+
+      if (aHasScore && bHasScore) {
+        const scoreDiff =
+          (b.scores.final ?? 0) - (a.scores.final ?? 0);
+        if (Math.abs(scoreDiff) > EPS) return scoreDiff;
+        const fieldDiff =
+          (b.scores.fieldRelevance ?? 0) - (a.scores.fieldRelevance ?? 0);
+        if (Math.abs(fieldDiff) > EPS) return fieldDiff;
+        const seniorDiff =
+          (b.scores.seniorAuthorship ?? 0) -
+          (a.scores.seniorAuthorship ?? 0);
+        if (Math.abs(seniorDiff) > EPS) return seniorDiff;
+        const piDiff =
+          (b.scores.piScore ?? 0) - (a.scores.piScore ?? 0);
+        if (Math.abs(piDiff) > EPS) return piDiff;
+        const twA = getTopicWorksCount(a);
+        const twB = getTopicWorksCount(b);
+        if (twB !== twA) return twB - twA;
+        const locDiff =
+          (b.scores.location ?? 0) - (a.scores.location ?? 0);
+        if (Math.abs(locDiff) > EPS) return locDiff;
+        const idA = a.verification?.openAlexId ?? a.name ?? "";
+        const idB = b.verification?.openAlexId ?? b.name ?? "";
+        return String(idA).localeCompare(String(idB));
+      }
+
+      if (aHasScore && !bHasScore) return -1;
+      if (!aHasScore && bHasScore) return 1;
+
       const aCitations = getCitationCount(a);
       const bCitations = getCitationCount(b);
       if (bCitations !== aCitations) return bCitations - aCitations;
@@ -631,7 +675,7 @@ export default function Experts() {
         );
       }
 
-      const sortedResults = sortExpertsByCitations(combinedResults);
+      const sortedResults = sortExpertsUnified(combinedResults);
       setResults(sortedResults);
 
       // Save search state to sessionStorage
@@ -747,7 +791,7 @@ export default function Experts() {
       );
 
       if (uniqueNew.length > 0) {
-        setResults((prev) => [...prev, ...uniqueNew]); // Keep backend order; do not re-sort on load more
+        setResults((prev) => sortExpertsUnified([...prev, ...uniqueNew]));
       }
 
       setGlobalPage(nextPage);
@@ -997,7 +1041,7 @@ export default function Experts() {
           );
         }
 
-        const sortedResults = sortExpertsByCitations(combinedResults);
+        const sortedResults = sortExpertsUnified(combinedResults);
         setResults(sortedResults);
 
         const searchState = {
