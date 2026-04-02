@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import clsx from "clsx";
 import {
   DEFAULT_SUGGESTION_LIMIT,
@@ -10,7 +11,7 @@ export default function SmartSearchInput({
   value,
   onChange,
   onSubmit,
-  placeholder = "Search...",
+  placeholder,
   extraTerms = [],
   canonicalMap = null,
   maxSuggestions = DEFAULT_SUGGESTION_LIMIT,
@@ -21,6 +22,8 @@ export default function SmartSearchInput({
   name,
   ...rest
 }) {
+  const { t } = useTranslation("common");
+  const resolvedPlaceholder = placeholder ?? t("smartSearch.defaultPlaceholder");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({
@@ -309,7 +312,7 @@ export default function SmartSearchInput({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           disabled={disabled}
           name={name}
           className={clsx(

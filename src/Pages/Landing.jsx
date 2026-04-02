@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -35,8 +36,8 @@ import GlobalSearch from "../components/GlobalSearch";
 import { ChevronDown } from "lucide-react";
 import Button from "../components/ui/Button";
 import { getDisplayName } from "../utils/researcherDisplayName";
-
 export default function Landing() {
+  const { t } = useTranslation("common");
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -195,6 +196,24 @@ export default function Landing() {
 
   const handleDashboardClick = () => navigate(getDashboardPath());
 
+  const heroBullets = useMemo(
+    () => [
+      {
+        text: t("landing.bullet1"),
+        icon: <Heart className="w-4 h-4" />,
+      },
+      {
+        text: t("landing.bullet2"),
+        icon: <Beaker className="w-4 h-4" />,
+      },
+      {
+        text: t("landing.bullet3"),
+        icon: <Users className="w-4 h-4" />,
+      },
+    ],
+    [t],
+  );
+
   const communitiesJoinedDisplay =
     userStats.communitiesJoined && userStats.communitiesJoined > 0
       ? userStats.communitiesJoined
@@ -215,26 +234,13 @@ export default function Landing() {
                 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.15] tracking-tight"
                 style={{ color: "#2F3C96" }}
               >
-                Empower Your
+                {t("landing.heroTitle1")}
                 <br />
-                Health Decisions
+                {t("landing.heroTitle2")}
               </h1>
 
               <ul className="hidden md:flex space-y-6 flex-col items-center lg:items-start">
-                {[
-                  {
-                    text: "Learn more about you and your loved one's health",
-                    icon: <Heart className="w-4 h-4" />,
-                  },
-                  {
-                    text: "Learn and participate in latest treatments",
-                    icon: <Beaker className="w-4 h-4" />,
-                  },
-                  {
-                    text: "Connect with others who are experiencing the same",
-                    icon: <Users className="w-4 h-4" />,
-                  },
-                ].map(({ text, icon }, idx) => (
+                {heroBullets.map(({ text, icon }, idx) => (
                   <li
                     key={idx}
                     className="flex items-center gap-4 text-left w-full"
@@ -275,7 +281,7 @@ export default function Landing() {
             <div className="w-full max-w-[280px] lg:max-w-[320px] flex justify-center lg:justify-end lg:mr-7 ">
               <img
                 src="/hero-bg.webp"
-                alt="Connect with healthcare and research"
+                alt={t("landing.heroImageAlt")}
                 width={1536}
                 height={1024}
                 fetchPriority="high"
@@ -291,7 +297,7 @@ export default function Landing() {
                   className="w-full py-4 rounded-lg font-bold text-[15px] uppercase tracking-wider border border-[#1c2459] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96] hover:opacity-90"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
-                  Get Started
+                  {t("landing.getStarted")}
                 </button>
 
                 {/* Secondary — outlined box button */}
@@ -304,7 +310,7 @@ export default function Landing() {
                     backgroundColor: "#FFFFFF",
                   }}
                 >
-                  I already have an account
+                  {t("landing.haveAccount")}
                 </button>
               </div>
             ) : (
@@ -319,7 +325,7 @@ export default function Landing() {
                   className="text-xl font-extrabold text-center lg:text-left"
                   style={{ color: "#2F3C96" }}
                 >
-                  Welcome back, {landingWelcomeName}!
+                  {t("landing.welcomeBack", { name: landingWelcomeName })}
                 </p>
 
                 <button
@@ -328,7 +334,7 @@ export default function Landing() {
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
                   <LayoutDashboard className="w-5 h-5" />
-                  Go to Dashboard
+                  {t("landing.goToDashboard")}
                 </button>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -341,7 +347,7 @@ export default function Landing() {
                       className="text-[10px] font-bold uppercase tracking-wider mb-1"
                       style={{ color: "#474F96" }}
                     >
-                      Following
+                      {t("landing.statFollowing")}
                     </span>
                     <span
                       className="text-xl font-extrabold"
@@ -359,7 +365,7 @@ export default function Landing() {
                       className="text-[10px] font-bold uppercase tracking-wider mb-1"
                       style={{ color: "#474F96" }}
                     >
-                      Communities
+                      {t("landing.statCommunities")}
                     </span>
                     <span
                       className="text-xl font-extrabold"
@@ -386,7 +392,7 @@ export default function Landing() {
                   }}
                 >
                   <Smartphone className="w-4 h-4" />
-                  Add to Home Screen
+                  {t("landing.addToHome")}
                 </button>
               </div>
             )}
@@ -431,12 +437,16 @@ export default function Landing() {
                 className="text-lg font-bold mb-2"
                 style={{ color: "#2F3C96" }}
               >
-                Add to Home Screen
+                {t("landing.addToHomeTitle")}
               </h3>
               <p className="text-sm mb-4" style={{ color: "#787878" }}>
-                Open the Chrome menu (⋮) in the top right, then tap{" "}
-                <strong>“Add to Home screen”</strong> or{" "}
-                <strong>“Install app”</strong>.
+                <Trans
+                  i18nKey="landing.addToHomeChrome"
+                  components={{
+                    s1: <strong />,
+                    s2: <strong />,
+                  }}
+                />
               </p>
               <button
                 type="button"
@@ -444,7 +454,7 @@ export default function Landing() {
                 className="w-full py-3 rounded-xl font-semibold text-white"
                 style={{ backgroundColor: "#2F3C96" }}
               >
-                Got it
+                {t("landing.gotIt")}
               </button>
             </motion.div>
           </motion.div>

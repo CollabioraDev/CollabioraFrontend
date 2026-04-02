@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useTranslation, Trans } from "react-i18next";
 import { Loader2, Pencil, Beaker, RefreshCw } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -63,6 +64,7 @@ function patchDraft(prev, patch) {
 }
 
 export default function CuratedTrialsManage() {
+  const { t } = useTranslation("common");
   const [trials, setTrials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -74,16 +76,16 @@ export default function CuratedTrialsManage() {
     try {
       const res = await fetch(`${base}/api/curated-trials`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load trials");
+      if (!res.ok) throw new Error(data.error || t("curatedTrialsManage.loadFailed"));
       setTrials(data.trials || []);
     } catch (e) {
       console.error(e);
-      toast.error(e.message || "Failed to load");
+      toast.error(e.message || t("curatedTrialsManage.loadFailed"));
       setTrials([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -103,7 +105,7 @@ export default function CuratedTrialsManage() {
   async function saveEdit() {
     if (!draft?.mongoId) return;
     if (!String(draft.title || "").trim()) {
-      toast.error("Title is required");
+      toast.error(t("curatedTrialsManage.titleRequired"));
       return;
     }
     setSaving(true);
@@ -115,8 +117,8 @@ export default function CuratedTrialsManage() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      toast.success("Curated trial saved");
+      if (!res.ok) throw new Error(data.error || t("curateTrials.saveFailed"));
+      toast.success(t("curatedTrialsManage.savedToast"));
       setTrials((prev) =>
         prev.map((x) => (x.mongoId === data.trial.mongoId ? data.trial : x)),
       );
@@ -124,7 +126,7 @@ export default function CuratedTrialsManage() {
       setDraft(null);
     } catch (e) {
       console.error(e);
-      toast.error(e.message || "Save failed");
+      toast.error(e.message || t("curateTrials.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -137,21 +139,23 @@ export default function CuratedTrialsManage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
             <h1 className="text-2xl font-bold text-[#2F3C96]">
-              Manage site-listed trials
+              {t("curatedTrialsManage.pageTitle")}
             </h1>
             <p className="text-sm text-slate-600 mt-1">
-              View and edit trials you added via{" "}
-              <Link
-                to="/curate-trials"
-                className="text-indigo-600 font-medium underline"
-              >
-                Add site-listed trials
-              </Link>
-              . Updates apply to how they appear on the{" "}
-              <Link to="/trials" className="text-indigo-600 underline">
-                Trials
-              </Link>{" "}
-              page (UCLA).
+              <Trans
+                i18nKey="curatedTrialsManage.pageIntro"
+                components={{
+                  addLink: (
+                    <Link
+                      to="/curate-trials"
+                      className="text-indigo-600 font-medium underline"
+                    />
+                  ),
+                  trialsLink: (
+                    <Link to="/trials" className="text-indigo-600 underline" />
+                  ),
+                }}
+              />
             </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -163,25 +167,25 @@ export default function CuratedTrialsManage() {
                 <RefreshCw
                   className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
                 />
-                Refresh
+                {t("curatedTrialsManage.refresh")}
               </Button>
               <Link
                 to="/curate-trials?tab=template"
                 className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
               >
-                Structured template
+                {t("curatedTrialsManage.structuredTemplate")}
               </Link>
               <Link
                 to="/curate-trials"
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-[#2F3C96] hover:bg-slate-50 hover:border-indigo-200 transition-colors"
               >
-                Add trials
+                {t("curatedTrialsManage.addTrials")}
               </Link>
               <Link
                 to="/trials"
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                ← Trials search
+                {t("curatedTrialsManage.trialsSearch")}
               </Link>
             </div>
           </div>
@@ -195,12 +199,12 @@ export default function CuratedTrialsManage() {
 
         {!loading && trials.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-14 text-center">
-            <p className="text-slate-600 mb-2">No curated trials saved yet.</p>
+            <p className="text-slate-600 mb-2">{t("curatedTrialsManage.empty")}</p>
             <Link
               to="/curate-trials"
               className="text-indigo-600 font-medium underline"
             >
-              Paste and save trials
+              {t("curatedTrialsManage.pasteLink")}
             </Link>
           </div>
         )}
@@ -217,7 +221,7 @@ export default function CuratedTrialsManage() {
                   <div className="p-5 flex flex-col flex-grow">
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       <span className="inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
-                        Site listing
+                        {t("curatedTrialsManage.siteListing")}
                       </span>
                       {trial.status && (
                         <span
@@ -247,7 +251,7 @@ export default function CuratedTrialsManage() {
                         className="text-lg font-bold leading-snug line-clamp-3"
                         style={{ color: "#2F3C96" }}
                       >
-                        {trial.title || "Untitled"}
+                        {trial.title || t("curatedTrialsManage.untitled")}
                       </h3>
                     </div>
 
@@ -278,7 +282,7 @@ export default function CuratedTrialsManage() {
                         className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all"
                       >
                         <Pencil className="w-4 h-4" />
-                        View & edit
+                        {t("curatedTrialsManage.viewEdit")}
                       </Button>
                     </div>
                   </div>
@@ -292,13 +296,12 @@ export default function CuratedTrialsManage() {
           isOpen={editOpen && !!draft}
           onClose={closeEdit}
           maxWidthClassName="max-w-3xl"
-          title={draft ? "Edit curated trial" : ""}
+          title={draft ? t("curatedTrialsManage.editTitle") : ""}
         >
           {draft && (
             <div className="space-y-4">
               <p className="text-xs text-slate-500">
-                Adjust any fields below, then save. Changes replace the stored
-                record for this listing.
+                {t("curatedTrialsManage.editHint")}
               </p>
               <TrialPreviewDetail
                 t={draft}
@@ -312,7 +315,7 @@ export default function CuratedTrialsManage() {
                   disabled={saving}
                   className="border border-slate-200"
                 >
-                  Cancel
+                  {t("ui.cancel")}
                 </Button>
                 <Button
                   onClick={saveEdit}
@@ -320,7 +323,7 @@ export default function CuratedTrialsManage() {
                   className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Save changes
+                  {t("curatedTrialsManage.saveChanges")}
                 </Button>
               </div>
             </div>

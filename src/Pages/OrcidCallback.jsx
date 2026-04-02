@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export default function OrcidCallback() {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
@@ -10,10 +12,10 @@ export default function OrcidCallback() {
     const handleCallback = async () => {
       const code = searchParams.get("code");
       const state = searchParams.get("state");
-      const error = searchParams.get("error");
+      const errParam = searchParams.get("error");
 
-      if (error) {
-        setError("ORCID authentication was cancelled or failed");
+      if (errParam) {
+        setError(t("auth.orcidCallback.cancelled"));
         setTimeout(() => {
           navigate("/onboarding");
         }, 3000);
@@ -21,7 +23,7 @@ export default function OrcidCallback() {
       }
 
       if (!code) {
-        setError("No authorization code received");
+        setError(t("auth.orcidCallback.noCode"));
         setTimeout(() => {
           navigate("/onboarding");
         }, 3000);
@@ -29,7 +31,6 @@ export default function OrcidCallback() {
       }
 
       try {
-        // Exchange code for ORCID ID
         const response = await fetch(
           `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/orcid/callback`,
           {
@@ -38,18 +39,17 @@ export default function OrcidCallback() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ code, state }),
-          }
+          },
         );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to complete ORCID authentication");
+          throw new Error(errorData.error || t("auth.orcidCallback.failed"));
         }
 
         const data = await response.json();
         const { orcid, profile } = data;
 
-        // Store ORCID data in localStorage
         const orcidData = {
           orcid,
           profile: profile || null,
@@ -57,11 +57,10 @@ export default function OrcidCallback() {
 
         localStorage.setItem("orcid_data", JSON.stringify(orcidData));
 
-        // Redirect back to onboarding with ORCID data
         navigate("/onboarding?orcid_success=true");
       } catch (err) {
         console.error("Error exchanging ORCID code:", err);
-        setError(err.message || "Failed to complete ORCID authentication");
+        setError(err.message || t("auth.orcidCallback.failed"));
         setTimeout(() => {
           navigate("/onboarding");
         }, 3000);
@@ -69,7 +68,7 @@ export default function OrcidCallback() {
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, t]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-blue-50">
@@ -92,11 +91,11 @@ export default function OrcidCallback() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Authentication Failed
+              {t("auth.orcidCallback.authFailedTitle")}
             </h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <p className="text-sm text-gray-500">
-              Redirecting you back to onboarding...
+              {t("auth.orcidCallback.redirecting")}
             </p>
           </>
         ) : (
@@ -123,10 +122,10 @@ export default function OrcidCallback() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Connecting to ORCID
+              {t("auth.orcidCallback.connectingTitle")}
             </h2>
             <p className="text-gray-600">
-              Please wait while we verify your ORCID credentials...
+              {t("auth.orcidCallback.connectingBody")}
             </p>
           </>
         )}

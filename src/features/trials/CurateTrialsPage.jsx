@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   ClipboardPaste,
   Loader2,
@@ -32,6 +33,7 @@ function makeSlot() {
 }
 
 export default function CurateTrials() {
+  const { t } = useTranslation("common");
   const [searchParams, setSearchParams] = useSearchParams();
   const curateTab =
     searchParams.get("tab") === "paste" ? "paste" : "template";
@@ -116,7 +118,7 @@ export default function CurateTrials() {
   async function previewSlot(id) {
     const slot = slots.find((s) => s.id === id);
     if (!slot?.text.trim()) {
-      toast.error("Paste trial text first");
+      toast.error(t("curateTrials.pasteFirst"));
       return;
     }
     setSlots((prev) =>
@@ -129,13 +131,13 @@ export default function CurateTrials() {
         body: JSON.stringify({ rawText: slot.text }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Preview failed");
+      if (!res.ok) throw new Error(data.error || t("curateTrials.previewFailed"));
       const trials = data.trials || [];
       const errors = data.errors || [];
       if (trials.length === 0) {
-        toast.error("No trials parsed — check section headers");
+        toast.error(t("curateTrials.noTrialsParsed"));
       } else {
-        toast.success(`Parsed ${trials.length} trial(s)`);
+        toast.success(t("curateTrials.parsedCount", { count: trials.length }));
       }
       setSlots((prev) =>
         prev.map((s) =>
@@ -144,7 +146,7 @@ export default function CurateTrials() {
       );
     } catch (e) {
       console.error(e);
-      toast.error(e.message || "Preview failed");
+      toast.error(e.message || t("curateTrials.previewFailed"));
       setSlots((prev) =>
         prev.map((s) => (s.id === id ? { ...s, loading: false } : s)),
       );
@@ -154,22 +156,22 @@ export default function CurateTrials() {
   async function previewAll() {
     const filled = slots.filter((s) => s.text.trim());
     if (!filled.length) {
-      toast.error("Paste trial text in at least one slot");
+      toast.error(t("curateTrials.pasteAtLeastOne"));
       return;
     }
     await Promise.all(filled.map((s) => previewSlot(s.id)));
   }
 
-  function stripPreviewFields(t) {
-    const { previewKeywords: _pk, _warnings: _w, __v, ...rest } = t;
+  function stripPreviewFields(trial) {
+    const { previewKeywords: _pk, _warnings: _w, __v, ...rest } = trial;
     return rest;
   }
 
-  function finalizeTrialForSave(t) {
-    const merged = applyTrialPatch(t, {
+  function finalizeTrialForSave(trial) {
+    const merged = applyTrialPatch(trial, {
       eligibility: {
-        ...(t.eligibility || {}),
-        criteria: buildEligibilityCriteriaFromParts(t),
+        ...(trial.eligibility || {}),
+        criteria: buildEligibilityCriteriaFromParts(trial),
       },
     });
     return stripPreviewFields(merged);
@@ -179,7 +181,7 @@ export default function CurateTrials() {
 
   async function saveBulk() {
     if (!allParsed.length) {
-      toast.error("Nothing to save — run preview first");
+      toast.error(t("curateTrials.nothingToSave"));
       return;
     }
     setSaving(true);
@@ -194,13 +196,13 @@ export default function CurateTrials() {
         body: JSON.stringify({ trials }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      toast.success(`Saved ${data.count} trial(s)`);
+      if (!res.ok) throw new Error(data.error || t("curateTrials.saveFailed"));
+      toast.success(t("curateTrials.savedCount", { count: data.count }));
       setConfirmOpen(false);
       setSlots([makeSlot()]);
     } catch (e) {
       console.error(e);
-      toast.error(e.message || "Save failed");
+      toast.error(e.message || t("curateTrials.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -209,7 +211,7 @@ export default function CurateTrials() {
   async function saveTemplateTrial() {
     const finalized = finalizeTrialForSave(templateDraft);
     if (!String(finalized.title || "").trim()) {
-      toast.error("Trial title is required");
+      toast.error(t("curateTrials.titleRequired"));
       return;
     }
     setSaving(true);
@@ -222,14 +224,16 @@ export default function CurateTrials() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      toast.success(`Saved ${data.count || 1} trial(s)`);
+      if (!res.ok) throw new Error(data.error || t("curateTrials.saveFailed"));
+      toast.success(
+        t("curateTrials.savedCount", { count: data.count || 1 }),
+      );
       setTemplateConfirmOpen(false);
       setTemplateModalOpen(false);
       setTemplateDraft(createEmptyTemplateTrial());
     } catch (e) {
       console.error(e);
-      toast.error(e.message || "Save failed");
+      toast.error(e.message || t("curateTrials.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -246,11 +250,10 @@ export default function CurateTrials() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
             <h1 className="text-2xl font-bold text-[#2F3C96]">
-              Add site-listed trials
+              {t("curateTrials.pageTitle")}
             </h1>
             <p className="text-sm text-slate-600 mt-1">
-              Paste text or use the structured template, then save. Choose an
-              institution below for where the listing is stored.
+              {t("curateTrials.pageSubtitle")}
             </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -258,13 +261,13 @@ export default function CurateTrials() {
                 to="/curate-trials/manage"
                 className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
               >
-                View & edit saved trials
+                {t("curateTrials.viewSaved")}
               </Link>
               <Link
                 to="/trials"
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
-                ← Back to Trials
+                {t("curateTrials.backToTrials")}
               </Link>
             </div>
           </div>
@@ -281,7 +284,7 @@ export default function CurateTrials() {
             }`}
           >
             <LayoutList className="w-4 h-4 shrink-0" />
-            Paste raw text
+            {t("curateTrials.tabPaste")}
           </button>
           <button
             type="button"
@@ -293,7 +296,7 @@ export default function CurateTrials() {
             }`}
           >
             <FileEdit className="w-4 h-4 shrink-0" />
-            Structured template
+            {t("curateTrials.tabTemplate")}
           </button>
         </div>
 
@@ -302,7 +305,7 @@ export default function CurateTrials() {
             htmlFor="curate-institution"
             className="text-sm font-semibold text-slate-700 shrink-0"
           >
-            Institution
+            {t("curateTrials.institutionLabel")}
           </label>
           <select
             id="curate-institution"
@@ -331,9 +334,11 @@ export default function CurateTrials() {
               {/* Slot header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40">
                 <span className="text-xs font-semibold text-slate-600">
-                  Trial {slotIdx + 1}
+                  {t("curateTrials.trialSlot", { index: slotIdx + 1 })}
                   {slot.parsed?.length > 0 && (
-                    <span className="ml-2 text-emerald-600">✓ parsed</span>
+                    <span className="ml-2 text-emerald-600">
+                      {t("curateTrials.parsedBadge")}
+                    </span>
                   )}
                 </span>
                 <div className="flex items-center gap-2">
@@ -343,13 +348,13 @@ export default function CurateTrials() {
                     className="h-8 px-3 text-xs inline-flex items-center gap-1.5 rounded-lg bg-[#2F3C96] hover:bg-[#253075] text-white font-semibold shadow-sm hover:shadow-md transition-all"
                   >
                     {slot.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                    Preview
+                    {t("curateTrials.preview")}
                   </Button>
                   {slots.length > 1 && (
                     <button
                       onClick={() => removeSlot(slot.id)}
                       className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-500 transition-colors"
-                      title="Remove slot"
+                      title={t("curateTrials.removeSlotTitle")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -381,12 +386,12 @@ export default function CurateTrials() {
               {slot.parsed?.length > 0 && (
                 <div className="px-3 pb-4 space-y-3 border-t border-slate-100 pt-3">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    Preview
+                    {t("curateTrials.previewSection")}
                   </p>
-                  {slot.parsed.map((t, idx) => (
+                  {slot.parsed.map((trialRow, idx) => (
                     <TrialPreviewDetail
                       key={idx}
-                      t={t}
+                      t={trialRow}
                       onPatch={(patch) =>
                         updateParsedTrial(slot.id, idx, patch)
                       }
@@ -404,7 +409,7 @@ export default function CurateTrials() {
           className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-indigo-200/70 bg-indigo-50/30 py-3 text-sm font-medium text-slate-600 hover:border-indigo-300 hover:text-[#2F3C96] hover:bg-indigo-50/50 transition-colors mb-8"
         >
           <Plus className="w-4 h-4" />
-          Add another trial
+          {t("curateTrials.addAnotherTrial")}
         </button>
 
         {/* Global actions */}
@@ -415,7 +420,7 @@ export default function CurateTrials() {
             className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all"
           >
             {anyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Preview parsed trials
+            {t("curateTrials.previewAll")}
           </Button>
           {anyParsed && (
             <Button
@@ -423,8 +428,7 @@ export default function CurateTrials() {
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#2F3C96] hover:bg-slate-50 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all"
             >
               <Save className="w-4 h-4" />
-              Save {allParsed.length} trial{allParsed.length !== 1 ? "s" : ""}{" "}
-              to database
+              {t("curateTrials.saveToDb", { count: allParsed.length })}
             </Button>
           )}
         </div>
@@ -433,11 +437,10 @@ export default function CurateTrials() {
         <Modal
           isOpen={confirmOpen}
           onClose={() => !saving && setConfirmOpen(false)}
-          title="Save site-listed trials"
+          title={t("curateTrials.confirmSaveTitle")}
         >
           <p className="text-sm text-slate-600 mb-4">
-            This will save <strong>{allParsed.length}</strong> trial record(s)
-            for UCLA. Existing entries with the same study code will be updated.
+            {t("curateTrials.confirmSaveBody", { count: allParsed.length })}
           </p>
           <div className="flex justify-end gap-2">
             <Button
@@ -446,7 +449,7 @@ export default function CurateTrials() {
               disabled={saving}
               className="border border-slate-200"
             >
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button
               onClick={saveBulk}
@@ -458,7 +461,7 @@ export default function CurateTrials() {
               ) : (
                 <ClipboardPaste className="w-4 h-4" />
               )}
-              Confirm save
+              {t("curateTrials.confirmSave")}
             </Button>
           </div>
         </Modal>
@@ -475,7 +478,7 @@ export default function CurateTrials() {
                 disabled={saving}
                 className="border border-slate-200"
               >
-                Reset template
+                {t("curateTrials.resetTemplate")}
               </Button>
               <Button
                 type="button"
@@ -484,7 +487,7 @@ export default function CurateTrials() {
                 className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#2F3C96] hover:bg-indigo-50"
               >
                 <FileEdit className="w-4 h-4" />
-                Edit Trial
+                {t("curateTrials.editTrial")}
               </Button>
               <Button
                 type="button"
@@ -493,13 +496,13 @@ export default function CurateTrials() {
                 className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
               >
                 <Save className="w-4 h-4" />
-                Save trial
+                {t("curateTrials.saveTrial")}
               </Button>
             </div>
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  Live preview
+                  {t("curateTrials.livePreview")}
                 </p>
                 <button
                   type="button"
@@ -510,21 +513,19 @@ export default function CurateTrials() {
                       : "border-indigo-200 bg-white hover:bg-indigo-50"
                   }`}
                   aria-expanded={templateHelpOpen}
-                  aria-label="How structured template works"
-                  title="How structured template works"
+                  aria-label={t("curateTrials.templateHelpAria")}
+                  title={t("curateTrials.templateHelpAria")}
                 >
                   <Info className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </div>
               {templateHelpOpen && (
-                <div className="rounded-xl border border-indigo-100 bg-slate-50/90 px-4 py-3 text-sm text-slate-700">
-                  Fill in the same sections as the live preview (Study Purpose,
-                  What Happens, eligibility, contacts, keywords). Use{" "}
-                  <strong>Edit</strong> on each block to type content. This
-                  matches the Manage trials →{" "}
-                  <strong>Edit curated trial</strong> editor and saves to the
-                  database the same way.
-                </div>
+                <div
+                  className="rounded-xl border border-indigo-100 bg-slate-50/90 px-4 py-3 text-sm text-slate-700"
+                  dangerouslySetInnerHTML={{
+                    __html: t("curateTrials.templateHelpBody"),
+                  }}
+                />
               )}
             </div>
             <TrialPreviewDetail
@@ -540,13 +541,10 @@ export default function CurateTrials() {
           isOpen={templateModalOpen}
           onClose={() => !saving && setTemplateModalOpen(false)}
           maxWidthClassName="max-w-3xl"
-          title="Edit curated trial"
+          title={t("curateTrials.editModalTitle")}
         >
           <div className="space-y-3 max-h-[min(78vh,720px)] overflow-y-auto pr-1">
-            <p className="text-xs text-slate-500">
-              Same fields as Manage site-listed trials → View &amp; edit. Close
-              to return to the page; your edits stay in sync.
-            </p>
+            <p className="text-xs text-slate-500">{t("curateTrials.editModalHint")}</p>
             <TrialPreviewDetail
               t={templateDraft}
               onPatch={patchTemplateDraft}
@@ -561,7 +559,7 @@ export default function CurateTrials() {
               disabled={saving}
               className="border border-slate-200"
             >
-              Close
+              {t("curateTrials.close")}
             </Button>
             <Button
               onClick={() => {
@@ -572,7 +570,7 @@ export default function CurateTrials() {
               className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white"
             >
               <Save className="w-4 h-4" />
-              Save trial…
+              {t("curateTrials.saveTrialEllipsis")}
             </Button>
           </div>
         </Modal>
@@ -580,11 +578,10 @@ export default function CurateTrials() {
         <Modal
           isOpen={templateConfirmOpen}
           onClose={() => !saving && setTemplateConfirmOpen(false)}
-          title="Save site-listed trial"
+          title={t("curateTrials.confirmSingleTitle")}
         >
           <p className="text-sm text-slate-600 mb-4">
-            This will save <strong>1</strong> trial for UCLA. Existing entries
-            with the same external study code will be updated.
+            {t("curateTrials.confirmSingleBody")}
           </p>
           <div className="flex justify-end gap-2">
             <Button
@@ -593,7 +590,7 @@ export default function CurateTrials() {
               disabled={saving}
               className="border border-slate-200"
             >
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button
               onClick={saveTemplateTrial}
@@ -605,7 +602,7 @@ export default function CurateTrials() {
               ) : (
                 <ClipboardPaste className="w-4 h-4" />
               )}
-              Confirm save
+              {t("curateTrials.confirmSave")}
             </Button>
           </div>
         </Modal>

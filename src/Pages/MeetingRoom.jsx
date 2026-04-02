@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
@@ -13,6 +14,7 @@ import {
 import "@livekit/components-styles";
 
 function WaitingForResearcherBanner({ role }) {
+  const { t } = useTranslation("common");
   const participants = useParticipants();
   const { localParticipant } = useLocalParticipant();
 
@@ -25,14 +27,13 @@ function WaitingForResearcherBanner({ role }) {
 
   return (
     <div className="mb-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-center justify-between gap-2">
-      <span>
-        The expert hasn&apos;t joined yet. They&apos;ll be joining shortly — please stay in the room.
-      </span>
+      <span>{t("meetingRoom.waitingForExpertBanner")}</span>
     </div>
   );
 }
 
 function MeetingRoomContent({ tokenPayload }) {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const { url, token, role, slotStartUtc, slotEndUtc, appointmentId } = tokenPayload;
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -77,18 +78,18 @@ function MeetingRoomContent({ tokenPayload }) {
     const now = Date.now();
     const msRemaining = slotEndMs - now;
     if (msRemaining <= 0) {
-      toast("This meeting has reached its 30 minute limit.");
+      toast(t("meetingRoom.timeLimitToast"));
       setShowFeedbackPrompt(true);
       return;
     }
 
     const timer = setTimeout(() => {
-      toast("This meeting has reached its 30 minute limit.");
+      toast(t("meetingRoom.timeLimitToast"));
       setShowFeedbackPrompt(true);
     }, msRemaining);
 
     return () => clearTimeout(timer);
-  }, [slotEndMs]);
+  }, [slotEndMs, t]);
 
   useEffect(() => {
     if (!slotEndMs || tenMinuteWarned) return;
@@ -96,13 +97,13 @@ function MeetingRoomContent({ tokenPayload }) {
     const interval = setInterval(() => {
       const remainingMs = slotEndMs - Date.now();
       if (remainingMs <= 10 * 60 * 1000 && remainingMs > 0) {
-        toast("10 minutes remaining");
+        toast(t("meetingRoom.tenMinutesRemaining"));
         setTenMinuteWarned(true);
       }
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [slotEndMs, tenMinuteWarned]);
+  }, [slotEndMs, tenMinuteWarned, t]);
 
   async function submitMeetingFeedback() {
     try {
@@ -110,7 +111,7 @@ function MeetingRoomContent({ tokenPayload }) {
         throw new Error("Missing appointment id for feedback");
       }
       if (feedbackThumb === "down" && !feedbackReason.trim()) {
-        toast.error("Please tell us what went wrong.");
+        toast.error(t("meetingRoom.feedbackRequired"));
         return;
       }
       setSubmittingFeedback(true);
@@ -150,11 +151,11 @@ function MeetingRoomContent({ tokenPayload }) {
         }
       }
 
-      toast.success("Feedback submitted. Thank you.");
+      toast.success(t("meetingRoom.feedbackThanks"));
       navigate(role === "researcher" ? "/dashboard/researcher" : "/dashboard/patient");
     } catch (err) {
       console.error("Error submitting meeting feedback:", err);
-      toast.error(err.message || "Failed to submit feedback");
+      toast.error(err.message || t("meetingRoom.feedbackFailed"));
     } finally {
       setSubmittingFeedback(false);
     }
@@ -169,14 +170,16 @@ function MeetingRoomContent({ tokenPayload }) {
             <div className="flex items-center gap-2 text-slate-700">
               <Calendar className="w-5 h-5 text-[#2F3C96]" />
               <h1 className="text-base md:text-lg font-semibold">
-                collabiora Meeting Room
+                {t("meetingRoom.roomTitle")}
               </h1>
             </div>
           </div>
 
           {scheduledText && (
             <p className="mb-3 text-xs sm:text-sm text-slate-600">
-              <span className="font-medium text-slate-800">Scheduled:</span>{" "}
+              <span className="font-medium text-slate-800">
+                {t("meetingRoom.scheduledLabel")}
+              </span>{" "}
               {scheduledText}
             </p>
           )}
@@ -249,12 +252,11 @@ function MeetingRoomContent({ tokenPayload }) {
                     onChange={(e) => setFeedbackReason(e.target.value)}
                     rows={3}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-[#2F3C96] focus:border-[#2F3C96]"
-                    placeholder="Tell us what went wrong..."
+                    placeholder={t("meetingRoom.feedbackPlaceholder")}
                   />
                   {role === "patient" && (
                     <p className="mt-1 text-[11px] text-slate-500">
-                      Submitting thumbs-down feedback as a patient also triggers a
-                      refund request for researcher review.
+                      {t("meetingRoom.refundNotePatient")}
                     </p>
                   )}
                 </div>
@@ -272,7 +274,7 @@ function MeetingRoomContent({ tokenPayload }) {
                   }
                   className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                 >
-                  Skip
+                  {t("pageTutorial.skip")}
                 </button>
                 <button
                   type="button"
@@ -280,7 +282,9 @@ function MeetingRoomContent({ tokenPayload }) {
                   disabled={submittingFeedback}
                   className="rounded-lg bg-[#2F3C96] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#253075] disabled:opacity-60"
                 >
-                  {submittingFeedback ? "Submitting..." : "Submit feedback"}
+                  {submittingFeedback
+                    ? t("meetingRoom.submitting")
+                    : t("meetingRoom.submitFeedback")}
                 </button>
               </div>
             </div>
@@ -292,6 +296,7 @@ function MeetingRoomContent({ tokenPayload }) {
 }
 
 export default function MeetingRoom() {
+  const { t } = useTranslation("common");
   const { appointmentId } = useParams();
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -302,13 +307,13 @@ export default function MeetingRoom() {
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in first");
+      toast.error(t("meetingRoom.signInFirst"));
       navigate("/signin");
       return;
     }
 
     if (!appointmentId) {
-      setError("Missing appointment id");
+      setError(t("meetingRoom.missingAppointmentId"));
       setLoading(false);
       return;
     }
@@ -329,20 +334,20 @@ export default function MeetingRoom() {
 
         const data = await res.json();
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Failed to join meeting");
+          throw new Error(data.error || t("meetingRoom.joinFailed"));
         }
         setTokenPayload(data);
       } catch (e) {
         console.error("Error fetching meeting token:", e);
-        setError(e.message || "Failed to join meeting");
-        toast.error(e.message || "Failed to join meeting");
+        setError(e.message || t("meetingRoom.joinFailed"));
+        toast.error(e.message || t("meetingRoom.joinFailed"));
       } finally {
         setLoading(false);
       }
     };
 
     fetchToken();
-  }, [appointmentId, base, navigate]);
+  }, [appointmentId, base, navigate, t]);
 
   if (loading) {
     return (
@@ -353,7 +358,7 @@ export default function MeetingRoom() {
             <div className="flex flex-col items-center justify-center gap-3 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-[#2F3C96]" />
               <p className="text-sm text-slate-600">
-                Preparing your meeting room…
+                {t("meetingRoom.preparingRoom")}
               </p>
             </div>
           </div>
@@ -371,11 +376,10 @@ export default function MeetingRoom() {
             <div className="rounded-2xl border border-rose-200 bg-white/90 shadow-sm px-6 py-8 flex flex-col items-center text-center gap-3">
               <ShieldAlert className="w-10 h-10 text-rose-500" />
               <h1 className="text-lg md:text-xl font-semibold text-slate-900">
-                Unable to join meeting
+                {t("meetingRoom.unableToJoinTitle")}
               </h1>
               <p className="text-sm text-slate-600 max-w-md">
-                {error ||
-                  "This meeting is no longer available or you do not have permission to join it."}
+                {error || t("meetingRoom.unableToJoinBody")}
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
                 <button
@@ -383,14 +387,14 @@ export default function MeetingRoom() {
                   onClick={() => window.location.reload()}
                   className="inline-flex items-center justify-center rounded-lg bg-[#2F3C96] px-4 py-2 text-sm font-medium text-white hover:bg-[#253075]"
                 >
-                  Try again
+                  {t("meetingRoom.tryAgain")}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
                   className="inline-flex items-center justify-center rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-200 border border-slate-200"
                 >
-                  Go back
+                  {t("meetingRoom.goBack")}
                 </button>
               </div>
             </div>

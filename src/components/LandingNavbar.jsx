@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function LandingNavbar() {
+  const { t } = useTranslation("common");
   const [user, setUser] = useState(null);
   const [isPastHero, setIsPastHero] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
@@ -101,7 +103,7 @@ export default function LandingNavbar() {
         <Link
           to={user ? "/yori" : "/"}
           className="flex items-center"
-          aria-label="collabiora home"
+          aria-label={t("landingNav.homeAria")}
         >
           <img
             src="/logo.webp"
@@ -128,7 +130,7 @@ export default function LandingNavbar() {
                   className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
-                  Get Started
+                  {t("landingNav.getStarted")}
                 </button>
               ) : (
                 <button
@@ -138,7 +140,7 @@ export default function LandingNavbar() {
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
                   <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
+                  {t("landingNav.dashboard")}
                 </button>
               )}
             </div>

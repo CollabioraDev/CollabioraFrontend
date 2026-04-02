@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Sparkles,
@@ -28,79 +29,95 @@ import {
 
 const FREE_SEARCHES_TOTAL = 6;
 
-const getCategoryCards = (user) => [
-  {
-    id: "publications",
-    title: user?.role === "researcher" ? "Publications" : "Health Library",
-    icon: BookOpen,
-    path: user?.role === "researcher" ? "/publications" : "/library",
-    color: "#474F97",
-    gradient: "linear-gradient(135deg, #474F97, #6B73B8)",
-    description: "Discover research papers and scientific articles. Search by topic, author, or keywords to find relevant studies.",
-    stats: "Thousands of peer‑reviewed papers",
-  },
-  {
-    id: "trials",
-    title: user?.role === "researcher" ? "Clinical Trials" : "New Treatments",
-    icon: Beaker,
-    path: "/trials",
-    color: "#2F3C96",
-    gradient: "linear-gradient(135deg, #2F3C96, #4A56C8)",
-    description: "Browse active clinical trials and research studies. Find opportunities to participate in groundbreaking medical research.",
-    stats: "Active studies across all conditions",
-  },
-  {
-    id: "experts",
-    title: user?.role === "researcher" ? "Collaborators" : "Health Experts",
-    icon: Users,
-    path: "/experts",
-    color: "#6B5B95",
-    gradient: "linear-gradient(135deg, #6B5B95, #B8A5D5)",
-    description: "Connect with researchers and medical experts. Explore profiles, publications, and collaboration opportunities.",
-    stats: "Leading researchers and specialists",
-  },
-];
-
-const features = [
-  {
-    icon: FileText,
-    title: "Summaries",
-    description: "Get concise, easy‑to‑read summaries of complex publications and trials.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Key Insights",
-    description: "Extract main findings, methodology, and conclusions at a glance.",
-  },
-  {
-    icon: ClipboardList,
-    title: "Full Details",
-    description: "Access complete information—eligibility criteria, outcomes, authors, and more.",
-  },
-];
-
 export default function Explore() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const localRemaining = getLocalRemainingSearches();
   const [freeSearches, setFreeSearches] = useState(
-    localRemaining !== null ? localRemaining : FREE_SEARCHES_TOTAL
+    localRemaining !== null ? localRemaining : FREE_SEARCHES_TOTAL,
   );
   const [loadingSearches, setLoadingSearches] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const categoryCards = useMemo(() => {
+    const isResearcher = user?.role === "researcher";
+    return [
+      {
+        id: "publications",
+        title: isResearcher ? t("nav.publications") : t("nav.healthLibrary"),
+        icon: BookOpen,
+        path: isResearcher ? "/publications" : "/library",
+        color: "#474F97",
+        gradient: "linear-gradient(135deg, #474F97, #6B73B8)",
+        description: t("explore.catPubsDesc"),
+        stats: t("explore.catPubsStats"),
+      },
+      {
+        id: "trials",
+        title: isResearcher ? t("nav.clinicalTrials") : t("nav.newTreatments"),
+        icon: Beaker,
+        path: "/trials",
+        color: "#2F3C96",
+        gradient: "linear-gradient(135deg, #2F3C96, #4A56C8)",
+        description: t("explore.catTrialsDesc"),
+        stats: t("explore.catTrialsStats"),
+      },
+      {
+        id: "experts",
+        title: isResearcher ? t("nav.collaborators") : t("nav.healthExperts"),
+        icon: Users,
+        path: "/experts",
+        color: "#6B5B95",
+        gradient: "linear-gradient(135deg, #6B5B95, #B8A5D5)",
+        description: t("explore.catExpertsDesc"),
+        stats: t("explore.catExpertsStats"),
+      },
+    ];
+  }, [t, user?.role]);
+
+  const features = useMemo(
+    () => [
+      {
+        icon: FileText,
+        title: t("explore.featureSummariesTitle"),
+        description: t("explore.featureSummariesDesc"),
+      },
+      {
+        icon: Lightbulb,
+        title: t("explore.featureInsightsTitle"),
+        description: t("explore.featureInsightsDesc"),
+      },
+      {
+        icon: ClipboardList,
+        title: t("explore.featureFullTitle"),
+        description: t("explore.featureFullDesc"),
+      },
+    ],
+    [t],
+  );
+
+  const benefits = useMemo(
+    () => [
+      t("explore.benefit1"),
+      t("explore.benefit2"),
+      t("explore.benefit3"),
+      t("explore.benefit4"),
+      t("explore.benefit5"),
+      t("explore.benefit6"),
+    ],
+    [t],
+  );
+
   useEffect(() => {
-    // Check if user is signed in
     const userData = JSON.parse(localStorage.getItem("user") || "null");
     const token = localStorage.getItem("token");
-    // Only show user as logged in if email is verified
     if (userData && token && userData.emailVerified) {
       setUser(userData);
     } else {
       setUser(null);
     }
 
-    // Guest limit: sync with backend (deviceId-based, lenient)
     if (userData && token && userData.emailVerified) {
       setFreeSearches(null);
       setLoadingSearches(false);
@@ -131,14 +148,12 @@ export default function Explore() {
       fetchRemaining();
     }
 
-    // Check mobile view
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
-    // Listen for free search updates (only update when search is made)
     const handleFreeSearchUsed = (event) => {
       if (event.detail && event.detail.remaining !== undefined) {
         const remaining = event.detail.remaining;
@@ -157,23 +172,19 @@ export default function Explore() {
     };
   }, []);
 
-  // Listen for login events
   useEffect(() => {
     const handleLogin = async () => {
       const userData = JSON.parse(localStorage.getItem("user") || "null");
       const token = localStorage.getItem("token");
-      // Only show user as logged in if email is verified
       if (userData && token && userData.emailVerified) {
         setUser(userData);
       } else {
         setUser(null);
       }
-      // Update free searches (will be unlimited for signed-in users)
       if (userData && token && userData.emailVerified) {
         setFreeSearches(null);
         setLoadingSearches(false);
       } else {
-        // Guest: fetch from backend
         try {
           const response = await apiFetch("/api/search/remaining");
           if (response?.ok) {
@@ -196,24 +207,12 @@ export default function Explore() {
     return () => window.removeEventListener("login", handleLogin);
   }, []);
 
-  const benefits = [
-    "Unlimited searches",
-    "Personalized recommendations",
-    "Save favorites",
-    "Connect with experts",
-    "Track your research",
-    "Priority support",
-  ];
-
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Animated Background */}
       <AnimatedBackground isMobile={isMobile} />
 
-      {/* Main Content */}
       <section className="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-hidden">
         <div className="max-w-4xl relative z-10 w-full">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -224,17 +223,16 @@ export default function Explore() {
               className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 leading-tight"
               style={{ color: "#2F3C96" }}
             >
-              Explore Healthcare Research
+              {t("explore.heroTitle")}
             </h1>
             <p
               className="text-base sm:text-lg mb-6"
               style={{ color: "#787878" }}
             >
-              Browse publications, clinical trials, and connect with experts. No sign-up required to start!
+              {t("explore.heroSubtitle")}
             </p>
           </motion.div>
 
-          {/* Free Searches Badge */}
           {!user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -259,7 +257,7 @@ export default function Explore() {
                       className="text-sm font-semibold"
                       style={{ color: "#2F3C96" }}
                     >
-                      Loading...
+                      {t("explore.loadingSearches")}
                     </span>
                   </>
                 ) : freeSearches !== null ? (
@@ -272,8 +270,9 @@ export default function Explore() {
                       className="text-sm font-semibold"
                       style={{ color: "#2F3C96" }}
                     >
-                      {freeSearches} search{freeSearches !== 1 ? "es" : ""}{" "}
-                      remaining
+                      {t("explore.searchesRemaining", {
+                        count: freeSearches,
+                      })}
                     </span>
                   </>
                 ) : null}
@@ -281,14 +280,13 @@ export default function Explore() {
             </motion.div>
           )}
 
-          {/* Category Cards */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-10"
           >
-            {getCategoryCards(user).map((card, idx) => {
+            {categoryCards.map((card, idx) => {
               const Icon = card.icon;
               return (
                 <motion.button
@@ -336,7 +334,7 @@ export default function Explore() {
                     className="inline-flex items-center gap-1.5 text-sm font-semibold"
                     style={{ color: card.color }}
                   >
-                    Explore
+                    {t("explore.exploreCta")}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </motion.button>
@@ -344,7 +342,6 @@ export default function Explore() {
             })}
           </motion.div>
 
-          {/* Features Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -358,14 +355,15 @@ export default function Explore() {
             <div
               className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10 blur-2xl"
               style={{
-                background: "linear-gradient(to bottom right, #2F3C96, #B8A5D5)",
+                background:
+                  "linear-gradient(to bottom right, #2F3C96, #B8A5D5)",
               }}
             />
             <h2
               className="text-xl sm:text-2xl font-bold mb-6 relative"
               style={{ color: "#2F3C96" }}
             >
-              What You Can Do
+              {t("explore.whatYouCanDo")}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
               {features.map((feature, idx) => {
@@ -402,7 +400,6 @@ export default function Explore() {
             </div>
           </motion.div>
 
-          {/* Sign In Encouragement - Enhanced - Only show when searches are exhausted */}
           {!user && freeSearches === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -414,13 +411,12 @@ export default function Explore() {
                 borderColor: "#D0C4E2",
               }}
             >
-              {/* Decorative gradient overlay */}
               <div
                 className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 blur-3xl"
                 style={{
                   background: `linear-gradient(to bottom right, #2F3C96, #B8A5D5)`,
                 }}
-              ></div>
+              />
 
               <div className="relative flex flex-col sm:flex-row items-center gap-6">
                 <div className="flex-1">
@@ -435,15 +431,14 @@ export default function Explore() {
                       className="text-xl sm:text-2xl font-bold"
                       style={{ color: "#2F3C96" }}
                     >
-                      Unlock Unlimited Access
+                      {t("explore.unlockTitle")}
                     </h2>
                   </div>
                   <p
                     className="text-sm sm:text-base mb-4"
                     style={{ color: "#787878" }}
                   >
-                    Sign in to get personalized recommendations, save your
-                    favorites, and connect with experts in your field.
+                    {t("explore.unlockBody")}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
                     {benefits.map((benefit, idx) => (
@@ -470,7 +465,7 @@ export default function Explore() {
                         background: `linear-gradient(to right, #2F3C96, #474F97)`,
                       }}
                     >
-                      Sign In Now
+                      {t("explore.signInNow")}
                       <ArrowRight className="w-4 h-4" />
                     </motion.button>
                     <motion.button
@@ -484,7 +479,7 @@ export default function Explore() {
                         color: "#2F3C96",
                       }}
                     >
-                      Create Account
+                      {t("explore.createAccount")}
                       <Star className="w-4 h-4" />
                     </motion.button>
                   </div>
@@ -494,7 +489,7 @@ export default function Explore() {
                   style={{ backgroundColor: "#FFFFFF" }}
                 >
                   <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                    FREE
+                    {t("explore.freeBadge")}
                   </div>
                   <Lock
                     className="w-16 h-16 sm:w-20 sm:h-20"

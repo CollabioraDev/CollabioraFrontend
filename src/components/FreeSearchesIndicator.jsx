@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, LogIn, ArrowRight, Loader2 } from "lucide-react";
@@ -15,6 +16,7 @@ import apiFetch from "../utils/api.js";
 const FREE_SEARCHES_POPUP_KEY = "free_searches_popup_shown";
 
 export default function FreeSearchesIndicator({ user, onSearch, centered = false }) {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname || "";
@@ -156,7 +158,7 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                 className="text-sm font-semibold"
                 style={{ color: "#2F3C96" }}
               >
-                Loading...
+                {t("freeSearches.loading")}
               </span>
             </>
           ) : (
@@ -167,12 +169,14 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                 style={{ color: "#2F3C96" }}
               >
                 {freeSearches !== null ? (
-                  <>
-                    {freeSearches} search{freeSearches !== 1 ? "es" : ""}{" "}
-                    remaining
-                  </>
+                  t(
+                    freeSearches === 1
+                      ? "freeSearches.remainingOne"
+                      : "freeSearches.remainingMany",
+                    { count: freeSearches },
+                  )
                 ) : (
-                  "Unlimited searches"
+                  t("freeSearches.unlimited")
                 )}
               </span>
             </>
@@ -222,18 +226,18 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                         className="text-xl font-bold"
                         style={{ color: "#2F3C96" }}
                       >
-                        Start Exploring
+                        {t("freeSearches.popupTitle")}
                       </h3>
                       <p className="text-sm mt-1" style={{ color: "#787878" }}>
                         {loadingSearches ? (
                           <span className="flex items-center gap-2">
                             <Loader2 className="w-3 h-3 animate-spin" />
-                            Loading...
+                            {t("freeSearches.popupLoading")}
                           </span>
                         ) : freeSearches !== null ? (
-                          <>You have {freeSearches} searches to explore</>
+                          t("freeSearches.popupCount", { count: freeSearches })
                         ) : (
-                          "Unlimited searches"
+                          t("freeSearches.unlimited")
                         )}
                       </p>
                     </div>
@@ -251,8 +255,7 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                   className="text-sm mb-4 leading-relaxed"
                   style={{ color: "#787878" }}
                 >
-                  Search through clinical trials, research publications, and
-                  medical experts. No sign-up required!
+                  {t("freeSearches.popupBody")}
                 </p>
 
                 <div className="flex gap-3">
@@ -267,7 +270,7 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                       color: "#2F3C96",
                     }}
                   >
-                    Start Exploring
+                    {t("freeSearches.startExploring")}
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
@@ -281,7 +284,7 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
                       background: `linear-gradient(to right, #2F3C96, #474F97)`,
                     }}
                   >
-                    Sign In
+                    {t("freeSearches.signIn")}
                     <ArrowRight className="w-4 h-4" />
                   </motion.button>
                 </div>

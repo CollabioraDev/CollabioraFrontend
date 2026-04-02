@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Users, Heart, Target, Sparkles } from "lucide-react";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Footer from "../components/Footer";
 
 export default function AboutUs() {
+  const { t } = useTranslation("common");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -22,18 +24,18 @@ export default function AboutUs() {
   const values = [
     {
       icon: <Target className="w-4 h-4" />,
-      title: "Transparency",
-      description: "Open, understandable research for everyone",
+      titleKey: "marketing.aboutUs.valueTransparencyTitle",
+      descKey: "marketing.aboutUs.valueTransparencyDesc",
     },
     {
       icon: <Heart className="w-4 h-4" />,
-      title: "Ethics",
-      description: "Integrity at every step",
+      titleKey: "marketing.aboutUs.valueEthicsTitle",
+      descKey: "marketing.aboutUs.valueEthicsDesc",
     },
     {
       icon: <Users className="w-4 h-4" />,
-      title: "Collaboration",
-      description: "Bringing researchers, clinicians, and patients together",
+      titleKey: "marketing.aboutUs.valueCollaborationTitle",
+      descKey: "marketing.aboutUs.valueCollaborationDesc",
     },
   ];
 
@@ -51,7 +53,7 @@ export default function AboutUs() {
             className="text-center mb-8 lg:mb-10"
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-3">
-              About Us
+              {t("marketing.aboutUs.title")}
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full mx-auto" />
           </motion.div>
@@ -203,7 +205,7 @@ export default function AboutUs() {
             >
               <div className="bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-5 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-500">
                 <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4">
-                  What We Stand For
+                  {t("marketing.aboutUs.whatWeStandFor")}
                 </h3>
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -222,10 +224,10 @@ export default function AboutUs() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-base font-bold text-foreground mb-0.5">
-                            {value.title}
+                            {t(value.titleKey)}
                           </h4>
                           <p className="text-sm leading-relaxed text-muted-foreground">
-                            {value.description}
+                            {t(value.descKey)}
                           </p>
                         </div>
                       </div>

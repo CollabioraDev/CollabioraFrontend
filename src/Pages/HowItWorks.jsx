@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import Footer from "../components/Footer";
@@ -10,6 +11,7 @@ const RESEARCHER_VIDEO_URL =
   "https://res.cloudinary.com/dtgmjvfms/video/upload/v1774506185/collabiora-researcher-demo_CSuvgG1G_cu8bhk.mp4";
 
 export default function HowItWorks() {
+  const { t } = useTranslation("common");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -35,12 +37,11 @@ export default function HowItWorks() {
             className="text-center mb-8 lg:mb-10"
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-3">
-              How It Works
+              {t("marketing.howItWorks.title")}
             </h1>
             <div className="w-20 h-1 bg-linear-to-r from-primary/50 via-primary to-primary/50 rounded-full mx-auto mb-4" />
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
-              Watch a quick walkthrough of the collabiora platform and how it
-              helps patients and researchers collaborate more effectively.
+              {t("marketing.howItWorks.subtitle")}
             </p>
           </motion.div>
 
@@ -52,7 +53,7 @@ export default function HowItWorks() {
               className="text-center pb-10 border-b border-border/60 md:pb-0 md:border-b-0 md:border-r md:pr-8 lg:pr-10"
             >
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                General Public
+                {t("marketing.howItWorks.generalPublic")}
               </h2>
               <div className="aspect-video w-full overflow-hidden rounded-xl bg-black/90">
                 <video
@@ -61,7 +62,7 @@ export default function HowItWorks() {
                   preload="metadata"
                   src={DEMO_VIDEO_URL}
                 >
-                  Your browser does not support the video tag.
+                  {t("marketing.howItWorks.videoNotSupported")}
                 </video>
               </div>
             </motion.div>
@@ -73,7 +74,7 @@ export default function HowItWorks() {
               className="text-center md:pl-8 lg:pl-10"
             >
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-4">
-                Researchers
+                {t("marketing.howItWorks.researchers")}
               </h2>
               <div className="aspect-video w-full overflow-hidden rounded-xl bg-black/90">
                 <video
@@ -82,7 +83,7 @@ export default function HowItWorks() {
                   preload="metadata"
                   src={RESEARCHER_VIDEO_URL}
                 >
-                  Your browser does not support the video tag.
+                  {t("marketing.howItWorks.videoNotSupported")}
                 </video>
               </div>
             </motion.div>

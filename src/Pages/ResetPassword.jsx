@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
 import Input from "../components/ui/Input.jsx";
@@ -9,6 +10,7 @@ import { Eye, EyeOff, Lock, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function ResetPassword() {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
@@ -22,7 +24,6 @@ export default function ResetPassword() {
   const [tokenValid, setTokenValid] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Verify token on mount
   useEffect(() => {
     if (!token) {
       setVerifying(false);
@@ -40,30 +41,30 @@ export default function ResetPassword() {
           setTokenValid(true);
         } else {
           setTokenValid(false);
-          toast.error(data.error || "Reset link expired. Request a new one.");
+          toast.error(data.error || t("auth.resetPassword.toastExpired"));
         }
       } catch (error) {
         console.error("Token verification error:", error);
         setTokenValid(false);
-        toast.error("Failed to verify reset link");
+        toast.error(t("auth.resetPassword.toastVerifyFailed"));
       } finally {
         setVerifying(false);
       }
     }
 
     verifyToken();
-  }, [token]);
+  }, [token, t]);
 
   function validatePassword(password) {
     if (password.length < 6) {
-      return "Password must be at least 6 characters";
+      return t("auth.resetPassword.toastPasswordMin");
     }
     return null;
   }
 
   async function handleResetPassword() {
     if (!newPassword || !confirmPassword) {
-      toast.error("Please fill in all fields");
+      toast.error(t("auth.resetPassword.toastFillAll"));
       return;
     }
 
@@ -74,12 +75,12 @@ export default function ResetPassword() {
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("auth.resetPassword.toastMismatch"));
       return;
     }
 
     if (!token) {
-      toast.error("Invalid reset token");
+      toast.error(t("auth.resetPassword.toastInvalidToken"));
       return;
     }
 
@@ -100,21 +101,20 @@ export default function ResetPassword() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Failed to reset password");
+        toast.error(data.error || t("auth.resetPassword.toastResetFailed"));
         setLoading(false);
         return;
       }
 
       setSuccess(true);
-      toast.success("Password reset successfully!");
+      toast.success(t("auth.resetPassword.toastResetSuccess"));
 
-      // Redirect to sign in after 3 seconds
       setTimeout(() => {
         navigate("/signin");
       }, 3000);
     } catch (e) {
       console.error("Reset password error:", e);
-      toast.error("Failed to reset password. Please try again.");
+      toast.error(t("auth.resetPassword.toastResetGenericFail"));
       setLoading(false);
     }
   }
@@ -134,7 +134,7 @@ export default function ResetPassword() {
               }}
             >
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2F3C96] mx-auto"></div>
-              <p style={{ color: "#787878" }}>Verifying reset link...</p>
+              <p style={{ color: "#787878" }}>{t("auth.resetPassword.verifying")}</p>
             </div>
           </div>
         </div>
@@ -164,15 +164,11 @@ export default function ResetPassword() {
                   <XCircle className="w-8 h-8" style={{ color: "#ef4444" }} />
                 </div>
               </div>
-              <h2
-                className="text-lg font-bold"
-                style={{ color: "#2F3C96" }}
-              >
-                Reset Link Expired
+              <h2 className="text-lg font-bold" style={{ color: "#2F3C96" }}>
+                {t("auth.resetPassword.expiredTitle")}
               </h2>
               <p className="text-xs" style={{ color: "#787878" }}>
-                This password reset link has expired or has already been used.
-                Please request a new one.
+                {t("auth.resetPassword.expiredBody")}
               </p>
               <Button
                 onClick={() => navigate("/forgot-password")}
@@ -182,7 +178,7 @@ export default function ResetPassword() {
                   color: "#FFFFFF",
                 }}
               >
-                Request New Reset Link →
+                {t("auth.resetPassword.requestNewLink")}
               </Button>
             </div>
           </div>
@@ -216,15 +212,11 @@ export default function ResetPassword() {
                   />
                 </div>
               </div>
-              <h2
-                className="text-lg font-bold"
-                style={{ color: "#2F3C96" }}
-              >
-                Password Reset Successful!
+              <h2 className="text-lg font-bold" style={{ color: "#2F3C96" }}>
+                {t("auth.resetPassword.successTitle")}
               </h2>
               <p className="text-xs" style={{ color: "#787878" }}>
-                Your password has been changed successfully. Redirecting to sign
-                in...
+                {t("auth.resetPassword.successBody")}
               </p>
             </div>
           </div>
@@ -247,27 +239,25 @@ export default function ResetPassword() {
               backgroundColor: "rgba(255, 255, 255, 0.98)",
             }}
           >
-            {/* Header */}
             <div className="text-center space-y-1.5">
               <h1
                 className="text-xl font-bold tracking-tight"
                 style={{ color: "#2F3C96" }}
               >
-                Reset Password
+                {t("auth.resetPassword.pageTitle")}
               </h1>
               <p className="text-xs font-medium" style={{ color: "#787878" }}>
-                Enter your new password below
+                {t("auth.resetPassword.pageSubtitle")}
               </p>
             </div>
 
-            {/* Form */}
             <div className="space-y-3">
               <div>
                 <label
                   className="text-xs font-semibold mb-1.5 block"
                   style={{ color: "#2F3C96" }}
                 >
-                  New Password
+                  {t("auth.resetPassword.newPassword")}
                 </label>
                 <div className="relative">
                   <Lock
@@ -276,7 +266,7 @@ export default function ResetPassword() {
                   />
                   <Input
                     type={showNewPassword ? "text" : "password"}
-                    placeholder="Enter new password"
+                    placeholder={t("auth.resetPassword.newPasswordPlaceholder")}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     onKeyPress={(e) =>
@@ -296,7 +286,9 @@ export default function ResetPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors hover:bg-black/5"
                     style={{ color: "#787878" }}
                     aria-label={
-                      showNewPassword ? "Hide password" : "Show password"
+                      showNewPassword
+                        ? t("auth.resetPassword.hidePassword")
+                        : t("auth.resetPassword.showPassword")
                     }
                   >
                     {showNewPassword ? (
@@ -307,7 +299,7 @@ export default function ResetPassword() {
                   </button>
                 </div>
                 <p className="text-xs mt-1" style={{ color: "#787878" }}>
-                  Must be at least 6 characters
+                  {t("auth.resetPassword.passwordHint")}
                 </p>
               </div>
 
@@ -316,7 +308,7 @@ export default function ResetPassword() {
                   className="text-xs font-semibold mb-1.5 block"
                   style={{ color: "#2F3C96" }}
                 >
-                  Confirm Password
+                  {t("auth.resetPassword.confirmPassword")}
                 </label>
                 <div className="relative">
                   <Lock
@@ -325,7 +317,7 @@ export default function ResetPassword() {
                   />
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm new password"
+                    placeholder={t("auth.resetPassword.confirmPasswordPlaceholder")}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onKeyPress={(e) =>
@@ -345,7 +337,9 @@ export default function ResetPassword() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors hover:bg-black/5"
                     style={{ color: "#787878" }}
                     aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
+                      showConfirmPassword
+                        ? t("auth.resetPassword.hidePassword")
+                        : t("auth.resetPassword.showPassword")
                     }
                   >
                     {showConfirmPassword ? (
@@ -377,7 +371,9 @@ export default function ResetPassword() {
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {loading ? "Resetting..." : "Reset Password →"}
+                {loading
+                  ? t("auth.resetPassword.resetting")
+                  : t("auth.resetPassword.submitButton")}
               </Button>
             </div>
           </div>

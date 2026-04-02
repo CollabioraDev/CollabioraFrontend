@@ -14,6 +14,8 @@ import {
 import { AppRoutes } from "./app/AppRoutes.jsx";
 import { RouteFallback } from "./app/routeFallback.jsx";
 import { FloatingChatbot, LandingNavbar, Navbar } from "./app/lazyPages.js";
+import LanguageShell from "./i18n/LanguageShell.jsx";
+import { syncI18nFromUser } from "./i18n/syncUserLanguage.js";
 
 const AppContent = () => {
   const location = useLocation();
@@ -79,6 +81,7 @@ const AppContent = () => {
         const stored = JSON.parse(localStorage.getItem("user") || "null");
         setIsSignedIn(Boolean(stored?._id || stored?.id));
         setUserRole(stored?.role || "patient");
+        syncI18nFromUser(stored || {});
       } catch {
         setIsSignedIn(false);
         setUserRole("patient");
@@ -219,9 +222,11 @@ const App = () => {
   return (
     <ProfileProvider>
       <BrowserRouter>
-        <Auth0ProviderWithNavigate>
-          <AppContent />
-        </Auth0ProviderWithNavigate>
+        <LanguageShell>
+          <Auth0ProviderWithNavigate>
+            <AppContent />
+          </Auth0ProviderWithNavigate>
+        </LanguageShell>
       </BrowserRouter>
     </ProfileProvider>
   );

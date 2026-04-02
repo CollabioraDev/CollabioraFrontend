@@ -31,6 +31,9 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { buildChatExportHtml } from "../../components/ChatExportPdf.js";
+import { getApiLocale } from "../../i18n/getApiLocale.js";
+import { getPublicationPath } from "../../utils/publicationRouting.js";
+import { useTranslation } from "react-i18next";
 import Button from "../../components/ui/Button.jsx";
 import { X } from "lucide-react";
 
@@ -69,7 +72,12 @@ const loadStoredUser = () => {
   }
 };
 
-const BETA_PROMPT_DISMISSED_KEY = "collabiora_beta_prompt_dismissed_v1";
+// v2: "Maybe Later" no longer sets this — only X or after opting in (Yes).
+// v1 incorrectly persisted dismiss on Maybe Later; using a new key resets that.
+const BETA_PROMPT_DISMISSED_KEY = "collabiora_beta_prompt_dismissed_v2";
+
+const YORI_DISCLAIMER =
+  "Yori is an AI-powered health information tool. The content provided is for informational and educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis, treatment, or medical decisions. Your information will never be sold or used for commercial purposes.";
 
 const getChatStorageKey = (user) => {
   const identity =
@@ -254,70 +262,58 @@ const getAskContext = (type, item) => {
   return null;
 };
 
-const getPublicationRoute = (publication) => {
-  const publicationId = publication?.pmid || publication?.id;
-  return publicationId
-    ? `/publication/${encodeURIComponent(publicationId)}`
-    : null;
-};
+function buildAskAboutOptions(t) {
+  return {
+    trial: [
+      {
+        label: t("chat.trialAskTellMore"),
+        question: t("chat.trialAskTellMoreQ"),
+      },
+      {
+        label: t("chat.trialAskInclusion"),
+        question: t("chat.trialAskInclusionQ"),
+      },
+      {
+        label: t("chat.trialAskParticipate"),
+        question: t("chat.trialAskParticipateQ"),
+      },
+      {
+        label: t("chat.trialAskContact"),
+        question: t("chat.trialAskContactQ"),
+      },
+      {
+        label: t("chat.trialAskLocations"),
+        question: t("chat.trialAskLocationsQ"),
+      },
+    ],
+    publication: [
+      {
+        label: t("chat.pubAskSummarize"),
+        question: t("chat.pubAskSummarizeQ"),
+      },
+      {
+        label: t("chat.pubAskMethods"),
+        question: t("chat.pubAskMethodsQ"),
+      },
+      {
+        label: t("chat.pubAskTakeaways"),
+        question: t("chat.pubAskTakeawaysQ"),
+      },
+    ],
+    expert: [
+      {
+        label: t("chat.expertAskTellMore"),
+        question: t("chat.expertAskTellMoreQ"),
+      },
+      {
+        label: t("chat.expertAskFocus"),
+        question: t("chat.expertAskFocusQ"),
+      },
+    ],
+  };
+}
 
-const ASK_ABOUT_OPTIONS = {
-  trial: [
-    {
-      label: "Tell me more",
-      question:
-        "Tell me more about this trial. Summarize the key details and what it's testing.",
-    },
-    {
-      label: "Inclusion criteria",
-      question:
-        "What are the inclusion and exclusion criteria for this trial? Explain who can participate.",
-    },
-    {
-      label: "How to participate",
-      question:
-        "How can I participate in this trial? What are the steps and who do I contact?",
-    },
-    {
-      label: "Contact details",
-      question:
-        "What are the contact details for this trial? Give me phone numbers, emails, or links to sign up.",
-    },
-    {
-      label: "Trial locations",
-      question:
-        "Where is this trial being conducted? List the locations and sites.",
-    },
-  ],
-  publication: [
-    {
-      label: "Summarize",
-      question:
-        "Summarize this publication. What are the main findings and conclusions?",
-    },
-    {
-      label: "Methods used",
-      question: "What methodology and methods were used in this study?",
-    },
-    {
-      label: "Key takeaways",
-      question: "What are the key takeaways and implications of this research?",
-    },
-  ],
-  expert: [
-    {
-      label: "Tell me more",
-      question:
-        "Tell me more about this researcher. What are their main contributions and expertise?",
-    },
-    {
-      label: "Research focus",
-      question: "What is this expert's research focus and recent work?",
-    },
-  ],
-};
-
-const markdownComponents = {
+const getMarkdownComponents = (t) => ({
   h1: ({ children }) => (
     <h1 className="text-xl font-bold text-[#2F3C96] mt-5 mb-3 first:mt-0">
       {children}
@@ -364,13 +360,13 @@ const markdownComponents = {
     const isSpecialLink =
       isPubMed || isClinicalTrials || isExpertProfile || isInternal;
     const label = isPubMed
-      ? "View on PubMed"
+      ? t("chat.linkViewPubMed")
       : isClinicalTrials
-        ? "View on ClinicalTrials.gov"
+        ? t("chat.linkViewClinicalTrials")
         : isPublicationRoute
-          ? "View on collabiora"
+          ? t("chat.linkViewCollabiora")
           : isExpertProfile
-            ? "View profile"
+            ? t("chat.linkViewProfile")
             : children || href;
     const linkClass = isSpecialLink
       ? "inline-flex items-center gap-2 mt-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
@@ -395,13 +391,13 @@ const markdownComponents = {
       </a>
     );
   },
-};
+});
 
 // --- Compact chatbot cards (simplified title, short summary, CTAs) ---
 
 const PublicationCard = React.memo(
   ({ publication, onAskAbout, onSave, userId, useSimplified }) => {
-    const publicationRoute = getPublicationRoute(publication);
+    const publicationRoute = getPublicationPath(publication);
     const displayTitle =
       useSimplified && publication.simplifiedTitle
         ? publication.simplifiedTitle
@@ -762,7 +758,14 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
   );
 });
 
-const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
+const TrialDetailsCard = ({
+  trialDetails,
+  onAskMore,
+  onSave,
+  userId,
+  askOptions = [],
+}) => {
+  const { t } = useTranslation("common");
   if (!trialDetails) return null;
   const {
     requestedSections = ["overview"],
@@ -782,7 +785,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
   const displayTitle =
     shortTitle ||
     (title?.length > 100 ? title.slice(0, 97) + "..." : title) ||
-    "Clinical Trial";
+    t("chat.clinicalTrialFallback");
   const show = (s) => requestedSections.includes(s);
   const hasEligibility =
     eligibilityCriteria ||
@@ -828,7 +831,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
           {show("overview") && conditions && conditions !== "Not specified" && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                Conditions
+                {t("chat.conditionsHeading")}
               </h5>
               <p className="text-sm text-slate-700">{conditions}</p>
             </section>
@@ -836,7 +839,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
           {show("eligibility") && hasEligibility && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                Eligibility Criteria
+                {t("chat.eligibilityCriteriaHeading")}
               </h5>
               <div className="text-sm text-slate-700 space-y-2">
                 {eligibilityCriteria && (
@@ -852,18 +855,19 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
                     <div className="flex flex-wrap gap-2">
                       {(eligibility.minimumAge || eligibility.maximumAge) && (
                         <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
-                          Age: {eligibility.minimumAge || "?"} -{" "}
+                          {t("chat.ageLabel")} {eligibility.minimumAge || "?"} -{" "}
                           {eligibility.maximumAge || "?"}
                         </span>
                       )}
                       {eligibility.gender && (
                         <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
-                          Gender: {eligibility.gender}
+                          {t("chat.genderLabel")} {eligibility.gender}
                         </span>
                       )}
                       {eligibility.healthyVolunteers && (
                         <span className="px-2 py-1 bg-[#E8E9F2] text-[#2F3C96] rounded text-xs">
-                          Healthy Volunteers: {eligibility.healthyVolunteers}
+                          {t("chat.healthyVolunteersLabel")}{" "}
+                          {eligibility.healthyVolunteers}
                         </span>
                       )}
                     </div>
@@ -874,7 +878,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
           {show("contacts") && hasContacts && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2">
-                Contact Details
+                {t("chat.contactDetails")}
               </h5>
               <div className="space-y-3">
                 {contacts.map((c, i) => (
@@ -919,7 +923,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
           {show("locations") && hasLocations && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2">
-                Trial Locations
+                {t("chat.trialLocationsHeading")}
               </h5>
               <div className="space-y-2">
                 {locations.map((loc, i) => (
@@ -949,7 +953,7 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
           {show("overview") && summary && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                Summary
+                {t("chat.summaryHeading")}
               </h5>
               <p className="text-sm text-slate-700 leading-relaxed">
                 {summary}
@@ -969,16 +973,16 @@ const TrialDetailsCard = ({ trialDetails, onAskMore, onSave, userId }) => {
               }
               className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
             >
-              <Heart className="w-3.5 h-3.5" /> Save to favourites
+              <Heart className="w-3.5 h-3.5" /> {t("chat.saveToFavourites")}
             </button>
           )}
           {onAskMore && (
             <div className="pt-3 border-t border-[#D1D3E5]">
               <p className="text-xs font-semibold text-slate-700 mb-2">
-                Ask more about this trial
+                {t("chat.askMoreTrial")}
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {ASK_ABOUT_OPTIONS.trial.map((opt, i) => (
+                {askOptions.map((opt, i) => (
                   <button
                     key={i}
                     type="button"
@@ -1002,7 +1006,9 @@ const PublicationDetailsCard = ({
   onAskMore,
   onSave,
   userId,
+  askOptions = [],
 }) => {
+  const { t } = useTranslation("common");
   if (!publicationDetails) return null;
   const {
     title,
@@ -1015,7 +1021,7 @@ const PublicationDetailsCard = ({
     keywords,
     publicationTypes,
   } = publicationDetails;
-  const publicationRoute = getPublicationRoute({ pmid });
+  const publicationRoute = getPublicationPath({ pmid });
   return (
     <div className="w-full max-w-2xl">
       <div className="bg-white border border-[#D1D3E5] rounded-xl shadow-sm overflow-hidden">
@@ -1029,7 +1035,7 @@ const PublicationDetailsCard = ({
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {pmid && (
                   <span className="px-2 py-0.5 bg-white/80 text-[#2F3C96] rounded text-xs font-mono border border-[#D1D3E5]">
-                    PMID: {pmid}
+                    {t("chat.pmidLabel")} {pmid}
                   </span>
                 )}
                 {publicationTypes && (
@@ -1044,7 +1050,7 @@ const PublicationDetailsCard = ({
         <div className="p-5 space-y-4">
           <section>
             <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-              Authors
+              {t("publications.authors")}
             </h5>
             <p className="text-sm text-slate-700">{authors}</p>
             <p className="text-xs text-slate-600 mt-1">
@@ -1054,7 +1060,7 @@ const PublicationDetailsCard = ({
           {abstract && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                Abstract
+                {t("publications.abstract")}
               </h5>
               <p className="text-sm text-slate-700 leading-relaxed">
                 {abstract}
@@ -1064,7 +1070,7 @@ const PublicationDetailsCard = ({
           {keywords && (
             <section>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                Keywords
+                {t("publications.keywords")}
               </h5>
               <p className="text-sm text-slate-700">{keywords}</p>
             </section>
@@ -1075,7 +1081,8 @@ const PublicationDetailsCard = ({
                 to={publicationRoute}
                 className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
               >
-                View on collabiora <ExternalLink className="w-4 h-4" />
+                {t("chat.linkViewCollabiora")}{" "}
+                <ExternalLink className="w-4 h-4" />
               </Link>
             ) : url ? (
               <a
@@ -1084,7 +1091,7 @@ const PublicationDetailsCard = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
               >
-                View on PubMed <ExternalLink className="w-4 h-4" />
+                {t("chat.linkViewPubMed")} <ExternalLink className="w-4 h-4" />
               </a>
             ) : null}
             {userId && onSave && (
@@ -1104,17 +1111,17 @@ const PublicationDetailsCard = ({
                 }
                 className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
               >
-                <Heart className="w-3.5 h-3.5" /> Save to favourites
+                <Heart className="w-3.5 h-3.5" /> {t("chat.saveToFavourites")}
               </button>
             )}
           </div>
           {onAskMore && (
             <div className="pt-3 border-t border-[#D1D3E5]">
               <p className="text-xs font-semibold text-slate-700 mb-2">
-                Ask more about this publication
+                {t("chat.askMorePublication")}
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {ASK_ABOUT_OPTIONS.publication.map((opt, i) => (
+                {askOptions.map((opt, i) => (
                   <button
                     key={i}
                     type="button"
@@ -1133,9 +1140,10 @@ const PublicationDetailsCard = ({
   );
 };
 
-const AskMoreBar = ({ type, details, onAskMore, onSave, userId }) => {
+const AskMoreBar = ({ type, details, onAskMore, onSave, userId, askAboutOptions }) => {
+  const { t } = useTranslation("common");
   if (!details || !onAskMore) return null;
-  const options = ASK_ABOUT_OPTIONS[type] || [];
+  const options = (askAboutOptions && askAboutOptions[type]) || [];
   const itemForSave =
     type === "trial"
       ? {
@@ -1159,7 +1167,9 @@ const AskMoreBar = ({ type, details, onAskMore, onSave, userId }) => {
     <div className="w-full max-w-2xl">
       <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
         <p className="text-xs font-semibold text-slate-700 mb-2">
-          Ask more about this {type}
+          {type === "trial"
+            ? t("chat.askMoreTrial")
+            : t("chat.askMorePublication")}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {options.map((opt, i) => (
@@ -1529,6 +1539,15 @@ export default function YoriAI() {
   const refreshPromiseRef = useRef(null);
 
   const userId = user?._id || user?.id;
+  const { t, i18n } = useTranslation("common");
+  const askAboutOptions = useMemo(
+    () => buildAskAboutOptions(t),
+    [t, i18n.language],
+  );
+  const markdownComponents = useMemo(
+    () => getMarkdownComponents(t),
+    [t, i18n.language],
+  );
   const userRole = user?.role || "patient";
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const authToken = getAuthToken();
@@ -1624,17 +1643,56 @@ export default function YoriAI() {
   // Beta program modal state (shown on /yori, not during onboarding)
   const [showBetaModal, setShowBetaModal] = useState(false);
   const [betaChoicePending, setBetaChoicePending] = useState(null);
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
 
-  // Decide if we should show beta popup when user lands on /yori
+  // Show beta prompt when eligible: sync betaProgramOptIn from the server (localStorage can be stale),
+  // respect permanent dismiss (X), and do not depend on `user` object identity (avoids flaky re-runs).
   useEffect(() => {
     if (!userId || !authToken) return;
     if (hasDismissedBetaPrompt()) return;
 
-    const alreadyOptedIn = user?.betaProgramOptIn === true;
-    if (alreadyOptedIn) return;
+    let cancelled = false;
 
-    setShowBetaModal(true);
-  }, [userId, authToken, user]);
+    (async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/users/me`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          const u = data?.user;
+          if (u && typeof u === "object") {
+            setUser((prev) => {
+              const merged = { ...(prev || {}), ...u };
+              try {
+                localStorage.setItem("user", JSON.stringify(merged));
+              } catch {
+                // ignore
+              }
+              return merged;
+            });
+            window.dispatchEvent(new Event("userUpdated"));
+            if (u.betaProgramOptIn === true) return;
+            if (hasDismissedBetaPrompt()) return;
+            setShowBetaModal(true);
+            return;
+          }
+        }
+      } catch {
+        // fall through to client-only check
+      }
+      if (cancelled) return;
+      const fromStorage = loadStoredUser();
+      if (fromStorage?.betaProgramOptIn === true) return;
+      if (hasDismissedBetaPrompt()) return;
+      setShowBetaModal(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, authToken, apiBase]);
 
   useEffect(() => {
     if (!activeChatId && chatSessions.length > 0) {
@@ -2212,10 +2270,12 @@ export default function YoriAI() {
           ? {
               sessionId,
               message: text,
+              locale: getApiLocale(),
               ...(context ? { context } : {}),
               ...(userId ? { userId } : {}),
             }
           : {
+              locale: getApiLocale(),
               messages: newMessages.map((message) => {
                 let content =
                   message.content != null && message.content !== ""
@@ -2791,6 +2851,7 @@ export default function YoriAI() {
                                 }
                                 onSave={handleSaveToFavourites}
                                 userId={userId}
+                                askOptions={askAboutOptions.trial}
                               />
                             )}
 
@@ -2808,6 +2869,7 @@ export default function YoriAI() {
                                 }
                                 onSave={handleSaveToFavourites}
                                 userId={userId}
+                                askAboutOptions={askAboutOptions}
                               />
                             )}
 
@@ -2824,6 +2886,7 @@ export default function YoriAI() {
                                 }
                                 onSave={handleSaveToFavourites}
                                 userId={userId}
+                                askOptions={askAboutOptions.publication}
                               />
                             )}
 
@@ -2841,6 +2904,7 @@ export default function YoriAI() {
                                 }
                                 onSave={handleSaveToFavourites}
                                 userId={userId}
+                                askAboutOptions={askAboutOptions}
                               />
                             )}
 
@@ -2940,14 +3004,18 @@ export default function YoriAI() {
                 </button>
               </div>
             </div>
-            <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-              Yori is an AI-powered health information tool. The content
-              provided is for informational and educational purposes only and
-              does not constitute medical advice. Always consult a qualified
-              healthcare professional for diagnosis, treatment, or medical
-              decisions. Your information will never be sold or used for
-              commercial purposes.
+            <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
+              {YORI_DISCLAIMER}
             </p>
+            <div className="sm:hidden mt-2 flex justify-center px-1">
+              <button
+                type="button"
+                onClick={() => setDisclaimerOpen(true)}
+                className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
+              >
+                View disclaimer
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -3033,29 +3101,11 @@ export default function YoriAI() {
               </Button>
               <Button
                 variant="outline"
-                onClick={async () => {
-                  if (betaChoicePending || !authToken || !userId) {
-                    setShowBetaModal(false);
-                    setDismissedBetaPrompt();
-                    return;
-                  }
-                  setBetaChoicePending("no");
-                  try {
-                    await fetch(`${apiBase}/api/users/me/beta-program`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${authToken}`,
-                      },
-                      body: JSON.stringify({ wantsBeta: false }),
-                    });
-                  } catch {
-                    // non-blocking
-                  } finally {
-                    setShowBetaModal(false);
-                    setBetaChoicePending(null);
-                    setDismissedBetaPrompt();
-                  }
+                onClick={() => {
+                  // Not now: close for this visit only — do not persist dismiss or
+                  // record a decline in the DB (so we can ask again next time).
+                  setShowBetaModal(false);
+                  setBetaChoicePending(null);
                 }}
                 disabled={!!betaChoicePending}
                 className="flex-1 rounded-lg py-2 text-sm font-semibold border"
@@ -3073,6 +3123,50 @@ export default function YoriAI() {
               We’ll only use your email to share beta updates, research invites,
               and opportunities to give feedback.
             </p>
+          </div>
+        </div>
+      )}
+
+      {disclaimerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/50"
+          onClick={() => setDisclaimerOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="yori-chat-disclaimer-title"
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border-2 border-t bg-white p-5 shadow-2xl max-h-[min(85vh,520px)] overflow-y-auto sm:max-h-[85vh]"
+            style={{ borderColor: "#D0C4E2" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2
+                id="yori-chat-disclaimer-title"
+                className="text-base font-bold text-[#2F3C96] pr-2"
+              >
+                Disclaimer
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDisclaimerOpen(false)}
+                className="shrink-0 rounded-lg p-1.5 text-[#2F3C96] hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
+                aria-label="Close disclaimer"
+              >
+                <X className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {YORI_DISCLAIMER}
+            </p>
+            <button
+              type="button"
+              onClick={() => setDisclaimerOpen(false)}
+              className="mt-5 w-full rounded-xl py-3 text-sm font-semibold text-white"
+              style={{ backgroundColor: "#2F3C96" }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

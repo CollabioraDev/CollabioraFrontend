@@ -39,6 +39,11 @@ import FreeSearchesIndicator, {
   useFreeSearches,
 } from "../../components/FreeSearchesIndicator.jsx";
 import apiFetch from "../../utils/api.js";
+import {
+  appendLocaleToSearchParams,
+  getApiLocale,
+} from "../../i18n/getApiLocale.js";
+import { useTranslation } from "react-i18next";
 import { autoCorrectQuery } from "../../utils/spellCorrection.js";
 import { processKeywordInput } from "../../utils/keywordSplitter.js";
 import { SMART_SUGGESTION_KEYWORDS } from "../../utils/smartSuggestions.js";
@@ -128,6 +133,7 @@ function getDisplayLabelForKeyword(keyword) {
 }
 
 export default function Publications() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const routeLocation = useLocation();
   const [q, setQ] = useState("");
@@ -431,75 +437,67 @@ export default function Publications() {
     () => [
       {
         target: "[data-tour='publications-header']",
-        title: "Explore Publications Library",
-        content:
-          "Hi! I'm Yori. This is where you search for research papers. Let's explore together—we'll search for 'hypertension' and I'll show you the key features.",
+        title: t("publications.tutorialSteps.step1Title"),
+        content: t("publications.tutorialSteps.step1Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='publications-search-bar']",
-        title: "Search here",
-        content:
-          "This is the search area. You can type keywords or add terms as chips. Let me add 'hypertension' for you to try...",
+        title: t("publications.tutorialSteps.step2Title"),
+        content: t("publications.tutorialSteps.step2Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='publications-keywords']",
-        title: "Your search terms",
-        content:
-          "I've added 'hypertension' as your search term. You can add more keywords or remove this one. Now click the Search button to find publications!",
+        title: t("publications.tutorialSteps.step3Title"),
+        content: t("publications.tutorialSteps.step3Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='publications-search-btn']",
-        title: "Run your search",
-        content:
-          "Click Search to run your query. Results will appear below so you can explore the card features.",
+        title: t("publications.tutorialSteps.step4Title"),
+        content: t("publications.tutorialSteps.step4Content"),
         placement: "bottom",
-        actionLabel: "Search",
+        actionLabel: t("publications.search"),
         onAction: onSearchAction,
       },
       {
         target: "[data-tour='publications-results-area']",
-        title: "Your results",
-        content:
-          "Here are your publication cards. Each shows the title, authors, and preview. Let's look at the actions on each card.",
+        title: t("publications.tutorialSteps.step5Title"),
+        content: t("publications.tutorialSteps.step5Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='publications-view-details-btn']",
-        title: "View full details",
-        content:
-          "Click here to open the full abstract and publication details in a modal.",
+        title: t("publications.tutorialSteps.step6Title"),
+        content: t("publications.tutorialSteps.step6Content"),
         placement: "top",
       },
       {
         target: "[data-tour='publications-understand-btn']",
-        title: "Simplify",
-        content:
-          "This button gets a plain-language summary of the study—great for understanding complex research at a glance.",
+        title: t("publications.tutorialSteps.step7Title"),
+        content: t("publications.tutorialSteps.step7Content"),
         placement: "top",
       },
       {
         target: "[data-tour='publications-favourites-btn']",
-        title: "Save to favourites",
-        content:
-          "Save publications you care about. You can later generate a report for your doctor or revisit them easily.",
+        title: t("publications.tutorialSteps.step8Title"),
+        content: t("publications.tutorialSteps.step8Content"),
         placement: "top",
       },
       {
         target: "[data-tour='yori-chatbot']",
-        title: "Meet Yori!",
+        title: t("publications.tutorialSteps.step9Title"),
         content: isSignedIn
-          ? "That's me! You can always click the helper in the bottom-right corner to ask questions about publications, trials, or research."
-          : "That's me! Sign in and use the helper in the bottom-right corner to get personalized help with publications, trials, and research.",
+          ? t("publications.tutorialSteps.step9ContentSignedIn")
+          : t("publications.tutorialSteps.step9ContentGuest"),
         placement: "top",
         allowTargetClick: true,
         spotlightShape: "circle",
         spotlightPadding: 18,
       },
     ],
-    [onSearchAction, isSignedIn],
+    [i18n.language, onSearchAction, isSignedIn, t],
   );
 
   // Advanced search functions
@@ -1020,6 +1018,8 @@ export default function Publications() {
       }
     }
 
+    appendLocaleToSearchParams(params);
+
     try {
       const response = await apiFetch(
         `/api/search/publications?${params.toString()}`,
@@ -1211,6 +1211,8 @@ export default function Publications() {
       params.set("conditions", savedUserMedicalInterest);
     }
 
+    appendLocaleToSearchParams(params);
+
     try {
       const response = await apiFetch(
         `/api/search/publications?${params.toString()}`,
@@ -1360,6 +1362,8 @@ export default function Publications() {
         params.set("conditions", enabledInterestsForParams);
       }
     }
+
+    appendLocaleToSearchParams(params);
 
     apiFetch(`/api/search/publications?${params.toString()}`)
       .then(async (r) => {
@@ -1712,7 +1716,7 @@ export default function Publications() {
       simplifiedTitles.get(item.title) ||
       item.simplifiedTitle ||
       item.title ||
-      "Publication";
+      t("publications.publicationFallbackTitle");
     const text = [
       item.title || "",
       item.journal || "",
@@ -1743,6 +1747,7 @@ export default function Publications() {
           type: "publication",
           simplify: shouldSimplify, // Simplify for patients, technical for researchers
           pmid: item.pmid || item.id, // When present, backend fetches full publication (same as publication-detail chatbot) for better key insights
+          outputLocale: getApiLocale(),
         }),
       }).then((r) => r.json());
 
@@ -1752,14 +1757,14 @@ export default function Publications() {
           res.summary ||
           (typeof res.summary === "object" && res.summary.structured
             ? res.summary
-            : { structured: false, summary: "Summary unavailable" }),
+            : { structured: false, summary: t("publications.summaryUnavailable") }),
         loading: false,
       }));
     } catch (e) {
       console.error("Summary generation error:", e);
       setSummaryModal((prev) => ({
         ...prev,
-        summary: "Failed to generate summary. Please try again.",
+        summary: t("publications.summaryFailed"),
         loading: false,
       }));
     }
@@ -1793,6 +1798,7 @@ export default function Publications() {
             authors: summaryPublication.authors,
             year: summaryPublication.year,
           },
+          outputLocale: getApiLocale(),
         }),
       }).then((r) => r.json());
 
@@ -1802,14 +1808,14 @@ export default function Publications() {
           res.summary ||
           (typeof res.summary === "object" && res.summary.structured
             ? res.summary
-            : { structured: false, summary: "Summary unavailable" }),
+            : { structured: false, summary: t("publications.summaryUnavailable") }),
         loading: false,
       }));
     } catch (e) {
       console.error("Further simplification error:", e);
       setSummaryModal((prev) => ({
         ...prev,
-        summary: "Failed to simplify further. Please try again.",
+        summary: t("publications.simplifyFurtherFailed"),
         loading: false,
       }));
     }
@@ -2125,8 +2131,8 @@ export default function Publications() {
             >
               <AuroraText speed={2.5} colors={["#2F3C96"]}>
                 {routeLocation.pathname === "/library"
-                  ? "Health Library"
-                  : "Publications"}
+                  ? t("nav.healthLibrary")
+                  : t("nav.publications")}
               </AuroraText>
             </h1>
             <div className="flex items-center justify-center">
@@ -2155,10 +2161,10 @@ export default function Publications() {
                   }
                 }}
                 className="inline-flex items-center gap-1 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-                title="Show tutorial again"
+                title={t("publications.showTutorialAgain")}
               >
                 <Info className="w-3.5 h-3.5" />
-                Tutorial
+                {t("publications.tutorial")}
               </button>
             </div>
             {/* Free Searches Indicator */}
@@ -2186,12 +2192,13 @@ export default function Publications() {
                 <div className="flex flex-col gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-700 font-medium">
-                      Your medical interest
-                      {userMedicalInterests.length > 1 ? "s" : ""}:
+                      {userMedicalInterests.length > 1
+                        ? t("publications.yourMedicalInterests")
+                        : t("publications.yourMedicalInterest")}
                     </span>
                     {q && enabledMedicalInterests.size > 0 && (
                       <span className="text-xs text-slate-600">
-                        (enabled interests will be combined with search queries)
+                        {t("publications.enabledInterestsHint")}
                       </span>
                     )}
                   </div>
@@ -2235,7 +2242,7 @@ export default function Publications() {
                     value={q}
                     onChange={setQ}
                     onSubmit={handleKeywordSubmit}
-                    placeholder="Try being specific to get more accurate search results...."
+                    placeholder={t("publications.searchPlaceholder")}
                     extraTerms={publicationSuggestionTerms}
                     canonicalMap={publicationCanonicalMap}
                     className="w-full"
@@ -2255,10 +2262,12 @@ export default function Publications() {
                     {(dateRange.start || dateRange.end || articleType) && (
                       <Calendar className="w-3.5 h-3.5" />
                     )}
-                    {showAdvancedSearch ? "Hide" : "Advanced"}
+                    {showAdvancedSearch
+                      ? t("publications.hide")
+                      : t("publications.advanced")}
                     {(dateRange.start || dateRange.end || articleType) && (
                       <span className="bg-[#D0C4E2]/20 text-[#2F3C96] px-1.5 py-0.5 rounded text-xs font-medium">
-                        Filters
+                        {t("publications.filters")}
                       </span>
                     )}
                   </Button>
@@ -2274,7 +2283,7 @@ export default function Publications() {
                       e.currentTarget.style.backgroundColor = "#2F3C96";
                     }}
                   >
-                    Search
+                    {t("publications.search")}
                   </Button>
                 </div>
               </div>
@@ -2320,7 +2329,9 @@ export default function Publications() {
                   return searchKeywords.length > 0 ? (
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-medium text-slate-600">
-                        Keywords ({chipsToShow.length}):
+                        {t("publications.keywordsCount", {
+                          count: chipsToShow.length,
+                        })}
                       </span>
                       {chipsToShow.map(({ display, removeRef }, idx) => (
                         <span
@@ -2346,14 +2357,14 @@ export default function Publications() {
                         onClick={clearAllKeywords}
                         className="text-xs text-slate-500 hover:text-red-600 transition-colors underline underline-offset-2"
                       >
-                        Clear all
+                        {t("publications.clearAll")}
                       </button>
                     </div>
                   ) : null;
                 })()}
                 {searchKeywords.length === 0 && (
                   <p className="text-xs text-slate-500 italic">
-                    Add keywords to refine your search (optional).
+                    {t("publications.addKeywordsHint")}
                   </p>
                 )}
               </div>
@@ -2363,7 +2374,7 @@ export default function Publications() {
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-slate-600">
-                      Filters applied:
+                      {t("publications.filtersApplied")}
                     </span>
                     {getActiveAdvancedFilters().map((filter, index) => (
                       <span
@@ -2396,7 +2407,7 @@ export default function Publications() {
                       onClick={clearAllAdvancedFilters}
                       className="text-xs text-slate-500 hover:text-red-600 transition-colors underline underline-offset-2"
                     >
-                      Clear all
+                      {t("publications.clearAll")}
                     </button>
                   </div>
                 </div>
@@ -2413,7 +2424,7 @@ export default function Publications() {
                       className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                     />
                     <span className="text-sm font-medium text-slate-700">
-                      Simplify titles
+                      {t("publications.simplifyTitles")}
                     </span>
                   </label>
                 </div>
@@ -2425,14 +2436,14 @@ export default function Publications() {
           <Modal
             isOpen={showAdvancedSearch}
             onClose={() => setShowAdvancedSearch(false)}
-            title="Advanced Search"
+            title={t("publications.advancedSearch")}
           >
             <div className="space-y-4">
               {/* Display added terms as chips - only show confirmed added terms */}
               {addedTerms.length > 0 && (
                 <div className="mb-4">
                   <h3 className="text-xs font-medium text-slate-600 mb-2">
-                    Added Terms:
+                    {t("publications.addedTerms")}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {addedTerms.map((term, index) => {
@@ -2464,7 +2475,7 @@ export default function Publications() {
                               buildQueryFromAddedTerms(updated);
                             }}
                             className="ml-1 p-0.5 hover:bg-indigo-200 rounded-full transition-colors"
-                            title="Remove term"
+                            title={t("publications.removeTerm")}
                           >
                             <X className="w-3 h-3 text-indigo-600" />
                           </button>
@@ -2478,7 +2489,7 @@ export default function Publications() {
               {/* Add new term form */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 mb-3">
-                  Add terms to the query box
+                  {t("publications.addTermsToQuery")}
                 </h3>
                 <div className="space-y-3">
                   {queryTerms.map((term, index) => (
@@ -2503,7 +2514,7 @@ export default function Publications() {
                               updateQueryTerm(index, "field", value)
                             }
                             options={fieldOptions}
-                            placeholder="Select field..."
+                            placeholder={t("publications.selectField")}
                             className="w-full"
                           />
                         </div>
@@ -2531,12 +2542,12 @@ export default function Publications() {
                             }}
                             placeholder={
                               term.field === "Author"
-                                ? "e.g., Smith J or Smith John"
+                                ? t("publications.placeholderAuthor")
                                 : term.field === "Publication Type"
-                                  ? "e.g., Review, Clinical Trial, Case Reports"
+                                  ? t("publications.placeholderPublicationType")
                                   : term.field === "Journal"
-                                    ? "e.g., Nature, JAMA, New England Journal"
-                                    : "Enter a search term"
+                                    ? t("publications.placeholderJournal")
+                                    : t("publications.placeholderSearchTerm")
                             }
                             className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                           />
@@ -2547,7 +2558,7 @@ export default function Publications() {
                           className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-colors"
                         >
                           <Plus className="w-4 h-4" />
-                          ADD
+                          {t("publications.addButton")}
                         </Button>
                       </div>
                       {/* Help text below input box only - aligned with first input position */}
@@ -2567,7 +2578,7 @@ export default function Publications() {
               <div className="border-t border-slate-200 pt-4">
                 <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-indigo-600" />
-                  Publication Date Range
+                  {t("publications.publicationDateRange")}
                 </h3>
                 <div className="bg-gradient-to-br from-indigo-50 to-slate-50 rounded-lg p-4 border border-indigo-100">
                   {/* Date Inputs */}
@@ -2575,7 +2586,7 @@ export default function Publications() {
                     {/* From Date */}
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                        <span>From</span>
+                        <span>{t("publications.from")}</span>
                       </label>
                       <div className="flex gap-2">
                         <select
@@ -2600,7 +2611,7 @@ export default function Publications() {
                           }}
                           className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 transition-all"
                         >
-                          <option value="">Select Month</option>
+                          <option value="">{t("publications.selectMonth")}</option>
                           <option value="01">January</option>
                           <option value="02">February</option>
                           <option value="03">March</option>
@@ -2641,7 +2652,7 @@ export default function Publications() {
                           }}
                           className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 transition-all"
                         >
-                          <option value="">Select Year</option>
+                          <option value="">{t("publications.selectYear")}</option>
                           {Array.from({ length: 50 }, (_, i) => {
                             const year = new Date().getFullYear() - i;
                             return (
@@ -2657,7 +2668,7 @@ export default function Publications() {
                     {/* To Date */}
                     <div className="space-y-2">
                       <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                        <span>To</span>
+                        <span>{t("publications.to")}</span>
                       </label>
                       <div className="flex gap-2">
                         <select
@@ -2682,7 +2693,7 @@ export default function Publications() {
                           }}
                           className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 transition-all"
                         >
-                          <option value="">Select Month</option>
+                          <option value="">{t("publications.selectMonth")}</option>
                           <option value="01">January</option>
                           <option value="02">February</option>
                           <option value="03">March</option>
@@ -2723,7 +2734,7 @@ export default function Publications() {
                           }}
                           className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 transition-all"
                         >
-                          <option value="">Select Year</option>
+                          <option value="">{t("publications.selectYear")}</option>
                           {Array.from({ length: 50 }, (_, i) => {
                             const year = new Date().getFullYear() - i;
                             return (
@@ -2740,7 +2751,7 @@ export default function Publications() {
                   {/* Quick Presets */}
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span className="text-xs font-medium text-slate-500">
-                      Quick select:
+                      {t("publications.quickSelect")}
                     </span>
                     <button
                       type="button"
@@ -2755,7 +2766,7 @@ export default function Publications() {
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white border border-slate-300 text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 shadow-sm hover:shadow"
                     >
-                      This Year
+                      {t("publications.thisYear")}
                     </button>
                     <button
                       type="button"
@@ -2772,7 +2783,7 @@ export default function Publications() {
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white border border-slate-300 text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 shadow-sm hover:shadow"
                     >
-                      Last Year
+                      {t("publications.lastYear")}
                     </button>
                     <button
                       type="button"
@@ -2789,7 +2800,7 @@ export default function Publications() {
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white border border-slate-300 text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 shadow-sm hover:shadow"
                     >
-                      Last 5 Years
+                      {t("publications.last5Years")}
                     </button>
                     <button
                       type="button"
@@ -2806,7 +2817,7 @@ export default function Publications() {
                       }}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-white border border-slate-300 text-slate-600 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 shadow-sm hover:shadow"
                     >
-                      Last 10 Years
+                      {t("publications.last10Years")}
                     </button>
                     {(dateRange.start || dateRange.end) && (
                       <button
@@ -2815,7 +2826,7 @@ export default function Publications() {
                         className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-slate-100 border border-slate-300 text-slate-600 hover:bg-slate-200 hover:border-slate-400 flex items-center gap-1.5"
                       >
                         <X className="w-3 h-3" />
-                        Clear
+                        {t("publications.clear")}
                       </button>
                     )}
                   </div>
@@ -2826,7 +2837,9 @@ export default function Publications() {
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
                         <p className="text-xs text-indigo-700 font-medium">
-                          <span className="text-slate-500">Active filter:</span>{" "}
+                          <span className="text-slate-500">
+                            {t("publications.activeFilter")}
+                          </span>{" "}
                           {dateRange.start ? (
                             new Date(
                               dateRange.start + "-01",
@@ -2835,7 +2848,9 @@ export default function Publications() {
                               year: "numeric",
                             })
                           ) : (
-                            <span className="text-slate-400">Any</span>
+                            <span className="text-slate-400">
+                              {t("publications.any")}
+                            </span>
                           )}
                           {" → "}
                           {dateRange.end ? (
@@ -2844,7 +2859,9 @@ export default function Publications() {
                               { month: "long", year: "numeric" },
                             )
                           ) : (
-                            <span className="text-slate-400">Present</span>
+                            <span className="text-slate-400">
+                              {t("publications.present")}
+                            </span>
                           )}
                         </p>
                       </div>
@@ -2857,11 +2874,10 @@ export default function Publications() {
               <div className="border-t border-slate-200 pt-4">
                 <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-indigo-600" />
-                  Type of Article
+                  {t("publications.typeOfArticle")}
                 </h3>
                 <p className="text-xs text-slate-500 mb-2">
-                  Filter by publication type using PubMed&apos;s Article Type
-                  (PT) index.
+                  {t("publications.typeOfArticleHint")}
                 </p>
                 <div className="bg-gradient-to-br from-indigo-50 to-slate-50 rounded-lg p-4 border border-indigo-100">
                   <select
@@ -2877,7 +2893,7 @@ export default function Publications() {
                   </select>
                   {articleType && (
                     <p className="mt-2 text-xs text-indigo-700">
-                      Filter:{" "}
+                      {t("publications.filterLabel")}{" "}
                       <strong>
                         {
                           articleTypeOptions.find(
@@ -2953,7 +2969,7 @@ export default function Publications() {
                     publicationSources?.sourceCounts && (
                       <div className="mb-3 text-xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span className="font-medium text-slate-600">
-                          Sources:
+                          {t("publications.sources")}
                         </span>
                         {publicationSources.sourceCounts.pubmed > 0 && (
                           <span>
@@ -3070,7 +3086,9 @@ export default function Publications() {
                                         className="text-sm font-bold"
                                         style={{ color: "#2F3C96" }}
                                       >
-                                        {pub.matchPercentage}% Match
+                                        {t("publications.matchPercent", {
+                                          pct: pub.matchPercentage,
+                                        })}
                                       </span>
                                       {/* Info Icon with Tooltip */}
                                       <div className="relative group">
@@ -3081,11 +3099,14 @@ export default function Publications() {
                                         {/* Tooltip */}
                                         <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
                                           <div className="font-semibold mb-1">
-                                            Match Relevance
+                                            {t("publications.matchRelevance")}
                                           </div>
                                           <div className="text-gray-300 leading-relaxed">
                                             {pub.matchExplanation ||
-                                              `This publication matches ${pub.matchPercentage}% based on your profile, interests, and search criteria. The match considers factors like your medical interests, location, and research preferences.`}
+                                              t(
+                                                "publications.matchExplanationDefault",
+                                                { pct: pub.matchPercentage },
+                                              )}
                                           </div>
                                           {/* Tooltip arrow */}
                                           <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
@@ -3131,12 +3152,12 @@ export default function Publications() {
                                   )}
                                   <span className="flex-1">
                                     {userProfile?.researcher !== undefined
-                                      ? pub.title || "Untitled Publication"
+                                      ? pub.title || t("publications.untitledPublication")
                                       : (simplifyTitles &&
                                           simplifiedTitles.get(pub.title)) ||
                                         pub.simplifiedTitle ||
                                         pub.title ||
-                                        "Untitled Publication"}
+                                        t("publications.untitledPublication")}
                                   </span>
                                 </h3>
                               </div>
@@ -3212,7 +3233,9 @@ export default function Publications() {
                                           className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
                                           style={{ color: "#2F3C96" }}
                                         >
-                                          <span>View full details</span>
+                                          <span>
+                                            {t("publications.viewFullDetails")}
+                                          </span>
                                           <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
                                             →
                                           </span>
@@ -3249,7 +3272,7 @@ export default function Publications() {
                                       "linear-gradient(135deg, #2F3C96, #253075)";
                                   }}
                                 >
-                                  Simplify
+                                  {t("publications.simplify")}
                                 </button>
 
                                 <button
@@ -3370,7 +3393,7 @@ export default function Publications() {
                                   }}
                                 >
                                   <ExternalLink className="w-3.5 h-3.5" />
-                                  View Full Publication
+                                  {t("publications.viewFullPublication")}
                                 </button>
                               )}
                             </div>
@@ -3387,28 +3410,33 @@ export default function Publications() {
                 {/* Results Count */}
                 <div className="text-sm text-slate-600 flex flex-col items-center gap-1">
                   <span>
-                    Page{" "}
-                    <span className="font-semibold text-indigo-700">
-                      {currentPage}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-indigo-700">
-                      {totalPages.toLocaleString()}
-                    </span>{" "}
-                    ({totalCount.toLocaleString()} total results)
+                    {t("publications.pageOf", {
+                      current: currentPage,
+                      total: totalPages.toLocaleString(),
+                    })}{" "}
+                    {t("publications.totalResults", {
+                      count: totalCount.toLocaleString(),
+                    })}
                     {(dateRange.start || dateRange.end) && (
                       <span className="text-slate-500">
                         {" "}
-                        • Filtered by date
+                        {t("publications.filteredByDate")}
                         {dateRange.start &&
                           dateRange.end &&
-                          `: ${dateRange.start} to ${dateRange.end}`}
+                          t("publications.dateRangeBoth", {
+                            start: dateRange.start,
+                            end: dateRange.end,
+                          })}
                         {dateRange.start &&
                           !dateRange.end &&
-                          `: from ${dateRange.start}`}
+                          t("publications.dateFromOnly", {
+                            start: dateRange.start,
+                          })}
                         {!dateRange.start &&
                           dateRange.end &&
-                          `: until ${dateRange.end}`}
+                          t("publications.dateUntilOnly", {
+                            end: dateRange.end,
+                          })}
                       </span>
                     )}
                   </span>
@@ -3423,7 +3451,7 @@ export default function Publications() {
                       (publicationSources.sourceCounts.genereviews ?? 0) > 0 ||
                       (publicationSources.sourceCounts.medlineplus ?? 0) > 0) && (
                       <span className="text-xs text-slate-500">
-                        From:{" "}
+                        {t("publications.fromSources")}{" "}
                         {[
                           publicationSources.sourceCounts.pubmed > 0 &&
                             `PubMed (${publicationSources.sourceCounts.pubmed.toLocaleString()})`,
@@ -3459,7 +3487,7 @@ export default function Publications() {
                       disabled={currentPage === 1 || loading}
                       className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Previous
+                      {t("publications.previous")}
                     </button>
 
                     {/* Page Numbers */}
@@ -3509,7 +3537,7 @@ export default function Publications() {
                       disabled={currentPage === totalPages || loading}
                       className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Next
+                      {t("publications.next")}
                     </button>
                   </div>
                 )}
@@ -3526,26 +3554,26 @@ export default function Publications() {
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-indigo-600" />
                       <h3 className="text-lg font-bold text-indigo-900">
-                        Want to see more publications?
+                        {t("publications.wantMoreTitle")}
                       </h3>
                     </div>
                     <p className="text-sm text-indigo-700 max-w-md">
-                      Sign up for free to view all {results.length} matching
-                      publications and get personalized recommendations based on
-                      your medical interests.
+                      {t("publications.wantMoreBody", {
+                        count: results.length,
+                      })}
                     </p>
                     <div className="flex gap-3 mt-2">
                       <button
                         onClick={() => navigate("/signin")}
                         className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
                       >
-                        Sign In
+                        {t("auth.signIn")}
                       </button>
                       <button
                         onClick={() => navigate("/onboarding")}
                         className="px-6 py-2.5 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-all border-2 border-indigo-200 hover:border-indigo-300"
                       >
-                        Sign Up
+                        {t("publications.signUp")}
                       </button>
                     </div>
                   </div>
@@ -3557,11 +3585,10 @@ export default function Publications() {
               <div className="text-center py-12 bg-white rounded-lg shadow-md border border-slate-200 animate-fade-in">
                 <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                  No Publications Found
+                  {t("publications.emptyTitle")}
                 </h3>
                 <p className="text-sm text-slate-600 max-w-md mx-auto">
-                  Try adjusting your search criteria or browse different
-                  categories.
+                  {t("publications.emptyHint")}
                 </p>
               </div>
             )}
@@ -3572,7 +3599,7 @@ export default function Publications() {
         <Modal
           isOpen={detailsModal.open}
           onClose={closeDetailsModal}
-          title="Publication Details"
+          title={t("publications.modalDetailsTitle")}
         >
           {detailsModal.loading ? (
             <div className="flex items-center justify-center py-12">
@@ -3581,7 +3608,7 @@ export default function Publications() {
                 style={{ color: "#2F3C96" }}
               />
               <span className="ml-3 text-sm" style={{ color: "#787878" }}>
-                Loading detailed publication information...
+                {t("publications.loadingDetails")}
               </span>
             </div>
           ) : (
@@ -3650,7 +3677,7 @@ export default function Publications() {
                           className="font-semibold mb-3 flex items-center gap-2 text-sm uppercase tracking-wide"
                           style={{ color: "#2F3C96" }}
                         >
-                          Abstract
+                          {t("publications.abstract")}
                         </h4>
                         <p
                           className="text-sm leading-relaxed whitespace-pre-wrap"
@@ -3675,7 +3702,7 @@ export default function Publications() {
                           style={{ color: "#2F3C96" }}
                         >
                           <ListChecks className="w-4 h-4" />
-                          Methods
+                          {t("publications.methods")}
                         </h4>
                         <p
                           className="text-sm leading-relaxed"
@@ -3699,7 +3726,7 @@ export default function Publications() {
                           style={{ color: "#2F3C96" }}
                         >
                           <TrendingUp className="w-4 h-4" />
-                          Results
+                          {t("publications.results")}
                         </h4>
                         <p
                           className="text-sm leading-relaxed"
@@ -3723,7 +3750,7 @@ export default function Publications() {
                           style={{ color: "#2F3C96" }}
                         >
                           <CheckCircle className="w-4 h-4" />
-                          Conclusion
+                          {t("publications.conclusion")}
                         </h4>
                         <p
                           className="text-sm leading-relaxed"
@@ -3756,7 +3783,7 @@ export default function Publications() {
                             style={{ color: "#2F3C96" }}
                           >
                             <AlertCircle className="w-4 h-4" />
-                            Key Takeaways
+                            {t("publications.keyTakeaways")}
                           </h4>
                           <ul className="space-y-2">
                             {detailsModal.publication.simplifiedDetails.keyTakeaways.map(
@@ -3793,7 +3820,7 @@ export default function Publications() {
                             style={{ color: "#2F3C96" }}
                           >
                             <User className="w-4 h-4" />
-                            Authors
+                            {t("publications.authors")}
                           </h4>
                           <p
                             className="text-sm leading-relaxed"
@@ -3806,7 +3833,9 @@ export default function Publications() {
                               className="text-xs mt-2"
                               style={{ color: "#787878" }}
                             >
-                              {detailsModal.publication.authors.length} authors
+                              {t("publications.authorsCount", {
+                                count: detailsModal.publication.authors.length,
+                              })}
                             </p>
                           )}
                         </div>
@@ -3824,7 +3853,7 @@ export default function Publications() {
                         style={{ color: "#2F3C96" }}
                       >
                         <Calendar className="w-4 h-4" />
-                        Publication Information
+                        {t("publications.publicationInformation")}
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {/* Publication Date */}
@@ -3846,7 +3875,7 @@ export default function Publications() {
                                 className="text-xs font-medium uppercase tracking-wide"
                                 style={{ color: "#787878" }}
                               >
-                                Published
+                                {t("publications.published")}
                               </span>
                             </div>
                             <p
@@ -3859,7 +3888,8 @@ export default function Publications() {
                               {detailsModal.publication.day
                                 ? `${detailsModal.publication.day}, `
                                 : ""}
-                              {detailsModal.publication.year || "N/A"}
+                              {detailsModal.publication.year ||
+                                t("publications.notAvailable")}
                             </p>
                           </div>
                         )}
@@ -3880,7 +3910,7 @@ export default function Publications() {
                             style={{ color: "#2F3C96" }}
                           >
                             <TrendingUp className="w-4 h-4" />
-                            Keywords
+                            {t("publications.keywords")}
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {detailsModal.publication.keywords.map(
@@ -3916,7 +3946,7 @@ export default function Publications() {
                             style={{ color: "#2F3C96" }}
                           >
                             <MapPin className="w-4 h-4" />
-                            Affiliation
+                            {t("publications.affiliation")}
                           </h4>
                           <p
                             className="text-sm leading-relaxed"
@@ -3941,7 +3971,7 @@ export default function Publications() {
                             style={{ color: "#2F3C96" }}
                           >
                             <FileText className="w-4 h-4" />
-                            Publication Type
+                            {t("publications.publicationType")}
                           </h4>
                           <div className="flex flex-wrap gap-2">
                             {detailsModal.publication.publicationTypes.map(
@@ -3998,7 +4028,7 @@ export default function Publications() {
                         }}
                       >
                         <ExternalLink className="w-4 h-4" />
-                        View Full Publication
+                        {t("publications.viewFullPublication")}
                       </button>
                     )}
                     <button
@@ -4103,7 +4133,7 @@ export default function Publications() {
                       {favoritingItems.has(
                         getFavoriteKey(detailsModal.publication),
                       )
-                        ? "Processing..."
+                        ? t("publications.processing")
                         : favorites.some(
                               (fav) =>
                                 fav.type === "publication" &&
@@ -4117,8 +4147,8 @@ export default function Publications() {
                                     (detailsModal.publication.id ||
                                       detailsModal.publication.pmid)),
                             )
-                          ? "Remove from Favorites"
-                          : "Add to Favorites"}
+                          ? t("publications.removeFromFavorites")
+                          : t("publications.addToFavorites")}
                     </button>
                   </div>
                 </div>
@@ -4141,7 +4171,7 @@ export default function Publications() {
             setSummaryPublication(null);
             setHasSimplifiedFurther(false);
           }}
-          title="Key Insights"
+          title={t("publications.keyInsights")}
         >
           <div className="space-y-4">
             <div
@@ -4161,7 +4191,7 @@ export default function Publications() {
                     color: "#2F3C96",
                   }}
                 >
-                  Research Publication
+                  {t("publications.researchPublication")}
                 </span>
                 {userProfile?.researcher === undefined &&
                   summaryModal.type === "publication" &&
@@ -4177,7 +4207,7 @@ export default function Publications() {
                         color: "#2F3C96",
                       }}
                     >
-                      Simplify further
+                      {t("publications.simplifyFurther")}
                     </button>
                   )}
               </div>
@@ -4186,7 +4216,7 @@ export default function Publications() {
               <div className="space-y-4 py-4">
                 <div className="mb-4" style={{ color: "#2F3C96" }}>
                   <span className="text-sm font-medium">
-                    Preparing key insights…
+                    {t("publications.preparingKeyInsights")}
                   </span>
                 </div>
                 <div className="animate-pulse space-y-3">
@@ -4238,7 +4268,7 @@ export default function Publications() {
                           className="font-bold text-base mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          Key Finding
+                          {t("publications.keyFinding")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -4278,7 +4308,7 @@ export default function Publications() {
                           >
                             1
                           </span>
-                          What This Study Was About
+                          {t("publications.whatStudyAbout")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -4318,7 +4348,7 @@ export default function Publications() {
                           >
                             2
                           </span>
-                          Why This Research Matters
+                          {t("publications.whyResearchMatters")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -4358,7 +4388,7 @@ export default function Publications() {
                           >
                             3
                           </span>
-                          How They Did The Study
+                          {t("publications.howTheyDidStudy")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -4398,7 +4428,7 @@ export default function Publications() {
                           >
                             4
                           </span>
-                          So What Does This Mean?
+                          {t("publications.soWhatMeans")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -4432,7 +4462,7 @@ export default function Publications() {
                           className="font-bold text-sm mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          Remember This
+                          {t("publications.rememberThis")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed font-medium"
@@ -4503,8 +4533,10 @@ export default function Publications() {
                     style={{ color: "#787878" }}
                   >
                     {typeof summaryModal.summary === "object"
-                      ? summaryModal.summary?.summary || "Summary unavailable"
-                      : summaryModal.summary || "Summary unavailable"}
+                      ? summaryModal.summary?.summary ||
+                        t("publications.summaryUnavailable")
+                      : summaryModal.summary ||
+                        t("publications.summaryUnavailable")}
                   </p>
                 )}
               </div>

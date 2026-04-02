@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { requireEmailVerification } from "../../utils/requireEmailVerification.js";
@@ -196,7 +197,7 @@ function hydrateCommentsWithCurrentUserHandle(items, currentUser) {
   }));
 }
 
-function getDiscoveryAuthorName(author, fallback = "Anonymous", authorRole) {
+function getDiscoveryAuthorName(author, fallback, authorRole) {
   if (!author) return fallback;
   if (isResearcherAuthor(author, authorRole)) {
     return getDisplayName(author, fallback);
@@ -207,6 +208,7 @@ function getDiscoveryAuthorName(author, fallback = "Anonymous", authorRole) {
 }
 
 export default function Discovery() {
+  const { t } = useTranslation("common");
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -382,7 +384,7 @@ export default function Discovery() {
       }
     } catch (error) {
       console.error("Error loading communities:", error);
-      toast.error("Failed to load communities");
+      toast.error(t("discovery.loadCommunitiesFailed"));
     }
   }
 
@@ -469,7 +471,7 @@ export default function Discovery() {
       if (!reset) setPage((prev) => prev + 1);
     } catch (error) {
       console.error("Error loading posts:", error);
-      toast.error("Failed to load posts");
+      toast.error(t("discovery.loadPostsFailed"));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -479,7 +481,7 @@ export default function Discovery() {
 
   async function handleLike(postId, isLiked) {
     if (!user) {
-      toast.error("Please sign in to like posts");
+      toast.error(t("discovery.signInToLikePosts"));
       navigate("/signin");
       return;
     }
@@ -507,17 +509,17 @@ export default function Discovery() {
       );
     } catch (error) {
       console.error("Error toggling like:", error);
-      toast.error("Failed to like post");
+      toast.error(t("discovery.likePostFailed"));
     }
   }
 
   async function handleDeletePost(postId) {
     if (!user) {
-      toast.error("Please sign in to delete posts");
+      toast.error(t("discovery.signInToDeletePosts"));
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this post?")) {
+    if (!window.confirm(t("discovery.confirmDeletePost"))) {
       return;
     }
 
@@ -536,18 +538,18 @@ export default function Discovery() {
         throw new Error(error.error || "Failed to delete post");
       }
 
-      toast.success("Post deleted successfully");
+      toast.success(t("discovery.postDeleted"));
       // Remove post from list
       setPosts((prev) => prev.filter((post) => post._id !== postId));
     } catch (error) {
       console.error("Error deleting post:", error);
-      toast.error(error.message || "Failed to delete post");
+      toast.error(error.message || t("discovery.deletePostFailed"));
     }
   }
 
   async function handleFollowUser(authorId, authorRole) {
     if (!user) {
-      toast.error("Please sign in to follow");
+      toast.error(t("discovery.signInToFollow"));
       navigate("/signin");
       return;
     }
@@ -572,7 +574,7 @@ export default function Discovery() {
           next.delete(uid);
           return next;
         });
-        toast.success("Unfollowed");
+        toast.success(t("discovery.unfollowed"));
       } else {
         const res = await fetch(`${base}/api/follow`, {
           method: "POST",
@@ -587,11 +589,15 @@ export default function Discovery() {
         });
         if (!res.ok) throw new Error("Follow failed");
         setFollowingUserIds((prev) => new Set(prev).add(uid));
-        toast.success("Following");
+        toast.success(t("discovery.following"));
       }
     } catch (e) {
       console.error(e);
-      toast.error(isFollowing ? "Failed to unfollow" : "Failed to follow");
+      toast.error(
+        isFollowing
+          ? t("discovery.unfollowFailed")
+          : t("discovery.followFailed"),
+      );
     } finally {
       setFollowUserLoading((prev) => {
         const next = new Set(prev);
@@ -657,7 +663,7 @@ export default function Discovery() {
       );
     } catch (error) {
       console.error("Error loading comments:", error);
-      toast.error("Failed to load comments");
+      toast.error(t("discovery.loadCommentsFailed"));
     } finally {
       setLoadingComments((prev) => ({ ...prev, [postId]: false }));
     }
@@ -683,7 +689,7 @@ export default function Discovery() {
 
   async function handleSubmitComment(postId) {
     if (!user) {
-      toast.error("Please sign in to comment");
+      toast.error(t("discovery.signInToComment"));
       navigate("/signin");
       return;
     }
@@ -691,7 +697,7 @@ export default function Discovery() {
 
     const content = commentInputs[postId]?.trim();
     if (!content) {
-      toast.error("Please enter a comment");
+      toast.error(t("discovery.enterComment"));
       return;
     }
 
@@ -739,10 +745,10 @@ export default function Discovery() {
         ),
       );
 
-      toast.success("Comment added!");
+      toast.success(t("discovery.commentAdded"));
     } catch (error) {
       console.error("Error creating comment:", error);
-      toast.error(error.message || "Failed to create comment");
+      toast.error(error.message || t("discovery.createCommentFailed"));
     } finally {
       setSubmittingComment((prev) => ({ ...prev, [postId]: false }));
     }
@@ -750,7 +756,7 @@ export default function Discovery() {
 
   async function handleLikeComment(postId, commentId, isLiked) {
     if (!user) {
-      toast.error("Please sign in to like comments");
+      toast.error(t("discovery.signInToLikeComments"));
       navigate("/signin");
       return;
     }
@@ -798,7 +804,7 @@ export default function Discovery() {
       }));
     } catch (error) {
       console.error("Error toggling comment like:", error);
-      toast.error("Failed to like comment");
+      toast.error(t("discovery.likeCommentFailed"));
     }
   }
 
@@ -812,7 +818,7 @@ export default function Discovery() {
 
     // Check if user is logged in
     if (!token) {
-      toast.error("Please sign in to upload files");
+      toast.error(t("discovery.signInToUploadFiles"));
       navigate("/signin");
       throw new Error("Not authenticated");
     }
@@ -820,7 +826,7 @@ export default function Discovery() {
     // Check if user is a researcher
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (userData?.role !== "researcher") {
-      toast.error("Only researchers can upload files");
+      toast.error(t("discovery.researchersOnlyUploadFiles"));
       throw new Error("Unauthorized: Only researchers can upload files");
     }
 
@@ -840,7 +846,7 @@ export default function Discovery() {
       if (response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        toast.error("Session expired. Please sign in again.");
+        toast.error(t("discovery.sessionExpired"));
         navigate("/signin");
         throw new Error("Token expired");
       }
@@ -887,7 +893,7 @@ export default function Discovery() {
   async function handleFileUpload(event) {
     // Check if user is logged in
     if (!user) {
-      toast.error("Please sign in to upload files");
+      toast.error(t("discovery.signInToUploadFiles"));
       navigate("/signin");
       if (event.target) event.target.value = "";
       return;
@@ -895,7 +901,7 @@ export default function Discovery() {
 
     // Check if user is a researcher
     if (user.role !== "researcher") {
-      toast.error("Only researchers can upload files");
+      toast.error(t("discovery.researchersOnlyUploadFiles"));
       if (event.target) event.target.value = "";
       return;
     }
@@ -911,20 +917,22 @@ export default function Discovery() {
     });
 
     if (validFiles.length === 0) {
-      toast.error("Please select only images or PDF files");
+      toast.error(t("discovery.onlyImagesOrPdf"));
       if (event.target) event.target.value = "";
       return;
     }
 
     if (validFiles.length < files.length) {
-      toast.error("Some files were skipped. Only images and PDFs are allowed.");
+      toast.error(t("discovery.filesSkippedNonMedia"));
     }
 
     setUploading(true);
     try {
       const uploadedFiles = await uploadToBackend(validFiles);
       setComposerAttachments((prev) => [...prev, ...uploadedFiles]);
-      toast.success(`${uploadedFiles.length} file(s) uploaded successfully`);
+      toast.success(
+        t("discovery.filesUploaded", { count: uploadedFiles.length }),
+      );
     } catch (error) {
       console.error("Error uploading files:", error);
       // Don't show error toast if it's a redirect (token expired/not authenticated)
@@ -932,7 +940,7 @@ export default function Discovery() {
         error.message !== "Token expired" &&
         error.message !== "Not authenticated"
       ) {
-        toast.error(error.message || "Failed to upload files");
+        toast.error(error.message || t("discovery.uploadFilesFailed"));
       }
     } finally {
       setUploading(false);
@@ -944,7 +952,7 @@ export default function Discovery() {
   async function handleVideoUpload(event) {
     // Check if user is logged in
     if (!user) {
-      toast.error("Please sign in to upload videos");
+      toast.error(t("discovery.signInToUploadVideos"));
       navigate("/signin");
       if (event.target) event.target.value = "";
       return;
@@ -952,7 +960,7 @@ export default function Discovery() {
 
     // Check if user is a researcher
     if (user.role !== "researcher") {
-      toast.error("Only researchers can upload videos");
+      toast.error(t("discovery.researchersOnlyVideos"));
       if (event.target) event.target.value = "";
       return;
     }
@@ -964,7 +972,7 @@ export default function Discovery() {
     const videoFiles = files.filter((file) => file.type.startsWith("video/"));
 
     if (videoFiles.length === 0) {
-      toast.error("Please select video files");
+      toast.error(t("discovery.selectVideoFiles"));
       if (event.target) event.target.value = "";
       return;
     }
@@ -973,7 +981,7 @@ export default function Discovery() {
     const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
     const sizeValidFiles = videoFiles.filter((file) => {
       if (file.size > maxSize) {
-        toast.error(`Video "${file.name}" exceeds 10 MB size limit`);
+        toast.error(t("discovery.videoTooLarge", { name: file.name }));
         return false;
       }
       return true;
@@ -994,7 +1002,12 @@ export default function Discovery() {
           await validateVideoDuration(file);
           validFiles.push(file);
         } catch (error) {
-          toast.error(`Video "${file.name}": ${error.message}`);
+          toast.error(
+            t("discovery.videoUploadError", {
+              name: file.name,
+              message: error.message,
+            }),
+          );
         }
       }
 
@@ -1005,7 +1018,9 @@ export default function Discovery() {
 
       const uploadedFiles = await uploadToBackend(validFiles);
       setComposerAttachments((prev) => [...prev, ...uploadedFiles]);
-      toast.success(`${uploadedFiles.length} video(s) uploaded successfully`);
+      toast.success(
+        t("discovery.videosUploaded", { count: uploadedFiles.length }),
+      );
     } catch (error) {
       console.error("Error uploading videos:", error);
       // Don't show error toast if it's a redirect (token expired/not authenticated)
@@ -1013,7 +1028,7 @@ export default function Discovery() {
         error.message !== "Token expired" &&
         error.message !== "Not authenticated"
       ) {
-        toast.error(error.message || "Failed to upload videos");
+        toast.error(error.message || t("discovery.uploadVideosFailed"));
       }
     } finally {
       setUploading(false);
@@ -1028,20 +1043,22 @@ export default function Discovery() {
 
   async function handleCreatePost() {
     if (!user) {
-      toast.error("Please sign in to create a post");
+      toast.error(t("discovery.signInToCreatePost"));
       navigate("/signin");
       return;
     }
     if (!requireEmailVerification()) return;
 
     if (!composerContent.trim()) {
-      toast.error("Please enter some content");
+      toast.error(t("discovery.enterContent"));
       return;
     }
 
     const wordCount = countWords(composerContent);
     if (wordCount > POST_MAX_WORDS) {
-      toast.error(`Content is limited to ${POST_MAX_WORDS} words.`);
+      toast.error(
+        t("discovery.contentWordLimit", { max: POST_MAX_WORDS }),
+      );
       return;
     }
 
@@ -1078,7 +1095,7 @@ export default function Discovery() {
       }
 
       const data = await response.json();
-      toast.success("Post created successfully!");
+      toast.success(t("discovery.postCreated"));
 
       // Reset composer
       setComposerContent("");
@@ -1092,21 +1109,29 @@ export default function Discovery() {
       loadPosts(true);
     } catch (error) {
       console.error("Error creating post:", error);
-      toast.error(error.message || "Failed to create post");
+      toast.error(error.message || t("discovery.createPostFailed"));
     }
   }
 
   function formatTimeAgo(date) {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 60) {
+      return t("discovery.timeSecondsAgo", { count: seconds });
+    }
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 60) {
+      return t("discovery.timeMinutesAgo", { count: minutes });
+    }
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) {
+      return t("discovery.timeHoursAgo", { count: hours });
+    }
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days}d ago`;
+    if (days < 7) {
+      return t("discovery.timeDaysAgo", { count: days });
+    }
     const weeks = Math.floor(days / 7);
-    return `${weeks}w ago`;
+    return t("discovery.timeWeeksAgo", { count: weeks });
   }
 
   return (
@@ -1119,12 +1144,10 @@ export default function Discovery() {
           <div className="text-center mb-6 animate-fade-in">
             <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-[#2F3C96] via-[#474F97] to-[#D0C4E2] bg-clip-text text-transparent mb-1">
               <AuroraText speed={2.5} colors={["#2F3C96"]}>
-                Discovery
+                {t("discovery.title")}
               </AuroraText>
             </h1>
-            <p className="text-sm text-slate-600">
-              Connect. Share your thoughts, experiences, and work.
-            </p>
+            <p className="text-sm text-slate-600">{t("discovery.subtitle")}</p>
           </div>
 
           {/* Tabs for News / Community sections */}
@@ -1139,7 +1162,7 @@ export default function Discovery() {
                     : "text-[#787878] hover:text-[#484848]"
                 }`}
               >
-                News & Articles
+                {t("discovery.tabNewsArticles")}
               </button>
               <button
                 type="button"
@@ -1150,7 +1173,7 @@ export default function Discovery() {
                     : "text-[#787878] hover:text-[#484848]"
                 }`}
               >
-                Community
+                {t("discovery.tabCommunity")}
               </button>
             </div>
           </div>
@@ -1169,7 +1192,7 @@ export default function Discovery() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex-1 h-px bg-gray-200" />
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2">
-                  Community Feed
+                  {t("discovery.communityFeedDivider")}
                 </span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
@@ -1208,8 +1231,8 @@ export default function Discovery() {
                         }}
                         placeholder={
                           user?.role === "researcher"
-                            ? "Share research or experiences..."
-                            : "What's on your mind?"
+                            ? t("discovery.placeholderResearcherComposer")
+                            : t("discovery.placeholderPatientComposer")
                         }
                         className="flex-1 min-w-0 py-3 px-3 text-sm border-0 bg-gray-50 rounded-lg focus:ring-2 focus:ring-[#2F3C96]/20 focus:bg-white placeholder:text-gray-400 outline-none"
                         onFocus={() => setComposerOpen(true)}
@@ -1223,7 +1246,7 @@ export default function Discovery() {
                         }
                         className="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg bg-[#2F3C96] text-white hover:bg-[#253075] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        Post
+                        {t("discovery.post")}
                       </button>
                     </div>
                   </div>
@@ -1243,11 +1266,10 @@ export default function Discovery() {
               ) : posts.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                   <p className="text-gray-700 font-medium mb-1">
-                    Posts from the community will appear here
+                    {t("discovery.emptyFeedTitle")}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Stories, research updates, and insights from patients and
-                    researchers.
+                    {t("discovery.emptyFeedSubtitle")}
                   </p>
                 </div>
               ) : (
@@ -1306,7 +1328,7 @@ export default function Discovery() {
                                   <h3 className="font-semibold text-[#2F3C96]">
                                     {getDiscoveryAuthorName(
                                       post.authorUserId,
-                                      "Anonymous",
+                                      t("discovery.anonymous"),
                                       post.authorRole,
                                     )}
                                   </h3>
@@ -1349,12 +1371,12 @@ export default function Discovery() {
                                     ) : isFollowingAuthor ? (
                                       <>
                                         <UserCheck className="w-4 h-4" />
-                                        Following
+                                        {t("discovery.followingLabel")}
                                       </>
                                     ) : (
                                       <>
                                         <UserPlus className="w-4 h-4" />
-                                        Follow
+                                        {t("discovery.follow")}
                                       </>
                                     )}
                                   </button>
@@ -1363,7 +1385,7 @@ export default function Discovery() {
                                   <button
                                     onClick={() => handleDeletePost(post._id)}
                                     className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
-                                    title="Delete post"
+                                    title={t("discovery.deletePostTitle")}
                                   >
                                     <X className="w-4 h-4" />
                                   </button>
@@ -1421,12 +1443,12 @@ export default function Discovery() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                   <span className="text-xs font-medium text-[#2F3C96]">
-                                    Forum Question
+                                    {t("discovery.forumQuestion")}
                                   </span>
                                 </div>
                                 <h3 className="font-semibold text-[#484848] mb-2 line-clamp-2">
                                   {post.linkedThreadId.title ||
-                                    "Forum Question"}
+                                    t("discovery.forumQuestion")}
                                 </h3>
                                 {post.linkedThreadId.body && (
                                   <p className="text-sm text-[#787878] line-clamp-3 mb-2">
@@ -1435,7 +1457,7 @@ export default function Discovery() {
                                 )}
                                 <p className="text-xs text-[#787878] mt-2 flex items-center gap-1">
                                   <MessageCircle className="w-3 h-3" />
-                                  Click to view in forums
+                                  {t("discovery.clickToViewInForums")}
                                 </p>
                               </div>
                             </div>
@@ -1451,7 +1473,12 @@ export default function Discovery() {
                                   <div className="relative group">
                                     <img
                                       src={att.url}
-                                      alt={att.name || `Image ${idx + 1}`}
+                                      alt={
+                                        att.name ||
+                                        t("discovery.imageNumber", {
+                                          n: idx + 1,
+                                        })
+                                      }
                                       className="w-full max-h-96 object-contain rounded-lg border border-gray-200 bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
                                       onClick={() =>
                                         window.open(att.url, "_blank")
@@ -1471,7 +1498,7 @@ export default function Discovery() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium text-gray-900 truncate">
-                                        {att.name || "Document"}
+                                        {att.name || t("discovery.document")}
                                       </p>
                                       {att.size && (
                                         <p className="text-xs text-gray-500">
@@ -1480,7 +1507,7 @@ export default function Discovery() {
                                       )}
                                     </div>
                                     <span className="text-xs text-brand-royal-blue font-medium">
-                                      View
+                                      {t("discovery.view")}
                                     </span>
                                   </a>
                                 )}
@@ -1549,7 +1576,9 @@ export default function Discovery() {
                                           [post._id]: e.target.value,
                                         }))
                                       }
-                                      placeholder="Write a comment..."
+                                      placeholder={t(
+                                        "discovery.writeCommentPlaceholder",
+                                      )}
                                       className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent resize-none text-sm"
                                       rows={2}
                                       onKeyDown={(e) => {
@@ -1573,8 +1602,8 @@ export default function Discovery() {
                                         className="px-4 py-1.5 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-opacity-90 disabled:opacity-50 transition-colors"
                                       >
                                         {submittingComment[post._id]
-                                          ? "Posting..."
-                                          : "Post"}
+                                          ? t("discovery.posting")
+                                          : t("discovery.post")}
                                       </button>
                                     </div>
                                   </div>
@@ -1605,7 +1634,7 @@ export default function Discovery() {
                                         <span className="text-sm font-semibold text-[#2F3C96]">
                                           {getDiscoveryAuthorName(
                                             comment.authorUserId,
-                                            "Anonymous",
+                                            t("discovery.anonymous"),
                                             comment.authorRole,
                                           )}
                                         </span>
@@ -1659,7 +1688,7 @@ export default function Discovery() {
                                                       <span className="text-xs font-semibold text-[#2F3C96]">
                                                         {getDiscoveryAuthorName(
                                                           childComment.authorUserId,
-                                                          "Anonymous",
+                                                          t("discovery.anonymous"),
                                                           childComment.authorRole,
                                                         )}
                                                       </span>
@@ -1712,7 +1741,7 @@ export default function Discovery() {
                               </div>
                             ) : (
                               <p className="text-sm text-gray-500 text-center py-4">
-                                No comments yet. Be the first to comment!
+                                {t("discovery.noCommentsYet")}
                               </p>
                             )}
                           </div>
@@ -1731,7 +1760,7 @@ export default function Discovery() {
                       {loadingMore ? (
                         <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#2F3C96]" />
                       ) : (
-                        "Load More"
+                        t("discovery.loadMore")
                       )}
                     </button>
                   )}
@@ -1747,7 +1776,7 @@ export default function Discovery() {
             <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-200 flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-brand-royal-blue">
-                  Create Post
+                  {t("discovery.createPostModalTitle")}
                 </h2>
                 <button
                   onClick={() => setComposerOpen(false)}
@@ -1761,7 +1790,7 @@ export default function Discovery() {
                 {/* Content */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Content
+                    {t("discovery.contentLabel")}
                   </label>
                   <textarea
                     value={composerContent}
@@ -1772,7 +1801,11 @@ export default function Discovery() {
                       );
                       setComposerContent(next);
                     }}
-                    placeholder="What's on your mind?"
+                    placeholder={
+                      user?.role === "researcher"
+                        ? t("discovery.placeholderResearcherComposer")
+                        : t("discovery.placeholderPatientComposer")
+                    }
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-royal-blue focus:border-transparent resize-none"
                     rows={6}
                   />
@@ -1785,9 +1818,10 @@ export default function Discovery() {
                 {user?.role === "patient" && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <p className="text-sm text-amber-900">
-                      <span className="font-semibold">⚠️ Reminder:</span> Do not
-                      share personal or identifiable health information. Consult
-                      healthcare professionals for medical concerns.
+                      <span className="font-semibold">
+                        ⚠️ {t("discovery.reminder")}
+                      </span>{" "}
+                      {t("discovery.patientDisclaimer")}
                     </p>
                   </div>
                 )}
@@ -1796,7 +1830,7 @@ export default function Discovery() {
                 {composerAttachments.length > 0 && (
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      Attachments
+                      {t("discovery.attachmentsLabel")}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {composerAttachments.map((att, idx) => (
@@ -1804,14 +1838,19 @@ export default function Discovery() {
                           {att.type === "image" ? (
                             <img
                               src={att.url}
-                              alt={att.name || `Attachment ${idx + 1}`}
+                              alt={
+                                att.name ||
+                                t("discovery.attachmentNumber", {
+                                  n: idx + 1,
+                                })
+                              }
                               className="w-full h-32 object-cover rounded-lg"
                             />
                           ) : (
                             <div className="p-3 bg-gray-100 rounded-lg flex items-center gap-2">
                               <FileText className="w-5 h-5 text-brand-royal-blue" />
                               <span className="text-sm truncate">
-                                {att.name || "File"}
+                                {att.name || t("discovery.file")}
                               </span>
                             </div>
                           )}
@@ -1831,13 +1870,13 @@ export default function Discovery() {
                 {user?.role === "researcher" && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 font-medium">
-                      Add files:
+                      {t("discovery.addFiles")}
                     </span>
                     <button
                       onClick={() => imageInputRef.current?.click()}
                       disabled={uploading}
                       className="p-2 text-gray-500 hover:text-[#2F3C96] hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Add Image"
+                      title={t("discovery.addImageTitle")}
                     >
                       {uploading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -1849,7 +1888,7 @@ export default function Discovery() {
                       onClick={() => videoInputRef.current?.click()}
                       disabled={uploading}
                       className="p-2 text-gray-500 hover:text-[#2F3C96] hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Add Video"
+                      title={t("discovery.addVideoTitle")}
                     >
                       {uploading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -1861,7 +1900,7 @@ export default function Discovery() {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
                       className="p-2 text-gray-500 hover:text-[#2F3C96] hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
-                      title="Attach File"
+                      title={t("discovery.attachFileTitle")}
                     >
                       {uploading ? (
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -1903,7 +1942,7 @@ export default function Discovery() {
                     onClick={() => setComposerOpen(false)}
                     className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                   >
-                    Cancel
+                    {t("discovery.cancel")}
                   </button>
                   <button
                     onClick={handleCreatePost}
@@ -1914,7 +1953,7 @@ export default function Discovery() {
                     }
                     className="px-6 py-2 bg-brand-royal-blue text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50"
                   >
-                    Post
+                    {t("discovery.post")}
                   </button>
                 </div>
               </div>

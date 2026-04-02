@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import {
   Bell,
@@ -27,6 +28,7 @@ import { BorderBeam } from "@/components/ui/border-beam";
 import { AuroraText } from "@/components/ui/aurora-text";
 
 export default function Notifications() {
+  const { t } = useTranslation("common");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("activity");
@@ -67,7 +69,7 @@ export default function Notifications() {
     
     // Redirect to sign in if user is not logged in
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in first");
+      toast.error(t("notificationsPage.signInFirst"));
       navigate("/signin");
       return;
     }
@@ -355,18 +357,20 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Connection request accepted!");
+        toast.success(t("notificationsPage.connectionAccepted"));
         const userId = user?._id || user?.id;
         loadConnectionRequests(userId);
         loadConnections(userId);
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to accept connection request");
+        toast.error(
+          errorData.error || t("notificationsPage.connectionAcceptFailed"),
+        );
       }
     } catch (error) {
       console.error("Error accepting connection request:", error);
-      toast.error("Failed to accept connection request");
+      toast.error(t("notificationsPage.connectionAcceptFailed"));
     }
   }
 
@@ -379,17 +383,19 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Connection request rejected");
+        toast.success(t("notificationsPage.connectionRejected"));
         const userId = user?._id || user?.id;
         loadConnectionRequests(userId);
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to reject connection request");
+        toast.error(
+          errorData.error || t("notificationsPage.connectionRejectFailed"),
+        );
       }
     } catch (error) {
       console.error("Error rejecting connection request:", error);
-      toast.error("Failed to reject connection request");
+      toast.error(t("notificationsPage.connectionRejectFailed"));
     }
   }
 
@@ -401,17 +407,17 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Connection disconnected");
+        toast.success(t("notificationsPage.disconnected"));
         loadConnections(userId);
         loadConversations(userId);
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to disconnect");
+        toast.error(errorData.error || t("notificationsPage.disconnectFailed"));
       }
     } catch (error) {
       console.error("Error disconnecting:", error);
-      toast.error("Failed to disconnect");
+      toast.error(t("notificationsPage.disconnectFailed"));
     }
   }
 
@@ -427,7 +433,7 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Meeting accepted!");
+        toast.success(t("notificationsPage.meetingAccepted"));
         setAcceptMeetingModal({
           open: false,
           requestId: null,
@@ -440,11 +446,11 @@ export default function Notifications() {
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to accept meeting");
+        toast.error(errorData.error || t("notificationsPage.meetingAcceptFailed"));
       }
     } catch (error) {
       console.error("Error accepting meeting request:", error);
-      toast.error("Failed to accept meeting");
+      toast.error(t("notificationsPage.meetingAcceptFailed"));
     }
   }
 
@@ -460,17 +466,19 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Meeting request rejected");
+        toast.success(t("notificationsPage.meetingRejected"));
         const userId = user?._id || user?.id;
         loadMeetingRequests(userId);
         loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to reject meeting request");
+        toast.error(
+          errorData.error || t("notificationsPage.meetingRejectFailed"),
+        );
       }
     } catch (error) {
       console.error("Error rejecting meeting request:", error);
-      toast.error("Failed to reject meeting request");
+      toast.error(t("notificationsPage.meetingRejectFailed"));
     }
   }
 
@@ -530,7 +538,7 @@ export default function Notifications() {
       loadInsights(userId);
     } catch (error) {
       console.error("Error loading conversation:", error);
-      toast.error("Failed to load conversation");
+      toast.error(t("notificationsPage.loadConversationFailed"));
     }
   }
 
@@ -580,7 +588,7 @@ export default function Notifications() {
 
     // Only researchers can send messages
     if (user?.role !== "researcher") {
-      toast.error("Only researchers can send messages");
+      toast.error(t("notificationsPage.researchersOnlyMessages"));
       return;
     }
 
@@ -598,7 +606,7 @@ export default function Notifications() {
       });
 
       if (response.ok) {
-        toast.success("Message sent successfully!");
+        toast.success(t("notificationsPage.messageSent"));
         setNewMessage("");
         // Immediately refresh the conversation
         const userId = user?._id || user?.id;
@@ -608,11 +616,11 @@ export default function Notifications() {
         await loadInsights(userId);
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to send message");
+        toast.error(errorData.error || t("notificationsPage.messageSendFailed"));
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      toast.error(t("notificationsPage.messageSendFailed"));
     }
   }
 

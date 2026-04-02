@@ -327,8 +327,23 @@ function shouldShowExpertContact(expert) {
   return true;
 }
 
-export default function PDFReportDocument({ report, patientFacingLabels = false }) {
+const defaultPdfLabels = {
+  patientContext: "Patient Context",
+  patientName: "Patient Name",
+  medicalCondition: "Medical Condition",
+  location: "Location",
+  keyConcerns: "Key Concerns",
+  medicalInterests: "Medical Interests",
+  notSpecified: "Not specified",
+};
+
+export default function PDFReportDocument({
+  report,
+  patientFacingLabels = false,
+  pdfLabels: pdfLabelsProp = {},
+}) {
   if (!report) return null;
+  const pdfLabels = { ...defaultPdfLabels, ...pdfLabelsProp };
   const sectionTitles = patientFacingLabels
     ? { experts: "Health Experts", publications: "Health Library", trials: "New Treatments" }
     : { experts: "Medical Experts", publications: "Research Publications", trials: "Clinical Trials" };
@@ -368,30 +383,30 @@ export default function PDFReportDocument({ report, patientFacingLabels = false 
       <Page size="A4" style={styles.page}>
         <PageHeader report={report} />
         <View style={styles.section}>
-          <SectionHeader icon={Icons.Patient} title="Patient Context" />
+          <SectionHeader icon={Icons.Patient} title={pdfLabels.patientContext} />
           <View style={styles.sectionContent}>
             <View style={styles.patientGrid}>
               <View style={styles.patientItem}>
-                <Text style={styles.patientLabel}>Patient Name</Text>
+                <Text style={styles.patientLabel}>{pdfLabels.patientName}</Text>
                 <Text style={styles.patientValue}>
-                  {report.patientContext?.name || "Not specified"}
+                  {report.patientContext?.name || pdfLabels.notSpecified}
                 </Text>
               </View>
               <View style={styles.patientItem}>
-                <Text style={styles.patientLabel}>Medical Condition</Text>
+                <Text style={styles.patientLabel}>{pdfLabels.medicalCondition}</Text>
                 <Text style={styles.patientValue}>
-                  {report.patientContext?.condition || "Not specified"}
+                  {report.patientContext?.condition || pdfLabels.notSpecified}
                 </Text>
               </View>
               <View style={styles.patientItem}>
-                <Text style={styles.patientLabel}>Location</Text>
+                <Text style={styles.patientLabel}>{pdfLabels.location}</Text>
                 <Text style={styles.patientValue}>
-                  {report.patientContext?.location || "Not specified"}
+                  {report.patientContext?.location || pdfLabels.notSpecified}
                 </Text>
               </View>
               {report.patientContext?.keyConcerns?.length > 0 && (
                 <View style={styles.patientItem}>
-                  <Text style={styles.patientLabel}>Key Concerns</Text>
+                  <Text style={styles.patientLabel}>{pdfLabels.keyConcerns}</Text>
                   <Text style={styles.patientValue}>
                     {report.patientContext.keyConcerns.join(", ")}
                   </Text>
@@ -399,7 +414,7 @@ export default function PDFReportDocument({ report, patientFacingLabels = false 
               )}
               {report.patientContext?.interests?.length > 0 && (
                 <View style={styles.patientItem}>
-                  <Text style={styles.patientLabel}>Medical Interests</Text>
+                  <Text style={styles.patientLabel}>{pdfLabels.medicalInterests}</Text>
                   <Text style={styles.patientValue}>
                     {report.patientContext.interests.join(", ")}
                   </Text>

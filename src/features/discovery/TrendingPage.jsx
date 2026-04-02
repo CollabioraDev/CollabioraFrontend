@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,15 +37,18 @@ const fadeIn = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
 };
 
-const SECTIONS = [
-  { id: "experts", label: "Trending Experts", icon: Users },
-  { id: "trials", label: "Trending Trials", icon: Beaker },
-  { id: "communities", label: "Trending Communities", icon: MessageCircle },
-  { id: "posts", label: "Trending Posts", icon: FileText },
-];
-
 export default function Trending() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const SECTIONS = useMemo(
+    () => [
+      { id: "experts", label: t("trending.experts"), icon: Users },
+      { id: "trials", label: t("trending.trials"), icon: Beaker },
+      { id: "communities", label: t("trending.communities"), icon: MessageCircle },
+      { id: "posts", label: t("trending.posts"), icon: FileText },
+    ],
+    [t],
+  );
   const [activeSection, setActiveSection] = useState("experts");
   const [expertsActive, setExpertsActive] = useState([]);
   const [newlyRecruitingTrials, setNewlyRecruitingTrials] = useState([]);
@@ -124,7 +128,7 @@ export default function Trending() {
   async function favorite(item) {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -182,11 +186,16 @@ export default function Trending() {
       if (!res.ok) throw new Error("Failed to toggle favorite");
 
       const data = await res.json();
-      toast.success(data.message || (isFavorited ? "Removed from favorites" : "Added to favorites"));
+      toast.success(
+        data.message ||
+          (isFavorited
+            ? t("toasts.favoritesRemoved")
+            : t("toasts.favoritesAdded")),
+      );
     } catch (error) {
       console.error("Error toggling favorite:", error);
       setFavorites(previousFavorites);
-      toast.error("Failed to update favorites");
+      toast.error(t("toasts.favoritesFailed"));
     } finally {
       setFavoritingItems((prev) => {
         const newSet = new Set(prev);

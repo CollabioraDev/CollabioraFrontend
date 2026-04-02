@@ -5,6 +5,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, X } from "lucide-react";
 
@@ -106,6 +107,7 @@ function PageTutorial({
   onStepChange,
   centerTooltip: centerTooltipProp = true,
 }) {
+  const { t } = useTranslation("common");
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [targetRect, setTargetRect] = useState(null);
@@ -498,15 +500,20 @@ function PageTutorial({
                 />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-sm">Yori's Tour</h3>
+                <h3 className="font-bold text-white text-sm">
+                  {t("pageTutorial.yorisTour")}
+                </h3>
                 <p className="text-xs text-white/80">
-                  Step {currentStep + 1} of {totalSteps}
+                  {t("pageTutorial.stepOf", {
+                    current: currentStep + 1,
+                    total: totalSteps,
+                  })}
                 </p>
               </div>
               <button
                 onClick={handleSkip}
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-white/90 hover:bg-white/20 transition-colors"
-                aria-label="Skip tutorial"
+                aria-label={t("pageTutorial.skipAria")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -550,7 +557,7 @@ function PageTutorial({
                   onClick={handleSkip}
                   className="text-sm text-slate-500 hover:text-slate-700 font-medium"
                 >
-                  Skip tour
+                  {t("pageTutorial.skipTour")}
                 </button>
                 <div className="flex gap-2 items-center">
                   {!isFirst && !step.waitForAction && (
@@ -559,12 +566,12 @@ function PageTutorial({
                       className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
                     >
                       <ChevronLeft className="w-4 h-4" />
-                      Back
+                      {t("pageTutorial.prev")}
                     </button>
                   )}
                   {step.waitForAction ? (
                     <p className="text-sm text-[#2F3C96] font-medium animate-pulse">
-                      Click the Search button to continue →
+                      {t("pageTutorial.clickSearchContinue")}
                     </p>
                   ) : (
                     <button
@@ -591,7 +598,8 @@ function PageTutorial({
                         background: "linear-gradient(135deg, #2F3C96, #474F97)",
                       }}
                     >
-                      {step.actionLabel || (isLast ? "Done" : "Next")}
+                      {step.actionLabel ||
+                        (isLast ? t("pageTutorial.done") : t("pageTutorial.next"))}
                       {!step.actionLabel && !isLast && (
                         <ChevronRight className="w-4 h-4" />
                       )}

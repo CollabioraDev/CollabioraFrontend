@@ -11,8 +11,10 @@ import {
   X,
   Users as UsersIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function MobileBottomNav({ isPatient }) {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const [showExploreMenu, setShowExploreMenu] = useState(false);
 
@@ -43,28 +45,28 @@ export default function MobileBottomNav({ isPatient }) {
   };
 
   const tabs = [
-    { key: "home", label: "Home", to: "/", Icon: Home },
+    { key: "home", label: t("mobileNav.home"), to: "/", Icon: Home },
     {
       key: "dashboard",
-      label: "Dashboard",
+      label: t("mobileNav.dashboard"),
       to: "/dashboard",
       Icon: LayoutDashboard,
     },
     {
       key: "explore",
-      label: "Explore",
+      label: t("mobileNav.explore"),
       to: "/explore",
       Icon: Compass,
     },
     {
       key: "forums",
-      label: "Forums",
+      label: t("mobileNav.forums"),
       to: "/forums",
       Icon: MessageCircle,
     },
     {
       key: "discovery",
-      label: "Discovery",
+      label: t("mobileNav.discovery"),
       to: "/discovery",
       Icon: FileText,
     },
@@ -78,13 +80,13 @@ export default function MobileBottomNav({ isPatient }) {
             <div className="mb-24 w-full max-w-sm rounded-2xl border border-[#D1D3E5] bg-white shadow-lg shadow-slate-900/10 px-3 py-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Explore
+                  {t("mobileNav.exploreMenuTitle")}
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowExploreMenu(false)}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#2F3C96] transition-colors"
-                  aria-label="Close explore menu"
+                  aria-label={t("mobileNav.closeExploreMenu")}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -96,7 +98,9 @@ export default function MobileBottomNav({ isPatient }) {
                 >
                   <Microscope className="h-4 w-4" />
                   <span className="leading-tight">
-                    {isPatient ? "New treatments" : "Trials"}
+                    {isPatient
+                      ? t("mobileNav.patientTrials")
+                      : t("mobileNav.researcherTrials")}
                   </span>
                 </Link>
                 <Link
@@ -105,7 +109,9 @@ export default function MobileBottomNav({ isPatient }) {
                 >
                   <BookOpen className="h-4 w-4" />
                   <span className="leading-tight">
-                    {isPatient ? "Health library" : "Publications"}
+                    {isPatient
+                      ? t("mobileNav.patientPubs")
+                      : t("mobileNav.researcherPubs")}
                   </span>
                 </Link>
                 <Link
@@ -114,7 +120,9 @@ export default function MobileBottomNav({ isPatient }) {
                 >
                   <UsersIcon className="h-4 w-4" />
                   <span className="leading-tight">
-                    {isPatient ? "Health experts" : "Experts"}
+                    {isPatient
+                      ? t("mobileNav.patientExperts")
+                      : t("mobileNav.researcherExperts")}
                   </span>
                 </Link>
               </div>

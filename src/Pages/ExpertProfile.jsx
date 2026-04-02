@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   Heart,
   User,
@@ -41,6 +42,7 @@ import Modal from "../components/ui/Modal.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 
 export default function ExpertProfile() {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -89,7 +91,7 @@ export default function ExpertProfile() {
     setUser(userData);
 
     if (!expertName) {
-      toast.error("Expert information not provided");
+      toast.error(t("expertProfile.expertInfoNotProvided"));
       navigate("/experts");
       return;
     }
@@ -126,7 +128,7 @@ export default function ExpertProfile() {
         setProfile(data.profile);
       } catch (error) {
         console.error("Error fetching profile:", error);
-        toast.error("Failed to load expert profile");
+        toast.error(t("expertProfile.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -177,7 +179,7 @@ export default function ExpertProfile() {
 
   async function toggleFavorite(type, itemId, item) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -336,7 +338,7 @@ export default function ExpertProfile() {
           }?type=${type}&id=${encodeURIComponent(checkId)}`,
           { method: "DELETE" },
         );
-        toast.success("Removed from favorites");
+        toast.success(t("toasts.favoritesRemoved"));
       } else {
         // Store complete item information
         const itemToStore = {
@@ -377,7 +379,7 @@ export default function ExpertProfile() {
             item: itemToStore,
           }),
         });
-        toast.success("Added to favorites");
+        toast.success(t("toasts.favoritesAdded"));
       }
 
       // Refresh favorites from backend
@@ -390,7 +392,7 @@ export default function ExpertProfile() {
       console.error("Error toggling favorite:", error);
       // Revert optimistic update on error
       setFavorites(previousFavorites);
-      toast.error("Failed to update favorites");
+      toast.error(t("toasts.favoritesFailed"));
     } finally {
       // Remove from loading set
       setFavoritingItems((prev) => {
@@ -430,12 +432,12 @@ export default function ExpertProfile() {
   // Send invite to expert
   async function sendInvite() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to invite experts");
+      toast.error(t("expertProfile.signInToInvite"));
       return;
     }
 
     if (hasInvited) {
-      toast.info("You have already invited this expert");
+      toast.info(t("expertProfile.alreadyInvited"));
       return;
     }
 
@@ -457,14 +459,14 @@ export default function ExpertProfile() {
 
       if (response.ok) {
         setHasInvited(true);
-        toast.success("Invite sent successfully!");
+        toast.success(t("expertProfile.inviteSent"));
         setContactModal(false);
       } else {
-        toast.error(data.error || "Failed to send invite");
+        toast.error(data.error || t("expertProfile.inviteFailed"));
       }
     } catch (error) {
       console.error("Error sending invite:", error);
-      toast.error("Failed to send invite. Please try again.");
+      toast.error(t("expertProfile.inviteFailedRetry"));
     } finally {
       setInviteLoading(false);
     }
@@ -621,7 +623,7 @@ export default function ExpertProfile() {
   const copyOrcidToClipboard = () => {
     if (!orcidValue) return;
     navigator.clipboard.writeText(orcidValue);
-    toast.success("ORCID copied to clipboard");
+    toast.success(t("expertProfile.orcidCopied"));
   };
 
   return (
@@ -764,7 +766,7 @@ export default function ExpertProfile() {
                 <button
                   onClick={() => {
                     if (!user?._id && !user?.id) {
-                      toast.error("Please sign in to book a meeting");
+                      toast.error(t("expertProfile.signInToBookMeeting"));
                       return;
                     }
                     setBookMeetingModalOpen(true);
@@ -1269,7 +1271,7 @@ export default function ExpertProfile() {
                 <button
                   onClick={() => {
                     if (!user?._id && !user?.id) {
-                      toast.error("Please sign in to book a meeting");
+                      toast.error(t("expertProfile.signInToBookMeeting"));
                       return;
                     }
                     setBookMeetingModalOpen(true);
@@ -1366,11 +1368,11 @@ export default function ExpertProfile() {
               <button
                 onClick={() => {
                   if (!user?._id && !user?.id) {
-                    toast.error("Please sign in to invite experts");
+                    toast.error(t("expertProfile.signInToInvite"));
                     return;
                   }
                   if (hasInvited) {
-                    toast.info("You have already invited this expert");
+                    toast.info(t("expertProfile.alreadyInvited"));
                     return;
                   }
                   sendInvite();

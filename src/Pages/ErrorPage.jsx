@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
-
 export default function ErrorPage() {
+  const { t } = useTranslation("common");
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function ErrorPage() {
             <div className="inline-flex items-center justify-center rounded-2xl p-3 sm:p-4">
               <img
                 src="/sad-yori-full.webp"
-                alt="Yori – collabiora's friendly assistant"
+                alt={t("errors.yoriAlt")}
                 className="max-h-44 sm:max-h-52 w-auto object-contain object-bottom"
               />
             </div>
@@ -49,7 +50,7 @@ export default function ErrorPage() {
           >
             <span className="text-base font-bold">404</span>
             <span className="text-[#787878]">·</span>
-            <span>Page not found</span>
+            <span>{t("errors.pageNotFound")}</span>
           </motion.div>
 
           {/* Headline */}
@@ -59,7 +60,7 @@ export default function ErrorPage() {
             transition={{ duration: 0.4, delay: 0.25 }}
             className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2"
           >
-            Oops! This page wandered off
+            {t("errors.oops")}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
@@ -67,8 +68,7 @@ export default function ErrorPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             className="text-[#787878] text-base sm:text-lg max-w-sm mx-auto mb-8"
           >
-            We couldn’t find what you’re looking for. No worries, we’ll get you
-            back on track.
+            {t("errors.description")}
           </motion.p>
 
           {/* CTA */}
@@ -81,7 +81,7 @@ export default function ErrorPage() {
               to="/"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-purple-200 text-[#2F3C96] font-semibold text-base shadow-lg shadow-[#D0C4E2]/40 hover:shadow-xl hover:bg-brand-purple-300 hover:text-[#1C2454] active:scale-[0.98] transition-all duration-200"
             >
-              Back to home
+              {t("errors.backHome")}
             </Link>
           </motion.div>
         </div>

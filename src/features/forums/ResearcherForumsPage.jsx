@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { requireEmailVerification } from "../../utils/requireEmailVerification.js";
@@ -263,6 +264,7 @@ const buildConditionTags = (community, threads = []) => {
 };
 
 export default function ResearcherForums() {
+  const { t } = useTranslation("common");
   const [communities, setCommunities] = useState([]);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -543,7 +545,7 @@ export default function ResearcherForums() {
 
   async function handleFollowUserInModal(profileUserId, profileRole) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to follow");
+      toast.error(t("discovery.signInToFollow"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -566,7 +568,7 @@ export default function ResearcherForums() {
           next.delete(uid);
           return next;
         });
-        toast.success("Unfollowed");
+        toast.success(t("discovery.unfollowed"));
       } else {
         await fetch(`${base}/api/follow`, {
           method: "POST",
@@ -580,11 +582,11 @@ export default function ResearcherForums() {
           }),
         });
         setFollowingUserIds((prev) => new Set(prev).add(uid));
-        toast.success("Following");
+        toast.success(t("discovery.following"));
       }
     } catch (e) {
       console.error(e);
-      toast.error(isFollowing ? "Failed to unfollow" : "Failed to follow");
+      toast.error(isFollowing ? t("discovery.unfollowFailed") : t("discovery.followFailed"));
     } finally {
       setFollowUserLoading((prev) => {
         const next = new Set(prev);
@@ -620,7 +622,7 @@ export default function ResearcherForums() {
       setFollowingIds(followingSet);
     } catch (error) {
       console.error("Error loading communities:", error);
-      toast.error("Failed to load communities");
+      toast.error(t("discovery.loadCommunitiesFailed"));
     } finally {
       setLoadingCommunities(false);
     }
@@ -654,7 +656,7 @@ export default function ResearcherForums() {
       setPatientThreads(combined);
     } catch (error) {
       console.error("Error loading patient threads:", error);
-      toast.error("Failed to load patient questions");
+      toast.error(t("forums.loadPatientQuestionsFailed"));
       const unansweredDummies = buildUnansweredPatientDummyThreadsForResearcher(communities);
       setPatientThreads(sortPatientThreads(unansweredDummies));
     }
@@ -744,7 +746,7 @@ export default function ResearcherForums() {
       setThreads(mergeDummyResearcherThreads(filtered, promotedKeys));
     } catch (error) {
       console.error("Error loading threads:", error);
-      toast.error("Failed to load threads");
+      toast.error(t("forums.loadThreadsFailed"));
     } finally {
       setLoading(false);
     }
@@ -784,7 +786,7 @@ export default function ResearcherForums() {
       setThreads(mergeDummyResearcherThreads(conditioned, promotedKeys));
     } catch (error) {
       console.error("Error loading threads:", error);
-      toast.error("Failed to load threads");
+      toast.error(t("forums.loadThreadsFailed"));
     } finally {
       setLoading(false);
     }
@@ -922,7 +924,7 @@ export default function ResearcherForums() {
 
   async function toggleFollow(communityId) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to follow communities");
+      toast.error(t("forums.signInToFollowCommunities"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -945,7 +947,7 @@ export default function ResearcherForums() {
           newSet.delete(communityId);
           return newSet;
         });
-        toast.success("Left community");
+        toast.success(t("forums.leftCommunity"));
       } else {
         await fetch(`${base}/api/communities/${communityId}/follow`, {
           method: "POST",
@@ -953,7 +955,7 @@ export default function ResearcherForums() {
           body: JSON.stringify({ userId: user._id || user.id }),
         });
         setFollowingIds((prev) => new Set(prev).add(communityId));
-        toast.success("Joined community!");
+        toast.success(t("forums.joinedCommunity"));
       }
 
       // Update community member counts
@@ -972,7 +974,7 @@ export default function ResearcherForums() {
       );
     } catch (error) {
       console.error("Error toggling follow:", error);
-      toast.error("Failed to update membership");
+      toast.error(t("forums.updateMembershipFailed"));
     } finally {
       setFollowingLoading((prev) => {
         const newSet = new Set(prev);
@@ -986,12 +988,12 @@ export default function ResearcherForums() {
     const file = e.target?.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image (JPEG, PNG, GIF, or WebP)");
+      toast.error(t("forums.chooseImageThumbnail"));
       return;
     }
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please sign in to upload a thumbnail");
+      toast.error(t("forums.signInUploadThumbnail"));
       return;
     }
     setProposeThumbnailUploading(true);
@@ -1012,7 +1014,7 @@ export default function ResearcherForums() {
       if (url) setProposeThumbnailUrl(url);
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to upload thumbnail");
+      toast.error(err.message || t("forums.uploadThumbnailFailed"));
     } finally {
       setProposeThumbnailUploading(false);
       if (e.target) e.target.value = "";
@@ -1022,12 +1024,12 @@ export default function ResearcherForums() {
   async function submitProposeCommunity(e) {
     e?.preventDefault();
     if (!proposeTitle.trim()) {
-      toast.error("Please enter a title");
+      toast.error(t("forums.enterTitle"));
       return;
     }
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please sign in to propose a community");
+      toast.error(t("forums.signInProposeCommunity"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -1047,14 +1049,14 @@ export default function ResearcherForums() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit proposal");
-      toast.success("Your proposal has been submitted. Moderators will review it before approval.");
+      toast.success(t("forums.proposalSubmitted"));
       setProposeCommunityModal(false);
       setProposeTitle("");
       setProposeDescription("");
       setProposeThumbnailUrl("");
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to submit proposal");
+      toast.error(err.message || t("forums.submitProposalFailed"));
     } finally {
       setProposeSubmitting(false);
     }
@@ -1149,7 +1151,7 @@ export default function ResearcherForums() {
 
   async function toggleFavorite(itemId, itemType = "thread", threadOrAuthor = null) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -1173,7 +1175,7 @@ export default function ResearcherForums() {
             (fav) => !(fav.itemId === itemId && fav.itemType === itemType)
           )
         );
-        toast.success("Removed from favorites");
+        toast.success(t("toasts.favoritesRemoved"));
       } else {
         await fetch(`${base}/api/favorites`, {
           method: "POST",
@@ -1188,7 +1190,7 @@ export default function ResearcherForums() {
           ...prev,
           { itemId, itemType, userId: user._id || user.id },
         ]);
-        toast.success("Added to favorites");
+        toast.success(t("toasts.favoritesAdded"));
         if (itemType === "thread" && threadOrAuthor) {
           const authorUserId = threadOrAuthor.authorUserId?._id || threadOrAuthor.authorUserId;
           const username = threadOrAuthor.authorUserId?.username;
@@ -1201,7 +1203,7 @@ export default function ResearcherForums() {
       }
     } catch (error) {
       console.error("Error toggling favorite:", error);
-      toast.error("Failed to update favorite");
+      toast.error(t("forums.updateFavoriteFailed"));
     } finally {
       setFavoritingItems((prev) => {
         const newSet = new Set(prev);
@@ -1213,15 +1215,15 @@ export default function ResearcherForums() {
 
   async function createSubcategory() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to create subcategories");
+      toast.error(t("forums.signInCreateSubcategories"));
       return;
     }
     if (!selectedCommunity) {
-      toast.error("Please select a community first");
+      toast.error(t("forums.selectCommunityFirst"));
       return;
     }
     if (!newSubcategoryName || !newSubcategoryName.trim()) {
-      toast.error("Please enter a subcategory name");
+      toast.error(t("forums.enterSubcategoryName"));
       return;
     }
 
@@ -1246,7 +1248,9 @@ export default function ResearcherForums() {
         if (response.status === 409 && data.redirect) {
           // Similar subcategory exists - redirect user
           toast.error(
-            `Similar subcategory "${data.existingSubcategory.name}" already exists`
+            t("forums.subcategorySimilarExists", {
+              name: data.existingSubcategory.name,
+            })
           );
           setSelectedSubcategory(data.existingSubcategory);
           setNewSubcategoryModal(false);
@@ -1258,7 +1262,7 @@ export default function ResearcherForums() {
         throw new Error(data.error || "Failed to create subcategory");
       }
 
-      toast.success("Subcategory created successfully!");
+      toast.success(t("forums.subcategoryCreated"));
       setNewSubcategoryModal(false);
       setNewSubcategoryName("");
       setNewSubcategoryDescription("");
@@ -1266,7 +1270,7 @@ export default function ResearcherForums() {
       loadSubcategories(selectedCommunity._id);
     } catch (error) {
       console.error("Error creating subcategory:", error);
-      toast.error(error.message || "Failed to create subcategory");
+      toast.error(error.message || t("forums.createSubcategoryFailed"));
     }
   }
 
@@ -1372,19 +1376,19 @@ export default function ResearcherForums() {
 
   async function postThread() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to post");
+      toast.error(t("forums.signInToPost"));
       return;
     }
     if (!requireEmailVerification()) return;
     const communityToUse = modalSelectedCommunity || selectedCommunity;
     if (!communityToUse) {
-      toast.error("Please select a community first");
+      toast.error(t("forums.selectCommunityFirst"));
       return;
     }
     const trimmedTitle = newThreadTitle?.trim() ?? "";
     const trimmedBody = newThreadBody?.trim() ?? "";
     if (!trimmedTitle) {
-      toast.error("Please enter a question or title");
+      toast.error(t("forums.enterQuestionOrTitle"));
       return;
     }
 
@@ -1410,7 +1414,7 @@ export default function ResearcherForums() {
 
       if (!response.ok) throw new Error("Failed to post");
 
-      toast.success("Posted successfully!");
+      toast.success(t("forums.postedSuccessfully"));
       setNewThreadModal(false);
       setNewThreadTitle("");
       setNewThreadBody("");
@@ -1432,20 +1436,20 @@ export default function ResearcherForums() {
       }
     } catch (error) {
       console.error("Error posting:", error);
-      toast.error("Failed to post");
+      toast.error(t("forums.postFailed"));
     }
   }
 
   async function postReply(threadId, parentReplyId = null) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to reply");
+      toast.error(t("forums.signInToReply"));
       return;
     }
     if (!requireEmailVerification()) return;
 
     const body = replyBody[`${threadId}-${parentReplyId || "root"}`] || "";
     if (!body.trim()) {
-      toast.error("Please enter a reply");
+      toast.error(t("forums.enterReply"));
       return;
     }
 
@@ -1492,7 +1496,7 @@ export default function ResearcherForums() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.error || "Failed to post reply");
+        toast.error(errorData.error || t("forums.postReplyFailed"));
         return;
       }
 
@@ -1502,7 +1506,7 @@ export default function ResearcherForums() {
         return newState;
       });
       setReplyingTo(null);
-      toast.success("Reply posted!");
+      toast.success(t("forums.replyPosted"));
 
       if (expandedThreadIds.has(threadId)) {
         const data = await loadThreadDetails(threadId, true);
@@ -1546,13 +1550,13 @@ export default function ResearcherForums() {
       }
     } catch (error) {
       console.error("Error posting reply:", error);
-      toast.error("Failed to post reply");
+      toast.error(t("forums.postReplyFailed"));
     }
   }
 
   async function voteOnThread(threadId, voteType) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to vote");
+      toast.error(t("forums.signInToVote"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -1609,13 +1613,13 @@ export default function ResearcherForums() {
       }
     } catch (error) {
       console.error("Error voting:", error);
-      toast.error("Failed to record vote");
+      toast.error(t("forums.voteFailed"));
     }
   }
 
   async function voteOnReply(replyId, voteType) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to vote");
+      toast.error(t("forums.signInToVote"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -1699,14 +1703,14 @@ export default function ResearcherForums() {
       setExpandedPatientThreads(applyVoteToApiResult);
     } catch (error) {
       console.error("Error voting:", error);
-      toast.error("Failed to record vote");
+      toast.error(t("forums.voteFailed"));
     }
   }
 
   async function updateReply(threadId, replyId, newBody) {
     if (!user?._id && !user?.id) return;
     if (!newBody?.trim()) {
-      toast.error("Reply cannot be empty");
+      toast.error(t("forums.replyEmpty"));
       return;
     }
     setUpdatingReplyIds((prev) => new Set(prev).add(replyId));
@@ -1718,7 +1722,7 @@ export default function ResearcherForums() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Failed to update reply");
+        toast.error(data.error || t("forums.updateReplyFailed"));
         return;
       }
       const updateReplyInThread = (prev) => {
@@ -1738,10 +1742,10 @@ export default function ResearcherForums() {
       setExpandedPatientThreads(updateReplyInThread);
       setEditingReplyId(null);
       setEditReplyBody((prev) => ({ ...prev, [replyId]: undefined }));
-      toast.success("Reply updated");
+      toast.success(t("forums.replyUpdated"));
     } catch (error) {
       console.error("Error updating reply:", error);
-      toast.error("Failed to update reply");
+      toast.error(t("forums.updateReplyFailed"));
     } finally {
       setUpdatingReplyIds((prev) => {
         const next = new Set(prev);
@@ -1763,7 +1767,7 @@ export default function ResearcherForums() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        toast.error(data.error || "Failed to delete reply");
+        toast.error(data.error || t("forums.deleteReplyFailed"));
         return;
       }
       const data = await res.json();
@@ -1797,10 +1801,10 @@ export default function ResearcherForums() {
       );
       setEditingReplyId(null);
       setEditReplyBody((prev) => ({ ...prev, [replyId]: undefined }));
-      toast.success("Reply deleted");
+      toast.success(t("forums.replyDeleted"));
     } catch (error) {
       console.error("Error deleting reply:", error);
-      toast.error("Failed to delete reply");
+      toast.error(t("forums.deleteReplyFailed"));
     } finally {
       setDeletingReplyIds((prev) => {
         const next = new Set(prev);
@@ -2076,7 +2080,7 @@ export default function ResearcherForums() {
               <button
                 onClick={() => {
                   if (!user?._id && !user?.id) {
-                    toast.error("Please sign in to reply");
+                    toast.error(t("forums.signInToReply"));
                     return;
                   }
                   setReplyingTo(
@@ -2386,7 +2390,7 @@ export default function ResearcherForums() {
                       type="button"
                       onClick={() => {
                         if (!user?._id && !user?.id) {
-                          toast.error("Please sign in to propose a community");
+                          toast.error(t("forums.signInProposeCommunity"));
                           return;
                         }
                         setProposeTitle("");
@@ -4340,7 +4344,7 @@ export default function ResearcherForums() {
                         onClick={() => {
                           if (!joinGuidelinesModalCommunity) return;
                           if (!user?._id && !user?.id) {
-                            toast.error("Please sign in to join");
+                            toast.error(t("forums.signInToJoin"));
                             return;
                           }
                           const communityId = joinGuidelinesModalCommunity._id;

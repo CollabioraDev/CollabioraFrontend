@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Layout from "../components/Layout.jsx";
 import Input from "../components/ui/Input.jsx";
 import Button from "../components/ui/Button.jsx";
@@ -8,6 +9,7 @@ import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function ForgotPassword() {
+  const { t } = useTranslation("common");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -15,7 +17,7 @@ export default function ForgotPassword() {
 
   async function handleForgotPassword() {
     if (!email.trim()) {
-      toast.error("Please enter your email address");
+      toast.error(t("auth.forgotPassword.toastEmailRequired"));
       return;
     }
 
@@ -34,19 +36,17 @@ export default function ForgotPassword() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Failed to send reset email");
+        toast.error(data.error || t("auth.forgotPassword.toastSendFailed"));
         setLoading(false);
         return;
       }
 
-      // Always show success (security: prevent email enumeration)
       setSuccess(true);
-      toast.success("If this email exists, we've sent a reset link.");
+      toast.success(t("auth.forgotPassword.toastSuccessGeneric"));
     } catch (e) {
       console.error("Forgot password error:", e);
-      // Still show success to prevent email enumeration
       setSuccess(true);
-      toast.success("If this email exists, we've sent a reset link.");
+      toast.success(t("auth.forgotPassword.toastSuccessGeneric"));
     } finally {
       setLoading(false);
     }
@@ -66,41 +66,38 @@ export default function ForgotPassword() {
               backgroundColor: "rgba(255, 255, 255, 0.98)",
             }}
           >
-            {/* Back Button */}
             <button
               onClick={() => navigate("/signin")}
               className="flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
               style={{ color: "#2F3C96" }}
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Sign In
+              {t("auth.forgotPassword.backToSignIn")}
             </button>
 
-            {/* Header */}
             <div className="text-center space-y-1.5">
               <h1
                 className="text-xl font-bold tracking-tight"
                 style={{ color: "#2F3C96" }}
               >
-                Forgot Password?
+                {t("auth.forgotPassword.title")}
               </h1>
               <p className="text-xs font-medium" style={{ color: "#787878" }}>
                 {success
-                  ? "Check your email for reset instructions"
-                  : "Enter your email to receive a reset link"}
+                  ? t("auth.forgotPassword.subtitleCheckEmail")
+                  : t("auth.forgotPassword.subtitleEnterEmail")}
               </p>
             </div>
 
             {!success ? (
               <>
-                {/* Form */}
                 <div className="space-y-3">
                   <div>
                     <label
                       className="text-xs font-semibold mb-1.5 block"
                       style={{ color: "#2F3C96" }}
                     >
-                      Email
+                      {t("auth.forgotPassword.emailLabel")}
                     </label>
                     <div className="relative">
                       <Mail
@@ -109,7 +106,7 @@ export default function ForgotPassword() {
                       />
                       <Input
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder={t("auth.forgotPassword.emailPlaceholder")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onKeyPress={(e) =>
@@ -134,10 +131,7 @@ export default function ForgotPassword() {
                       borderColor: "#D0C4E2",
                     }}
                   >
-                    <p>
-                      If this email exists, we'll send you a password reset
-                      link that expires in 15 minutes.
-                    </p>
+                    <p>{t("auth.forgotPassword.hintBox")}</p>
                   </div>
 
                   <Button
@@ -160,7 +154,9 @@ export default function ForgotPassword() {
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    {loading ? "Sending..." : "Send Reset Link →"}
+                    {loading
+                      ? t("auth.forgotPassword.sending")
+                      : t("auth.forgotPassword.sendResetLink")}
                   </Button>
                 </div>
               </>
@@ -182,21 +178,13 @@ export default function ForgotPassword() {
                     className="text-sm font-semibold"
                     style={{ color: "#2F3C96" }}
                   >
-                    Check your email
+                    {t("auth.forgotPassword.checkEmailTitle")}
                   </h3>
-                  <p
-                    className="text-xs"
-                    style={{ color: "#787878" }}
-                  >
-                    We've sent a password reset link to{" "}
-                    <span className="font-medium">{email}</span>. The link will
-                    expire in 15 minutes.
+                  <p className="text-xs" style={{ color: "#787878" }}>
+                    {t("auth.forgotPassword.checkEmailBody", { email })}
                   </p>
-                  <p
-                    className="text-xs mt-4"
-                    style={{ color: "#787878" }}
-                  >
-                    Didn't receive the email? Check your spam folder or{" "}
+                  <p className="text-xs mt-4" style={{ color: "#787878" }}>
+                    {t("auth.forgotPassword.spamHintPrefix")}
                     <button
                       onClick={() => {
                         setSuccess(false);
@@ -204,8 +192,9 @@ export default function ForgotPassword() {
                       }}
                       className="font-medium underline"
                       style={{ color: "#2F3C96" }}
+                      type="button"
                     >
-                      try again
+                      {t("auth.forgotPassword.tryAgainButton")}
                     </button>
                     .
                   </p>

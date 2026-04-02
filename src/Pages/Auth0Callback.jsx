@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth0 } from "@auth0/auth0-react";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
@@ -12,6 +13,7 @@ import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
  * It syncs the Auth0 user with our backend database and sets up the session.
  */
 export default function Auth0Callback() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth0();
   const [error, setError] = useState("");
@@ -96,7 +98,7 @@ export default function Auth0Callback() {
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || "Failed to sync user");
+          throw new Error(data.error || t("auth.auth0Callback.syncFailed"));
         }
 
         // ─── STEP A: Create account if brand-new user (no DB record yet) ───
@@ -127,7 +129,7 @@ export default function Auth0Callback() {
           const completeData = await completeRes.json();
           if (!completeRes.ok) {
             throw new Error(
-              completeData.error || "Failed to complete OAuth profile"
+              completeData.error || t("auth.auth0Callback.oauthFailed"),
             );
           }
 
@@ -222,13 +224,13 @@ export default function Auth0Callback() {
         navigate("/yori");
       } catch (e) {
         console.error("OAuth sync error:", e);
-        setError(e.message || "Failed to complete sign in. Please try again.");
+        setError(e.message || t("auth.auth0Callback.signInFailed"));
         setSyncing(false);
       }
     }
 
     syncUserWithBackend();
-  }, [isAuthenticated, isLoading, user, navigate]);
+  }, [isAuthenticated, isLoading, user, navigate, t]);
 
   return (
     <Layout>
@@ -275,7 +277,7 @@ export default function Auth0Callback() {
                     className="text-xl font-bold mb-2"
                     style={{ color: "#DC2626" }}
                   >
-                    Authentication Failed
+                    {t("auth.auth0Callback.authFailed")}
                   </h2>
                   <p className="text-sm mb-4" style={{ color: "#787878" }}>
                     {error}
@@ -288,7 +290,7 @@ export default function Auth0Callback() {
                       color: "#FFFFFF",
                     }}
                   >
-                    Back to Sign In
+                    {t("auth.auth0Callback.backToSignIn")}
                   </button>
                 </>
               ) : (
@@ -314,11 +316,11 @@ export default function Auth0Callback() {
                     style={{ color: "#2F3C96" }}
                   >
                     {syncing
-                      ? "Setting up your account..."
-                      : "Authenticating..."}
+                      ? t("auth.auth0Callback.settingUp")
+                      : t("auth.auth0Callback.authenticating")}
                   </h2>
                   <p className="text-sm" style={{ color: "#787878" }}>
-                    Please wait while we complete your sign in
+                    {t("auth.auth0Callback.pleaseWait")}
                   </p>
                 </>
               )}

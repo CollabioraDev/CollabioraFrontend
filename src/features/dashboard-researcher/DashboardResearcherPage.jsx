@@ -84,6 +84,7 @@ import {
   formatPublicationMonthYear,
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
+import { useTranslation } from "react-i18next";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -99,6 +100,19 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardResearcher() {
+  const { t } = useTranslation("common");
+  const pdfReportLabels = useMemo(
+    () => ({
+      patientContext: t("pdf.patientContext"),
+      patientName: t("pdf.patientName"),
+      medicalCondition: t("pdf.medicalCondition"),
+      location: t("pdf.location"),
+      keyConcerns: t("pdf.keyConcerns"),
+      medicalInterests: t("pdf.medicalInterests"),
+      notSpecified: t("pdf.notSpecified"),
+    }),
+    [t],
+  );
   const [data, setData] = useState({
     trials: [],
     publications: [],
@@ -1975,7 +1989,10 @@ export default function DashboardResearcher() {
         favoritesReportModal.report?.patientContext?.name || "Researcher";
       const fileName = `collabiora-Summary-Report-${String(name).replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`;
       const pdfInstance = pdf(
-        <PDFReportDocument report={favoritesReportModal.report} />,
+        <PDFReportDocument
+          report={favoritesReportModal.report}
+          pdfLabels={pdfReportLabels}
+        />,
       );
       const blob = await pdfInstance.toBlob();
       const url = URL.createObjectURL(blob);

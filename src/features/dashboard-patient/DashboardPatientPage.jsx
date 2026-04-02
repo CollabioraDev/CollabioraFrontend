@@ -85,6 +85,7 @@ import {
   formatPublicationMonthYear,
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
+import { useTranslation } from "react-i18next";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -100,6 +101,19 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardPatient() {
+  const { t } = useTranslation("common");
+  const pdfReportLabels = useMemo(
+    () => ({
+      patientContext: t("pdf.patientContext"),
+      patientName: t("pdf.patientName"),
+      medicalCondition: t("pdf.medicalCondition"),
+      location: t("pdf.location"),
+      keyConcerns: t("pdf.keyConcerns"),
+      medicalInterests: t("pdf.medicalInterests"),
+      notSpecified: t("pdf.notSpecified"),
+    }),
+    [t],
+  );
   const [data, setData] = useState({
     trials: [],
     publications: [],
@@ -626,6 +640,7 @@ export default function DashboardPatient() {
         <PDFReportDocument
           report={favoritesReportModal.report}
           patientFacingLabels
+          pdfLabels={pdfReportLabels}
         />,
       );
       const blob = await pdfInstance.toBlob();

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import {
   Heart,
   User,
@@ -47,6 +48,7 @@ import Modal from "../components/ui/Modal.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 
 export default function CollabioraExpertProfile() {
+  const { t } = useTranslation("common");
   const { userId } = useParams();
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -140,7 +142,7 @@ export default function CollabioraExpertProfile() {
     setUser(userData);
 
     if (!userId) {
-      toast.error("Expert ID not provided");
+      toast.error(t("expertProfile.expertIdNotProvided"));
       navigate("/dashboard/patient");
       return;
     }
@@ -222,7 +224,7 @@ export default function CollabioraExpertProfile() {
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
-        toast.error("Failed to load expert profile");
+        toast.error(t("expertProfile.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -260,7 +262,7 @@ export default function CollabioraExpertProfile() {
 
   async function toggleFavorite(type, itemId, item) {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -391,7 +393,7 @@ export default function CollabioraExpertProfile() {
           }?type=${type}&id=${encodeURIComponent(checkId)}`,
           { method: "DELETE" },
         );
-        toast.success("Removed from favorites");
+        toast.success(t("toasts.favoritesRemoved"));
       } else {
         const itemToStore = {
           ...item,
@@ -414,7 +416,7 @@ export default function CollabioraExpertProfile() {
             item: itemToStore,
           }),
         });
-        toast.success("Added to favorites");
+        toast.success(t("toasts.favoritesAdded"));
       }
 
       // Refresh favorites from backend
@@ -427,7 +429,7 @@ export default function CollabioraExpertProfile() {
       console.error("Error toggling favorite:", error);
       // Revert optimistic update on error
       setFavorites(previousFavorites);
-      toast.error("Failed to update favorites");
+      toast.error(t("toasts.favoritesFailed"));
     } finally {
       // Remove from loading set
       setFavoritingItems((prev) => {
@@ -440,7 +442,7 @@ export default function CollabioraExpertProfile() {
 
   async function toggleFollow() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to follow experts");
+      toast.error(t("expertProfile.signInToFollow"));
       return;
     }
 
@@ -454,7 +456,7 @@ export default function CollabioraExpertProfile() {
             followingId: userId,
           }),
         });
-        toast.success("Unfollowed successfully");
+        toast.success(t("expertProfile.unfollowed"));
         setFollowingStatus(false);
       } else {
         await fetch(`${base}/api/follow`, {
@@ -467,28 +469,28 @@ export default function CollabioraExpertProfile() {
             followingRole: "researcher",
           }),
         });
-        toast.success("Following successfully!");
+        toast.success(t("expertProfile.followingSuccess"));
         setFollowingStatus(true);
       }
     } catch (error) {
       console.error("Error toggling follow:", error);
-      toast.error("Failed to update follow status");
+      toast.error(t("expertProfile.followUpdateFailed"));
     }
   }
 
   async function sendMeetingRequest() {
     if (!meetingRequestModal.topic.trim()) {
-      toast.error("Please enter a topic / reason for the meeting");
+      toast.error(t("expertProfile.meetingTopicRequired"));
       return;
     }
 
     if (!meetingRequestModal.shortDescription.trim()) {
-      toast.error("Please add a short description");
+      toast.error(t("expertProfile.meetingDescriptionRequired"));
       return;
     }
 
     if (!meetingRequestModal.message.trim()) {
-      toast.error("Please enter a message");
+      toast.error(t("expertProfile.meetingMessageRequired"));
       return;
     }
 
@@ -498,17 +500,17 @@ export default function CollabioraExpertProfile() {
       !meetingRequestModal.preferredSlotStartUtc ||
       !meetingRequestModal.preferredSlotEndUtc
     ) {
-      toast.error("Please select a date and time");
+      toast.error(t("expertProfile.meetingDateRequired"));
       return;
     }
 
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to send meeting requests");
+      toast.error(t("expertProfile.signInMeeting"));
       return;
     }
 
     if (user.role !== "patient") {
-      toast.error("Only patients can send meeting requests to experts");
+      toast.error(t("expertProfile.onlyPatientsMeeting"));
       return;
     }
 
@@ -539,7 +541,7 @@ export default function CollabioraExpertProfile() {
         throw new Error(data.error || "Failed to send meeting request");
       }
 
-      toast.success("Meeting request sent successfully!");
+      toast.success(t("expertProfile.meetingRequestSent"));
       setMeetingRequestModal(getInitialMeetingRequestModal());
       setMeetingRequestStatus({
         hasRequest: true,
@@ -557,7 +559,7 @@ export default function CollabioraExpertProfile() {
       }
     } catch (error) {
       console.error("Error sending meeting request:", error);
-      toast.error(error.message || "Failed to send meeting request");
+      toast.error(error.message || t("expertProfile.meetingRequestFailed"));
     }
   }
 
@@ -633,7 +635,7 @@ export default function CollabioraExpertProfile() {
         throw new Error(err.error || "Failed to send questions");
       }
       if (questions.trim()) {
-        toast.success("Your questions have been sent to the researcher.");
+        toast.success(t("expertProfile.questionsSent"));
       }
       setQuestionsAfterBookingModal({
         open: false,
@@ -644,19 +646,19 @@ export default function CollabioraExpertProfile() {
       });
     } catch (error) {
       console.error("Error submitting questions:", error);
-      toast.error(error.message || "Failed to send questions");
+      toast.error(error.message || t("expertProfile.questionsFailed"));
       setQuestionsAfterBookingModal((prev) => ({ ...prev, submitting: false }));
     }
   }
 
   async function sendConnectionRequest() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to send connection requests");
+      toast.error(t("expertProfile.signInToSendConnectionRequest"));
       return;
     }
 
     if (user.role !== "researcher") {
-      toast.error("Only researchers can send connection requests");
+      toast.error(t("expertProfile.researchersOnlyConnectionRequest"));
       return;
     }
 
@@ -673,10 +675,10 @@ export default function CollabioraExpertProfile() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send connection request");
+        throw new Error(errorData.error || t("expertProfile.connectionRequestFailed"));
       }
 
-      toast.success("Connection request sent successfully!");
+      toast.success(t("expertProfile.connectionRequestSent"));
       setConnectionRequestModal({ open: false, message: "" });
       setConnectionRequestStatus({
         hasRequest: true,
@@ -686,26 +688,24 @@ export default function CollabioraExpertProfile() {
       });
     } catch (error) {
       console.error("Error sending connection request:", error);
-      toast.error(error.message || "Failed to send connection request");
+      toast.error(error.message || t("expertProfile.connectionRequestFailed"));
     }
   }
 
   async function sendMessage() {
     if (!messageModal.body.trim()) {
-      toast.error("Please enter a message");
+      toast.error(t("expertProfile.enterMessage"));
       return;
     }
 
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to send messages");
+      toast.error(t("expertProfile.signInToSendMessages"));
       return;
     }
 
     // Only researchers can send messages to connected researchers
     if (user.role !== "researcher" || !connectionRequestStatus.isConnected) {
-      toast.error(
-        "You must be connected with this researcher to send messages",
-      );
+      toast.error(t("expertProfile.mustBeConnectedToMessage"));
       return;
     }
 
@@ -723,15 +723,15 @@ export default function CollabioraExpertProfile() {
       });
 
       if (response.ok) {
-        toast.success("Message sent successfully!");
+        toast.success(t("expertProfile.messageSentSuccess"));
         setMessageModal({ open: false, body: "" });
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || "Failed to send message");
+        toast.error(errorData.error || t("expertProfile.messageSendFailed"));
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      toast.error(t("expertProfile.messageSendFailed"));
     }
   }
 
@@ -880,7 +880,7 @@ export default function CollabioraExpertProfile() {
   const copyOrcidToClipboard = () => {
     if (!profile.orcid) return;
     navigator.clipboard.writeText(profile.orcid);
-    toast.success("ORCID copied to clipboard");
+    toast.success(t("expertProfile.orcidCopied"));
   };
 
   const isCurrentUser = (user?._id || user?.id) === profile.userId;

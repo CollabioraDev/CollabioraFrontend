@@ -32,6 +32,7 @@ import {
   Mail,
   AlertTriangle,
   Loader2,
+  Globe,
 } from "lucide-react";
 import ManageProfilePublications from "../components/ManageProfilePublications.jsx";
 import SubmitWorkModal from "../components/SubmitWorkModal.jsx";
@@ -42,6 +43,10 @@ import {
   capitalizeText,
 } from "../utils/textCorrection.js";
 import { getDisplayName } from "../utils/researcherDisplayName.js";
+import { useTranslation } from "react-i18next";
+import LanguagePicker, {
+  savePreferredLanguageToApi,
+} from "../components/LanguagePicker.jsx";
 import {
   IconHospital,
   IconRibbonHealth,
@@ -79,6 +84,7 @@ const getCommunityIcon = (slug, name) => {
 };
 
 export default function EditProfile() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [user, setUser] = useState(null);
@@ -1455,7 +1461,47 @@ export default function EditProfile() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 space-y-6">
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            {/* Interface language — full-width bar */}
+            <div className="flex flex-col gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-[#2F3C96]/[0.06] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#2F3C96]/15 bg-[#2F3C96]/10 text-[#2F3C96]"
+                  aria-hidden
+                >
+                  <Globe className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-[#2F3C96]">
+                    {t("profile.languageTitle")}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-600">
+                    {t("profile.languageHint")}
+                  </p>
+                </div>
+              </div>
+              <div className="w-full shrink-0 sm:w-72 md:w-80">
+                <LanguagePicker
+                  showLabel={false}
+                  className="w-full"
+                  value={user?.preferredLanguage}
+                  onChange={async (lng) => {
+                    const r = await savePreferredLanguageToApi(lng);
+                    if (r.ok) {
+                      toast.success("Language updated");
+                      try {
+                        const u = JSON.parse(localStorage.getItem("user") || "{}");
+                        setUser((prev) => ({ ...prev, ...u }));
+                      } catch {
+                        /* ignore */
+                      }
+                    } else toast.error(r.error || "Failed to save language");
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-6 p-6">
             {/* Profile Picture Upload + Email badge + Researcher name */}
             <div className="flex flex-wrap items-start gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
@@ -2480,6 +2526,7 @@ export default function EditProfile() {
               >
                 {saving ? "Saving..." : "Save Changes"}
               </button>
+            </div>
             </div>
           </div>
 

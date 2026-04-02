@@ -16,8 +16,8 @@ import {
 
 const SAMPLE_PROMPTS = [
   "How much water should I drink?",
-  "How long does the flu last?",
-  "What should I eat for a balanced diet?",
+  "Tell me about stem cell therapy in Parkinson's disease",
+  "Treatments for metastatic breast cancer",
   "What are common vitamin deficiencies?",
 ];
 

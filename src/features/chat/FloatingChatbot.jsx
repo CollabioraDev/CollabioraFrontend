@@ -36,11 +36,16 @@ import {
   restoreGuestGeneralMessages,
   YORI_GUEST_CHAT_STORAGE_KEY,
 } from "../../utils/yoriGuestChatStorage.js";
+import { getApiLocale } from "../../i18n/getApiLocale.js";
+import { getPublicationPath } from "../../utils/publicationRouting.js";
 
 // Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
 const IORA_STORAGE_KEY = "collabiora_iora_chat";
 const YORI_MOBILE_TEASER_STORAGE_KEY =
   "collabiora_yori_mobile_teaser_collapsed";
+
+const YORI_DISCLAIMER =
+  "Yori is an AI-powered health information tool. The content provided is for informational and educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis, treatment, or medical decisions. Your information will never be sold or used for commercial purposes.";
 
 const DEFAULT_GREETING = {
   role: "assistant",
@@ -111,17 +116,10 @@ const ASK_ABOUT_OPTIONS = {
   ],
 };
 
-const getPublicationRoute = (publication) => {
-  const publicationId = publication?.pmid || publication?.id;
-  return publicationId
-    ? `/publication/${encodeURIComponent(publicationId)}`
-    : null;
-};
-
 // Publication Card - compact; simplified title/summary for patients, full for researchers
 const PublicationCard = React.memo(
   ({ publication, onAskAbout, onSaveToFavourites, userId, useSimplified }) => {
-    const publicationRoute = getPublicationRoute(publication);
+    const publicationRoute = getPublicationPath(publication);
     const displayTitle =
       useSimplified && publication.simplifiedTitle
         ? publication.simplifiedTitle
@@ -1340,6 +1338,7 @@ const FloatingChatbot = () => {
   const [chatTab, setChatTab] = useState("yori"); // 'yori' | 'meetings'
   const [meetingRequests, setMeetingRequests] = useState([]);
   const [guestChatHydrated, setGuestChatHydrated] = useState(false);
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const abortControllerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
@@ -1888,6 +1887,7 @@ const FloatingChatbot = () => {
 
       const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const requestBody = {
+        locale: getApiLocale(),
         messages: messagesToSend,
         ...(activeContext && { context: activeContext }),
       };
@@ -2827,20 +2827,67 @@ const FloatingChatbot = () => {
                           )}
                         </button>
                       </div>
-                      <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-                        Yori is an AI-powered health information tool. The
-                        content provided is for informational and educational
-                        purposes only and does not constitute medical advice.
-                        Always consult a qualified healthcare professional for
-                        diagnosis, treatment, or medical decisions. Your
-                        information will never be sold or used for commercial
-                        purposes.
+                      <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
+                        {YORI_DISCLAIMER}
                       </p>
+                      <div className="sm:hidden mt-2 flex justify-center px-1">
+                        <button
+                          type="button"
+                          onClick={() => setDisclaimerOpen(true)}
+                          className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
+                        >
+                          View disclaimer
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
               </>
             ))}
+        </div>
+      )}
+
+      {disclaimerOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/50"
+          onClick={() => setDisclaimerOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="yori-floating-disclaimer-title"
+        >
+          <div
+            className="w-full max-w-md rounded-t-2xl sm:rounded-2xl border-2 border-t bg-white p-5 shadow-2xl max-h-[min(85vh,520px)] overflow-y-auto sm:max-h-[85vh]"
+            style={{ borderColor: "#D0C4E2" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2
+                id="yori-floating-disclaimer-title"
+                className="text-base font-bold text-[#2F3C96] pr-2"
+              >
+                Disclaimer
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDisclaimerOpen(false)}
+                className="shrink-0 rounded-lg p-1.5 text-[#2F3C96] hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
+                aria-label="Close disclaimer"
+              >
+                <X className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {YORI_DISCLAIMER}
+            </p>
+            <button
+              type="button"
+              onClick={() => setDisclaimerOpen(false)}
+              className="mt-5 w-full rounded-xl py-3 text-sm font-semibold text-white"
+              style={{ backgroundColor: "#2F3C96" }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </>

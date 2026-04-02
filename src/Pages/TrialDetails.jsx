@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import {
   Beaker,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 export default function TrialDetails() {
+  const { t } = useTranslation("common");
   const { nctId } = useParams();
   const navigate = useNavigate();
   const [trial, setTrial] = useState(null);
@@ -32,7 +34,7 @@ export default function TrialDetails() {
   useEffect(() => {
     async function fetchTrialDetails() {
       if (!nctId) {
-        toast.error("No trial ID provided");
+        toast.error(t("trialDetails.toastNoId"));
         navigate("/dashboard/patient");
         return;
       }
@@ -45,7 +47,7 @@ export default function TrialDetails() {
         const response = await fetch(`${base}/api/search/trial/${nctId}`);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch trial details");
+          throw new Error(t("trialDetails.fetchError"));
         }
 
         const data = await response.json();
@@ -71,12 +73,12 @@ export default function TrialDetails() {
             })
           );
         } else {
-          toast.error("Trial not found");
+          toast.error(t("trialDetails.toastNotFound"));
           navigate("/dashboard/patient");
         }
       } catch (error) {
         console.error("Error fetching trial details:", error);
-        toast.error("Failed to load trial details");
+        toast.error(t("trialDetails.toastLoadFailed"));
         navigate("/dashboard/patient");
       } finally {
         setLoading(false);
@@ -84,7 +86,7 @@ export default function TrialDetails() {
     }
 
     fetchTrialDetails();
-  }, [nctId, navigate]);
+  }, [nctId, navigate, t]);
 
   // Function to get Google Maps URL for a location
   const getGoogleMapsUrl = (location) => {
@@ -123,7 +125,7 @@ export default function TrialDetails() {
             style={{ color: "#2F3C96" }}
           />
           <p className="text-lg font-medium" style={{ color: "#787878" }}>
-            Loading trial details...
+            {t("trialDetails.loading")}
           </p>
         </div>
       </div>
@@ -135,14 +137,14 @@ export default function TrialDetails() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
           <p className="text-lg font-medium mb-4" style={{ color: "#787878" }}>
-            Trial not found
+            {t("trialDetails.notFound")}
           </p>
           <button
             onClick={() => navigate("/dashboard/patient")}
             className="px-4 py-2 rounded-lg text-white font-medium"
             style={{ backgroundColor: "#2F3C96" }}
           >
-            Go Back
+            {t("trialDetails.goBack")}
           </button>
         </div>
       </div>
@@ -179,7 +181,7 @@ export default function TrialDetails() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "#2F3C96")}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            {t("trialDetails.back")}
           </button>
 
           <div
@@ -209,7 +211,7 @@ export default function TrialDetails() {
                       borderColor: "rgba(163, 167, 203, 1)",
                     }}
                   >
-                    {trial.id || trial._id || "N/A"}
+                    {trial.id || trial._id || t("trialDetails.notAvailable")}
                   </span>
                   {trial.status && (
                     <span
@@ -229,7 +231,7 @@ export default function TrialDetails() {
                         borderColor: "rgba(232, 232, 232, 1)",
                       }}
                     >
-                      Phase {trial.phase}
+                      {t("trialDetails.phaseLabel", { phase: trial.phase })}
                     </span>
                   )}
                 </div>
@@ -252,7 +254,7 @@ export default function TrialDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <FileText className="w-5 h-5" />
-                  Study Description
+                  {t("trialDetails.studyDescription")}
                 </h2>
                 <p
                   className="text-sm leading-relaxed whitespace-pre-line"
@@ -274,7 +276,7 @@ export default function TrialDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <ListChecks className="w-5 h-5" />
-                  Eligibility Criteria
+                  {t("trialDetails.eligibilityCriteria")}
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
@@ -288,14 +290,14 @@ export default function TrialDetails() {
                         className="text-xs font-semibold uppercase tracking-wide"
                         style={{ color: "#787878" }}
                       >
-                        Gender
+                        {t("trialDetails.gender")}
                       </span>
                     </div>
                     <p
                       className="text-sm font-bold"
                       style={{ color: "#2F3C96" }}
                     >
-                      {trial.eligibility?.gender || "All"}
+                      {trial.eligibility?.gender || t("trialDetails.genderAll")}
                     </p>
                   </div>
 
@@ -312,7 +314,7 @@ export default function TrialDetails() {
                         className="text-xs font-semibold uppercase tracking-wide"
                         style={{ color: "#787878" }}
                       >
-                        Age Range
+                        {t("trialDetails.ageRange")}
                       </span>
                     </div>
                     <p
@@ -322,12 +324,12 @@ export default function TrialDetails() {
                       {trial.eligibility?.minimumAge !== "Not specified" &&
                       trial.eligibility?.minimumAge
                         ? trial.eligibility.minimumAge
-                        : "N/A"}{" "}
+                        : t("trialDetails.notAvailable")}{" "}
                       -{" "}
                       {trial.eligibility?.maximumAge !== "Not specified" &&
                       trial.eligibility?.maximumAge
                         ? trial.eligibility.maximumAge
-                        : "N/A"}
+                        : t("trialDetails.notAvailable")}
                     </p>
                   </div>
 
@@ -344,14 +346,15 @@ export default function TrialDetails() {
                         className="text-xs font-semibold uppercase tracking-wide"
                         style={{ color: "#787878" }}
                       >
-                        Volunteers
+                        {t("trialDetails.volunteers")}
                       </span>
                     </div>
                     <p
                       className="text-sm font-bold"
                       style={{ color: "#2F3C96" }}
                     >
-                      {trial.eligibility?.healthyVolunteers || "Unknown"}
+                      {trial.eligibility?.healthyVolunteers ||
+                        t("trialDetails.unknownVolunteers")}
                     </p>
                   </div>
                 </div>
@@ -364,7 +367,7 @@ export default function TrialDetails() {
                       style={{ color: "#2F3C96" }}
                     >
                       <Users className="w-4 h-4" />
-                      Study Population
+                      {t("trialDetails.studyPopulation")}
                     </h3>
                     <div
                       className="bg-gray-50 rounded-lg p-4 border text-sm whitespace-pre-line"
@@ -386,7 +389,7 @@ export default function TrialDetails() {
                         style={{ color: "#2F3C96" }}
                       >
                         <ListChecks className="w-4 h-4" />
-                        Detailed Eligibility Criteria
+                        {t("trialDetails.detailedEligibilityCriteria")}
                       </h3>
                       <div
                         className="bg-gray-50 rounded-lg p-4 border text-sm whitespace-pre-line"
@@ -413,7 +416,7 @@ export default function TrialDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <Activity className="w-5 h-5" />
-                  Conditions Studied
+                  {t("trialDetails.conditionsStudied")}
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {trial.conditions.map((condition, idx) => (
@@ -446,7 +449,7 @@ export default function TrialDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <Mail className="w-5 h-5" style={{ color: "#787878" }} />
-                  Contact Information
+                  {t("trialDetails.contactInformation")}
                 </h4>
                 <div className="space-y-3">
                   {trial.contacts.map((contact, i) => (
@@ -523,7 +526,9 @@ export default function TrialDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <MapPin className="w-5 h-5" />
-                  Trial Locations ({trial.locations.length})
+                  {t("trialDetails.trialLocations", {
+                    count: trial.locations.length,
+                  })}
                 </h2>
                 <div className="space-y-4">
                   {/* Show first 5 locations in full detail */}
@@ -553,7 +558,7 @@ export default function TrialDetails() {
                           className="text-xs font-medium mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          Status: {location.status}
+                          {t("trialDetails.statusPrefix")} {location.status}
                         </div>
                       )}
                       {location.contactName && (
@@ -561,7 +566,9 @@ export default function TrialDetails() {
                           className="text-xs mb-1"
                           style={{ color: "#787878" }}
                         >
-                          <span className="font-medium">Contact:</span>{" "}
+                          <span className="font-medium">
+                            {t("trialDetails.contactLabel")}
+                          </span>{" "}
                           {location.contactName}
                         </div>
                       )}
@@ -610,7 +617,7 @@ export default function TrialDetails() {
                           }
                         >
                           <MapPin className="w-3 h-3" />
-                          View on Map
+                          {t("trialDetails.viewOnMap")}
                         </a>
                       )}
                     </div>
@@ -695,13 +702,16 @@ export default function TrialDetails() {
                         {showAllLocations ? (
                           <>
                             <ChevronUp className="w-4 h-4" />
-                            Show Less ({trial.locations.length - 5} hidden)
+                            {t("trialDetails.showLessHidden", {
+                              count: trial.locations.length - 5,
+                            })}
                           </>
                         ) : (
                           <>
                             <ChevronDown className="w-4 h-4" />
-                            Show {trial.locations.length - 5} More Location
-                            {trial.locations.length - 5 !== 1 ? "s" : ""}
+                            {t("trialDetails.showMoreLocations", {
+                              count: trial.locations.length - 5,
+                            })}
                           </>
                         )}
                       </button>
@@ -721,21 +731,21 @@ export default function TrialDetails() {
                 style={{ color: "#2F3C96" }}
               >
                 <Info className="w-5 h-5" />
-                Trial Information
+                {t("trialDetails.trialInformation")}
               </h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
                   <span className="text-sm font-medium" style={{ color: "#787878" }}>
-                    Trial ID:
+                    {t("trialDetails.trialIdLabel")}
                   </span>
                   <span className="text-sm font-semibold" style={{ color: "#2F3C96" }}>
-                    {trial.id || trial._id || "N/A"}
+                    {trial.id || trial._id || t("trialDetails.notAvailable")}
                   </span>
                 </div>
                 {trial.status && (
                   <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
                     <span className="text-sm font-medium" style={{ color: "#787878" }}>
-                      Status:
+                      {t("trialDetails.statusLabel")}
                     </span>
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
@@ -749,7 +759,7 @@ export default function TrialDetails() {
                 {trial.phase && (
                   <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "rgba(232, 224, 239, 1)" }}>
                     <span className="text-sm font-medium" style={{ color: "#787878" }}>
-                      Phase:
+                      {t("trialDetails.phaseFieldLabel")}
                     </span>
                     <span className="text-sm font-semibold" style={{ color: "#2F3C96" }}>
                       {trial.phase}
@@ -759,7 +769,7 @@ export default function TrialDetails() {
                 {trial.conditions && trial.conditions.length > 0 && (
                   <div className="py-2">
                     <span className="text-sm font-medium block mb-2" style={{ color: "#787878" }}>
-                      Conditions:
+                      {t("trialDetails.conditionsLabel")}
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {trial.conditions.map((condition, idx) => (

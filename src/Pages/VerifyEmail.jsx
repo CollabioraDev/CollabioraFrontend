@@ -1,133 +1,112 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
 import { broadcastEmailVerified } from "../utils/crossTabSync.js";
 
 const logoUrl = import.meta.env.VITE_LOGO_URL || "https://res.cloudinary.com/dtgmjvfms/image/upload/logo_mh2rpv.png";
 
 export default function VerifyEmail() {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState("idle"); // idle, verifying, success, error
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     const token = searchParams.get("token");
-    if (token) {
-      handleVerifyEmail(token);
-    } else {
-      // No token, show idle state
-      setStatus("idle");
-    }
-  }, [searchParams]);
-
-  const handleVerifyEmail = async (token) => {
     if (!token) {
-      setStatus("error");
-      setMessage("No verification token provided");
+      setStatus("idle");
       return;
     }
 
-    setStatus("verifying");
-    setMessage("");
+    async function run() {
+      setStatus("verifying");
+      setMessage("");
 
-    // Add minimum delay to show loading state (at least 1.5 seconds)
-    const minDelay = new Promise(resolve => setTimeout(resolve, 1500));
+      const minDelay = new Promise((resolve) => setTimeout(resolve, 1500));
 
-    try {
-      const decodedToken = decodeURIComponent(token);
-      
-      // Make the API call
-      const fetchPromise = fetch(`${base}/api/auth/verify-email?token=${decodedToken}`);
-      
-      // Wait for both the API call and minimum delay
-      const [response] = await Promise.all([fetchPromise, minDelay]);
-      
-      // Get response text first to check if it's valid JSON
-      const responseText = await response.text();
-      let data;
-      
       try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("Failed to parse response:", parseError, responseText);
-        setStatus("error");
-        setMessage("Invalid response from server. Please try again.");
-        return;
-      }
-      
-      // Check if response is ok
-      if (!response.ok) {
-        // Handle different error cases
-        if (data.code === "EXPIRED_TOKEN") {
-          setStatus("error");
-          setMessage(data.error || "This verification link has expired. Please request a new verification email.");
-        } else if (data.code === "INVALID_TOKEN") {
-          setStatus("error");
-          setMessage(data.error || "Invalid verification token. Please request a new verification email.");
-        } else {
-          setStatus("error");
-          setMessage(data.error || "Failed to verify email. The link may be invalid or expired.");
-        }
-        return;
-      }
+        const decodedToken = decodeURIComponent(token);
 
-      // Check if email is already verified
-      if (data.alreadyVerified) {
+        const fetchPromise = fetch(`${base}/api/auth/verify-email?token=${decodedToken}`);
+
+        const [response] = await Promise.all([fetchPromise, minDelay]);
+
+        const responseText = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Failed to parse response:", parseError, responseText);
+          setStatus("error");
+          setMessage(t("auth.verifyEmail.invalidResponse"));
+          return;
+        }
+
+        if (!response.ok) {
+          if (data.code === "EXPIRED_TOKEN") {
+            setStatus("error");
+            setMessage(data.error || t("auth.verifyEmail.expired"));
+          } else if (data.code === "INVALID_TOKEN") {
+            setStatus("error");
+            setMessage(data.error || t("auth.verifyEmail.invalidToken"));
+          } else {
+            setStatus("error");
+            setMessage(data.error || t("auth.verifyEmail.failedGeneric"));
+          }
+          return;
+        }
+
+        if (data.alreadyVerified) {
+          setStatus("success");
+          setMessage(data.message || t("auth.verifyEmail.alreadyVerified"));
+
+          const userData = JSON.parse(localStorage.getItem("user") || "{}");
+          if (userData._id || userData.id) {
+            userData.emailVerified = true;
+            localStorage.setItem("user", JSON.stringify(userData));
+
+            window.dispatchEvent(new Event("login"));
+
+            broadcastEmailVerified(userData);
+          }
+          return;
+        }
+
         setStatus("success");
-        setMessage(data.message || "Your email is already verified.");
-        
-        // Update user in localStorage if user is logged in
+        setMessage(data.message || t("auth.verifyEmail.success"));
+
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         if (userData._id || userData.id) {
           userData.emailVerified = true;
           localStorage.setItem("user", JSON.stringify(userData));
-          
-          // Dispatch event to update user state
+
           window.dispatchEvent(new Event("login"));
-          
-          // Broadcast to all tabs (cross-tab sync)
+
           broadcastEmailVerified(userData);
         }
-        return;
+      } catch (error) {
+        console.error("Verification error:", error);
+        setStatus("error");
+        setMessage(t("auth.verifyEmail.errorGeneric"));
       }
-
-      // Success - email is verified on the backend
-      setStatus("success");
-      setMessage(data.message || "Email verified successfully!");
-
-      // Update user in localStorage if user is logged in
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      if (userData._id || userData.id) {
-        userData.emailVerified = true;
-        localStorage.setItem("user", JSON.stringify(userData));
-        
-        // Dispatch event to update user state
-        window.dispatchEvent(new Event("login"));
-        
-        // Broadcast to all tabs (cross-tab sync)
-        broadcastEmailVerified(userData);
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
-      setStatus("error");
-      setMessage("An error occurred while verifying your email. Please try again.");
     }
-  };
 
+    run();
+  }, [searchParams, base, t]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#D0C4E2] via-[#E8E0EF] to-[#F5F0FA] px-4 py-8">
-      {/* Logo */}
       <div className="mb-8">
-        <img 
-          src={logoUrl} 
-          alt="collabiora Logo" 
+        <img
+          src={logoUrl}
+          alt={t("auth.verifyEmail.logoAlt")}
           className="h-16 w-auto"
         />
       </div>
 
-      {/* Main Content Card */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
         {status === "idle" && (
           <div className="text-center space-y-6">
@@ -141,11 +120,9 @@ export default function VerifyEmail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold mb-2" style={{ color: "#2F3C96" }}>
-                Email Verification
+                {t("auth.verifyEmail.idleTitle")}
               </h1>
-              <p className="text-gray-600">
-                Please check your email and click the verification link to verify your email address.
-              </p>
+              <p className="text-gray-600">{t("auth.verifyEmail.idleBody")}</p>
             </div>
           </div>
         )}
@@ -157,11 +134,9 @@ export default function VerifyEmail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold mb-2" style={{ color: "#2F3C96" }}>
-                Verifying Your Email
+                {t("auth.verifyEmail.verifyingTitle")}
               </h1>
-              <p className="text-gray-600">
-                Please wait while we verify your email address...
-              </p>
+              <p className="text-gray-600">{t("auth.verifyEmail.verifyingBody")}</p>
             </div>
           </div>
         )}
@@ -178,13 +153,13 @@ export default function VerifyEmail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold mb-2" style={{ color: "#2F3C96" }}>
-                Email Verified!
+                {t("auth.verifyEmail.successTitle")}
               </h1>
               <p className="text-gray-600 mb-4">
-                {message || "Your email has been successfully verified."}
+                {message || t("auth.verifyEmail.successBodyFallback")}
               </p>
               <p className="text-gray-600 text-sm">
-                You can now go back to your health research journey.
+                {t("auth.verifyEmail.successFooter")}
               </p>
             </div>
           </div>
@@ -202,23 +177,22 @@ export default function VerifyEmail() {
             </div>
             <div>
               <h1 className="text-2xl font-bold mb-2" style={{ color: "#2F3C96" }}>
-                Verification Failed
+                {t("auth.verifyEmail.errorTitle")}
               </h1>
               <p className="text-gray-600 mb-4">
-                {message || "Failed to verify your email. The link may be invalid or expired."}
+                {message || t("auth.verifyEmail.errorBodyFallback")}
               </p>
               <p className="text-sm text-gray-500">
-                Please request a new verification email from your dashboard.
+                {t("auth.verifyEmail.errorFooter")}
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer Text */}
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
-          © {new Date().getFullYear()} collabiora. All rights reserved.
+          {t("auth.verifyEmail.copyright", { year: new Date().getFullYear() })}
         </p>
       </div>
     </div>

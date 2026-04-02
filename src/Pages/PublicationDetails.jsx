@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import {
   FileText,
@@ -19,6 +20,7 @@ import {
   FileDown,
 } from "lucide-react";
 import InlinePdfViewer from "../components/InlinePdfViewer.jsx";
+import { inferPublicationSourceFromId } from "../utils/publicationRouting.js";
 
 const SOURCE_LABELS = {
   pubmed: "PubMed",
@@ -32,9 +34,13 @@ const SOURCE_LABELS = {
 };
 
 export default function PublicationDetails() {
+  const { t } = useTranslation("common");
   const { pmid: idParam } = useParams();
   const [searchParams] = useSearchParams();
-  const source = searchParams.get("source") || "pubmed";
+  const source =
+    searchParams.get("source") ||
+    inferPublicationSourceFromId(idParam) ||
+    "pubmed";
   const navigate = useNavigate();
   const [publication, setPublication] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +69,7 @@ export default function PublicationDetails() {
   useEffect(() => {
     async function fetchPublicationDetails() {
       if (!idParam) {
-        toast.error("No publication ID provided");
+        toast.error(t("publicationDetails.toastNoId"));
         navigate(listPath);
         return;
       }
@@ -107,12 +113,12 @@ export default function PublicationDetails() {
             }),
           );
         } else {
-          toast.error("Publication not found");
+          toast.error(t("publicationDetails.toastNotFound"));
           navigate(listPath);
         }
       } catch (error) {
         console.error("Error fetching publication details:", error);
-        toast.error("Failed to load publication details");
+        toast.error(t("publicationDetails.toastLoadFailed"));
         navigate(listPath);
       } finally {
         setLoading(false);
@@ -120,7 +126,7 @@ export default function PublicationDetails() {
     }
 
     fetchPublicationDetails();
-  }, [idParam, source, navigate]);
+  }, [idParam, source, navigate, t]);
 
   // Fetch full-text and access level for in-platform reading
   useEffect(() => {
@@ -169,7 +175,7 @@ export default function PublicationDetails() {
             style={{ color: "#2F3C96" }}
           />
           <p className="text-lg font-medium" style={{ color: "#787878" }}>
-            Loading publication details...
+            {t("publicationDetails.loading")}
           </p>
         </div>
       </div>
@@ -181,14 +187,14 @@ export default function PublicationDetails() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
           <p className="text-lg font-medium mb-4" style={{ color: "#787878" }}>
-            Publication not found
+            {t("publicationDetails.notFound")}
           </p>
           <button
             onClick={() => navigate(listPath)}
             className="px-4 py-2 rounded-lg text-white font-medium"
             style={{ backgroundColor: "#2F3C96" }}
           >
-            Go Back
+            {t("publicationDetails.goBack")}
           </button>
         </div>
       </div>
@@ -208,7 +214,7 @@ export default function PublicationDetails() {
             onMouseLeave={(e) => (e.currentTarget.style.color = "#2F3C96")}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            {t("publicationDetails.back")}
           </button>
 
           <div
@@ -228,10 +234,10 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   {isResearcher
-                    ? publication.title || "Untitled Publication"
+                    ? publication.title || t("publications.untitledPublication")
                     : publication.simplifiedTitle ||
                       publication.title ||
-                      "Untitled Publication"}
+                      t("publications.untitledPublication")}
                 </h1>
                 <div className="flex flex-wrap gap-2">
                   {fullTextData?.accessLevel && (
@@ -258,12 +264,13 @@ export default function PublicationDetails() {
                               : "rgba(148, 163, 184, 0.4)",
                       }}
                     >
-                      Access: {fullTextData.accessLevel.label}
+                      {t("publicationDetails.accessPrefix")}{" "}
+                      {fullTextData.accessLevel.label}
                     </span>
                   )}
                   {fullTextLoading && !fullTextData?.accessLevel && (
                     <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border border-slate-200 bg-slate-50 text-slate-500">
-                      Checking access...
+                      {t("publicationDetails.checkingAccess")}
                     </span>
                   )}
                   {publication.url && (
@@ -279,7 +286,7 @@ export default function PublicationDetails() {
                       }}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      View on PubMed
+                      {t("publicationDetails.viewOnPubMed")}
                     </a>
                   )}
                   {publication.doi && (
@@ -290,7 +297,7 @@ export default function PublicationDetails() {
                       className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      View at publisher
+                      {t("publicationDetails.viewAtPublisher")}
                     </a>
                   )}
                 </div>
@@ -308,7 +315,7 @@ export default function PublicationDetails() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition-colors"
                       >
                         <FileDown className="w-3.5 h-3.5" />
-                        Open Access PDF
+                        {t("publicationDetails.openAccessPdf")}
                         {publication.openAccessPdfStatus && (
                           <span className="opacity-80">
                             ({publication.openAccessPdfStatus})
@@ -324,7 +331,7 @@ export default function PublicationDetails() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors"
                       >
                         <FileDown className="w-3.5 h-3.5" />
-                        PDF
+                        {t("publicationDetails.pdf")}
                       </a>
                     )}
                   </div>
@@ -351,7 +358,7 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 />
                 <p className="text-sm" style={{ color: "#787878" }}>
-                  Checking access and loading full text...
+                  {t("publicationDetails.checkingAccessFullText")}
                 </p>
               </div>
             )}
@@ -370,15 +377,15 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <BookOpen className="w-5 h-5" />
-                    Read on platform
+                    {t("publicationDetails.readOnPlatform")}
                     {fullTextData.fullText.source === "pmc_xml" && (
                       <span className="text-xs font-normal opacity-80">
-                        (Full text from PubMed Central)
+                        {t("publicationDetails.fullTextPmc")}
                       </span>
                     )}
                     {fullTextData.fullText.source === "html" && (
                       <span className="text-xs font-normal opacity-80">
-                        (Full text from publisher)
+                        {t("publicationDetails.fullTextPublisher")}
                       </span>
                     )}
                   </h2>
@@ -431,14 +438,15 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <BookOpen className="w-5 h-5" />
-                    Read Paper
+                    {t("publicationDetails.readPaper")}
                     {(fullTextData?.publisher || publicationSource) && (
                       <span className="text-sm font-normal opacity-80">
-                        (from{" "}
-                        {fullTextData?.publisher ||
-                          SOURCE_LABELS[publicationSource] ||
-                          publicationSource}
-                        )
+                        {t("publicationDetails.fromSource", {
+                          name:
+                            fullTextData?.publisher ||
+                            SOURCE_LABELS[publicationSource] ||
+                            publicationSource,
+                        })}
                       </span>
                     )}
                   </h2>
@@ -455,7 +463,7 @@ export default function PublicationDetails() {
                       }}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      Open in new tab
+                      {t("publicationDetails.openInNewTab")}
                     </a>
                   </div>
                 </div>
@@ -480,7 +488,7 @@ export default function PublicationDetails() {
                   style={{ borderColor: "rgba(208, 196, 226, 0.3)" }}
                 >
                   <p className="text-sm mb-2" style={{ color: "#787878" }}>
-                    Full article is available at the publisher.
+                    {t("publicationDetails.fullArticleAtPublisher")}
                   </p>
                   <a
                     href={fullTextData.accessLevel.externalUrl}
@@ -490,7 +498,7 @@ export default function PublicationDetails() {
                     style={{ backgroundColor: "#2F3C96" }}
                   >
                     <ExternalLink className="w-4 h-4" />
-                    View full article at publisher
+                    {t("publicationDetails.viewFullArticleAtPublisher")}
                   </a>
                 </div>
               )}
@@ -527,8 +535,15 @@ export default function PublicationDetails() {
                       >
                         {fullTextData?.accessLevel?.publisher ||
                         publication.journal
-                          ? `${fullTextData?.accessLevel?.publisher || publication.journal} has restricted access`
-                          : "This article has restricted access"}
+                          ? t(
+                              "publicationDetails.restrictedHeadingWithJournal",
+                              {
+                                journal:
+                                  fullTextData?.accessLevel?.publisher ||
+                                  publication.journal,
+                              },
+                            )
+                          : t("publicationDetails.restrictedHeadingGeneric")}
                       </h3>
                       <p
                         className="text-sm leading-relaxed"
@@ -536,9 +551,16 @@ export default function PublicationDetails() {
                       >
                         {fullTextData?.accessLevel?.publisher ||
                         publication.journal
-                          ? `This article is published by ${fullTextData?.accessLevel?.publisher || publication.journal} and requires a subscription or institutional access to view the full text.`
-                          : "This article requires a subscription or institutional access to view the full text."}{" "}
-                        You can access it through the links below.
+                          ? t(
+                              "publicationDetails.restrictedBodyWithJournal",
+                              {
+                                journal:
+                                  fullTextData?.accessLevel?.publisher ||
+                                  publication.journal,
+                              },
+                            )
+                          : t("publicationDetails.restrictedBodyGeneric")}{" "}
+                        {t("publicationDetails.accessThroughLinks")}
                       </p>
                     </div>
                   </div>
@@ -556,10 +578,12 @@ export default function PublicationDetails() {
                         }}
                       >
                         <ExternalLink className="w-4 h-4" />
-                        View on{" "}
-                        {SOURCE_LABELS[publication.source] ||
-                          publication.source ||
-                          "source"}
+                        {t("publicationDetails.viewOnSource", {
+                          source:
+                            SOURCE_LABELS[publication.source] ||
+                            publication.source ||
+                            t("publicationDetails.sourceFallback"),
+                        })}
                       </a>
                     )}
                     {publication.doi && (
@@ -570,7 +594,7 @@ export default function PublicationDetails() {
                         className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        View at publisher
+                        {t("publicationDetails.viewAtPublisher")}
                       </a>
                     )}
                   </div>
@@ -589,7 +613,7 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <MapPin className="w-5 h-5" />
-                    Affiliation
+                    {t("publications.affiliation")}
                   </h2>
                   <p
                     className="text-sm leading-relaxed"
@@ -612,7 +636,7 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <FileText className="w-5 h-5" />
-                    Publication Type
+                    {t("publications.publicationType")}
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {publication.publicationTypes.map((type, idx) => (
@@ -643,7 +667,7 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <ListChecks className="w-5 h-5" />
-                  Methods
+                  {t("publications.methods")}
                 </h2>
                 <p
                   className="text-sm leading-relaxed whitespace-pre-line"
@@ -665,7 +689,7 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <TrendingUp className="w-5 h-5" />
-                  Results
+                  {t("publications.results")}
                 </h2>
                 <p
                   className="text-sm leading-relaxed whitespace-pre-line"
@@ -687,7 +711,7 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <CheckCircle className="w-5 h-5" />
-                  Conclusion
+                  {t("publications.conclusion")}
                 </h2>
                 <p
                   className="text-sm leading-relaxed whitespace-pre-line"
@@ -714,7 +738,7 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <AlertCircle className="w-5 h-5" />
-                    Key Takeaways
+                    {t("publications.keyTakeaways")}
                   </h2>
                   <ul className="space-y-3">
                     {publication.simplifiedDetails.keyTakeaways.map(
@@ -751,7 +775,7 @@ export default function PublicationDetails() {
                   style={{ color: "#2F3C96" }}
                 >
                   <Heart className="w-5 h-5" />
-                  What This Means For You
+                  {t("publicationDetails.whatThisMeansForYou")}
                 </h2>
                 <p
                   className="text-sm leading-relaxed whitespace-pre-line"
@@ -778,7 +802,7 @@ export default function PublicationDetails() {
                     style={{ color: "#2F3C96" }}
                   >
                     <User className="w-5 h-5" />
-                    Authors
+                    {t("publications.authors")}
                   </h2>
                   <p
                     className="text-sm leading-relaxed"
@@ -788,7 +812,9 @@ export default function PublicationDetails() {
                   </p>
                   {publication.authors.length > 1 && (
                     <p className="text-xs mt-3" style={{ color: "#787878" }}>
-                      {publication.authors.length} authors
+                      {t("publications.authorsCount", {
+                        count: publication.authors.length,
+                      })}
                     </p>
                   )}
                 </div>
@@ -804,7 +830,7 @@ export default function PublicationDetails() {
                 style={{ color: "#2F3C96" }}
               >
                 <Info className="w-5 h-5" />
-                Publication Information
+                {t("publications.publicationInformation")}
               </h2>
               <div className="space-y-4">
                 {/* Publication Date */}
@@ -818,7 +844,7 @@ export default function PublicationDetails() {
                       style={{ color: "#787878" }}
                     >
                       <Calendar className="w-4 h-4" />
-                      Published:
+                      {t("publicationDetails.publishedLabel")}
                     </span>
                     <span
                       className="text-sm font-semibold"
@@ -826,7 +852,7 @@ export default function PublicationDetails() {
                     >
                       {publication.month ? `${publication.month} ` : ""}
                       {publication.day ? `${publication.day}, ` : ""}
-                      {publication.year || "N/A"}
+                      {publication.year || t("publications.notAvailable")}
                     </span>
                   </div>
                 )}
@@ -842,7 +868,7 @@ export default function PublicationDetails() {
                       style={{ color: "#787878" }}
                     >
                       <BookOpen className="w-4 h-4" />
-                      Journal:
+                      {t("publicationDetails.journalLabel")}
                     </span>
                     <span
                       className="text-sm font-semibold text-right max-w-[60%]"
@@ -863,7 +889,7 @@ export default function PublicationDetails() {
                       className="text-sm font-medium"
                       style={{ color: "#787878" }}
                     >
-                      DOI:
+                      {t("publicationDetails.doiLabel")}
                     </span>
                     <span
                       className="text-sm font-semibold text-right max-w-[60%] break-words"
@@ -884,7 +910,7 @@ export default function PublicationDetails() {
                       className="text-sm font-medium"
                       style={{ color: "#787878" }}
                     >
-                      PMID:
+                      {t("publicationDetails.pmidLabel")}
                     </span>
                     <span
                       className="text-sm font-semibold"
@@ -903,7 +929,7 @@ export default function PublicationDetails() {
                       style={{ color: "#787878" }}
                     >
                       <TrendingUp className="w-4 h-4" />
-                      Keywords:
+                      {t("publicationDetails.keywordsLabel")}
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {publication.keywords.map((keyword, idx) => (
@@ -945,10 +971,12 @@ export default function PublicationDetails() {
                 }}
               >
                 <ExternalLink className="w-4 h-4" />
-                View on{" "}
-                {SOURCE_LABELS[publication.source] ||
-                  publication.source ||
-                  "Source"}
+                {t("publicationDetails.viewOnSource", {
+                  source:
+                    SOURCE_LABELS[publication.source] ||
+                    publication.source ||
+                    t("publicationDetails.sourceFallbackTitle"),
+                })}
               </a>
             )}
           </div>

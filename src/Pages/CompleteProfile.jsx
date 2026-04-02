@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth0 } from "@auth0/auth0-react";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
@@ -14,6 +15,7 @@ import { User, Microscope } from "lucide-react";
  * after signing in with Google/Outlook for the first time.
  */
 export default function CompleteProfile() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth0();
   const [selectedRole, setSelectedRole] = useState(null);
@@ -101,7 +103,7 @@ export default function CompleteProfile() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to complete profile");
+        throw new Error(data.error || t("auth.completeProfile.errorCompleteFailed"));
       }
 
       // Store token and user data (account was just created or updated)
@@ -123,7 +125,7 @@ export default function CompleteProfile() {
       }
     } catch (e) {
       console.error("Profile completion error:", e);
-      setError(e.message || "Failed to save. Please try again.");
+      setError(e.message || t("auth.completeProfile.errorSaveFailed"));
       setSaving(false);
     }
   }
@@ -180,10 +182,12 @@ export default function CompleteProfile() {
                   className="text-xl font-bold mb-1"
                   style={{ color: "#2F3C96" }}
                 >
-                  Welcome, {user?.name || user?.email?.split("@")[0]}!
+                  {t("auth.completeProfile.welcome", {
+                    name: user?.name || user?.email?.split("@")[0],
+                  })}
                 </h1>
                 <p className="text-sm" style={{ color: "#787878" }}>
-                  One last step - tell us who you are
+                  {t("auth.completeProfile.subtitle")}
                 </p>
               </div>
 
@@ -215,10 +219,10 @@ export default function CompleteProfile() {
                       className="font-semibold text-sm"
                       style={{ color: "#2F3C96" }}
                     >
-                      I'm a Patient
+                      {t("auth.completeProfile.patientTitle")}
                     </h3>
                     <p className="text-xs" style={{ color: "#787878" }}>
-                      Looking for clinical trials and medical research
+                      {t("auth.completeProfile.patientDesc")}
                     </p>
                   </div>
                   {selectedRole === "patient" && saving && (
@@ -264,10 +268,10 @@ export default function CompleteProfile() {
                       className="font-semibold text-sm"
                       style={{ color: "#2F3C96" }}
                     >
-                      I'm a Researcher
+                      {t("auth.completeProfile.researcherTitle")}
                     </h3>
                     <p className="text-xs" style={{ color: "#787878" }}>
-                      Conducting studies and recruiting participants
+                      {t("auth.completeProfile.researcherDesc")}
                     </p>
                   </div>
                   {selectedRole === "researcher" && saving && (
@@ -307,7 +311,7 @@ export default function CompleteProfile() {
                 className="text-xs text-center mt-4"
                 style={{ color: "#787878", opacity: 0.7 }}
               >
-                You can change this later in your profile settings
+                {t("auth.completeProfile.footerHint")}
               </p>
             </div>
           </motion.div>

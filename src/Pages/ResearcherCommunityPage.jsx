@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import {
-  MessageCircle,
   Users,
   Plus,
   UserCheck,
@@ -33,6 +33,7 @@ const CommunityAvatar = ({ community }) => {
 };
 
 export default function ResearcherCommunityPage() {
+  const { t } = useTranslation("common");
   const { id } = useParams();
   const navigate = useNavigate();
   const [community, setCommunity] = useState(null);
@@ -60,9 +61,9 @@ export default function ResearcherCommunityPage() {
         setCommunity(data.community);
         setIsFollowing(!!data.community?.isFollowing);
       })
-      .catch(() => toast.error("Community not found"))
+      .catch(() => toast.error(t("community.notFound")))
       .finally(() => setLoading(false));
-  }, [id, base, user?._id, user?.id]);
+  }, [id, base, user?._id, user?.id, t]);
 
   useEffect(() => {
     if (!id) return;
@@ -77,7 +78,7 @@ export default function ResearcherCommunityPage() {
 
   async function handleJoin() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to join");
+      toast.error(t("community.signInToJoin"));
       return;
     }
     if (!requireEmailVerification()) return;
@@ -91,14 +92,14 @@ export default function ResearcherCommunityPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to join");
+        throw new Error(data.error || t("community.joinFailed"));
       }
       setIsFollowing(true);
       setShowJoinModal(false);
-      toast.success("Joined community!");
+      toast.success(t("community.joined"));
       navigate("/researcher-forums", { state: { redirectCommunityId: community._id } });
     } catch (e) {
-      toast.error(e.message || "Failed to join");
+      toast.error(e.message || t("community.joinFailed"));
     } finally {
       setFollowLoading(false);
     }
@@ -113,9 +114,9 @@ export default function ResearcherCommunityPage() {
         { method: "DELETE" }
       );
       setIsFollowing(false);
-      toast.success("Left community");
+      toast.success(t("community.left"));
     } catch {
-      toast.error("Failed to leave");
+      toast.error(t("community.leaveFailed"));
     } finally {
       setFollowLoading(false);
     }
@@ -137,7 +138,9 @@ export default function ResearcherCommunityPage() {
       <Layout>
         <div className="min-h-screen bg-[#F5F5F5] relative pt-24 flex items-center justify-center">
           <AnimatedBackground />
-          <p className="text-[#787878] relative z-10">Community not found.</p>
+          <p className="text-[#787878] relative z-10">
+            {t("community.notFoundPeriod")}
+          </p>
         </div>
       </Layout>
     );
@@ -155,7 +158,7 @@ export default function ResearcherCommunityPage() {
             className="flex items-center gap-2 text-sm text-[#787878] hover:text-[#2F3C96] mb-6 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to Researcher Forums
+            {t("community.backToResearcherForums")}
           </button>
 
           {/* Hero */}
@@ -179,12 +182,16 @@ export default function ResearcherCommunityPage() {
             <div className="p-6">
               <h1 className="text-2xl font-bold text-[#2F3C96] mb-2">{community.name}</h1>
               <p className="text-sm text-[#787878] mb-4">
-                {community.description || "Join this research community."}
+                {community.description || t("community.defaultDescriptionResearcher")}
               </p>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-1.5 text-sm text-[#787878]">
                   <Users className="w-4 h-4" />
-                  <span className="font-medium">{community.memberCount?.toLocaleString() ?? 0} members</span>
+                  <span className="font-medium">
+                    {t("community.membersCount", {
+                      count: community.memberCount?.toLocaleString() ?? 0,
+                    })}
+                  </span>
                 </div>
                 {user?._id || user?.id ? (
                   isFollowing ? (
@@ -194,7 +201,7 @@ export default function ResearcherCommunityPage() {
                       className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#673AB7]/10 text-[#673AB7] hover:bg-[#673AB7]/20 transition-all flex items-center gap-2"
                     >
                       {followLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                      Joined
+                      {t("community.joinedButton")}
                     </button>
                   ) : (
                     <button
@@ -202,16 +209,16 @@ export default function ResearcherCommunityPage() {
                       className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#673AB7] text-white hover:bg-[#5E35B1] transition-all flex items-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Join community
+                      {t("community.joinCommunity")}
                     </button>
                   )
                 ) : (
                   <button
-                    onClick={() => toast.error("Please sign in to join")}
+                    onClick={() => toast.error(t("community.signInToJoin"))}
                     className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#673AB7] text-white hover:bg-[#5E35B1] transition-all flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
-                    Join community
+                    {t("community.joinCommunity")}
                   </button>
                 )}
               </div>
@@ -220,13 +227,17 @@ export default function ResearcherCommunityPage() {
 
           {/* Discussions */}
           <div className="bg-white rounded-xl border border-[#E8E8E8] p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#2F3C96] mb-4">Discussions</h2>
+            <h2 className="text-lg font-bold text-[#2F3C96] mb-4">
+              {t("community.discussionsTitle")}
+            </h2>
             {threadsLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 text-[#2F3C96] animate-spin" />
               </div>
             ) : threads.length === 0 ? (
-              <p className="text-[#787878] text-sm py-6">No discussions yet. Be the first to start one!</p>
+              <p className="text-[#787878] text-sm py-6">
+                {t("community.noDiscussionsYet")}
+              </p>
             ) : (
               <ul className="space-y-3">
                 {threads.map((thread) => (
@@ -244,10 +255,10 @@ export default function ResearcherCommunityPage() {
                           }`}
                           title={
                             thread.hasResearcherReply
-                              ? "Researcher replied"
+                              ? t("community.researcherReplied")
                               : thread.onlyResearchersCanReply
-                                ? "Awaiting researcher reply"
-                                : "Awaiting reply"
+                                ? t("community.awaitingResearcherReply")
+                                : t("community.awaitingReply")
                           }
                         >
                           {thread.hasResearcherReply ? (
@@ -256,12 +267,19 @@ export default function ResearcherCommunityPage() {
                             <Clock className="w-4 h-4" aria-hidden />
                           )}
                           <span className="sr-only">
-                            {thread.hasResearcherReply ? "Researcher replied" : thread.onlyResearchersCanReply ? "Awaiting researcher reply" : "Awaiting reply"}
+                            {thread.hasResearcherReply
+                              ? t("community.researcherReplied")
+                              : thread.onlyResearchersCanReply
+                                ? t("community.awaitingResearcherReply")
+                                : t("community.awaitingReply")}
                           </span>
                         </span>
                       </div>
                       <p className="text-xs text-[#787878] mt-1">
-                        {thread.authorUserId?.username ?? "—"} · {thread.replyCount ?? 0} replies
+                        {t("community.threadMeta", {
+                          username: thread.authorUserId?.username ?? "—",
+                          count: thread.replyCount ?? 0,
+                        })}
                       </p>
                     </button>
                   </li>
@@ -272,7 +290,7 @@ export default function ResearcherCommunityPage() {
               onClick={() => navigate("/researcher-forums", { state: { redirectCommunityId: community._id } })}
               className="mt-4 w-full py-2.5 rounded-lg border border-[#673AB7] text-[#673AB7] text-sm font-semibold hover:bg-[#673AB7]/10 transition-all"
             >
-              View all discussions on Researcher Forums
+              {t("community.viewAllOnResearcherForums")}
             </button>
           </div>
         </div>
@@ -284,7 +302,9 @@ export default function ResearcherCommunityPage() {
           <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
             <div className="p-6 border-b border-[#E8E8E8]">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-[#2F3C96]">Welcome to the community</h2>
+                <h2 className="text-lg font-semibold text-[#2F3C96]">
+                  {t("community.welcomeTitle")}
+                </h2>
                 <button
                   onClick={() => setShowJoinModal(false)}
                   className="p-2 text-[#787878] hover:text-[#2F3C96] hover:bg-[#F5F5F5] rounded-lg transition-all"
@@ -295,45 +315,39 @@ export default function ResearcherCommunityPage() {
               <p className="text-sm text-[#787878] mt-1">{community.name}</p>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-[#484848]">Make sure to follow these rules:</p>
+              <p className="text-sm text-[#484848]">{t("community.followRulesTitle")}</p>
               <div className="bg-[#F5F5F5] rounded-lg p-4 border border-[#E8E8E8] space-y-4 text-sm text-[#484848]">
-                <h3 className="font-semibold text-[#2F3C96]">Community Guidelines</h3>
-                <p>
-                  collabiora is a space for respectful, educational discussion about health research. By participating, you agree to:
-                </p>
+                <h3 className="font-semibold text-[#2F3C96]">{t("community.guidelinesTitle")}</h3>
+                <p>{t("community.guidelinesIntro")}</p>
                 <div>
-                  <h4 className="font-semibold text-[#2F3C96] mb-2">Respect & Conduct</h4>
+                  <h4 className="font-semibold text-[#2F3C96] mb-2">{t("community.respectTitle")}</h4>
                   <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                    <li>Treat all members with respect and kindness</li>
-                    <li>Do not use offensive, discriminatory, or harassing language</li>
-                    <li>Do not promote political agendas, conspiracy theories, or misinformation</li>
-                    <li>Stay focused on health research and educational topics</li>
+                    <li>{t("community.respect1")}</li>
+                    <li>{t("community.respect2")}</li>
+                    <li>{t("community.respect3")}</li>
+                    <li>{t("community.respect4")}</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-[#2F3C96] mb-2">Medical Disclaimer</h4>
-                  <p className="mb-2">collabiora does not provide medical advice.</p>
+                  <h4 className="font-semibold text-[#2F3C96] mb-2">{t("community.medicalTitle")}</h4>
+                  <p className="mb-2">{t("community.medicalLead")}</p>
                   <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                    <li>Do not ask for personal diagnoses or treatment recommendations</li>
-                    <li>Information shared is for educational purposes only</li>
-                    <li>Always consult your healthcare provider for medical decisions</li>
+                    <li>{t("community.medical1")}</li>
+                    <li>{t("community.medical2")}</li>
+                    <li>{t("community.medical3")}</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-[#2F3C96] mb-2">Privacy</h4>
+                  <h4 className="font-semibold text-[#2F3C96] mb-2">{t("community.privacyTitle")}</h4>
                   <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                    <li>Do not share personal identifying medical information</li>
-                    <li>Do not post another person&apos;s private data</li>
+                    <li>{t("community.privacy1")}</li>
+                    <li>{t("community.privacy2")}</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-[#2F3C96] mb-2">Moderation Rights</h4>
-                  <p className="text-[#484848]">
-                    collabiora reserves the right to remove posts or restrict accounts that violate these guidelines.
-                  </p>
-                  <p className="mt-2 text-[#484848]">
-                    Our goal is to maintain a safe, supportive, and scientifically grounded community.
-                  </p>
+                  <h4 className="font-semibold text-[#2F3C96] mb-2">{t("community.moderationTitle")}</h4>
+                  <p className="text-[#484848]">{t("community.moderationP1")}</p>
+                  <p className="mt-2 text-[#484848]">{t("community.moderationP2")}</p>
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
@@ -343,14 +357,14 @@ export default function ResearcherCommunityPage() {
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#673AB7] text-white rounded-lg text-sm font-semibold hover:bg-[#5E35B1] transition-all disabled:opacity-70"
                 >
                   {followLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  I agree & Join
+                  {t("community.agreeAndJoin")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowJoinModal(false)}
                   className="px-6 py-2.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all"
                 >
-                  Cancel
+                  {t("ui.cancel")}
                 </button>
               </div>
             </div>

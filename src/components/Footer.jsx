@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import PrefetchLink from "./PrefetchLink.jsx";
 import {
   Instagram,
@@ -8,7 +9,24 @@ import {
   Youtube,
 } from "lucide-react";
 
+const QUICK_LINKS = [
+  { key: "footer.linkAbout", to: "/about" },
+  { key: "footer.linkHowItWorks", to: "/how-it-works" },
+  { key: "footer.linkExplore", to: "/explore" },
+  { key: "footer.linkBlogs", to: "/blogs" },
+];
+
+const RESOURCE_LINKS = [
+  { key: "footer.linkPrivacy", to: "/privacy" },
+  { key: "footer.linkTerms", to: "/terms" },
+  { key: "footer.linkCookie", to: "/cookie-policy" },
+  { key: "footer.linkContact", to: "/contact" },
+  { key: "footer.linkFaq", to: "/faq" },
+];
+
 export default function Footer() {
+  const { t } = useTranslation("common");
+
   return (
     <footer className="relative w-full bg-transparent border-t-2 pt-12 pb-8" style={{ borderColor: "#D0C4E2" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -19,7 +37,7 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-4">
               <img
                 src="/logo1.webp"
-                alt="collabiora Logo"
+                alt={t("footer.logoAlt")}
                 className="h-6 w-auto"
               />
               <span
@@ -33,9 +51,9 @@ export default function Footer() {
               className="text-sm font-semibold mb-2"
               style={{ color: "#2F3C96" }}
             >
-              Empower Your
+              {t("footer.brandTagline1")}
               <br />
-              Health Decisions
+              {t("footer.brandTagline2")}
             </p>
           </div>
 
@@ -45,34 +63,22 @@ export default function Footer() {
               className="text-sm font-bold mb-4"
               style={{ color: "#2F3C96" }}
             >
-              Quick Links
+              {t("footer.quickLinks")}
             </h3>
             <ul className="space-y-2">
-              {["About Us", "How it Works", "Explore", "Blogs"].map((link) => {
-                const routeMap = {
-                  "About Us": "/about",
-                  "How it Works": "/how-it-works",
-                  Explore: "/explore",
-                  Blogs: "/blogs",
-                };
-                const route =
-                  routeMap[link] ||
-                  `/${link.toLowerCase().replace(/\s+/g, "-")}`;
-
-                return (
-                  <li key={link}>
-                    <PrefetchLink
-                      to={route}
-                      className="text-xs transition-colors duration-200 block"
-                      style={{ color: "#787878" }}
-                      onMouseEnter={(e) => (e.target.style.color = "#2F3C96")}
-                      onMouseLeave={(e) => (e.target.style.color = "#787878")}
-                    >
-                      {link}
-                    </PrefetchLink>
-                  </li>
-                );
-              })}
+              {QUICK_LINKS.map(({ key, to }) => (
+                <li key={key}>
+                  <PrefetchLink
+                    to={to}
+                    className="text-xs transition-colors duration-200 block"
+                    style={{ color: "#787878" }}
+                    onMouseEnter={(e) => (e.target.style.color = "#2F3C96")}
+                    onMouseLeave={(e) => (e.target.style.color = "#787878")}
+                  >
+                    {t(key)}
+                  </PrefetchLink>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -82,33 +88,22 @@ export default function Footer() {
               className="text-sm font-bold mb-4"
               style={{ color: "#2F3C96" }}
             >
-              Resources
+              {t("footer.resources")}
             </h3>
             <ul className="space-y-2">
-              {["Privacy Policy", "Terms of Service", "Cookie Policy", "Contact Us", "FAQ"].map((link) => {
-                const routeMap = {
-                  "Privacy Policy": "/privacy",
-                  "Terms of Service": "/terms",
-                  "Cookie Policy": "/cookie-policy",
-                  "Contact Us": "/contact",
-                  FAQ: "/faq",
-                };
-                const route = routeMap[link] || `/${link.toLowerCase().replace(/\s+/g, "-")}`;
-                
-                return (
-                  <li key={link}>
-                    <PrefetchLink
-                      to={route}
-                      className="text-xs transition-colors duration-200 block"
-                      style={{ color: "#787878" }}
-                      onMouseEnter={(e) => (e.target.style.color = "#2F3C96")}
-                      onMouseLeave={(e) => (e.target.style.color = "#787878")}
-                    >
-                      {link}
-                    </PrefetchLink>
-                  </li>
-                );
-              })}
+              {RESOURCE_LINKS.map(({ key, to }) => (
+                <li key={key}>
+                  <PrefetchLink
+                    to={to}
+                    className="text-xs transition-colors duration-200 block"
+                    style={{ color: "#787878" }}
+                    onMouseEnter={(e) => (e.target.style.color = "#2F3C96")}
+                    onMouseLeave={(e) => (e.target.style.color = "#787878")}
+                  >
+                    {t(key)}
+                  </PrefetchLink>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -118,7 +113,7 @@ export default function Footer() {
               className="text-sm font-bold mb-4"
               style={{ color: "#2F3C96" }}
             >
-              Contact
+              {t("footer.contact")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -136,7 +131,7 @@ export default function Footer() {
               <li>
                 <div className="flex items-center gap-2 text-xs" style={{ color: "#787878" }}>
                   <MapPin className="w-4 h-4" />
-                  Los Angeles, CA
+                  {t("footer.location")}
                 </div>
               </li>
             </ul>
@@ -236,7 +231,7 @@ export default function Footer() {
                   collabiora
                 </span>
               </div>
-              <span>. All rights reserved.</span>
+              <span>. {t("footer.rightsReserved")}</span>
             </div>
 
           </div>

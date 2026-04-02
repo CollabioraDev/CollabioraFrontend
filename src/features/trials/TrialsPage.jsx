@@ -52,6 +52,11 @@ import FreeSearchesIndicator, {
 } from "../../components/FreeSearchesIndicator.jsx";
 import { autoCorrectQuery } from "../../utils/spellCorrection.js";
 import apiFetch from "../../utils/api.js";
+import {
+  appendLocaleToSearchParams,
+  getApiLocale,
+} from "../../i18n/getApiLocale.js";
+import { useTranslation } from "react-i18next";
 import { parseEligibilityCriteria } from "../../utils/parseEligibilityCriteria.js";
 import {
   getLocalRemainingSearches,
@@ -97,6 +102,7 @@ function collectTrialContactEmails(trial) {
 }
 
 export default function Trials() {
+  const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("RECRUITING"); // Default to RECRUITING
@@ -289,20 +295,31 @@ export default function Trials() {
     [tutorialSampleResults.length, scrollToResultsOnce],
   );
 
-  const quickFilters = [
-    { label: "Recruiting", value: "RECRUITING", icon: "👥" },
-    { label: "Phase 3", value: "PHASE3", icon: "🔬" },
-    { label: "Cancer", value: "cancer", icon: "🩺" },
-    { label: "Diabetes", value: "diabetes", icon: "💊" },
-    { label: "Cardiology", value: "cardiology", icon: "❤️" },
-    { label: "Neurology", value: "neurology", icon: "🧠" },
-  ];
+  const quickFilters = useMemo(
+    () => [
+      {
+        labelEn: "Recruiting",
+        value: "RECRUITING",
+        icon: "👥",
+      },
+      { labelEn: "Phase 3", value: "PHASE3", icon: "🔬" },
+      { labelEn: "Cancer", value: "cancer", icon: "🩺" },
+      { labelEn: "Diabetes", value: "diabetes", icon: "💊" },
+      { labelEn: "Cardiology", value: "cardiology", icon: "❤️" },
+      { labelEn: "Neurology", value: "neurology", icon: "🧠" },
+    ],
+    [],
+  );
 
-  const trialSuggestionTerms = [
-    ...quickFilters.map((filter) => filter.label),
-    ...quickFilters.map((filter) => filter.value),
-    userMedicalInterest,
-  ].filter(Boolean);
+  const trialSuggestionTerms = useMemo(
+    () =>
+      [
+        ...quickFilters.map((filter) => filter.labelEn),
+        ...quickFilters.map((filter) => filter.value),
+        userMedicalInterest,
+      ].filter(Boolean),
+    [quickFilters, userMedicalInterest],
+  );
 
   const statusOptionsList = [
     "RECRUITING",
@@ -315,19 +332,27 @@ export default function Trials() {
   ];
 
   // Convert to format for CustomSelect
-  const statusOptions = [
-    { value: "", label: "All Statuses" },
-    ...statusOptionsList.map((status) => ({
-      value: status,
-      label: status.replace(/_/g, " "),
-    })),
-  ];
+  const statusOptions = useMemo(
+    () => [
+      { value: "", label: t("trials.allStatuses") },
+      ...statusOptionsList.map((st) => ({
+        value: st,
+        label: t(`trials.statusLabels.${st}`, {
+          defaultValue: st.replace(/_/g, " "),
+        }),
+      })),
+    ],
+    [t, i18n.language],
+  );
 
   const INSTITUTION_UCLA = "University of California, Los Angeles";
-  const institutionOptions = [
-    { value: "", label: "All institutions" },
-    { value: INSTITUTION_UCLA, label: INSTITUTION_UCLA },
-  ];
+  const institutionOptions = useMemo(
+    () => [
+      { value: "", label: t("trials.allInstitutions") },
+      { value: INSTITUTION_UCLA, label: INSTITUTION_UCLA },
+    ],
+    [t, i18n.language],
+  );
 
   /** Tracks prior institution for proactive UCLA search; synced in effect below. */
   const prevInstitutionRef = useRef("");
@@ -348,7 +373,10 @@ export default function Trials() {
       // Show a toast if correction was made
       if (correctedKeyword.toLowerCase() !== keyword.trim().toLowerCase()) {
         toast.success(
-          `Corrected "${keyword.trim()}" to "${correctedKeyword}"`,
+          t("trials.correctedTo", {
+            from: keyword.trim(),
+            to: correctedKeyword,
+          }),
           { duration: 2000 },
         );
       }
@@ -414,8 +442,22 @@ export default function Trials() {
   // Get active advanced filters
   const getActiveAdvancedFilters = () => {
     const filters = [];
+    const sexLabel = (s) =>
+      s === "Female"
+        ? t("trials.sexFemale")
+        : s === "Male"
+          ? t("trials.sexMale")
+          : s;
+    const agePresetLabel = (a) =>
+      a === "Child"
+        ? t("trials.ageChild")
+        : a === "Adult"
+          ? t("trials.ageAdult")
+          : a === "Older adult"
+            ? t("trials.ageOlder")
+            : a;
     if (eligibilitySex && eligibilitySex !== "All") {
-      filters.push({ label: eligibilitySex, key: "sex" });
+      filters.push({ label: sexLabel(eligibilitySex), key: "sex" });
     }
     if (eligibilityAge) {
       if (eligibilityAge === "custom" && (ageRange.min || ageRange.max)) {
@@ -424,15 +466,18 @@ export default function Trials() {
           key: "age",
         });
       } else if (eligibilityAge !== "custom") {
-        filters.push({ label: eligibilityAge, key: "age" });
+        filters.push({
+          label: agePresetLabel(eligibilityAge),
+          key: "age",
+        });
       }
     }
     if (phase) {
       const phaseLabels = {
-        PHASE1: "Phase I",
-        PHASE2: "Phase II",
-        PHASE3: "Phase III",
-        PHASE4: "Phase IV",
+        PHASE1: t("trials.phase1"),
+        PHASE2: t("trials.phase2"),
+        PHASE3: t("trials.phase3"),
+        PHASE4: t("trials.phase4"),
       };
       filters.push({
         label: phaseLabels[phase] || phase,
@@ -500,7 +545,7 @@ export default function Trials() {
       const canSearch = await checkAndUseSearch();
       if (!canSearch) {
         toast.error(
-          "You've used all your free searches! Sign in to continue searching.",
+          t("toasts.searchLimitSignIn"),
           { duration: 4000 },
         );
         return;
@@ -658,6 +703,8 @@ export default function Trials() {
       }
     }
 
+    appendLocaleToSearchParams(params);
+
     try {
       const response = await apiFetch(
         `/api/search/trials?${params.toString()}`,
@@ -674,7 +721,7 @@ export default function Trials() {
         const errorData = await response.json();
         toast.error(
           errorData.error ||
-            "Search limit reached. Sign in to continue searching.",
+            t("toasts.searchLimitShort"),
           { duration: 4000 },
         );
         setLoading(false);
@@ -704,14 +751,12 @@ export default function Trials() {
 
         if (remaining === 0) {
           toast(
-            "You've used all your searches. Sign in for unlimited searches.",
+            t("toasts.searchLimitSignInUnlimited"),
             { duration: 5000, icon: "🔒" },
           );
         } else {
           toast.success(
-            `Search successful! ${remaining} search${
-              remaining !== 1 ? "es" : ""
-            } remaining.`,
+            t("trials.guestSearchSuccess", { count: remaining }),
             { duration: 3000 },
           );
         }
@@ -926,6 +971,8 @@ export default function Trials() {
       }
     }
 
+    appendLocaleToSearchParams(params);
+
     try {
       const response = await apiFetch(
         `/api/search/trials?${params.toString()}`,
@@ -940,7 +987,7 @@ export default function Trials() {
         const errorData = await response.json();
         toast.error(
           errorData.error ||
-            "You've used all your free searches! Sign in to continue searching.",
+            t("toasts.searchLimitSignIn"),
           { duration: 4000 },
         );
         setLoading(false);
@@ -1008,7 +1055,7 @@ export default function Trials() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Page navigation error:", error);
-      toast.error("Failed to load page");
+      toast.error(t("toasts.pageLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -1024,7 +1071,7 @@ export default function Trials() {
       const canSearch = await checkAndUseSearch();
       if (!canSearch) {
         toast.error(
-          "You've used all your free searches! Sign in to continue searching.",
+          t("toasts.searchLimitSignIn"),
           { duration: 4000 },
         );
         return;
@@ -1104,6 +1151,8 @@ export default function Trials() {
         }
       }
 
+      appendLocaleToSearchParams(params);
+
       apiFetch(`/api/search/trials?${params.toString()}`)
         .then(async (r) => {
           // Handle case where apiFetch returns undefined (401 redirect)
@@ -1117,7 +1166,7 @@ export default function Trials() {
             const errorData = await r.json();
             toast.error(
               errorData.error ||
-                "Search limit reached. Sign in to continue searching.",
+                t("toasts.searchLimitShort"),
               { duration: 4000 },
             );
             setLoading(false);
@@ -1146,14 +1195,12 @@ export default function Trials() {
 
             if (remaining === 0) {
               toast(
-                "You've used all your searches. Sign in for unlimited searches.",
+                t("toasts.searchLimitSignInUnlimited"),
                 { duration: 5000, icon: "🔒" },
               );
             } else {
               toast.success(
-                `Search successful! ${remaining} search${
-                  remaining !== 1 ? "es" : ""
-                } remaining.`,
+                t("trials.guestSearchSuccess", { count: remaining }),
                 { duration: 3000 },
               );
             }
@@ -1219,7 +1266,7 @@ export default function Trials() {
   async function favorite(item) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -1282,7 +1329,7 @@ export default function Trials() {
           }?type=trial&id=${encodeURIComponent(itemId)}`,
           { method: "DELETE" },
         );
-        toast.success("Removed from favorites");
+        toast.success(t("toasts.favoritesRemoved"));
       } else {
         // Store complete item information
         await fetch(`${base}/api/favorites/${user._id || user.id}`, {
@@ -1297,7 +1344,7 @@ export default function Trials() {
             },
           }),
         });
-        toast.success("Added to favorites");
+        toast.success(t("toasts.favoritesAdded"));
       }
 
       // Refresh favorites from backend
@@ -1310,7 +1357,7 @@ export default function Trials() {
       console.error("Error toggling favorite:", error);
       // Revert optimistic update on error
       setFavorites(previousFavorites);
-      toast.error("Failed to update favorites");
+      toast.error(t("toasts.favoritesFailed"));
     } finally {
       // Remove from loading set
       setFavoritingItems((prev) => {
@@ -1338,7 +1385,7 @@ export default function Trials() {
     const isResearcher = userProfile?.researcher !== undefined;
     const shouldSimplify = !isResearcher;
 
-    const title = item.title || "Clinical Trial";
+    const title = item.title || t("trials.fallbackTitle");
     const text = [
       item.title || "",
       item.status || "",
@@ -1371,6 +1418,7 @@ export default function Trials() {
           simplify: shouldSimplify, // Simplify for patients, technical for researchers
           // Pass full trial object for structured summary (like Patient Dashboard)
           trial: item,
+          outputLocale: getApiLocale(),
         }),
       }).then((r) => r.json());
 
@@ -1380,14 +1428,17 @@ export default function Trials() {
           res.summary ||
           (typeof res.summary === "object" && res.summary.structured
             ? res.summary
-            : { structured: false, summary: "Summary unavailable" }),
+            : {
+                structured: false,
+                summary: t("publications.summaryUnavailable"),
+              }),
         loading: false,
       }));
     } catch (e) {
       console.error("Summary generation error:", e);
       setSummaryModal((prev) => ({
         ...prev,
-        summary: "Failed to generate summary. Please try again.",
+        summary: t("publications.summaryFailed"),
         loading: false,
       }));
     }
@@ -1412,7 +1463,7 @@ export default function Trials() {
           summary: {
             structured: false,
             summary:
-              res.error || "Failed to simplify further. Please try again.",
+              res.error || t("publications.simplifyFurtherFailed"),
           },
           loading: false,
         }));
@@ -1424,7 +1475,8 @@ export default function Trials() {
           ? res.summary
           : {
               structured: false,
-              summary: res.summary?.summary || "Summary unavailable",
+              summary:
+                res.summary?.summary || t("publications.summaryUnavailable"),
             };
 
       setHasSimplifiedFurther(true);
@@ -1439,7 +1491,7 @@ export default function Trials() {
         ...prev,
         summary: {
           structured: false,
-          summary: "Failed to simplify further. Please try again.",
+          summary: t("publications.simplifyFurtherFailed"),
         },
         loading: false,
       }));
@@ -1467,8 +1519,8 @@ export default function Trials() {
 
       // Update the trial in results to mark as read
       setResults((prevResults) =>
-        prevResults.map((t) =>
-          (t.id || t._id) === itemId ? { ...t, isRead: true } : t,
+        prevResults.map((row) =>
+          (row.id || row._id) === itemId ? { ...row, isRead: true } : row,
         ),
       );
     } catch (error) {
@@ -1476,12 +1528,13 @@ export default function Trials() {
     }
   }
 
-  function getTrialSourceLabel(trial) {
-    const src = trial?.sourceRegistry;
-    if (src === "clinicaltrials.gov") return "ClinicalTrials.gov";
-    if (src === "isrctn") return "ISRCTN";
-    if (src === "ctis") return "EU CTIS";
-    if (src === "cura-link") return "collabiora";
+  function getTrialSourceLabel(trialRow) {
+    const src = trialRow?.sourceRegistry;
+    if (src === "clinicaltrials.gov") return t("trials.registryClinicalTrialsGov");
+    if (src === "isrctn") return t("trials.registryIsrctn");
+    if (src === "eu-ctr") return t("trials.registryEuCtr");
+    if (src === "ctis") return t("trials.registryEuCtis");
+    if (src === "cura-link") return t("trials.registryCollabiora");
     return src || "Unknown";
   }
 
@@ -1534,12 +1587,12 @@ export default function Trials() {
   async function claimCuratedPiAsMe(trial) {
     const mongoId = getCuratedTrialMongoId(trial);
     if (!mongoId) {
-      toast.error("Could not identify this trial");
+      toast.error(t("trials.toastIdentifyTrial"));
       return;
     }
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please sign in");
+      toast.error(t("trials.toastSignIn"));
       return;
     }
     setClaimingPi(true);
@@ -1551,7 +1604,7 @@ export default function Trials() {
       if (!res.ok) {
         throw new Error(data.error || "Claim failed");
       }
-      toast.success("This trial is linked to your profile");
+      toast.success(t("trials.toastTrialLinked"));
       setDetailsModal((prev) => {
         if (!prev.trial) return prev;
         const u = JSON.parse(localStorage.getItem("user") || "{}");
@@ -1583,7 +1636,7 @@ export default function Trials() {
         };
       });
     } catch (e) {
-      toast.error(e.message || "Could not link trial");
+      toast.error(e.message || t("trials.toastLinkTrialFailed"));
     } finally {
       setClaimingPi(false);
     }
@@ -1700,7 +1753,7 @@ export default function Trials() {
     // Check if user is signed in
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to generate a message");
+      toast.error(t("trials.toastSignInMessage"));
       return;
     }
 
@@ -1733,7 +1786,7 @@ export default function Trials() {
       }));
     } catch (error) {
       console.error("Error generating message:", error);
-      toast.error("Failed to generate message. Please try again.");
+      toast.error(t("trials.toastMessageFailed"));
       setDetailsModal((prev) => ({ ...prev, generating: false }));
     }
   }
@@ -1742,7 +1795,7 @@ export default function Trials() {
     if (detailsModal.generatedMessage) {
       navigator.clipboard.writeText(detailsModal.generatedMessage);
       setDetailsModal((prev) => ({ ...prev, copied: true }));
-      toast.success("Message copied to clipboard!");
+      toast.success(t("trials.toastMessageCopied"));
       setTimeout(() => {
         setDetailsModal((prev) => ({ ...prev, copied: false }));
       }, 2000);
@@ -1829,7 +1882,7 @@ export default function Trials() {
     // Check if user is signed in
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to generate a message");
+      toast.error(t("trials.toastSignInMessage"));
       return;
     }
 
@@ -1862,7 +1915,7 @@ export default function Trials() {
       }));
     } catch (error) {
       console.error("Error generating message:", error);
-      toast.error("Failed to generate message. Please try again.");
+      toast.error(t("trials.toastMessageFailed"));
       setContactInfoModal((prev) => ({ ...prev, generating: false }));
     }
   }
@@ -1871,7 +1924,7 @@ export default function Trials() {
     if (contactInfoModal.generatedMessage) {
       navigator.clipboard.writeText(contactInfoModal.generatedMessage);
       setContactInfoModal((prev) => ({ ...prev, copied: true }));
-      toast.success("Message copied to clipboard!");
+      toast.success(t("trials.toastMessageCopied"));
       setTimeout(() => {
         setContactInfoModal((prev) => ({ ...prev, copied: false }));
       }, 2000);
@@ -1909,7 +1962,7 @@ export default function Trials() {
     // Check if user is signed in
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to generate an email");
+      toast.error(t("trials.toastSignInEmail"));
       return;
     }
 
@@ -1942,7 +1995,7 @@ export default function Trials() {
       }));
     } catch (error) {
       console.error("Error generating email:", error);
-      toast.error("Failed to generate email. Please try again.");
+      toast.error(t("trials.toastEmailFailed"));
       setContactStepsModal((prev) => ({ ...prev, generating: false }));
     }
   }
@@ -1951,7 +2004,7 @@ export default function Trials() {
     if (contactStepsModal.generatedEmail) {
       navigator.clipboard.writeText(contactStepsModal.generatedEmail);
       setContactStepsModal((prev) => ({ ...prev, copied: true }));
-      toast.success("Email copied to clipboard!");
+      toast.success(t("trials.toastEmailCopied"));
       setTimeout(() => {
         setContactStepsModal((prev) => ({ ...prev, copied: false }));
       }, 2000);
@@ -1963,12 +2016,12 @@ export default function Trials() {
     if (!contactStepsModal.trial) return;
     const emails = collectTrialContactEmails(contactStepsModal.trial);
     if (emails.length === 0) {
-      toast.error("No email address available");
+      toast.error(t("trials.toastNoEmail"));
       return;
     }
     const draft = (contactStepsModal.generatedEmail || "").trim();
     if (!draft) {
-      toast.error("Generate an email draft first");
+      toast.error(t("trials.toastDraftFirst"));
       return;
     }
 
@@ -1982,13 +2035,11 @@ export default function Trials() {
     navigator.clipboard
       .writeText(clipboardText)
       .then(() => {
-        toast.success(
-          "Opened email app — addresses and draft copied to clipboard",
-        );
+        toast.success(t("trials.toastEmailAppOpened"));
         openGmail();
       })
       .catch(() => {
-        toast.error("Could not copy to clipboard");
+        toast.error(t("trials.toastClipboardFailed"));
         openGmail();
       });
   }
@@ -1999,7 +2050,7 @@ export default function Trials() {
     // Check if user is signed in
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in to generate a message");
+      toast.error(t("trials.toastSignInMessage"));
       return;
     }
 
@@ -2032,14 +2083,14 @@ export default function Trials() {
       }));
     } catch (error) {
       console.error("Error generating message:", error);
-      toast.error("Failed to generate message. Please try again.");
+      toast.error(t("trials.toastMessageFailed"));
       setContactModal((prev) => ({ ...prev, generating: false }));
     }
   }
 
   function handleSendMessage() {
     if (!contactModal.message.trim()) return;
-    toast.success("Message sent successfully!");
+    toast.success(t("trials.toastMessageSent"));
     setContactModal((prev) => ({ ...prev, sent: true, generating: false }));
     setTimeout(() => {
       setContactModal({
@@ -2392,80 +2443,71 @@ export default function Trials() {
     () => [
       {
         target: "[data-tour='trials-header']",
-        title: "Explore Clinical Trials",
-        content:
-          "Hi! I'm Yori. This is where you discover clinical trials that match your needs. Let me show you the key features.",
+        title: t("trials.tutorialSteps.step1Title"),
+        content: t("trials.tutorialSteps.step1Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='trials-search-bar']",
-        title: "Search for trials",
-        content:
-          "Enter keywords (e.g. a condition or treatment) and use the status filter. You can add multiple keywords to refine your search.",
+        title: t("trials.tutorialSteps.step2Title"),
+        content: t("trials.tutorialSteps.step2Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='trials-keywords']",
-        title: "Search keywords",
-        content:
-          "Your search terms appear here as chips. You can remove or add more. Use the Advanced button for age, sex, phase, and location filters.",
+        title: t("trials.tutorialSteps.step3Title"),
+        content: t("trials.tutorialSteps.step3Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='trials-search-btn']",
-        title: "Run your search",
-        content:
-          "Click Search to find matching trials. Results will appear below with match percentage and key details.",
+        title: t("trials.tutorialSteps.step4Title"),
+        content: t("trials.tutorialSteps.step4Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='trials-results-area']",
-        title: "Your results",
-        content:
-          "Matching trials appear here. Each card shows status, phase, and match score. Try searching to see results, then we'll look at the actions on each card.",
+        title: t("trials.tutorialSteps.step5Title"),
+        content: t("trials.tutorialSteps.step5Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='trials-view-details-btn']",
-        title: "View full details",
-        content:
-          "Click here to read the full trial description and eligibility criteria.",
+        title: t("trials.tutorialSteps.step6Title"),
+        content: t("trials.tutorialSteps.step6Content"),
         placement: "top",
       },
       {
         target: "[data-tour='trials-understand-btn']",
-        title: "Simplify",
-        content:
-          "Get a plain-language summary of the trial—great for understanding what it's about and who it's for.",
+        title: t("trials.tutorialSteps.step7Title"),
+        content: t("trials.tutorialSteps.step7Content"),
         placement: "top",
       },
       {
         target: "[data-tour='trials-favourites-btn']",
-        title: "Save to favourites",
-        content:
-          "Save trials you're interested in. You can revisit them later or share with your doctor.",
+        title: t("trials.tutorialSteps.step8Title"),
+        content: t("trials.tutorialSteps.step8Content"),
         placement: "top",
       },
       {
         target: "[data-tour='trials-contact-btn']",
-        title: "Contact information",
-        content:
-          "View contact details for the trial site so you can reach out to the study team.",
+        title: t("trials.tutorialSteps.step9Title"),
+        content: t("trials.tutorialSteps.step9Content"),
         placement: "top",
       },
       {
         target: "[data-tour='yori-chatbot']",
-        title: "Meet Yori!",
+        title: t("trials.tutorialSteps.step10Title"),
         content: isSignedIn
-          ? "That's me! You can always click the helper in the bottom-right corner to ask questions about trials, publications, or research."
-          : "That's me! Sign in and use the helper in the bottom-right corner to get personalized help with trials, publications, and research.",
+          ? t("trials.tutorialSteps.step10ContentSignedIn")
+          : t("trials.tutorialSteps.step10ContentGuest"),
         placement: "top",
         allowTargetClick: true,
         spotlightShape: "circle",
         spotlightPadding: 18,
       },
     ],
-    [isSignedIn],
+    [isSignedIn, t, i18n.language],
   );
 
   return (
@@ -2494,8 +2536,8 @@ export default function Trials() {
             <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-1">
               <AuroraText speed={2.5} colors={["#2F3C96"]}>
                 {user?.role === "researcher"
-                  ? "Clinical Trials"
-                  : "New Treatments"}
+                  ? t("nav.clinicalTrials")
+                  : t("nav.newTreatments")}
               </AuroraText>
             </h1>
             <div className="flex items-center justify-center">
@@ -2522,10 +2564,10 @@ export default function Trials() {
                   }
                 }}
                 className="inline-flex items-center gap-1 text-xs text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline"
-                title="Show tutorial again"
+                title={t("publications.showTutorialAgain")}
               >
                 <Info className="w-3.5 h-3.5" />
-                Tutorial
+                {t("publications.tutorial")}
               </button>
             </div>
             {/* Free Searches Indicator */}
@@ -2553,12 +2595,13 @@ export default function Trials() {
                 <div className="flex flex-col gap-2 p-2 bg-indigo-50 rounded-lg border border-indigo-200">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-700 font-medium">
-                      Your medical interest
-                      {userMedicalInterests.length > 1 ? "s" : ""}:
+                      {userMedicalInterests.length > 1
+                        ? t("publications.yourMedicalInterests")
+                        : t("publications.yourMedicalInterest")}
                     </span>
                     {q && enabledMedicalInterests.size > 0 && (
                       <span className="text-xs text-slate-600">
-                        (enabled interests will be combined with search queries)
+                        {t("publications.enabledInterestsHint")}
                       </span>
                     )}
                   </div>
@@ -2600,7 +2643,7 @@ export default function Trials() {
                   value={q}
                   onChange={setQ}
                   onSubmit={handleKeywordSubmit}
-                  placeholder="Try being specific to get more accurate search results...."
+                  placeholder={t("publications.searchPlaceholder")}
                   extraTerms={trialSuggestionTerms}
                   className="flex-1"
                 />
@@ -2608,7 +2651,7 @@ export default function Trials() {
                   value={status}
                   onChange={(value) => setStatus(value)}
                   options={statusOptions}
-                  placeholder="Select status..."
+                  placeholder={t("trials.selectStatusPlaceholder")}
                   className="w-full sm:w-auto"
                 />
                 <div className="flex gap-2">
@@ -2620,10 +2663,12 @@ export default function Trials() {
                         : "border-slate-200 shadow-[0_2px_8px_rgba(208,196,226,0.25)] hover:shadow-[0_4px_12px_rgba(208,196,226,0.35)] hover:border-[#D0C4E2]/60"
                     }`}
                   >
-                    {showAdvancedSearch ? "Hide" : "Advanced"}
+                    {showAdvancedSearch
+                      ? t("publications.hide")
+                      : t("publications.advanced")}
                     {getActiveAdvancedFilters().length > 0 && (
                       <span className="ml-1.5 bg-[#D0C4E2]/20 text-[#2F3C96] px-1.5 py-0.5 rounded text-xs font-medium">
-                        Filters
+                        {t("publications.filters")}
                       </span>
                     )}
                   </Button>
@@ -2639,7 +2684,7 @@ export default function Trials() {
                     }}
                     data-tour="trials-search-btn"
                   >
-                    Search
+                    {t("publications.search")}
                   </Button>
                 </div>
               </div>
@@ -2649,7 +2694,9 @@ export default function Trials() {
                 {searchKeywords.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-slate-600">
-                      Keywords ({searchKeywords.length}):
+                      {t("publications.keywordsCount", {
+                        count: searchKeywords.length,
+                      })}
                     </span>
                     {searchKeywords.map((keyword, index) => (
                       <span
@@ -2670,7 +2717,7 @@ export default function Trials() {
                       onClick={clearAllKeywords}
                       className="text-xs text-slate-500 hover:text-red-600 transition-colors underline underline-offset-2"
                     >
-                      Clear all
+                      {t("publications.clearAll")}
                     </button>
                   </div>
                 )}
@@ -2682,7 +2729,7 @@ export default function Trials() {
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-medium text-slate-600">
-                      Filters applied:
+                      {t("publications.filtersApplied")}
                     </span>
                     {getActiveAdvancedFilters().map((filter, index) => (
                       <span
@@ -2716,7 +2763,7 @@ export default function Trials() {
                       onClick={clearAllAdvancedFilters}
                       className="text-xs text-slate-500 hover:text-red-600 transition-colors underline underline-offset-2"
                     >
-                      Clear all
+                      {t("publications.clearAll")}
                     </button>
                   </div>
                 </div>
@@ -2726,13 +2773,13 @@ export default function Trials() {
               <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-2">
                 <div className="flex flex-wrap items-center gap-2 min-w-0 shrink-0">
                   <span className="text-xs font-medium text-[#2F3C96] shrink-0">
-                    Location:
+                    {t("trials.locationLabel")}
                   </span>
                   {userLocation && (
                     <button
                       type="button"
                       aria-pressed={locationMode === "current"}
-                      aria-label="Use my profile location for search"
+                      aria-label={t("trials.useProfileLocationAria")}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -2751,7 +2798,7 @@ export default function Trials() {
                       }`}
                     >
                       <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      Near Me
+                      {t("trials.nearMe")}
                     </button>
                   )}
                   <LocationInput
@@ -2764,20 +2811,20 @@ export default function Trials() {
                         setLocationMode("global");
                       }
                     }}
-                    placeholder="City, country…"
+                    placeholder={t("trials.locationPlaceholder")}
                     className="w-[9rem] sm:w-44 shrink-0 max-w-[11rem]"
                     inputClassName="!h-9 !min-h-9 !py-0 !rounded-lg !text-xs border border-[#E8E8E8] bg-white pl-9 pr-3 text-[#2F3C96] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D0C4E2] focus:border-[#D0C4E2] box-border leading-none"
                   />
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   <span className="text-xs font-medium text-[#2F3C96] shrink-0">
-                    Institution:
+                    {t("trials.institutionLabel")}
                   </span>
                   <CustomSelect
                     value={institution}
                     onChange={(v) => setInstitution(v)}
                     options={institutionOptions}
-                    placeholder="All institutions"
+                    placeholder={t("trials.allInstitutions")}
                     variant="location"
                     className="w-56 min-w-[10rem] sm:w-72"
                     maxDropdownHeight={320}
@@ -2796,7 +2843,7 @@ export default function Trials() {
                       className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                     />
                     <span className="text-sm font-medium text-slate-700">
-                      Simplify titles
+                      {t("publications.simplifyTitles")}
                     </span>
                   </label>
                 </div>
@@ -2808,32 +2855,37 @@ export default function Trials() {
           <Modal
             isOpen={showAdvancedSearch}
             onClose={() => setShowAdvancedSearch(false)}
-            title="Advanced Search"
+            title={t("trials.advancedSearchTitle")}
           >
             <div className="space-y-6">
               {/* Eligibility Criteria Section */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-800 mb-4">
-                  Eligibility Criteria
+                  {t("trials.eligibilityCriteriaSection")}
                 </h3>
 
                 {/* Sex Filter */}
                 <div className="mb-4">
                   <label className="block text-xs font-medium text-slate-700 mb-2">
-                    Sex
+                    {t("trials.sex")}
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {["All", "Female", "Male"].map((sex) => (
+                    {[
+                      { v: "All", lab: t("trials.sexAll") },
+                      { v: "Female", lab: t("trials.sexFemale") },
+                      { v: "Male", lab: t("trials.sexMale") },
+                    ].map((sex) => (
                       <button
-                        key={sex}
-                        onClick={() => setEligibilitySex(sex)}
+                        key={sex.v}
+                        type="button"
+                        onClick={() => setEligibilitySex(sex.v)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          eligibilitySex === sex
+                          eligibilitySex === sex.v
                             ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md"
                             : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        {sex}
+                        {sex.lab}
                       </button>
                     ))}
                   </div>
@@ -2842,21 +2894,21 @@ export default function Trials() {
                 {/* Age Filter */}
                 <div className="mb-4">
                   <label className="block text-xs font-medium text-slate-700 mb-2">
-                    Age
+                    {t("trials.age")}
                   </label>
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap gap-2">
                       {[
                         {
-                          label: "Child (birth - 17)",
+                          label: t("trials.ageChild"),
                           value: "Child",
                         },
                         {
-                          label: "Adult (18 - 64)",
+                          label: t("trials.ageAdult"),
                           value: "Adult",
                         },
                         {
-                          label: "Older adult (65+)",
+                          label: t("trials.ageOlder"),
                           value: "Older adult",
                         },
                       ].map((age) => (
@@ -2885,7 +2937,7 @@ export default function Trials() {
                             : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        Manually enter range
+                        {t("trials.manualAgeRange")}
                       </button>
                     </div>
 
@@ -2898,7 +2950,7 @@ export default function Trials() {
                           onChange={(e) =>
                             setAgeRange({ ...ageRange, min: e.target.value })
                           }
-                          placeholder="Min age"
+                          placeholder={t("trials.minAgePlaceholder")}
                           className="w-24 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                         <span className="text-slate-600">-</span>
@@ -2908,7 +2960,7 @@ export default function Trials() {
                           onChange={(e) =>
                             setAgeRange({ ...ageRange, max: e.target.value })
                           }
-                          placeholder="Max age"
+                          placeholder={t("trials.maxAgePlaceholder")}
                           className="w-24 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                       </div>
@@ -2920,14 +2972,14 @@ export default function Trials() {
               {/* Phase Filter */}
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-2">
-                  Phase
+                  {t("trials.phase")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { label: "Phase I", value: "PHASE1" },
-                    { label: "Phase II", value: "PHASE2" },
-                    { label: "Phase III", value: "PHASE3" },
-                    { label: "Phase IV", value: "PHASE4" },
+                    { label: t("trials.phase1"), value: "PHASE1" },
+                    { label: t("trials.phase2"), value: "PHASE2" },
+                    { label: t("trials.phase3"), value: "PHASE3" },
+                    { label: t("trials.phase4"), value: "PHASE4" },
                   ].map((phaseOption) => (
                     <button
                       key={phaseOption.value}
@@ -2951,14 +3003,14 @@ export default function Trials() {
               {/* Other Terms */}
               <div>
                 <label className="flex text-xs font-medium text-slate-700 mb-2 items-center gap-2">
-                  Other terms
-                  <Tooltip content="In the search feature, the Other terms field is used to narrow a search. For example, you may enter the name of a drug or the NCT number of a clinical study to limit the search to study records that contain these words." />
+                  {t("trials.otherTerms")}
+                  <Tooltip content={t("trials.otherTermsTooltip")} />
                 </label>
                 <input
                   type="text"
                   value={otherTerms}
                   onChange={(e) => setOtherTerms(e.target.value)}
-                  placeholder="Enter drug name, NCT number, etc."
+                  placeholder={t("trials.otherTermsPlaceholder")}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -2966,14 +3018,14 @@ export default function Trials() {
               {/* Intervention/Treatment */}
               <div>
                 <label className="flex text-xs font-medium text-slate-700 mb-2 items-center gap-2">
-                  Intervention/treatment
-                  <Tooltip content="A process or action that is the focus of a clinical study. Interventions include drugs, medical devices, procedures, vaccines, and other products that are either investigational or already available. Interventions can also include noninvasive approaches, such as education or modifying diet and exercise." />
+                  {t("trials.interventionTreatmentHeading")}
+                  <Tooltip content={t("trials.interventionTooltip")} />
                 </label>
                 <input
                   type="text"
                   value={intervention}
                   onChange={(e) => setIntervention(e.target.value)}
-                  placeholder="Enter intervention or treatment name"
+                  placeholder={t("trials.interventionPlaceholder")}
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -2987,7 +3039,7 @@ export default function Trials() {
                   }}
                   className="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-6 py-2 rounded-lg text-sm font-medium"
                 >
-                  Search
+                  {t("publications.search")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -3001,7 +3053,7 @@ export default function Trials() {
                   }}
                   className="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
                 >
-                  Clear
+                  {t("publications.clear")}
                 </Button>
               </div>
             </div>
@@ -3116,7 +3168,9 @@ export default function Trials() {
                                       className="text-sm font-bold"
                                       style={{ color: "#2F3C96" }}
                                     >
-                                      {trial.matchPercentage}% Match
+                                      {t("trials.matchPercent", {
+                                        pct: trial.matchPercentage,
+                                      })}
                                     </span>
                                     {/* Info Icon with Tooltip */}
                                     <div className="relative group">
@@ -3127,11 +3181,13 @@ export default function Trials() {
                                       {/* Tooltip */}
                                       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
                                         <div className="font-semibold mb-1">
-                                          Match Relevance
+                                          {t("trials.matchRelevance")}
                                         </div>
                                         <div className="text-gray-300 leading-relaxed">
                                           {trial.matchExplanation ||
-                                            `This trial matches ${trial.matchPercentage}% based on your profile, medical conditions, location, and eligibility criteria. The match considers factors like your medical interests, location proximity, age, gender, and trial requirements.`}
+                                            t("trials.matchExplanationDefault", {
+                                              pct: trial.matchPercentage,
+                                            })}
                                         </div>
                                         {/* Tooltip arrow */}
                                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
@@ -3144,7 +3200,12 @@ export default function Trials() {
                                         trial.status,
                                       )}`}
                                     >
-                                      {trial.status.replace(/_/g, " ")}
+                                      {t(`trials.statusLabels.${trial.status}`, {
+                                        defaultValue: trial.status.replace(
+                                          /_/g,
+                                          " ",
+                                        ),
+                                      })}
                                     </span>
                                   )}
                                 </div>
@@ -3185,14 +3246,14 @@ export default function Trials() {
                                 )}
                                 <span className="flex-1">
                                   {userProfile?.researcher !== undefined
-                                    ? trial.title || "Untitled Trial"
+                                    ? trial.title || t("trials.untitledTrial")
                                     : (simplifyTitles &&
                                         simplifiedTrialSummaries.get(
                                           trial.title,
                                         )) ||
                                       trial.simplifiedTitle ||
                                       trial.title ||
-                                      "Untitled Trial"}
+                                      t("trials.untitledTrial")}
                                 </span>
                               </h3>
                               {trial.sourceRegistry === "cura-link" &&
@@ -3202,7 +3263,7 @@ export default function Trials() {
                                       className="text-xs font-medium"
                                       style={{ color: "#787878" }}
                                     >
-                                      PI on collabiora:
+                                      {t("trials.piOnPlatform")}
                                     </span>
                                     {trial.piOnPlatform
                                       .slice(0, 3)
@@ -3257,14 +3318,14 @@ export default function Trials() {
                                         <span className="line-clamp-2">
                                           {trial.description ||
                                             trial.conditionDescription ||
-                                            "View details for more information"}
+                                            t("trials.viewDetailsPlaceholder")}
                                         </span>
                                       </div>
                                       <div
                                         className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
                                         style={{ color: "#2F3C96" }}
                                       >
-                                        <span>Read more details</span>
+                                        <span>{t("trials.readMoreDetails")}</span>
                                         <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
                                           →
                                         </span>
@@ -3306,7 +3367,7 @@ export default function Trials() {
                                   }
                                 }}
                               >
-                                Simplify
+                                {t("publications.simplify")}
                               </button>
                               <button
                                 onClick={() => favorite(trial)}
@@ -3412,7 +3473,7 @@ export default function Trials() {
                                 e.target.style.color = "#2F3C96";
                               }}
                             >
-                              View Contact Information
+                              {t("trials.viewContactInformation")}
                             </button>
                           </div>
                         </div>
@@ -3427,15 +3488,13 @@ export default function Trials() {
             <div className="mt-6 flex flex-col items-center gap-4">
               {/* Results Count */}
               <div className="text-sm text-slate-600">
-                Page{" "}
-                <span className="font-semibold text-indigo-700">
-                  {currentPage}
-                </span>{" "}
-                of{" "}
-                <span className="font-semibold text-indigo-700">
-                  {totalPages.toLocaleString()}
-                </span>{" "}
-                ({totalCount.toLocaleString()} total results)
+                {t("publications.pageOf", {
+                  current: currentPage,
+                  total: totalPages.toLocaleString(),
+                })}{" "}
+                {t("trials.totalResultsInline", {
+                  count: totalCount.toLocaleString(),
+                })}
               </div>
 
               {/* Pagination Controls */}
@@ -3446,7 +3505,7 @@ export default function Trials() {
                     disabled={currentPage === 1 || loading}
                     className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    {t("publications.previous")}
                   </button>
 
                   {/* Page Numbers */}
@@ -3496,7 +3555,7 @@ export default function Trials() {
                     disabled={currentPage === totalPages || loading}
                     className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 hover:border-indigo-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t("publications.next")}
                   </button>
                 </div>
               )}
@@ -3518,26 +3577,24 @@ export default function Trials() {
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-indigo-600" />
                     <h3 className="text-lg font-bold text-indigo-900">
-                      Want to see more trials?
+                      {t("trials.wantMoreTrialsTitle")}
                     </h3>
                   </div>
                   <p className="text-sm text-indigo-700 max-w-md">
-                    Sign up for free to view all {results.length} matching
-                    trials and get personalized recommendations based on your
-                    medical interests.
+                    {t("trials.wantMoreTrialsBody", { count: results.length })}
                   </p>
                   <div className="flex gap-3 mt-2">
                     <button
                       onClick={() => navigate("/signin")}
                       className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
                     >
-                      Sign In
+                      {t("auth.signIn")}
                     </button>
                     <button
                       onClick={() => navigate("/onboarding")}
                       className="px-6 py-2.5 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-all border-2 border-indigo-200 hover:border-indigo-300"
                     >
-                      Sign Up
+                      {t("publications.signUp")}
                     </button>
                   </div>
                 </div>
@@ -3549,11 +3606,10 @@ export default function Trials() {
             <div className="text-center py-12 bg-white rounded-lg shadow-md border border-slate-200 animate-fade-in">
               <Beaker className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                No Clinical Trials Found
+                {t("trials.emptyTitle")}
               </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Try adjusting your search criteria or browse different
-                categories.
+                {t("trials.emptyHint")}
               </p>
             </div>
           )}
@@ -3573,7 +3629,7 @@ export default function Trials() {
             setSummaryTrial(null);
             setHasSimplifiedFurther(false);
           }}
-          title="Key Insights"
+          title={t("publications.keyInsights")}
         >
           <div className="space-y-4">
             <div
@@ -3593,7 +3649,7 @@ export default function Trials() {
                     color: "#2F3C96",
                   }}
                 >
-                  Clinical Trial
+                  {t("trials.clinicalTrialBadge")}
                 </span>
                 {summaryModal.type === "trial" &&
                   !summaryModal.loading &&
@@ -3608,7 +3664,7 @@ export default function Trials() {
                         color: "#2F3C96",
                       }}
                     >
-                      Simplify further
+                      {t("publications.simplifyFurther")}
                     </button>
                   )}
               </div>
@@ -3621,7 +3677,7 @@ export default function Trials() {
                 >
                   <Sparkles className="w-4 h-4 animate-pulse" />
                   <span className="text-sm font-medium">
-                    Preparing key insights…
+                    {t("publications.preparingKeyInsights")}
                   </span>
                 </div>
                 <div className="animate-pulse space-y-3">
@@ -3678,7 +3734,7 @@ export default function Trials() {
                           className="font-semibold text-sm mb-2"
                           style={{ color: "#2F3C96" }}
                         >
-                          Overview
+                          {t("trials.overview")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -3706,7 +3762,7 @@ export default function Trials() {
                           <span className="w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold bg-green-500">
                             1
                           </span>
-                          What Happens (Procedures, Schedule, Treatments)
+                          {t("trials.whatHappens")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -3734,7 +3790,7 @@ export default function Trials() {
                           <span className="w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold bg-amber-500">
                             2
                           </span>
-                          Potential Risks and Benefits
+                          {t("trials.risksBenefits")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -3762,7 +3818,7 @@ export default function Trials() {
                           <span className="w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold bg-purple-500">
                             3
                           </span>
-                          What Participants Need to Do
+                          {t("trials.participantRequirements")}
                         </h5>
                         <p
                           className="text-sm leading-relaxed"
@@ -3783,8 +3839,10 @@ export default function Trials() {
                   style={{ color: "#787878" }}
                 >
                   {typeof summaryModal.summary === "object"
-                    ? summaryModal.summary.summary || "Summary unavailable"
-                    : summaryModal.summary || "Summary unavailable"}
+                    ? summaryModal.summary.summary ||
+                      t("publications.summaryUnavailable")
+                    : summaryModal.summary ||
+                      t("publications.summaryUnavailable")}
                 </p>
               </div>
             )}
@@ -3795,7 +3853,7 @@ export default function Trials() {
         <Modal
           isOpen={detailsModal.open}
           onClose={closeDetailsModal}
-          title="Clinical Trial Details"
+          title={t("trials.modalDetailsTitle")}
         >
           {detailsModal.loading ? (
             <div className="flex items-center justify-center py-12">
@@ -3804,7 +3862,7 @@ export default function Trials() {
                 style={{ color: "#2F3C96" }}
               />
               <span className="ml-3 text-sm" style={{ color: "#787878" }}>
-                Loading detailed trial information...
+                {t("trials.loadingDetails")}
               </span>
             </div>
           ) : detailsModal.trial ? (
@@ -3849,7 +3907,13 @@ export default function Trials() {
                           detailsModal.trial.status,
                         )}`}
                       >
-                        {detailsModal.trial.status.replace(/_/g, " ")}
+                        {t(
+                          `trials.statusLabels.${detailsModal.trial.status}`,
+                          {
+                            defaultValue:
+                              detailsModal.trial.status.replace(/_/g, " "),
+                          },
+                        )}
                       </span>
                     )}
                     {detailsModal.trial.phase && (
@@ -3861,23 +3925,15 @@ export default function Trials() {
                           borderColor: "rgba(232, 232, 232, 1)",
                         }}
                       >
-                        Phase {detailsModal.trial.phase}
+                        {t("trialDetails.phaseLabel", {
+                          phase: detailsModal.trial.phase,
+                        })}
                       </span>
                     )}
                     {detailsModal.trial.sourceRegistry && (
                       <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border bg-slate-50 text-slate-600 border-slate-200">
                         <ExternalLink className="w-3 h-3 mr-1" />
-                        {detailsModal.trial.sourceRegistry ===
-                        "clinicaltrials.gov"
-                          ? "ClinicalTrials.gov"
-                          : detailsModal.trial.sourceRegistry === "isrctn"
-                            ? "ISRCTN"
-                            : detailsModal.trial.sourceRegistry === "eu-ctr"
-                              ? "EU Clinical Trials Register"
-                              : detailsModal.trial.sourceRegistry ===
-                                  "cura-link"
-                                ? "collabiora"
-                                : detailsModal.trial.sourceRegistry}
+                        {getTrialSourceLabel(detailsModal.trial)}
                       </span>
                     )}
                   </div>
@@ -3906,7 +3962,7 @@ export default function Trials() {
                           className="w-5 h-5"
                           style={{ color: "#2F3C96" }}
                         />
-                        Principal investigator
+                        {t("trials.principalInvestigator")}
                       </h4>
                       {detailsModal.trial.principalInvestigator && (
                         <p
@@ -3923,7 +3979,7 @@ export default function Trials() {
                               className="text-xs font-semibold uppercase tracking-wide"
                               style={{ color: "#787878" }}
                             >
-                              On collabiora
+                              {t("trials.onCollabiora")}
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {detailsModal.trial.piOnPlatform.map((pi) => (
@@ -3948,7 +4004,7 @@ export default function Trials() {
                                   <span>{pi.displayName}</span>
                                   {pi.claimed && (
                                     <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                                      Verified
+                                      {t("trials.verifiedBadge")}
                                     </span>
                                   )}
                                 </Link>
@@ -3969,8 +4025,8 @@ export default function Trials() {
                             style={{ backgroundColor: "#2F3C96" }}
                           >
                             {claimingPi
-                              ? "Linking…"
-                              : "This is me (I'm the PI)"}
+                              ? t("trials.linking")
+                              : t("trials.claimPiButton")}
                           </button>
                         )}
                       {userProfile?.researcher !== undefined &&
@@ -3981,7 +4037,7 @@ export default function Trials() {
                             className="mt-3 text-sm font-medium"
                             style={{ color: "#059669" }}
                           >
-                            This trial is linked to your researcher profile.
+                            {t("trials.linkedToProfile")}
                           </p>
                         )}
                     </div>
@@ -4007,7 +4063,7 @@ export default function Trials() {
                         className="w-5 h-5"
                         style={{ color: "#2F3C96" }}
                       />
-                      Study Purpose
+                      {t("trials.studyPurpose")}
                     </h4>
                     <p
                       className="text-sm leading-relaxed whitespace-pre-line"
@@ -4039,7 +4095,7 @@ export default function Trials() {
                         className="w-5 h-5"
                         style={{ color: "#2F3C96" }}
                       />
-                      Who Can Join (Eligibility)
+                      {t("trials.whoCanJoin")}
                     </h4>
 
                     {/* Show simplified summary if available */}
@@ -4803,7 +4859,7 @@ export default function Trials() {
         <Modal
           isOpen={contactInfoModal.open}
           onClose={closeContactInfoModal}
-          title="Contact Information"
+          title={t("trials.contactInformationTitle")}
         >
           <div className="space-y-4">
             {contactInfoModal.loading ? (
@@ -5077,7 +5133,7 @@ export default function Trials() {
               });
             }
           }}
-          title="Contact Moderator"
+          title={t("trials.contactModeratorTitle")}
         >
           <div className="space-y-4">
             {contactModal.sent ? (
@@ -5188,7 +5244,7 @@ export default function Trials() {
         <Modal
           isOpen={contactStepsModal.open}
           onClose={closeContactStepsModal}
-          title="Help me contact Trial Moderator"
+          title={t("trials.helpContactModerator")}
         >
           <div className="space-y-6">
             {contactStepsModal.trial && (

@@ -1,12 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import './i18n/index.js'
 import './index.css'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import LogRocket from 'logrocket';
 
 LogRocket.init('fuvonk/collabiora');
-
 // Register Service Worker (PWA)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

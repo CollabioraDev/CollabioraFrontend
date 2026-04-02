@@ -42,6 +42,8 @@ import FreeSearchesIndicator, {
   useFreeSearches,
 } from "../components/FreeSearchesIndicator.jsx";
 import apiFetch from "../utils/api.js";
+import { appendLocaleToSearchParams } from "../i18n/getApiLocale.js";
+import { useTranslation } from "react-i18next";
 import {
   getLocalRemainingSearches,
   setLocalSearchCount,
@@ -62,6 +64,7 @@ import {
 import { loadTutorialSampleExperts } from "../utils/tutorialSampleData.js";
 
 export default function Experts() {
+  const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const initialFetchDone = useRef(false); // Track if initial fetch has been performed
   const [researchArea, setResearchArea] = useState("");
@@ -156,8 +159,12 @@ export default function Experts() {
 
   // Determine if user is a researcher to show "Collaborators" instead of "Experts"
   const isResearcher = user?.role === "researcher";
-  const expertLabel = isResearcher ? "Collaborator" : "Expert";
-  const expertsLabel = isResearcher ? "Collaborators" : "Health Experts";
+  const expertLabel = isResearcher
+    ? t("experts.collaborator")
+    : t("experts.expert");
+  const expertsLabel = isResearcher
+    ? t("experts.collaborators")
+    : t("experts.healthExperts");
 
   const getCitationCount = (expert) => {
     const metricsCitations = expert?.metrics?.totalCitations;
@@ -366,7 +373,7 @@ export default function Experts() {
       const canSearch = await checkAndUseSearch();
       if (!canSearch) {
         toast.error(
-          "You've used all your searches. Sign in to continue searching.",
+          t("toasts.searchLimitSignIn"),
           { duration: 4000 },
         );
         return;
@@ -415,17 +422,13 @@ export default function Experts() {
     const hasInstitutionFilter = Boolean(institution && institution.trim());
 
     if (!hasTopicInput && !hasInstitutionFilter) {
-      toast.error(
-        "Enter a condition, research focus, or select an institution to search.",
-      );
+      toast.error(t("experts.enterTopicOrInstitution"));
       setLoading(false);
       return;
     }
 
     if (isOnPlatform && !hasTopicInput && hasInstitutionFilter) {
-      toast.error(
-        'Browsing by institution uses global experts. Uncheck "On Platform" or enter a topic.',
-      );
+      toast.error(t("experts.onPlatformConflict"));
       setLoading(false);
       return;
     }
@@ -542,6 +545,7 @@ export default function Experts() {
         }
       }
 
+      appendLocaleToSearchParams(sourceParams);
       return sourceParams;
     };
 
@@ -618,7 +622,7 @@ export default function Experts() {
         if (result.error && result.error.includes("Rate limit")) {
           toast.error(
             result.error ||
-              "You've used all your searches. Sign in to continue searching.",
+              t("toasts.searchLimitSignIn"),
             { duration: 4000 },
           );
           setLoading(false);
@@ -659,14 +663,12 @@ export default function Experts() {
 
         if (remaining === 0) {
           toast(
-            "You've used all your searches. Sign in for unlimited searches.",
+            t("toasts.searchLimitSignInUnlimited"),
             { duration: 5000, icon: "🔒" },
           );
         } else {
           toast.success(
-            `Search successful! ${remaining} search${
-              remaining !== 1 ? "es" : ""
-            } remaining.`,
+            t("experts.guestSearchSuccess", { count: remaining }),
             { duration: 3000 },
           );
         }
@@ -698,14 +700,18 @@ export default function Experts() {
 
       if (sortedResults.length === 0) {
         toast.error(
-          `No ${expertsLabel.toLowerCase()} found. Try adjusting your search criteria.`,
+          t("experts.noneFoundTryAdjust", {
+            label: expertsLabel.toLowerCase(),
+          }),
         );
       }
     } catch (error) {
       console.error("Search error:", error);
       setResults([]);
       toast.error(
-        `Failed to search ${expertsLabel.toLowerCase()}. Please try again later.`,
+        t("experts.searchFailedTryLater", {
+          label: expertsLabel.toLowerCase(),
+        }),
       );
     } finally {
       setLoading(false);
@@ -737,15 +743,17 @@ export default function Experts() {
       setFindExpertResults(data.results || []);
 
       if ((data.results || []).length === 0) {
-        toast.error(`No researchers found with the name "${findExpertName}"`);
+        toast.error(
+          t("experts.findExpertNotFound", { name: findExpertName }),
+        );
       } else {
         toast.success(
-          `Found ${data.results.length} researcher${data.results.length !== 1 ? "s" : ""}`,
+          t("experts.findExpertFound", { count: data.results.length }),
         );
       }
     } catch (error) {
       console.error("Find expert error:", error);
-      toast.error("Failed to search for expert. Please try again.");
+      toast.error(t("experts.findExpertError"));
       setFindExpertResults([]);
     } finally {
       setFindExpertLoading(false);
@@ -774,7 +782,7 @@ export default function Experts() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || "Failed to load more experts");
+        toast.error(data.error || t("experts.loadMoreFailed"));
         setLoadingMore(false);
         return;
       }
@@ -799,7 +807,7 @@ export default function Experts() {
       setGlobalTotalFound(data.totalFound || 0);
     } catch (error) {
       console.error("Error loading more experts:", error);
-      toast.error("Failed to load more experts. Please try again.");
+      toast.error(t("experts.loadMoreError"));
     } finally {
       setLoadingMore(false);
     }
@@ -815,7 +823,7 @@ export default function Experts() {
       const canSearch = await checkAndUseSearch();
       if (!canSearch) {
         toast.error(
-          "You've used all your searches. Sign in to continue searching.",
+          t("toasts.searchLimitSignIn"),
           { duration: 4000 },
         );
         return;
@@ -985,7 +993,7 @@ export default function Experts() {
           if (result.error && result.error.includes("Rate limit")) {
             toast.error(
               result.error ||
-                "You've used all your searches. Sign in to continue searching.",
+                t("toasts.searchLimitSignIn"),
               { duration: 4000 },
             );
             setLoading(false);
@@ -1024,14 +1032,12 @@ export default function Experts() {
 
           if (remaining === 0) {
             toast(
-              "You've used all your searches. Sign in for unlimited searches.",
+              t("toasts.searchLimitSignInUnlimited"),
               { duration: 5000, icon: "🔒" },
             );
           } else {
             toast.success(
-              `Search successful! ${remaining} search${
-                remaining !== 1 ? "es" : ""
-              } remaining.`,
+              t("experts.guestSearchSuccess", { count: remaining }),
               { duration: 3000 },
             );
           }
@@ -1115,11 +1121,11 @@ export default function Experts() {
       }));
 
       if (data.publications && data.publications.length === 0) {
-        toast.error("No publications found for this researcher");
+        toast.error(t("experts.noPublications"));
       }
     } catch (error) {
       console.error("Error fetching publications:", error);
-      toast.error("Failed to fetch publications");
+      toast.error(t("experts.fetchPublicationsFailed"));
       setPublications((prev) => ({
         ...prev,
         [expertId]: [],
@@ -1138,7 +1144,7 @@ export default function Experts() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("token");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to favorite items");
+      toast.error(t("toasts.signInRequiredFavorites"));
       return;
     }
 
@@ -1251,7 +1257,7 @@ export default function Experts() {
           throw new Error("Failed to delete favorite");
         }
 
-        toast.success("Removed from favorites");
+        toast.success(t("toasts.favoritesRemoved"));
       } else {
         // Store complete item information
         const itemToStore = {
@@ -1286,7 +1292,7 @@ export default function Experts() {
           throw new Error("Failed to add favorite");
         }
 
-        toast.success("Added to favorites");
+        toast.success(t("toasts.favoritesAdded"));
       }
 
       // Refresh favorites from backend - wait a bit to ensure backend has processed
@@ -1305,7 +1311,7 @@ export default function Experts() {
       console.error("Error toggling favorite:", error);
       // Revert optimistic update on error
       setFavorites(previousFavorites);
-      toast.error("Failed to update favorites");
+      toast.error(t("toasts.favoritesFailed"));
     } finally {
       // Remove from loading set
       setFavoritingItems((prev) => {
@@ -1319,11 +1325,11 @@ export default function Experts() {
   async function sendConnectionRequest() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     if (!userData?._id && !userData?.id) {
-      toast.error("Please sign in to send connection requests");
+      toast.error(t("experts.signInConnection"));
       return;
     }
     if (userData.role !== "researcher") {
-      toast.error("Only researchers can send connection requests");
+      toast.error(t("experts.researchersOnlyConnection"));
       return;
     }
     const expert = connectionRequestModal.expert;
@@ -1347,7 +1353,7 @@ export default function Experts() {
         throw new Error(errorData.error || "Failed to send connection request");
       }
 
-      toast.success("Connection request sent successfully!");
+      toast.success(t("experts.connectionSent"));
       setConnectionRequestModal({ open: false, message: "", expert: null });
       setConnectionRequestStatus((prev) => ({
         ...prev,
@@ -1360,7 +1366,7 @@ export default function Experts() {
       }));
     } catch (error) {
       console.error("Error sending connection request:", error);
-      toast.error(error.message || "Failed to send connection request");
+      toast.error(error.message || t("experts.connectionFailed"));
     }
   }
 
@@ -1657,79 +1663,71 @@ export default function Experts() {
     () => [
       {
         target: "[data-tour='experts-header']",
-        title: `Explore ${expertsLabel}`,
-        content: `Hi! I'm Yori. This is where you find and connect with medical researchers. Let me show you the key features.`,
+        title: t("experts.tutorialExploreTitle", { label: expertsLabel }),
+        content: t("experts.tutorialStep1Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-tabs']",
-        title: "Explore or Find",
-        content:
-          "Use Explore to search by condition and expertise. Use Find an Expert to search for a researcher by name.",
+        title: t("experts.tutorialStep2Title"),
+        content: t("experts.tutorialStep2Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-on-platform']",
-        title: "On platform vs global",
-        content:
-          "When **On platform** is checked, you see researchers who are on collabiora. Uncheck it to search global experts from other sources.",
+        title: t("experts.tutorialStep3Title"),
+        content: t("experts.tutorialStep3Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-search-bar']",
-        title: "Search for experts",
-        content:
-          "Enter a condition and the expertise you're looking for. You can filter by location. Your medical interest can be used to pre-fill the condition.",
+        title: t("experts.tutorialStep4Title"),
+        content: t("experts.tutorialStep4Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-search-btn']",
-        title: "Run your search",
-        content:
-          "Click Search to find matching researchers. Results show citation metrics and you can expand a card to see publications and actions.",
+        title: t("experts.tutorialStep5Title"),
+        content: t("experts.tutorialStep5Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-results-area']",
-        title: "Your results",
-        content:
-          "Matching experts appear here. Expand a card to view their profile, publications, and send a connection request (researchers only).",
+        title: t("experts.tutorialStep6Title"),
+        content: t("experts.tutorialStep6Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-match-badge']",
-        title: "Why this ranking?",
-        content:
-          "Each expert gets a match score based on your search. The bar and explanation show how well they fit your condition and expertise.",
+        title: t("experts.tutorialStep7Title"),
+        content: t("experts.tutorialStep7Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='experts-view-profile-btn']",
-        title: "View profile",
-        content:
-          "Open the full expert profile to see their research, publications, and how to get in touch.",
+        title: t("experts.tutorialStep8Title"),
+        content: t("experts.tutorialStep8Content"),
         placement: "top",
       },
       {
         target: "[data-tour='experts-favourites-btn']",
-        title: "Save to favourites",
-        content:
-          "Save experts you're interested in so you can find them easily later.",
+        title: t("experts.tutorialStep9Title"),
+        content: t("experts.tutorialStep9Content"),
         placement: "left",
       },
       {
         target: "[data-tour='yori-chatbot']",
-        title: "Meet Yori!",
+        title: t("experts.tutorialStep10Title"),
         content: isSignedIn
-          ? "That's me! You can always click the helper in the bottom-right corner to ask questions about experts, trials, or research."
-          : "That's me! Sign in and use the helper in the bottom-right corner to get personalized help with experts, trials, and research.",
+          ? t("experts.tutorialStep10ContentSignedIn")
+          : t("experts.tutorialStep10ContentGuest"),
         placement: "top",
         allowTargetClick: true,
         spotlightShape: "circle",
         spotlightPadding: 18,
       },
     ],
-    [expertsLabel, isSignedIn],
+    [expertsLabel, isSignedIn, t, i18n.language],
   );
 
   return (

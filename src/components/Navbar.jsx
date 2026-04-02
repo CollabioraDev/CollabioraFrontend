@@ -6,8 +6,10 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { listenForMessages } from "../utils/crossTabSync.js";
 import { getDisplayName } from "../utils/researcherDisplayName.js";
 import { IconBell } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 
 export default function Navbar() {
+  const { t } = useTranslation("common");
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [isMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -114,62 +116,62 @@ export default function Navbar() {
   const getNavItems = () => {
     // How It Works page: restrict to About Us, FAQ, Contact
     if (isHowItWorksPage) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["aboutUs", "faq", "contact"];
     }
     // FAQ page: always show About Us, FAQ, Contact (regardless of auth state)
     if (isFAQPage) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["aboutUs", "faq", "contact"];
     }
     // Privacy Policy / Terms: show only About Us, FAQ, Contact (Sign In shown in navbar)
     if (isPrivacyOrTermsPage) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["aboutUs", "faq", "contact"];
     }
     // Forgot Password / Reset Password pages: always show About Us, FAQ, Contact (regardless of auth state)
     if (isForgotOrResetPasswordPage) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["aboutUs", "faq", "contact"];
     }
     // Auth callback / complete-profile (setting up account): show only Explore, Forums, Discovery
     if (isAuthCallbackPage) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     // Blogs + press releases: Explore, Forums, Discovery (no Dashboard — match Explore page)
     if (isBlogsPage || isPressReleasePage) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     // About Us, Contact, Sign In, Onboarding: basic nav for guests, app nav for signed-in
     if (isSimpleNavPage && !user) {
-      return ["About Us", "FAQ", "Contact"];
+      return ["aboutUs", "faq", "contact"];
     }
     if (isSimpleNavPage && user) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     if (isLandingPage && !user) {
-      return ["Explore"];
+      return ["explore"];
     }
     if (isSignInOrExplorePage) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     // Non-signed-in on Trials, Publications, or Experts: show Explore, Forums, Discovery
     if (!user && isTrialsPublicationsOrExperts) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     // Non-signed-in on Discovery or Forums: show Explore, Forums, Discovery
     if (!user && isDiscoveryOrForumsPage) {
-      return ["Explore", "Forums", "Discovery"];
+      return ["explore", "forums", "discovery"];
     }
     if (user) {
-      return ["Dashboard", "Explore", "Forums", "Discovery"];
+      return ["dashboard", "explore", "forums", "discovery"];
     }
     const allNavItems = [
-      "Trials",
-      "Publications",
-      "Experts",
-      "Forums",
-      "Discovery",
+      "trials",
+      "publications",
+      "experts",
+      "forums",
+      "discovery",
     ];
     return isDashboardPage
       ? allNavItems.filter(
-          (item) => !["Trials", "Publications", "Experts"].includes(item),
+          (item) => !["trials", "publications", "experts"].includes(item),
         )
       : allNavItems;
   };
@@ -177,12 +179,17 @@ export default function Navbar() {
   const navItems = getNavItems();
 
   // When signed in as researcher, show "Collaborators" / "Publications" / "Clinical Trials"; for patients use friendlier terms
-  const expertsNavLabel =
-    user?.role === "researcher" ? "Collaborators" : "Health Experts";
-  const publicationsNavLabel =
-    user?.role === "researcher" ? "Publications" : "Health Library";
-  const trialsNavLabel =
-    user?.role === "researcher" ? "Clinical Trials" : "New Treatments";
+  const expertsNavLabel = t(
+    user?.role === "researcher" ? "nav.collaborators" : "nav.healthExperts",
+  );
+  const publicationsNavLabel = t(
+    user?.role === "researcher"
+      ? "nav.publicationsResearcher"
+      : "nav.healthLibrary",
+  );
+  const trialsNavLabel = t(
+    user?.role === "researcher" ? "nav.clinicalTrials" : "nav.newTreatments",
+  );
   const publicationsNavRoute =
     user?.role === "researcher" ? "/publications" : "/library";
 
@@ -357,194 +364,6 @@ export default function Navbar() {
     return `/dashboard/${user.role || "patient"}`;
   }
 
-  const getIcon = (item) => {
-    const icons = {
-      // Landing page navigation
-      "About Us": (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
-      FAQ: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
-      Contact: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-          />
-        </svg>
-      ),
-      // Regular navigation
-      Dashboard: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-3m0 0l7-4 7 4M5 9v10a1 1 0 001 1h12a1 1 0 001-1V9m-9 4l4 2m-2-8l4-2m-6 2l-4-2"
-          />
-        </svg>
-      ),
-      Trials: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
-      Publications: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747S17.5 6.253 12 6.253z"
-          />
-        </svg>
-      ),
-      Experts: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
-        </svg>
-      ),
-      Forums: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-      "Researcher Forums": (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-          />
-        </svg>
-      ),
-      Discovery: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      ),
-      Explore: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      ),
-      Trending: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-          />
-        </svg>
-      ),
-    };
-    return icons[item];
-  };
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none ui-fade-in">
       <div
@@ -593,24 +412,24 @@ export default function Navbar() {
             {navItems.map((item, index) => {
               // Map navigation items to their routes
               const routeMap = {
-                // Landing page routes
-                "About Us": "/about",
-                FAQ: "/faq",
-                Contact: "/contact",
-                // Regular navigation routes
-                Dashboard: getDashboardPath(),
-                // Forums routes based on user role
-                Forums:
+                aboutUs: "/about",
+                faq: "/faq",
+                contact: "/contact",
+                dashboard: getDashboardPath(),
+                forums:
                   user?.role === "researcher"
                     ? "/researcher-forums"
                     : "/forums",
-                Discovery: "/discovery",
+                discovery: "/discovery",
+                trials: "/trials",
+                publications:
+                  user?.role === "researcher" ? "/publications" : "/library",
+                experts: "/experts",
               };
-              const route =
-                routeMap[item] || `/${item.toLowerCase().replace(/\s+/g, "-")}`;
+              const route = routeMap[item];
 
               // Handle Explore dropdown separately (guest Yori `/` uses a single link to public Explore page)
-              if (item === "Explore") {
+              if (item === "explore") {
                 if (isLandingPage && !user) {
                   return (
                     <Fragment key={`${item}-guest-landing`}>
@@ -620,7 +439,7 @@ export default function Navbar() {
                         data-tour="nav-explore"
                       >
                         <span className="relative z-10 text-[#2F3C96] transition-colors duration-200 group-hover:text-[#B8A5D5]">
-                          {item}
+                          {t(`nav.${item}`)}
                         </span>
                         <span className="absolute bottom-0 left-0 h-[3px] w-0 rounded-full bg-[#2F3C96] transition-all duration-300 group-hover:w-full" />
                       </PrefetchLink>
@@ -651,7 +470,7 @@ export default function Navbar() {
                               : "#2F3C96",
                           }}
                         >
-                          {item}
+                          {t(`nav.${item}`)}
                         </span>
                         <svg
                           className="w-4 h-4 transition-transform duration-200"
@@ -791,7 +610,7 @@ export default function Navbar() {
                   <PrefetchLink
                     to={route}
                     className="relative group transition-all py-2"
-                    {...(item === "Forums"
+                    {...(item === "forums"
                       ? { "data-tour": "nav-forums" }
                       : {})}
                   >
@@ -803,7 +622,7 @@ export default function Navbar() {
                       onMouseEnter={(e) => (e.target.style.color = "#B8A5D5")}
                       onMouseLeave={(e) => (e.target.style.color = "#2F3C96")}
                     >
-                      {item}
+                      {t(`nav.${item}`)}
                     </span>
                     <span
                       className="absolute bottom-0 left-0 w-0 h-[3px] rounded-full transition-all duration-300 group-hover:w-full"
@@ -871,7 +690,7 @@ export default function Navbar() {
                           className="text-lg font-bold"
                           style={{ color: "#2F3C96" }}
                         >
-                          Notifications
+                          {t("notifications.title")}
                         </h3>
                         <div className="flex items-center gap-2">
                           {unreadCount > 0 && (
@@ -905,7 +724,7 @@ export default function Navbar() {
                               className="text-xs font-medium px-2 py-1 rounded transition-colors hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
                               style={{ color: "#787878" }}
                             >
-                              Clear All
+                              {t("notifications.clearAll")}
                             </button>
                           )}
                           <button
@@ -917,7 +736,7 @@ export default function Navbar() {
                             className="text-xs font-medium px-2 py-1 rounded transition-colors hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
                             style={{ color: "#787878" }}
                           >
-                            View All
+                            {t("notifications.viewAll")}
                           </button>
                         </div>
                       </div>
@@ -951,13 +770,13 @@ export default function Navbar() {
                             className="font-medium text-center"
                             style={{ color: "#2F3C96" }}
                           >
-                            No new notifications
+                            {t("notifications.noNew")}
                           </p>
                           <p
                             className="text-sm mt-1 text-center mb-4"
                             style={{ color: "#787878" }}
                           >
-                            You're all caught up!
+                            {t("notifications.allCaughtUp")}
                           </p>
                         </div>
                       ) : (
@@ -1179,7 +998,7 @@ export default function Navbar() {
                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                           />
                         </svg>
-                        <span>My Profile</span>
+                        <span>{t("userMenu.myProfile")}</span>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="w-4 h-4 ml-auto"
@@ -1223,7 +1042,7 @@ export default function Navbar() {
                             d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                           />
                         </svg>
-                        <span>Favorites</span>
+                        <span>{t("userMenu.favorites")}</span>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="w-4 h-4 ml-auto"
@@ -1265,7 +1084,7 @@ export default function Navbar() {
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                           />
                         </svg>
-                        <span>SignOut</span>
+                        <span>{t("userMenu.signOutButton")}</span>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="w-4 h-4 ml-auto"
@@ -1291,7 +1110,7 @@ export default function Navbar() {
                   className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
-                  Get Started
+                  {t("auth.getStarted")}
                 </button>
               ) : (
                 <div>
@@ -1311,7 +1130,7 @@ export default function Navbar() {
                         "linear-gradient(135deg, #2F3C96, #474F97)";
                     }}
                   >
-                    Sign In
+                    {t("auth.signIn")}
                   </PrefetchLink>
                 </div>
               )}
@@ -1436,7 +1255,7 @@ export default function Navbar() {
                     />
                   </svg>
                 </span>
-                Explore
+                {t("nav.explore")}
               </PrefetchLink>
             </div>
           )}
@@ -1479,7 +1298,7 @@ export default function Navbar() {
                     />
                   </svg>
                 </span>
-                My Profile
+                {t("userMenu.myProfile")}
               </PrefetchLink>
 
               <PrefetchLink
@@ -1514,7 +1333,7 @@ export default function Navbar() {
                     />
                   </svg>
                 </span>
-                Favourites
+                {t("userMenu.favourites")}
               </PrefetchLink>
             </div>
           ) : null}
@@ -1540,7 +1359,7 @@ export default function Navbar() {
                     "linear-gradient(135deg, #dc2626, #ef4444)";
                 }}
               >
-                Sign out
+                {t("userMenu.signOut")}
               </button>
             ) : isLandingPage ? (
               <button
@@ -1552,7 +1371,7 @@ export default function Navbar() {
                 className="w-full text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                 style={{ backgroundColor: "#2F3C96" }}
               >
-                Get Started
+                {t("auth.getStarted")}
               </button>
             ) : (
               <PrefetchLink
@@ -1571,7 +1390,7 @@ export default function Navbar() {
                     "linear-gradient(135deg, #2F3C96, #474F97)";
                 }}
               >
-                Sign In
+                {t("auth.signIn")}
               </PrefetchLink>
             )}
           </div>
@@ -1582,7 +1401,9 @@ export default function Navbar() {
       {isNotificationOpen && user && (
         <div className="pointer-events-auto absolute top-24 right-4 left-4 mx-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-indigo-200/60 shadow-2xl py-6 px-6 sm:hidden z-50 ui-fade-in-fast">
           <div className="px-2 pb-4 border-b border-indigo-200/60 mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-bold text-gray-800">Notifications</h3>
+            <h3 className="text-xl font-bold text-gray-800">
+              {t("notifications.title")}
+            </h3>
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
                 <button
@@ -1607,7 +1428,7 @@ export default function Navbar() {
                   }}
                   className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
                 >
-                  Clear All
+                  {t("notifications.clearAll")}
                 </button>
               )}
               <button
@@ -1618,7 +1439,7 @@ export default function Navbar() {
                 }}
                 className="text-xs font-medium px-2 py-1 rounded transition-colors text-gray-500 hover:text-[#2F3C96] hover:bg-[#E8E0EF]"
               >
-                View All
+                {t("notifications.viewAll")}
               </button>
             </div>
           </div>
@@ -1645,10 +1466,10 @@ export default function Navbar() {
                 </svg>
               </div>
               <p className="text-gray-600 font-semibold text-center text-lg">
-                No new notifications
+                {t("notifications.noNew")}
               </p>
               <p className="text-sm text-gray-400 mt-2 text-center mb-4">
-                You're all caught up!
+                {t("notifications.allCaughtUp")}
               </p>
             </div>
           ) : (

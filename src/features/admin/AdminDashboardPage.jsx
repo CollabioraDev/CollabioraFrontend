@@ -51,6 +51,7 @@ import {
   Menu,
   X,
   Send,
+  History,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import {
@@ -540,6 +541,11 @@ const SECTIONS = [
     icon: Mail,
   },
   {
+    id: "beta-users",
+    label: "Beta program",
+    icon: FlaskConical,
+  },
+  {
     id: "researcher-invites",
     label: "Researcher Invites",
     icon: Send,
@@ -563,6 +569,7 @@ const SIDEBAR_GROUPS = [
     title: "OTHERS",
     items: [
       "weekly-mailer",
+      "beta-users",
       "researcher-invites",
       "onboarding-cleanup",
       "meeting-requests",
@@ -690,6 +697,15 @@ export default function AdminDashboard() {
   const [sendingWeeklyMailer, setSendingWeeklyMailer] = useState(false);
   const [weeklyMailerSearchQuery, setWeeklyMailerSearchQuery] = useState("");
   const [weeklyMailerPipeline, setWeeklyMailerPipeline] = useState([]);
+  // Beta program — opted-in users & survey emails
+  const [betaProgramUsers, setBetaProgramUsers] = useState([]);
+  const [loadingBetaProgramUsers, setLoadingBetaProgramUsers] = useState(false);
+  const [betaSurveyUrl, setBetaSurveyUrl] = useState("");
+  const [betaSelectedUserIds, setBetaSelectedUserIds] = useState([]);
+  const [sendingBetaSurvey, setSendingBetaSurvey] = useState(false);
+  const [betaSurveySearchQuery, setBetaSurveySearchQuery] = useState("");
+  const [betaSurveyPipeline, setBetaSurveyPipeline] = useState([]);
+  const [betaSurveyLastBatch, setBetaSurveyLastBatch] = useState(null);
   // Researcher invite mailer (external researchers; tags + parsed or manual name each)
   const [researcherInviteDraftEmail, setResearcherInviteDraftEmail] =
     useState("");
@@ -949,6 +965,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "researcher-invites") {
       fetchResearcherInviteLogs();
+    }
+    if (activeSection === "beta-users") {
+      fetchBetaProgramUsers();
     }
     if (activeSection === "active-users") {
       fetchActiveUserStats();
@@ -1430,6 +1449,184 @@ export default function AdminDashboard() {
       toast.error(e?.message || "Failed to send weekly mailer");
     } finally {
       setSendingWeeklyMailer(false);
+    }
+  };
+
+  const fetchBetaProgramUsers = async () => {
+    const { token } = getAuth();
+    if (!token) return;
+    setLoadingBetaProgramUsers(true);
+    try {
+      const res = await fetch(`${base}/api/admin/beta-users?token=${token}`);
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      const list = (data.users || []).map((u) => ({
+        userId: u._id,
+        email: u.email,
+        role: u.role,
+        username: u.username,
+        handle: u.handle,
+        betaProgramOptedAt: u.betaProgramOptedAt,
+      }));
+      setBetaProgramUsers(list);
+      setBetaSurveyLastBatch(data.lastBatch || null);
+    } catch (e) {
+      toast.error("Failed to load beta program users");
+    } finally {
+      setLoadingBetaProgramUsers(false);
+    }
+  };
+
+  const getBetaUsersFiltered = () => {
+    const q = (betaSurveySearchQuery || "").trim().toLowerCase();
+    if (!q) return betaProgramUsers;
+    return (betaProgramUsers || []).filter((u) => {
+      const hay = `${u.username || ""} ${u.email || ""} ${u.handle || ""} ${u.role || ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+  };
+
+  const toggleBetaSurveyUser = (userId) => {
+    if (sendingBetaSurvey) return;
+    const sid = String(userId);
+    setBetaSelectedUserIds((prev) => {
+      if (prev.some((id) => String(id) === sid))
+        return prev.filter((id) => String(id) !== sid);
+      return [...prev, userId];
+    });
+  };
+
+  const handleToggleSelectAllBetaUsers = () => {
+    if (sendingBetaSurvey) return;
+    const filtered = getBetaUsersFiltered();
+    if (!filtered.length) return;
+    const allIds = filtered.map((u) => u.userId);
+    setBetaSelectedUserIds((prev) => {
+      const same =
+        prev.length === allIds.length &&
+        allIds.every((id) => prev.some((p) => String(p) === String(id)));
+      return same ? [] : allIds;
+    });
+  };
+
+  const handleSendBetaSurveyEmails = async () => {
+    const url = (betaSurveyUrl || "").trim();
+    if (!url || !/^https:\/\//i.test(url)) {
+      toast.error("Paste a valid https survey link (e.g. your Google Form URL).");
+      return;
+    }
+    if (betaSelectedUserIds.length === 0) {
+      toast.error("Select at least one beta participant.");
+      return;
+    }
+
+    const { token, headers } = getAuth();
+    if (!token) return;
+
+    const pipelineInit = betaSelectedUserIds.map((id, idx) => {
+      const u = betaProgramUsers.find(
+        (x) => String(x.userId) === String(id),
+      );
+      return {
+        idx,
+        userId: id,
+        name: u?.username || u?.email || "User",
+        email: u?.email || "",
+        status: "pending",
+        message: "",
+      };
+    });
+    setBetaSurveyPipeline(pipelineInit);
+    setSendingBetaSurvey(true);
+
+    let sent = 0;
+    let err = 0;
+
+    try {
+      for (let i = 0; i < betaSelectedUserIds.length; i++) {
+        const userId = betaSelectedUserIds[i];
+        setBetaSurveyPipeline((prev) =>
+          prev.map((entry) =>
+            entry.userId === userId
+              ? {
+                  ...entry,
+                  status: "sending",
+                  message: `Sending (${i + 1}/${betaSelectedUserIds.length})…`,
+                }
+              : entry,
+          ),
+        );
+
+        try {
+          const res = await fetch(`${base}/api/admin/beta-users/send-survey`, {
+            method: "POST",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, surveyUrl: url }),
+          });
+          if (handleAdminAuthFailure(res)) return;
+          const data = await res.json();
+
+          if (!res.ok) {
+            err += 1;
+            setBetaSurveyPipeline((prev) =>
+              prev.map((entry) =>
+                entry.userId === userId
+                  ? {
+                      ...entry,
+                      status: "error",
+                      message: data?.error || "Failed to send",
+                    }
+                  : entry,
+              ),
+            );
+            continue;
+          }
+
+          sent += 1;
+          setBetaSurveyPipeline((prev) =>
+            prev.map((entry) =>
+              entry.userId === userId
+                ? { ...entry, status: "sent", message: "Sent" }
+                : entry,
+            ),
+          );
+        } catch (e) {
+          err += 1;
+          setBetaSurveyPipeline((prev) =>
+            prev.map((entry) =>
+              entry.userId === userId
+                ? {
+                    ...entry,
+                    status: "error",
+                    message: e?.message || "Request failed",
+                  }
+                : entry,
+            ),
+          );
+        }
+      }
+
+      try {
+        const logRes = await fetch(`${base}/api/admin/beta-users/batch-log`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ successCount: sent, errorCount: err }),
+        });
+        if (logRes.ok) {
+          const logData = await logRes.json().catch(() => ({}));
+          if (logData?.lastBatch) setBetaSurveyLastBatch(logData.lastBatch);
+        }
+      } catch {
+        /* non-blocking */
+      }
+
+      toast.success(
+        `Survey emails finished. Sent: ${sent}${err ? `, errors: ${err}` : ""}`,
+      );
+    } catch (e) {
+      toast.error(e?.message || "Failed to send survey emails");
+    } finally {
+      setSendingBetaSurvey(false);
     }
   };
 
@@ -4789,6 +4986,19 @@ export default function AdminDashboard() {
                                     verification
                                   </span>
                                 )}
+                                {expert.betaProgramOptIn && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-100 text-violet-800 rounded-full text-xs font-semibold border border-violet-200/70"
+                                    title={
+                                      expert.betaProgramOptedAt
+                                        ? `Beta program · opted in ${new Date(expert.betaProgramOptedAt).toLocaleDateString()}`
+                                        : "Beta program participant"
+                                    }
+                                  >
+                                    <FlaskConical className="w-3 h-3" />
+                                    Beta program
+                                  </span>
+                                )}
                               </div>
                               <div className="space-y-1 text-xs md:text-sm text-brand-gray">
                                 {expert.email && (
@@ -5250,9 +5460,24 @@ export default function AdminDashboard() {
                         >
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-base md:text-lg font-semibold text-[#2F3C96] mb-1.5 md:mb-2">
-                                {patient.name}
-                              </h3>
+                              <div className="flex flex-wrap items-center gap-2 mb-1.5 md:mb-2">
+                                <h3 className="text-base md:text-lg font-semibold text-[#2F3C96]">
+                                  {patient.name}
+                                </h3>
+                                {patient.betaProgramOptIn && (
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-violet-100 text-violet-800 border border-violet-200/70"
+                                    title={
+                                      patient.betaProgramOptedAt
+                                        ? `Beta program · opted in ${new Date(patient.betaProgramOptedAt).toLocaleDateString()}`
+                                        : "Beta program participant"
+                                    }
+                                  >
+                                    <FlaskConical className="w-3 h-3" />
+                                    Beta program
+                                  </span>
+                                )}
+                              </div>
                               <div className="space-y-1 text-xs md:text-sm text-brand-gray">
                                 {patient.email && (
                                   <div className="flex items-center gap-2">
@@ -8193,6 +8418,287 @@ export default function AdminDashboard() {
                                   </span>
                                 </div>
                               )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeSection === "beta-users" && (
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
+                <p className="text-sm text-brand-gray mb-1">
+                  Users who opted in to the beta program (from Yori). Send a
+                  short survey message with your Google Form or other{" "}
+                  <strong className="font-semibold text-brand-royal-blue">
+                    https
+                  </strong>{" "}
+                  link—one message per recipient, same link for all.
+                </p>
+                <p className="text-xs text-brand-gray/80 mb-4">
+                  Emails are sent through the same Azure mail as the rest of the
+                  app. You can select everyone or individual participants.
+                </p>
+
+                <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-brand-gray border border-brand-purple-200/50 bg-brand-purple-50/50 rounded-lg px-3 py-2.5">
+                  <History className="w-4 h-4 text-brand-royal-blue shrink-0" />
+                  {betaSurveyLastBatch?.sentAt ? (
+                    <span>
+                      <span className="font-semibold text-brand-royal-blue">
+                        Last batch sent
+                      </span>
+                      {" · "}
+                      {new Date(
+                        betaSurveyLastBatch.sentAt,
+                      ).toLocaleString()}
+                      {" · "}
+                      <span className="font-medium text-[#2F3C96]">
+                        {betaSurveyLastBatch.successCount}
+                      </span>{" "}
+                      {betaSurveyLastBatch.successCount === 1
+                        ? "mail sent"
+                        : "mails sent"}
+                      {betaSurveyLastBatch.errorCount > 0 ? (
+                        <span className="text-amber-800">
+                          {" "}
+                          ({betaSurveyLastBatch.errorCount} failed)
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
+                    <span className="text-brand-gray/90">
+                      No survey batches sent yet.
+                    </span>
+                  )}
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-brand-gray mb-1">
+                    Survey link (https)
+                  </label>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    value={betaSurveyUrl}
+                    onChange={(e) => setBetaSurveyUrl(e.target.value)}
+                    placeholder="https://docs.google.com/forms/d/e/..."
+                    disabled={sendingBetaSurvey}
+                    className="w-full max-w-2xl px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+                    <Search className="w-4 h-4 text-brand-gray/70 shrink-0" />
+                    <input
+                      type="text"
+                      value={betaSurveySearchQuery}
+                      onChange={(e) =>
+                        setBetaSurveySearchQuery(e.target.value)
+                      }
+                      placeholder="Search by name, email, role…"
+                      className="w-full px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
+                      disabled={sendingBetaSurvey}
+                    />
+                  </div>
+
+                  {getBetaUsersFiltered().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleToggleSelectAllBetaUsers}
+                      disabled={sendingBetaSurvey}
+                      className="flex items-center gap-2 text-xs text-brand-royal-blue hover:underline"
+                    >
+                      {betaSelectedUserIds.length ===
+                        getBetaUsersFiltered().length &&
+                      getBetaUsersFiltered().length > 0 ? (
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5" />
+                      )}
+                      <span>
+                        {betaSelectedUserIds.length > 0
+                          ? `Selected (${betaSelectedUserIds.length})`
+                          : "Select all"}
+                      </span>
+                    </button>
+                  )}
+
+                  {betaSelectedUserIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setBetaSelectedUserIds([])}
+                      disabled={sendingBetaSurvey}
+                      className="flex items-center gap-2 text-xs text-brand-gray hover:underline"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Clear
+                    </button>
+                  )}
+
+                  <div className="flex-1" />
+
+                  <button
+                    type="button"
+                    onClick={handleSendBetaSurveyEmails}
+                    disabled={
+                      sendingBetaSurvey ||
+                      betaSelectedUserIds.length === 0 ||
+                      !(betaSurveyUrl || "").trim()
+                    }
+                    className="px-3 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue rounded-lg hover:bg-brand-royal-blue/20 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sendingBetaSurvey ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    Send ({betaSelectedUserIds.length})
+                  </button>
+                </div>
+
+                {betaSurveyPipeline.length > 0 && (
+                  <div className="mb-4 rounded-xl border border-[rgba(208,196,226,0.35)] bg-slate-50/80 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-brand-gray uppercase">
+                        Sending
+                      </p>
+                      <p className="text-xs text-brand-gray">
+                        {
+                          betaSurveyPipeline.filter((e) => e.status === "sent")
+                            .length
+                        }{" "}
+                        sent •{" "}
+                        {
+                          betaSurveyPipeline.filter((e) => e.status === "error")
+                            .length
+                        }{" "}
+                        errors
+                      </p>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {betaSurveyPipeline.map((entry) => {
+                        const isSending = entry.status === "sending";
+                        const isSent = entry.status === "sent";
+                        const isError = entry.status === "error";
+                        const pillClass = isSent
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : isError
+                            ? "bg-rose-50 text-rose-800 border-rose-200"
+                            : isSending
+                              ? "bg-blue-50 text-blue-800 border-blue-200"
+                              : "bg-slate-50 text-slate-700 border-slate-200";
+                        return (
+                          <div
+                            key={entry.userId}
+                            className="flex items-start justify-between gap-3 rounded-lg border border-[rgba(208,196,226,0.35)] bg-white p-2.5"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-[#2F3C96] truncate">
+                                {entry.idx + 1}. {entry.name}
+                              </p>
+                              {entry.email && (
+                                <p className="text-[11px] text-brand-gray truncate">
+                                  {entry.email}
+                                </p>
+                              )}
+                              {!!entry.message && (
+                                <p className="text-[11px] text-brand-gray mt-1">
+                                  {entry.message}
+                                </p>
+                              )}
+                            </div>
+                            <div
+                              className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}
+                            >
+                              {isSending ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : isSent ? (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              ) : isError ? (
+                                <XCircle className="w-3.5 h-3.5" />
+                              ) : (
+                                <Mail className="w-3.5 h-3.5" />
+                              )}
+                              <span className="capitalize">{entry.status}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {loadingBetaProgramUsers ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                  </div>
+                ) : betaProgramUsers.length === 0 ? (
+                  <div className="text-center py-12 rounded-lg border border-brand-purple-200/40 bg-brand-purple-50/30">
+                    <FlaskConical className="w-16 h-16 text-brand-gray-300 mx-auto mb-4" />
+                    <p className="text-brand-gray font-medium">
+                      No beta opt-ins yet
+                    </p>
+                    <p className="text-sm text-brand-gray/70 mt-1 max-w-md mx-auto">
+                      When users choose to join the beta from Yori, they will
+                      appear here.
+                    </p>
+                  </div>
+                ) : getBetaUsersFiltered().length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-brand-gray font-medium">
+                      No users match your search
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {getBetaUsersFiltered().map((u) => (
+                      <div
+                        key={String(u.userId)}
+                        className="bg-slate-50/80 rounded-lg p-3 border border-[rgba(208,196,226,0.4)] hover:shadow-md transition-all flex items-start justify-between gap-4"
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              !sendingBetaSurvey &&
+                              toggleBetaSurveyUser(u.userId)
+                            }
+                            className="shrink-0 text-brand-royal-blue hover:opacity-80 mt-0.5"
+                            title="Toggle selection"
+                          >
+                            {betaSelectedUserIds.some(
+                              (id) => String(id) === String(u.userId),
+                            ) ? (
+                              <CheckSquare className="w-4 h-4" />
+                            ) : (
+                              <Square className="w-4 h-4" />
+                            )}
+                          </button>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[#2F3C96] truncate">
+                              {u.username || "—"}
+                            </p>
+                            {u.email && (
+                              <p className="text-xs text-brand-gray truncate">
+                                {u.email}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-2 mt-1.5">
+                              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200/80 capitalize">
+                                {u.role || "user"}
+                              </span>
+                              {u.betaProgramOptedAt && (
+                                <span className="text-[11px] text-brand-gray">
+                                  Opted in{" "}
+                                  {new Date(
+                                    u.betaProgramOptedAt,
+                                  ).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

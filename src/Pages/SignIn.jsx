@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation, Trans } from "react-i18next";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
 import Input from "../components/ui/Input.jsx";
@@ -8,7 +9,15 @@ import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import { useAuth0Social } from "../hooks/useAuth0Social.js";
 import { Mail, Eye, EyeOff } from "lucide-react";
 
+const PROVIDER_TKEY = {
+  google: "signIn.providerGoogle",
+  microsoft: "signIn.providerMicrosoft",
+  facebook: "signIn.providerFacebook",
+  apple: "signIn.providerApple",
+};
+
 export default function SignIn() {
+  const { t } = useTranslation("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,14 +54,15 @@ export default function SignIn() {
       }
     } catch (e) {
       console.error(`${provider} login error:`, e);
-      setError(`Failed to sign in with ${provider}. Please try again.`);
+      const pKey = PROVIDER_TKEY[provider] || "signIn.providerGoogle";
+      setError(t("signIn.errSocial", { provider: t(pKey) }));
       setSocialLoginLoading(null);
     }
   }
 
   async function handleSignIn() {
     if (!email.trim() || !password.trim()) {
-      setError("Please enter your email and password");
+      setError(t("signIn.errEmailPassword"));
       return;
     }
 
@@ -73,7 +83,7 @@ export default function SignIn() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Sign in failed");
+        setError(data.error || t("signIn.errSignInFailed"));
         setLoading(false);
         return;
       }
@@ -96,7 +106,7 @@ export default function SignIn() {
 
       navigate("/yori");
     } catch (e) {
-      setError("Failed to sign in. Please try again.");
+      setError(t("signIn.errGeneric"));
       setLoading(false);
     }
   }
@@ -108,7 +118,7 @@ export default function SignIn() {
 
         <div className="flex justify-center items-center min-h-screen px-4 py-6 relative z-10">
           <div
-            className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border p-5 sm:p-6 space-y-4 transition-all duration-300"
+            className="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border p-5 sm:p-6 space-y-4 transition-all duration-300"
             style={{
               borderColor: "#D0C4E2",
               boxShadow: "0 20px 60px rgba(208, 196, 226, 0.25)",
@@ -116,15 +126,15 @@ export default function SignIn() {
             }}
           >
             {/* Header */}
-            <div className="text-center space-y-1.5">
+            <div className="text-center space-y-1.5 pe-2">
               <h1
                 className="text-xl font-bold tracking-tight"
                 style={{ color: "#2F3C96" }}
               >
-                Sign In
+                {t("signIn.title")}
               </h1>
               <p className="text-xs font-medium" style={{ color: "#787878" }}>
-                Resume your session
+                {t("signIn.subtitle")}
               </p>
             </div>
 
@@ -135,7 +145,7 @@ export default function SignIn() {
                   className="text-xs text-center font-medium"
                   style={{ color: "#787878" }}
                 >
-                  Sign in with
+                  {t("signIn.signInWith")}
                 </p>
                 <div className="grid grid-cols-4 gap-2">
                   <motion.button
@@ -195,7 +205,7 @@ export default function SignIn() {
                       </svg>
                     )}
                     <span className="text-[10px] font-medium leading-tight">
-                      Google
+                      {t("signIn.providerGoogle")}
                     </span>
                   </motion.button>
                   <motion.button
@@ -243,7 +253,7 @@ export default function SignIn() {
                       </svg>
                     )}
                     <span className="text-[10px] font-medium leading-tight">
-                      Microsoft
+                      {t("signIn.providerMicrosoft")}
                     </span>
                   </motion.button>
                   <motion.button
@@ -291,7 +301,7 @@ export default function SignIn() {
                       </svg>
                     )}
                     <span className="text-[10px] font-medium leading-tight">
-                      Facebook
+                      {t("signIn.providerFacebook")}
                     </span>
                   </motion.button>
                   <motion.button
@@ -339,7 +349,7 @@ export default function SignIn() {
                       </svg>
                     )}
                     <span className="text-[10px] font-medium leading-tight">
-                      Apple
+                      {t("signIn.providerApple")}
                     </span>
                   </motion.button>
                 </div>
@@ -361,7 +371,7 @@ export default function SignIn() {
                         backgroundColor: "rgba(255, 255, 255, 0.98)",
                       }}
                     >
-                      Or continue with email
+                      {t("signIn.orEmail")}
                     </span>
                   </div>
                 </div>
@@ -375,11 +385,11 @@ export default function SignIn() {
                   className="text-xs font-semibold mb-1.5 block"
                   style={{ color: "#2F3C96" }}
                 >
-                  Email
+                  {t("signIn.email")}
                 </label>
                 <Input
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={t("signIn.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSignIn()}
@@ -398,12 +408,12 @@ export default function SignIn() {
                   className="text-xs font-semibold mb-1.5 block"
                   style={{ color: "#2F3C96" }}
                 >
-                  Password
+                  {t("signIn.password")}
                 </label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={t("signIn.passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSignIn()}
@@ -421,7 +431,9 @@ export default function SignIn() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors hover:bg-black/5"
                     style={{ color: "#787878" }}
                     aria-label={
-                      showPassword ? "Hide password" : "Show password"
+                      showPassword
+                        ? t("signIn.hidePassword")
+                        : t("signIn.showPassword")
                     }
                   >
                     {showPassword ? (
@@ -454,7 +466,7 @@ export default function SignIn() {
                   className="text-xs font-medium transition-colors hover:opacity-80"
                   style={{ color: "#2F3C96" }}
                 >
-                  Forgot Password?
+                  {t("signIn.forgotPassword")}
                 </button>
               </div>
 
@@ -478,7 +490,7 @@ export default function SignIn() {
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {loading ? "Signing in..." : "Sign In →"}
+                {loading ? t("signIn.signingIn") : t("signIn.signInButton")}
               </Button>
             </div>
 
@@ -486,50 +498,50 @@ export default function SignIn() {
               className="text-center text-[11px] mt-3"
               style={{ color: "#787878" }}
             >
-              By signing in or using third-party authentication, you agree to
-              collabiora's{" "}
-              <a
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:opacity-80 transition-opacity"
-                style={{ color: "#2F3C96" }}
-              >
-                Terms of Service
-              </a>
-              , and acknowledge the{" "}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:opacity-80 transition-opacity"
-                style={{ color: "#2F3C96" }}
-              >
-                Privacy Policy
-              </a>{" "}
-              and{" "}
-              <a
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:opacity-80 transition-opacity"
-                style={{ color: "#2F3C96" }}
-              >
-                Cookie Policy
-              </a>
-              .
+              <Trans
+                i18nKey="signIn.termsFull"
+                components={{
+                  termsLink: (
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:opacity-80 transition-opacity"
+                      style={{ color: "#2F3C96" }}
+                    />
+                  ),
+                  privacyLink: (
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:opacity-80 transition-opacity"
+                      style={{ color: "#2F3C96" }}
+                    />
+                  ),
+                  cookieLink: (
+                    <a
+                      href="/cookie-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:opacity-80 transition-opacity"
+                      style={{ color: "#2F3C96" }}
+                    />
+                  ),
+                }}
+              />
             </p>
 
             <div className="pt-2">
               <p className="text-center text-xs" style={{ color: "#787878" }}>
-                Don't have an account?{" "}
+                {t("signIn.noAccount")}{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/onboarding")}
                   className="font-semibold underline hover:opacity-80 transition-opacity"
                   style={{ color: "#2F3C96" }}
                 >
-                  Create account
+                  {t("signIn.createAccount")}
                 </button>
               </p>
             </div>

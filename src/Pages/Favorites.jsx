@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -59,6 +60,19 @@ import {
 } from "lucide-react";
 
 export default function Favorites() {
+  const { t } = useTranslation("common");
+  const pdfReportLabels = useMemo(
+    () => ({
+      patientContext: t("pdf.patientContext"),
+      patientName: t("pdf.patientName"),
+      medicalCondition: t("pdf.medicalCondition"),
+      location: t("pdf.location"),
+      keyConcerns: t("pdf.keyConcerns"),
+      medicalInterests: t("pdf.medicalInterests"),
+      notSpecified: t("pdf.notSpecified"),
+    }),
+    [t],
+  );
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -428,7 +442,10 @@ export default function Favorites() {
 
       // Use react-pdf to generate and download the PDF
       const pdfInstance = pdf(
-        <PDFReportDocument report={reportModal.report} />,
+        <PDFReportDocument
+          report={reportModal.report}
+          pdfLabels={pdfReportLabels}
+        />,
       );
       const blob = await pdfInstance.toBlob();
 

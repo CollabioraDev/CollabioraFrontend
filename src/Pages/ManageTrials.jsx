@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Layout from "../components/Layout.jsx";
 import Input from "../components/ui/Input.jsx";
 import Button from "../components/ui/Button.jsx";
 import Card from "../components/ui/Card.jsx";
 
 export default function ManageTrials() {
+  const { t } = useTranslation("common");
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [list, setList] = useState([]);
@@ -62,66 +64,66 @@ export default function ManageTrials() {
   return (
     <Layout>
       <h2 className="text-2xl font-semibold text-orange-700 mb-4">
-        Manage Trials
+        {t("manageTrials.heading")}
       </h2>
       <div className="grid md:grid-cols-6 gap-3 mb-6">
         <div className="md:col-span-2">
           <Input
-            placeholder="Title"
+            placeholder={t("manageTrials.placeholderTitle")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
         <Input
-          placeholder="Status"
+          placeholder={t("manageTrials.placeholderStatus")}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         />
         <Input
-          placeholder="Phase"
+          placeholder={t("manageTrials.placeholderPhase")}
           value={phase}
           onChange={(e) => setPhase(e.target.value)}
         />
         <Input
-          placeholder="Location"
+          placeholder={t("manageTrials.placeholderLocation")}
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
         <Input
-          placeholder="Eligibility"
+          placeholder={t("manageTrials.placeholderEligibility")}
           value={eligibility}
           onChange={(e) => setEligibility(e.target.value)}
         />
-        <Button onClick={createTrial}>Add</Button>
+        <Button onClick={createTrial}>{t("manageTrials.add")}</Button>
       </div>
       <div className="space-y-3">
-        {list.map((t) => (
+        {list.map((trial) => (
           <Card
-            key={t._id}
-            title={t.title}
-            subtitle={`${t.status || ""} ${t.phase ? "• " + t.phase : ""}`}
+            key={trial._id}
+            title={trial.title}
+            subtitle={`${trial.status || ""} ${trial.phase ? "• " + trial.phase : ""}`}
           >
             <div className="grid md:grid-cols-3 gap-3 mt-3">
               <div>
-                <label className="label">Status</label>
+                <label className="label">{t("manageTrials.labelStatus")}</label>
                 <Input
-                  value={t.status || ""}
-                  onChange={(e) => updateTrial(t._id, "status", e.target.value)}
+                  value={trial.status || ""}
+                  onChange={(e) => updateTrial(trial._id, "status", e.target.value)}
                 />
               </div>
               <div>
-                <label className="label">Phase</label>
+                <label className="label">{t("manageTrials.labelPhase")}</label>
                 <Input
-                  value={t.phase || ""}
-                  onChange={(e) => updateTrial(t._id, "phase", e.target.value)}
+                  value={trial.phase || ""}
+                  onChange={(e) => updateTrial(trial._id, "phase", e.target.value)}
                 />
               </div>
               <div>
-                <label className="label">Location</label>
+                <label className="label">{t("manageTrials.labelLocation")}</label>
                 <Input
-                  value={t.location || ""}
+                  value={trial.location || ""}
                   onChange={(e) =>
-                    updateTrial(t._id, "location", e.target.value)
+                    updateTrial(trial._id, "location", e.target.value)
                   }
                 />
               </div>

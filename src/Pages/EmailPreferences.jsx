@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Layout from "../components/Layout.jsx";
 import Button from "../components/ui/Button.jsx";
 import { Loader2, Mail, ShieldOff } from "lucide-react";
@@ -10,6 +11,7 @@ function useQuery() {
 }
 
 export default function EmailPreferences() {
+  const { t } = useTranslation("common");
   const query = useQuery();
   const navigate = useNavigate();
   const token = query.get("token") || "";
@@ -28,7 +30,7 @@ export default function EmailPreferences() {
     async function load() {
       const allowedTypes = ["profile-reminder", "weekly-mailer"];
       if (!token || !allowedTypes.includes(type)) {
-        setError("This email preferences link is invalid or incomplete.");
+        setError(t("emailPreferences.invalidLink"));
         setLoading(false);
         return;
       }
@@ -36,7 +38,6 @@ export default function EmailPreferences() {
       try {
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-        // One-click unsubscribe: the email link opens this page and auto-submits.
         if (action === "unsubscribe") {
           setSaving(true);
           const unsubRes = await fetch(
@@ -49,7 +50,7 @@ export default function EmailPreferences() {
           );
           const unsubData = await unsubRes.json();
           if (!unsubRes.ok) {
-            throw new Error(unsubData.error || "Failed to update preferences.");
+            throw new Error(unsubData.error || t("emailPreferences.updateFailed"));
           }
           setOptedOut(true);
           setEmail(unsubData.email || "");
@@ -63,20 +64,20 @@ export default function EmailPreferences() {
           )}`,
         );
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Invalid or expired link.");
+        if (!res.ok) throw new Error(data.error || t("emailPreferences.invalidOrExpired"));
 
         setEmail(data.email || "");
         setOptedOut(!!data.profileReminderOptOut || !!data.weeklyMailerOptOut);
       } catch (err) {
         console.error("Email preferences load error:", err);
-        setError(err.message || "Invalid or expired link.");
+        setError(err.message || t("emailPreferences.invalidOrExpired"));
       } finally {
         setLoading(false);
         setSaving(false);
       }
     }
     load();
-  }, [token, type, action]);
+  }, [token, type, action, endpointType, t]);
 
   async function handleUnsubscribe() {
     if (!token) return;
@@ -94,12 +95,12 @@ export default function EmailPreferences() {
       );
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update preferences.");
+        throw new Error(data.error || t("emailPreferences.updateFailed"));
       }
       setOptedOut(true);
     } catch (err) {
       console.error("Email preferences unsubscribe error:", err);
-      setError(err.message || "Failed to update preferences.");
+      setError(err.message || t("emailPreferences.updateFailed"));
     } finally {
       setSaving(false);
     }
@@ -114,10 +115,10 @@ export default function EmailPreferences() {
           </div>
           <div>
             <h1 className="text-base font-semibold text-brand-royal-blue">
-              Email preferences
+              {t("emailPreferences.title")}
             </h1>
             <p className="text-xs text-slate-600">
-              Manage reminders related to your collabiora account.
+              {t("emailPreferences.subtitle")}
             </p>
           </div>
         </div>
@@ -125,13 +126,13 @@ export default function EmailPreferences() {
         {loading && (
           <div className="flex items-center justify-center py-10 text-slate-500 text-sm gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Loading your preferences…</span>
+            <span>{t("emailPreferences.loading")}</span>
           </div>
         )}
 
         {!loading && error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-            <p className="font-medium mb-1">We could not load this link.</p>
+            <p className="font-medium mb-1">{t("emailPreferences.loadErrorTitle")}</p>
             <p>{error}</p>
             <div className="mt-3 flex justify-between items-center">
               <button
@@ -139,7 +140,7 @@ export default function EmailPreferences() {
                 className="text-[11px] text-slate-600 underline"
                 onClick={() => navigate("/")}
               >
-                Go back to collabiora
+                {t("emailPreferences.backHome")}
               </button>
             </div>
           </div>
@@ -149,15 +150,15 @@ export default function EmailPreferences() {
           <div className="space-y-4">
             <div className="rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3 text-xs text-slate-700">
               <p className="font-medium">
-                Managing preferences for{" "}
+                {t("emailPreferences.managingFor")}{" "}
                 <span className="font-semibold text-brand-royal-blue">
-                  {email || "your account"}
+                  {email || t("emailPreferences.yourAccount")}
                 </span>
               </p>
               <p className="mt-1">
                 {type === "weekly-mailer"
-                  ? "These settings only apply to collabiora weekly digest emails."
-                  : "These settings only apply to profile completion reminder emails."}
+                  ? t("emailPreferences.weeklyDigestOnly")
+                  : t("emailPreferences.profileReminderOnly")}
               </p>
             </div>
 
@@ -167,17 +168,15 @@ export default function EmailPreferences() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-800">
-                  Profile completion reminders
+                  {t("emailPreferences.remindersTitle")}
                 </p>
                 <p className="text-xs text-slate-600 mt-1">
-                  Emails we send after you create an account but haven&apos;t
-                  fully completed your profile yet (for both patients and
-                  researchers).
+                  {t("emailPreferences.remindersBody")}
                 </p>
                 <div className="mt-3">
                   {optedOut ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700 border border-emerald-100">
-                      You&apos;re currently unsubscribed.
+                      {t("emailPreferences.unsubscribedBadge")}
                     </span>
                   ) : (
                     <Button
@@ -189,8 +188,8 @@ export default function EmailPreferences() {
                         <Loader2 className="w-3 h-3 animate-spin mr-1" />
                       )}
                       {type === "weekly-mailer"
-                        ? "Unsubscribe from weekly digest"
-                        : "Stop sending these reminders"}
+                        ? t("emailPreferences.unsubscribeWeekly")
+                        : t("emailPreferences.unsubscribeReminders")}
                     </Button>
                   )}
                 </div>
@@ -204,4 +203,3 @@ export default function EmailPreferences() {
 
   return <Layout>{baseContent}</Layout>;
 }
-

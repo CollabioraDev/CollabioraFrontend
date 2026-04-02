@@ -27,6 +27,7 @@ import {
   FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import icd11Dataset from "../data/icd11Dataset.json";
 import {
   buildCanonicalMapFromIcd11,
@@ -197,6 +198,7 @@ const symptomKeywords = [
 ];
 
 export default function OnboardingNew() {
+  const { t } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const isOAuth = searchParams.get("oauth") === "true";
   const navigate = useNavigate();
