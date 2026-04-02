@@ -43,6 +43,7 @@
     "react-markdown": "^10.1.0",
     "react-pdf": "^10.3.0",
     "react-redux": "^9.2.0",
+    "logrocket": "^12.1.0",
     "react-router-dom": "^7.9.5",
     "redux": "^5.0.1",
     "rough-notation": "^0.5.1",
