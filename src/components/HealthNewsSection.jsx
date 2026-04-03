@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Newspaper,
   ExternalLink,
@@ -17,16 +18,21 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
+import { appendLocaleToSearchParams, getApiLocale } from "../i18n/getApiLocale.js";
+
 const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// ─── Time formatter ─────────────────────────────────────────────────────────
-function timeAgo(dateStr) {
+// ─── Time formatter (uses i18n strings) ───────────────────────────────────────
+function timeAgo(dateStr, t) {
   if (!dateStr) return "";
   const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  if (diff < 3600)
+    return t("discovery.healthNews.timeMinutesShort", { n: Math.floor(diff / 60) });
+  if (diff < 86400)
+    return t("discovery.healthNews.timeHoursShort", { n: Math.floor(diff / 3600) });
+  if (diff < 604800)
+    return t("discovery.healthNews.timeDaysShort", { n: Math.floor(diff / 86400) });
+  return new Date(dateStr).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   });
@@ -57,6 +63,7 @@ function NewsCard({
   onSummaryClick,
   searchQuery,
 }) {
+  const { t } = useTranslation("common");
   const hasImage = !!article.urlToImage;
   const isCautionTier = (article.reliabilityTier ?? 0) >= 5;
 
@@ -121,8 +128,7 @@ function NewsCard({
           <div className="mb-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
             <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <p className="text-[11px] text-amber-800 font-medium">
-              Interpret cautiously — this source is advocacy-focused or has
-              limited specialist review.
+              {t("discovery.healthNews.cautionAdvocacy")}
             </p>
           </div>
         )}
@@ -148,12 +154,12 @@ function NewsCard({
                 {expanded ? (
                   <>
                     <ChevronUp className="w-3 h-3" />
-                    Less
+                    {t("discovery.healthNews.less")}
                   </>
                 ) : (
                   <>
                     <ChevronDown className="w-3 h-3" />
-                    More
+                    {t("discovery.healthNews.more")}
                   </>
                 )}
               </button>
@@ -165,7 +171,7 @@ function NewsCard({
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center gap-1 text-gray-400 text-[11px]">
             <Clock className="w-3 h-3" />
-            <span>{timeAgo(article.publishedAt)}</span>
+            <span>{timeAgo(article.publishedAt, t)}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -179,7 +185,7 @@ function NewsCard({
               ) : (
                 <ListOrdered className="w-3 h-3" />
               )}
-              Simplify
+              {t("discovery.healthNews.simplify")}
             </button>
             <a
               href={article.url}
@@ -188,7 +194,7 @@ function NewsCard({
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#2F3C96] text-white text-[11px] font-semibold hover:bg-[#253075] transition-colors"
             >
               <BookOpen className="w-3 h-3" />
-              Read
+              {t("discovery.healthNews.read")}
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
           </div>
@@ -200,6 +206,7 @@ function NewsCard({
 
 // ─── Summary (Key Points) Modal ──────────────────────────────────────────────
 function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
+  const { t } = useTranslation("common");
   if (!open) return null;
   return (
     <div
@@ -212,13 +219,13 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
       >
         <div className="p-4 border-b border-gray-200 flex items-center justify-between shrink-0">
           <h3 className="text-lg font-bold text-[#2F3C96] pr-8 line-clamp-2">
-            {article?.title || "Simplify"}
+            {article?.title || t("discovery.healthNews.simplify")}
           </h3>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-            aria-label="Close"
+            aria-label={t("discovery.healthNews.closeAria")}
           >
             <X className="w-5 h-5" />
           </button>
@@ -228,7 +235,7 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-8 h-8 animate-spin text-[#2F3C96]" />
               <span className="ml-2 text-sm text-gray-500">
-                Reading the article in detail…
+                {t("discovery.healthNews.modalLoading")}
               </span>
             </div>
           )}
@@ -236,7 +243,7 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
             <div className="py-4 flex flex-col items-center text-center">
               <AlertCircle className="w-10 h-10 text-amber-500 mb-2" />
               <p className="text-sm font-medium text-gray-700">
-                Could not generate summary
+                {t("discovery.healthNews.modalSummaryFailed")}
               </p>
               <p className="text-xs text-gray-500 mt-1">{error}</p>
             </div>
@@ -266,7 +273,10 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
                         </div>
                         <div className="flex-1">
                           <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1.5">
-                            {heading || `Key insight ${i + 1}`}
+                            {heading ||
+                              t("discovery.healthNews.keyInsightN", {
+                                n: i + 1,
+                              })}
                           </p>
                           <div className="text-sm text-gray-700 leading-relaxed">
                             <ReactMarkdown
@@ -297,6 +307,7 @@ function SummaryModal({ open, onClose, article, loading, keyPoints, error }) {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function HealthNewsSection({ user }) {
+  const { t, i18n } = useTranslation("common");
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -389,6 +400,7 @@ export default function HealthNewsSection({ user }) {
         if (conditions && conditions.length > 0)
           params.set("conditions", conditions.join(","));
         params.set("pageSize", "12");
+        appendLocaleToSearchParams(params);
         const res = await fetch(`${base}/api/news?${params.toString()}`);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
@@ -405,12 +417,12 @@ export default function HealthNewsSection({ user }) {
         setLoading(false);
       }
     },
-    [activeCondition],
+    [activeCondition, i18n.language],
   );
 
   useEffect(() => {
     if (!searchQuery) fetchNews();
-  }, [activeCondition, fetchNews, searchQuery]);
+  }, [activeCondition, fetchNews, searchQuery, i18n.language]);
 
   // ── Search input handler — only updates the text, does NOT auto-search ────
   function handleSearchInput(val) {
@@ -429,6 +441,7 @@ export default function HealthNewsSection({ user }) {
     setSearchError(null);
     try {
       const params = new URLSearchParams({ q: query, pageSize: "12" });
+      appendLocaleToSearchParams(params);
       const res = await fetch(`${base}/api/news/search?${params.toString()}`);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -479,6 +492,7 @@ export default function HealthNewsSection({ user }) {
           title: article.title,
           description: article.description || "",
           url: article.url,
+          locale: getApiLocale(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -536,7 +550,7 @@ export default function HealthNewsSection({ user }) {
             type="text"
             value={searchInput}
             onChange={(e) => handleSearchInput(e.target.value)}
-            placeholder="Search health news…"
+            placeholder={t("discovery.healthNews.searchPlaceholder")}
             className="flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter" && searchInput.trim()) {
@@ -549,7 +563,7 @@ export default function HealthNewsSection({ user }) {
             <button
               onClick={clearSearch}
               className="p-0.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              title="Clear"
+              title={t("discovery.cancel")}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -567,7 +581,7 @@ export default function HealthNewsSection({ user }) {
             ) : (
               <Search className="w-3 h-3" />
             )}
-            Search
+            {t("discovery.healthNews.searchButton")}
           </button>
         </div>
 
@@ -576,10 +590,12 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
             <span>
               {searchLoading
-                ? "Searching…"
+                ? t("discovery.healthNews.searching")
                 : searchError
                   ? `⚠ ${searchError}`
-                  : `${(searchResults || []).length} result${(searchResults || []).length !== 1 ? "s" : ""} for `}
+                  : t("discovery.healthNews.resultsCount", {
+                      count: (searchResults || []).length,
+                    })}
             </span>
             {!searchLoading && !searchError && (
               <span className="font-semibold text-[#2F3C96]">
@@ -590,7 +606,7 @@ export default function HealthNewsSection({ user }) {
               onClick={clearSearch}
               className="ml-auto text-[#2F3C96] hover:underline font-medium"
             >
-              Clear search
+              {t("discovery.healthNews.clearSearchLink")}
             </button>
           </div>
         )}
@@ -602,14 +618,14 @@ export default function HealthNewsSection({ user }) {
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                News curated to your conditions
+                {t("discovery.healthNews.curatedLabel")}
               </span>
               <button
                 type="button"
                 onClick={() => fetchNews()}
                 disabled={loading}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-[#2F3C96] hover:bg-[#2F3C96]/5 transition-colors disabled:opacity-40"
-                title="Refresh news"
+                title={t("discovery.healthNews.refreshNewsTitle")}
               >
                 <RefreshCw
                   className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
@@ -620,7 +636,7 @@ export default function HealthNewsSection({ user }) {
             {/* General Health pill */}
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <ConditionPill
-                label="General Health"
+                label={t("discovery.healthNews.generalHealth")}
                 active={!activeCondition}
                 onClick={() => setActiveCondition(null)}
               />
@@ -630,7 +646,7 @@ export default function HealthNewsSection({ user }) {
             {userConditions.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Your Conditions
+                  {t("discovery.healthNews.yourConditions")}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {userConditions.slice(0, 8).map((cond) => (
@@ -674,14 +690,14 @@ export default function HealthNewsSection({ user }) {
           <div className="flex flex-col items-center justify-center py-10 bg-white rounded-xl border border-gray-200 text-center px-6">
             <AlertCircle className="w-10 h-10 text-amber-400 mb-3" />
             <p className="font-semibold text-gray-700 mb-1">
-              Could not load health news
+              {t("discovery.healthNews.loadFailedTitle")}
             </p>
             <p className="text-sm text-gray-500 mb-4">{error}</p>
             <button
               onClick={() => fetchNews()}
               className="px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-colors"
             >
-              Try Again
+              {t("discovery.healthNews.tryAgain")}
             </button>
           </div>
         )}
@@ -690,7 +706,9 @@ export default function HealthNewsSection({ user }) {
         {isSearchMode && !searchLoading && searchError && (
           <div className="flex flex-col items-center justify-center py-10 bg-white rounded-xl border border-gray-200 text-center px-6">
             <AlertCircle className="w-10 h-10 text-amber-400 mb-3" />
-            <p className="font-semibold text-gray-700 mb-1">Search failed</p>
+            <p className="font-semibold text-gray-700 mb-1">
+              {t("discovery.healthNews.searchFailedTitle")}
+            </p>
             <p className="text-sm text-gray-500">{searchError}</p>
           </div>
         )}
@@ -705,20 +723,20 @@ export default function HealthNewsSection({ user }) {
               <Newspaper className="w-10 h-10 text-gray-300 mb-3" />
               <p className="font-semibold text-gray-600 mb-1">
                 {isSearchMode
-                  ? "No articles match your search"
-                  : "No articles found"}
+                  ? t("discovery.healthNews.noArticlesSearch")
+                  : t("discovery.healthNews.noArticles")}
               </p>
               <p className="text-sm text-gray-400">
                 {isSearchMode
-                  ? "Try a different keyword or clear the search"
-                  : "Try selecting a different category or check back later"}
+                  ? t("discovery.healthNews.tryDifferentKeyword")
+                  : t("discovery.healthNews.tryDifferentCategory")}
               </p>
               {isSearchMode && (
                 <button
                   onClick={clearSearch}
                   className="mt-3 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-semibold hover:bg-[#253075] transition-colors"
                 >
-                  Clear Search
+                  {t("discovery.healthNews.clearSearchButton")}
                 </button>
               )}
             </div>
@@ -750,10 +768,7 @@ export default function HealthNewsSection({ user }) {
           <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
             <Info className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Articles are ranked by source reliability (e.g. WHO, CDC, FDA =
-              Authoritative). Sources marked &quot;Use with Caution&quot; are
-              flagged for limited specialist review. Summaries are informational
-              only and not medical advice.
+              {t("discovery.healthNews.disclaimer")}
             </p>
           </div>
         )}

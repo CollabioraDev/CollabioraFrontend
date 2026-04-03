@@ -440,86 +440,75 @@ export default function DashboardResearcher() {
     () => [
       {
         target: "[data-tour='dashboard-researcher-tabs']",
-        title: "Dashboard sections",
-        content:
-          "Hi! I'm Yori. This is your researcher dashboard. Use these blocks to switch between Your Profile, Collaborators, Forums, Publications, Clinical Trials, Favourites, and Meetings.",
+        title: t("dashboardResearcher.tutorial.step0Title"),
+        content: t("dashboardResearcher.tutorial.step0Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-recommendations']",
-        title: "Personalized recommendations",
-        content:
-          "Your personalized recommendations appear here—publications, trials, and collaborators tailored to your research interests. You can edit your interests and refresh to get new results.",
+        title: t("dashboardResearcher.tutorial.step1Title"),
+        content: t("dashboardResearcher.tutorial.step1Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-interests-bar']",
-        title: "Research interests & refresh",
-        content:
-          "Edit your research interests here to personalize your feed. Use Refresh to fetch new recommendations based on your updated profile.",
+        title: t("dashboardResearcher.tutorial.step2Title"),
+        content: t("dashboardResearcher.tutorial.step2Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-tab-publications']",
-        title: "Publications tab",
-        content:
-          "Switch to the Publications tab to see recommended papers. We'll show you a card and how to view its details.",
+        title: t("dashboardResearcher.tutorial.step3Title"),
+        content: t("dashboardResearcher.tutorial.step3Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-publication-card']",
-        title: "View details for a card",
-        content:
-          "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
+        title: t("dashboardResearcher.tutorial.step4Title"),
+        content: t("dashboardResearcher.tutorial.step4Content"),
         placement: "top",
       },
       {
         target: "[data-tour='nav-explore']",
-        title: "Explore tab in the navbar",
-        content:
-          "Use the Explore menu to search clinical trials, publications, and experts from one place. It's your gateway to discovering new research.",
+        title: t("dashboardResearcher.tutorial.step5Title"),
+        content: t("dashboardResearcher.tutorial.step5Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='nav-forums']",
-        title: "Forums and Discovery",
-        content:
-          "Forums lets you join community discussions. Discovery is the next link to the right in the navbar, it shows a feed of activity across the platform.",
+        title: t("dashboardResearcher.tutorial.step6Title"),
+        content: t("dashboardResearcher.tutorial.step6Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-tabs']",
-        title: "Dashboard tabs",
-        content:
-          "Switch between Your Profile, Collaborators, Forums, Publications, Clinical Trials, and Favourites. Your saved items are in Favourites.",
+        title: t("dashboardResearcher.tutorial.step7Title"),
+        content: t("dashboardResearcher.tutorial.step7Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-tab-favorites']",
-        title: "Favourites tab",
-        content:
-          "Open Favourites to see your saved trials, publications, and collaborators. You can generate a summary report from your selection.",
+        title: t("dashboardResearcher.tutorial.step8Title"),
+        content: t("dashboardResearcher.tutorial.step8Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-researcher-favorites-generate-summary']",
-        title: "Generating a summary",
-        content:
-          "Select items from your favourites, then click Generate summary to create a personalized report. You can export it as PDF.",
+        title: t("dashboardResearcher.tutorial.step9Title"),
+        content: t("dashboardResearcher.tutorial.step9Content"),
         placement: "top",
       },
       {
         target: "[data-tour='yori-chatbot']",
-        title: "Meet Yori!",
-        content:
-          "That's me! Click anytime to ask questions about trials, publications, or your dashboard. I'm here to help with your research.",
+        title: t("dashboardResearcher.tutorial.step10Title"),
+        content: t("dashboardResearcher.tutorial.step10Content"),
         placement: "top",
         allowTargetClick: true,
         spotlightShape: "circle",
         spotlightPadding: 18,
       },
     ],
-    [],
+    [t],
   );
 
   // Fetch ORCID stats

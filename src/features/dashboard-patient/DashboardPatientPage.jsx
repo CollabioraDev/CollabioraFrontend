@@ -126,8 +126,12 @@ export default function DashboardPatient() {
 
   // Determine if user is a researcher to show "Collaborators" instead of "Experts"
   const isResearcher = user?.role === "researcher";
-  const expertLabel = isResearcher ? "Collaborator" : "Expert";
-  const expertsLabel = isResearcher ? "Collaborators" : "Health Experts";
+  const expertLabel = isResearcher
+    ? t("dashboardPatient.collaborator")
+    : t("dashboardPatient.expert");
+  const expertsLabel = isResearcher
+    ? t("dashboardPatient.collaborators")
+    : t("dashboardPatient.experts");
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Track if this is the first load (cache miss)
   const [summaryModal, setSummaryModal] = useState({
     open: false,
@@ -469,79 +473,69 @@ export default function DashboardPatient() {
     () => [
       {
         target: "[data-tour='dashboard-welcome']",
-        title: "This is your Dashboard",
-        content:
-          "Hi! I'm Yori. Welcome to your personal dashboard. Here you'll see your profile and quick access to everything that matters for your health journey.",
+        title: t("dashboardPatient.tutorial.step0Title"),
+        content: t("dashboardPatient.tutorial.step0Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-recommendations']",
-        title: "Personalized recommendations",
-        content:
-          "Your personalized recommendations appear here—trials, publications, and experts tailored to your conditions and interests. You can edit your medical conditions and refresh the dashboard to get new results.",
+        title: t("dashboardPatient.tutorial.step1Title"),
+        content: t("dashboardPatient.tutorial.step1Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-conditions-bar']",
-        title: "Edit conditions & refresh",
-        content:
-          "Edit your medical conditions here to personalize your feed. Use Refresh to fetch new recommendations based on your updated profile.",
+        title: t("dashboardPatient.tutorial.step2Title"),
+        content: t("dashboardPatient.tutorial.step2Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-publication-view-details']",
-        title: "View details for a card",
-        content:
-          "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
+        title: t("dashboardPatient.tutorial.step3Title"),
+        content: t("dashboardPatient.tutorial.step3Content"),
         placement: "top",
       },
       {
         target: "[data-tour='nav-explore']",
-        title: "Explore tab in the navbar",
-        content:
-          "Use the Explore menu in the navbar to search new treatments, health library, and health experts from one place. It's your gateway to discovering new research.",
+        title: t("dashboardPatient.tutorial.step4Title"),
+        content: t("dashboardPatient.tutorial.step4Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='nav-forums']",
-        title: "Forums and Discovery",
-        content:
-          "Forums lets you join community discussions. Discovery is the next link to the right in the navbarm it shows a feed of activity and content across the platform.",
+        title: t("dashboardPatient.tutorial.step5Title"),
+        content: t("dashboardPatient.tutorial.step5Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-tabs']",
-        title: "Dashboard tabs",
-        content:
-          "Switch between Health Library, New Treatments, Health Experts, Forums, and Favourites to see recommendations in each category. Your saved items are in Favourites.",
+        title: t("dashboardPatient.tutorial.step6Title"),
+        content: t("dashboardPatient.tutorial.step6Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-tab-favorites']",
-        title: "Favourites tab",
-        content:
-          "Open Favourites to see your saved new treatments, health library items, and health experts. You can generate a summary report from your selection.",
+        title: t("dashboardPatient.tutorial.step7Title"),
+        content: t("dashboardPatient.tutorial.step7Content"),
         placement: "bottom",
       },
       {
         target: "[data-tour='dashboard-favorites-generate-summary']",
-        title: "Generating a summary",
-        content:
-          "Select items from your favourites, then click Generate summary to create a personalized report. You can export it as PDF to share with your care team.",
+        title: t("dashboardPatient.tutorial.step8Title"),
+        content: t("dashboardPatient.tutorial.step8Content"),
         placement: "top",
       },
       {
         target: "[data-tour='yori-chatbot']",
-        title: "Meet Yori!",
-        content:
-          "That's me! Click anytime to ask questions about trials, publications, or your dashboard. I'm here to help you navigate your health research journey.",
+        title: t("dashboardPatient.tutorial.step9Title"),
+        content: t("dashboardPatient.tutorial.step9Content"),
         placement: "top",
         allowTargetClick: true,
         spotlightShape: "circle",
         spotlightPadding: 18,
       },
     ],
-    [],
+    [t],
   );
 
   async function generateFavoritesSummaryReport() {
@@ -551,7 +545,7 @@ export default function DashboardPatient() {
       (selectedFavoriteItems.trials?.length || 0);
 
     if (totalSelected === 0) {
-      toast.error("Please select at least one item to generate a report");
+      toast.error(t("dashboardPatient.toastSelectForReport"));
       return;
     }
 
@@ -2734,9 +2728,9 @@ export default function DashboardPatient() {
           },
         }));
       setEditConditionsModalOpen(false);
-      toast.success("Conditions updated");
+      toast.success(t("dashboardPatient.toastConditionsUpdated"));
     } catch (e) {
-      toast.error(e.message || "Failed to save conditions");
+      toast.error(e.message || t("dashboardPatient.toastSaveConditionsFailed"));
     } finally {
       setSavingConditions(false);
     }
@@ -2792,7 +2786,9 @@ export default function DashboardPatient() {
       }
     } catch (err) {
       console.error("Error refreshing active section:", err);
-      toast.error("Failed to refresh " + active);
+      toast.error(
+        t("dashboardPatient.toastRefreshFailed", { section: active }),
+      );
     } finally {
       setRefreshingSection(null);
     }
@@ -3240,12 +3236,32 @@ export default function DashboardPatient() {
             data-tour="dashboard-tabs"
           >
             {[
-              { key: "publications", label: "Health Library", icon: FileText },
-              { key: "trials", label: "New Treatments", icon: Beaker },
+              {
+                key: "publications",
+                label: t("dashboardPatient.tabHealthLibrary"),
+                icon: FileText,
+              },
+              {
+                key: "trials",
+                label: t("dashboardPatient.tabNewTreatments"),
+                icon: Beaker,
+              },
               { key: "experts", label: expertsLabel, icon: Users },
-              { key: "forums", label: "Forums", icon: MessageCircle },
-              { key: "favorites", label: "Favourites", icon: Star },
-              { key: "meetings", label: "Meetings", icon: Calendar },
+              {
+                key: "forums",
+                label: t("dashboardPatient.tabForums"),
+                icon: MessageCircle,
+              },
+              {
+                key: "favorites",
+                label: t("dashboardPatient.tabFavourites"),
+                icon: Star,
+              },
+              {
+                key: "meetings",
+                label: t("dashboardPatient.tabMeetings"),
+                icon: Calendar,
+              },
             ].map((category) => {
               const Icon = category.icon;
               const isSelected = selectedCategory === category.key;
@@ -3309,7 +3325,7 @@ export default function DashboardPatient() {
                 className="block text-sm font-semibold"
                 style={{ color: "#2F3C96" }}
               >
-                Medical Conditions
+                {t("dashboardPatient.medicalConditions")}
               </span>
             </div>
             <div className="flex flex-1 min-w-0 flex-wrap items-center gap-2">
@@ -3334,7 +3350,7 @@ export default function DashboardPatient() {
                         <CheckCircle2
                           className="w-4 h-4 shrink-0"
                           style={{ color: "#2F3C96" }}
-                          aria-label="Used for search"
+                          aria-label={t("dashboardPatient.usedForSearchAria")}
                         />
                       )}
                       <span>{c}</span>
@@ -3346,8 +3362,7 @@ export default function DashboardPatient() {
                   className="text-sm font-medium"
                   style={{ color: "#2F3C96" }}
                 >
-                  Complete your profile first to see personalized
-                  recommendations.
+                  {t("dashboardPatient.completeProfileHint")}
                 </span>
               )}
             </div>
@@ -3361,7 +3376,7 @@ export default function DashboardPatient() {
                 }}
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                Edit
+                {t("dashboardPatient.edit")}
               </button>
               <button
                 type="button"
@@ -3377,14 +3392,14 @@ export default function DashboardPatient() {
                 style={{
                   borderColor: "#2F3C96",
                 }}
-                title="Refresh trials, publications and experts based on your conditions"
+                title={t("dashboardPatient.refreshTitle")}
               >
                 {refreshingSection || refreshingSectionsBg.size > 0 ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                 ) : (
                   <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                 )}
-                <span>Refresh</span>
+                <span>{t("dashboardPatient.refresh")}</span>
               </button>
               <button
                 type="button"
@@ -3456,8 +3471,8 @@ export default function DashboardPatient() {
                           className="p-0.5 rounded-md hover:bg-black/10 flex items-center shrink-0"
                           title={
                             primaryIndicesDraft.includes(i)
-                              ? "Used for search (click to deselect)"
-                              : "Use for search (max 2)"
+                              ? t("dashboardPatient.usedForSearchClickDeselect")
+                              : t("dashboardPatient.useForSearchMaxTwo")
                           }
                         >
                           {primaryIndicesDraft.includes(i) ? (
@@ -3623,7 +3638,7 @@ export default function DashboardPatient() {
                               <CheckCircle2
                                 className="w-3.5 h-3.5 shrink-0"
                                 style={{ color: "#2F3C96" }}
-                                aria-label="Used for search"
+                                aria-label={t("dashboardPatient.usedForSearchAria")}
                               />
                             )}
                             <span className="truncate">{c}</span>

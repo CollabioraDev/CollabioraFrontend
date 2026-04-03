@@ -4,6 +4,64 @@
  */
 export const YORI_GUEST_CHAT_STORAGE_KEY = "collabiora_yori_guest_chat_v1";
 
+/** Must match FloatingChatbot / loadSavedChat — signed-in floating Yori thread. */
+export const IORA_CHAT_STORAGE_KEY = "collabiora_iora_chat";
+
+function hasUserMessage(messages) {
+  return Array.isArray(messages) && messages.some((m) => m.role === "user");
+}
+
+/**
+ * After sign-up or sign-in, copy the guest home-page thread into signed-in storage
+ * so "create an account to keep your conversation" is honored.
+ * Clears guest storage when migration runs. Safe to call on every auth check (idempotent).
+ */
+export function migrateGuestChatToIoraStorage() {
+  try {
+    const guest = loadGuestChatMessages();
+    if (guest === null || !hasUserMessage(guest)) return false;
+
+    let existing = null;
+    try {
+      const raw = localStorage.getItem(IORA_CHAT_STORAGE_KEY);
+      if (raw) existing = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
+
+    const existingMessages = existing?.messages;
+    const ioraHasUser = hasUserMessage(existingMessages);
+
+    let finalMessages;
+    if (!ioraHasUser) {
+      finalMessages = guest;
+    } else {
+      const divider = {
+        role: "assistant",
+        content:
+          "Here is your conversation from **before you signed in** (saved from the home page).",
+        searchResults: null,
+      };
+      finalMessages = [...existingMessages, divider, ...guest];
+    }
+
+    localStorage.setItem(
+      IORA_CHAT_STORAGE_KEY,
+      JSON.stringify({
+        messages: finalMessages,
+        isOpen: true,
+        updatedAt: Date.now(),
+      }),
+    );
+    localStorage.removeItem(YORI_GUEST_CHAT_STORAGE_KEY);
+    window.dispatchEvent(new Event("yoriGuestChatUpdated"));
+    return true;
+  } catch (e) {
+    console.warn("yori: guest→signed-in chat migrate failed", e);
+    return false;
+  }
+}
+
 function stripForStorage(msg) {
   if (!msg || typeof msg !== "object") return msg;
   const o = {

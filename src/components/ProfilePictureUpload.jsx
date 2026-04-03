@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, X, Check, Loader2, User } from "lucide-react";
 
-export default function ProfilePictureUpload({ 
-  currentPicture, 
-  onUpload, 
+export default function ProfilePictureUpload({
+  currentPicture,
+  onUpload,
   onRemove,
-  uploading = false 
+  uploading = false,
 }) {
   const [preview, setPreview] = useState(null);
   const [cropArea, setCropArea] = useState(null);
@@ -52,26 +52,36 @@ export default function ProfilePictureUpload({
     setCropStart({ ...cropArea });
   };
 
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging || !preview || !cropArea) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const scale = imageRef.current?.naturalWidth / imageRef.current?.clientWidth || 1;
-    const deltaX = (e.clientX - rect.left - dragStart.x) * scale;
-    const deltaY = (e.clientY - rect.top - dragStart.y) * scale;
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging || !preview || !cropArea) return;
 
-    const img = imageRef.current;
-    if (!img) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const scale =
+        imageRef.current?.naturalWidth / imageRef.current?.clientWidth || 1;
+      const deltaX = (e.clientX - rect.left - dragStart.x) * scale;
+      const deltaY = (e.clientY - rect.top - dragStart.y) * scale;
 
-    const newX = Math.max(0, Math.min(cropStart.x + deltaX, img.naturalWidth - cropArea.width));
-    const newY = Math.max(0, Math.min(cropStart.y + deltaY, img.naturalHeight - cropArea.height));
+      const img = imageRef.current;
+      if (!img) return;
 
-    setCropArea({
-      ...cropArea,
-      x: newX,
-      y: newY,
-    });
-  }, [isDragging, dragStart, cropStart, cropArea, preview]);
+      const newX = Math.max(
+        0,
+        Math.min(cropStart.x + deltaX, img.naturalWidth - cropArea.width),
+      );
+      const newY = Math.max(
+        0,
+        Math.min(cropStart.y + deltaY, img.naturalHeight - cropArea.height),
+      );
+
+      setCropArea({
+        ...cropArea,
+        x: newX,
+        y: newY,
+      });
+    },
+    [isDragging, dragStart, cropStart, cropArea, preview],
+  );
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -92,12 +102,19 @@ export default function ProfilePictureUpload({
     e.stopPropagation();
     // Simple resize - can be enhanced
     const rect = containerRef.current.getBoundingClientRect();
-    const scale = imageRef.current?.naturalWidth / imageRef.current?.clientWidth || 1;
+    const scale =
+      imageRef.current?.naturalWidth / imageRef.current?.clientWidth || 1;
     const mouseX = (e.clientX - rect.left) * scale;
     const mouseY = (e.clientY - rect.top) * scale;
 
     if (corner === "bottom-right") {
-      const newWidth = Math.max(50, Math.min(mouseX - cropArea.x, imageRef.current.naturalWidth - cropArea.x));
+      const newWidth = Math.max(
+        50,
+        Math.min(
+          mouseX - cropArea.x,
+          imageRef.current.naturalWidth - cropArea.x,
+        ),
+      );
       const newHeight = newWidth; // Keep square
       setCropArea({
         ...cropArea,
@@ -118,22 +135,16 @@ export default function ProfilePictureUpload({
     canvas.width = 400; // Output size
     canvas.height = 400;
 
-    ctx.drawImage(
-      img,
-      cropArea.x,
-      cropArea.y,
-      size,
-      size,
-      0,
-      0,
-      400,
-      400
-    );
+    ctx.drawImage(img, cropArea.x, cropArea.y, size, size, 0, 0, 400, 400);
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        resolve(blob);
-      }, "image/jpeg", 0.9);
+      canvas.toBlob(
+        (blob) => {
+          resolve(blob);
+        },
+        "image/jpeg",
+        0.9,
+      );
     });
   };
 
@@ -141,7 +152,9 @@ export default function ProfilePictureUpload({
     try {
       const croppedBlob = await getCroppedImage();
       if (croppedBlob) {
-        const file = new File([croppedBlob], "profile-picture.jpg", { type: "image/jpeg" });
+        const file = new File([croppedBlob], "profile-picture.jpg", {
+          type: "image/jpeg",
+        });
         await onUpload(file);
         // Clear preview after successful upload
         setPreview(null);
@@ -187,9 +200,7 @@ export default function ProfilePictureUpload({
               <Upload className="w-4 h-4" />
               Upload Picture
             </button>
-            <p className="text-xs text-slate-500 mt-1">
-              JPG, PNG up to 5MB
-            </p>
+            <p className="text-xs text-slate-500 mt-1">JPG, PNG up to 5MB</p>
           </div>
         </div>
       )}
@@ -300,4 +311,3 @@ export default function ProfilePictureUpload({
     </div>
   );
 }
-

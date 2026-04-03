@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { requireEmailVerification } from "../../utils/requireEmailVerification.js";
@@ -63,6 +63,7 @@ import {
   isDummyUserId,
   DUMMY_FORUM_HELPER_ID,
 } from "../../data/dummyForumThreads.js";
+import { appendLocaleToSearchParams } from "../../i18n/getApiLocale.js";
 
 // Icon mapping for communities
 const getCommunityIcon = (slug, name) => {
@@ -275,7 +276,7 @@ const buildConditionTags = (community, threads = []) => {
 };
 
 export default function Forums() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [communities, setCommunities] = useState([]);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -396,7 +397,7 @@ export default function Forums() {
     if (userData?._id || userData?.id) {
       loadFavorites();
     }
-  }, []);
+  }, [i18n.language]);
 
   // Load list of user IDs the current user follows (for Follow button in user profile modal)
   useEffect(() => {
@@ -444,6 +445,7 @@ export default function Forums() {
     const userId = (user?._id || user?.id)?.toString() || "";
     const params = new URLSearchParams();
     if (userId) params.set("userId", userId);
+    appendLocaleToSearchParams(params);
     fetch(`${base}/api/communities/categories?${params.toString()}`)
       .then((res) => (res.ok ? res.json() : { categories: [] }))
       .then((data) => {
@@ -467,7 +469,7 @@ export default function Forums() {
     return () => {
       cancelled = true;
     };
-  }, [viewMode, base, user?._id, user?.id]);
+  }, [viewMode, base, user?._id, user?.id, i18n.language]);
 
   useEffect(() => {
     if (selectedCommunity) {
@@ -596,6 +598,7 @@ export default function Forums() {
     sortBy,
     searchQuery,
     selectedConditionTag,
+    i18n.language,
   ]);
 
   async function loadFavorites() {
@@ -711,6 +714,7 @@ export default function Forums() {
       if (userId) params.set("userId", userId);
       // Filter to show only patient communities (exclude researcher-only communities)
       params.set("type", "patient");
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(
         `${base}/api/communities?${params.toString()}`,
@@ -738,7 +742,11 @@ export default function Forums() {
   async function loadAllThreads() {
     setLoading(true);
     try {
-      const response = await fetch(`${base}/api/forums/threads`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch threads");
       const data = await response.json();
       const threadsData = data.threads || [];
@@ -800,6 +808,7 @@ export default function Forums() {
         selectedCommunity.communityType === "researcher" ? "false" : "true",
       );
       // Tag filtering is done client-side now
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(
         `${base}/api/communities/${
@@ -838,6 +847,7 @@ export default function Forums() {
         isResearcherCommunity ? "false" : "true",
       );
       // Tag filtering is done client-side now
+      appendLocaleToSearchParams(params);
 
       // Filter threads client-side by subcategory for now
       // In production, add server-side filtering
@@ -873,8 +883,11 @@ export default function Forums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/recommended/${user._id || user.id}?limit=20`,
+        `${base}/api/communities/recommended/${user._id || user.id}?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch recommendations");
 
@@ -892,8 +905,11 @@ export default function Forums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/involving/${user._id || user.id}?limit=20`,
+        `${base}/api/communities/involving/${user._id || user.id}?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
@@ -911,8 +927,11 @@ export default function Forums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/feed/${user._id || user.id}?limit=20`,
+        `${base}/api/communities/feed/${user._id || user.id}?${params.toString()}`,
       );
       if (!response.ok) throw new Error("Failed to fetch feed");
 
@@ -929,7 +948,11 @@ export default function Forums() {
   async function loadResearcherRepliedThreads() {
     setLoading(true);
     try {
-      const response = await fetch(`${base}/api/forums/threads`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
       const data = await response.json();
@@ -975,7 +998,11 @@ export default function Forums() {
   async function loadRepliedThreads() {
     setLoading(true);
     try {
-      const response = await fetch(`${base}/api/forums/threads`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
       const data = await response.json();
@@ -1053,7 +1080,11 @@ export default function Forums() {
     try {
       // Always search from overall forums, not communities
       // Clear selectedCommunity when searching to show all results
-      const response = await fetch(`${base}/api/forums/threads`);
+      const sp = new URLSearchParams();
+      appendLocaleToSearchParams(sp);
+      const response = await fetch(
+        `${base}/api/forums/threads?${sp.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
       const data = await response.json();
@@ -1242,7 +1273,11 @@ export default function Forums() {
 
     setLoadingThreadDetails((prev) => new Set(prev).add(threadId));
     try {
-      const response = await fetch(`${base}/api/forums/threads/${threadId}`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads/${threadId}?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to load thread");
 
       const data = await response.json();
@@ -1600,8 +1635,12 @@ export default function Forums() {
     try {
       const token = localStorage.getItem("token");
       const userId = user._id || user.id;
+      const params = new URLSearchParams();
+      params.set("authorUserId", userId);
+      params.set("linkedThreadId", threadId);
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/posts?authorUserId=${userId}&linkedThreadId=${threadId}`,
+        `${base}/api/posts?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -2213,13 +2252,15 @@ export default function Forums() {
   }, [sortedDisplayedCommunities, followingIds]);
 
   const mobileCommunityOptions = useMemo(() => {
-    const opts = [{ value: "", label: "All communities" }];
+    const opts = [
+      { value: "", label: t("forums.mobileAllCommunities") },
+    ];
 
     if (groupedMobileCommunities.mine.length > 0) {
       groupedMobileCommunities.mine.forEach((c) => {
         opts.push({
           value: c._id,
-          label: `My · ${c.name}`,
+          label: t("forums.mobileMyCommunity", { name: c.name }),
         });
       });
     }
@@ -2228,13 +2269,13 @@ export default function Forums() {
       groupedMobileCommunities.explore.forEach((c) => {
         opts.push({
           value: c._id,
-          label: `Explore · ${c.name}`,
+          label: t("forums.mobileExploreCommunity", { name: c.name }),
         });
       });
     }
 
     return opts;
-  }, [groupedMobileCommunities]);
+  }, [groupedMobileCommunities, t, i18n.language]);
 
   const handleMobileCommunityChange = (communityId) => {
     setMobileCommunityId(communityId);
@@ -2604,13 +2645,13 @@ export default function Forums() {
     if (selectedCommunity) return selectedCommunity.name;
     switch (activeTab) {
       case "following":
-        return "From Communities You Follow";
+        return t("forums.tabTitleFollowing");
       case "forYou":
-        return "Recommended For You";
+        return t("forums.tabTitleForYou");
       case "involving":
-        return "Discussions Involving You";
+        return t("forums.tabTitleInvolving");
       default:
-        return "All Discussions";
+        return t("forums.tabTitleAll");
     }
   };
 
@@ -2654,11 +2695,11 @@ export default function Forums() {
             <div className="text-center mb-5 sm:mb-6 animate-fade-in">
               <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-2">
                 <AuroraText speed={2.5} colors={["#2F3C96"]}>
-                  Health Forums
+                  {t("forums.healthForumsTitle")}
                 </AuroraText>
               </h1>
               <p className="text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
-                Join communities, ask questions and share experiences
+                {t("forums.heroSubtitle")}
               </p>
             </div>
 
@@ -2673,7 +2714,7 @@ export default function Forums() {
                       : "text-[#787878] hover:text-[#484848]"
                   }`}
                 >
-                  Communities
+                  {t("forums.communitiesTab")}
                 </button>
                 <button
                   onClick={() => setViewMode("posts")}
@@ -2683,7 +2724,7 @@ export default function Forums() {
                       : "text-[#787878] hover:text-[#484848]"
                   }`}
                 >
-                  Posts
+                  {t("forums.postsTab")}
                 </button>
               </div>
             </div>
@@ -2695,10 +2736,10 @@ export default function Forums() {
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-[#2F3C96]">
-                        Browse discussions
+                        {t("forums.browseDiscussions")}
                       </p>
                       <p className="text-xs text-[#787878] leading-relaxed">
-                        Search posts, refine the feed, or jump into a community.
+                        {t("forums.browseDiscussionsHint")}
                       </p>
                     </div>
                     {user && (
@@ -2721,7 +2762,9 @@ export default function Forums() {
                         className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-[#2F3C96] text-white rounded-md font-semibold text-sm hover:bg-[#253075] transition-all shrink-0"
                       >
                         <Plus className="w-4 h-4 shrink-0" />
-                        <span className="whitespace-nowrap">Create Post</span>
+                        <span className="whitespace-nowrap">
+                          {t("forums.createPost")}
+                        </span>
                       </button>
                     )}
                   </div>
@@ -2740,7 +2783,7 @@ export default function Forums() {
                           searchThreads();
                         }
                       }}
-                      placeholder="Search discussions..."
+                      placeholder={t("forums.searchDiscussionsPlaceholder")}
                       className="w-full pl-10 pr-10 py-2.5 rounded-md border border-[#E8E8E8] bg-white text-sm text-[#484848] placeholder-[#787878] focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] transition-all"
                     />
                     {searchQuery && (
@@ -2769,17 +2812,23 @@ export default function Forums() {
                           setSelectedConditionTag("All");
                         }}
                         options={[
-                          { value: "all", label: "All" },
-                          { value: "following", label: "Following" },
-                          { value: "forYou", label: "For You" },
-                          { value: "involving", label: "Your Posts" },
+                          { value: "all", label: t("forums.filterAll") },
+                          {
+                            value: "following",
+                            label: t("forums.filterFollowing"),
+                          },
+                          { value: "forYou", label: t("forums.filterForYou") },
+                          {
+                            value: "involving",
+                            label: t("forums.filterYourPosts"),
+                          },
                           {
                             value: "researcherReplied",
-                            label: "Researcher Replied",
+                            label: t("forums.filterResearcherReplied"),
                           },
-                          { value: "replied", label: "Replied" },
+                          { value: "replied", label: t("forums.filterReplied") },
                         ]}
-                        placeholder="Filter..."
+                        placeholder={t("forums.filterPlaceholder")}
                         className="w-full"
                       />
                     </div>
@@ -2796,7 +2845,9 @@ export default function Forums() {
                               : "text-[#787878] hover:text-[#484848]"
                           }`}
                         >
-                          {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                          {sort === "recent"
+                            ? t("forums.sortRecent")
+                            : t("forums.sortPopular")}
                         </button>
                       ))}
                     </div>
@@ -2807,7 +2858,7 @@ export default function Forums() {
                         value={mobileCommunityId}
                         onChange={handleMobileCommunityChange}
                         options={mobileCommunityOptions}
-                        placeholder="All communities"
+                        placeholder={t("forums.allCommunitiesPlaceholder")}
                         disabled={
                           loadingCommunities ||
                           sortedDisplayedCommunities.length === 0
@@ -2837,7 +2888,9 @@ export default function Forums() {
                         className="md:hidden flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 bg-[#2F3C96] text-white rounded-md font-semibold text-sm hover:bg-[#253075] transition-all shrink-0 w-full sm:col-span-2"
                       >
                         <Plus className="w-4 h-4 shrink-0" />
-                        <span className="whitespace-nowrap">Create Post</span>
+                        <span className="whitespace-nowrap">
+                          {t("forums.createPost")}
+                        </span>
                       </button>
                     )}
                   </div>
@@ -2858,7 +2911,7 @@ export default function Forums() {
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
                         }}
-                        placeholder="Search communities..."
+                        placeholder={t("forums.searchCommunitiesPlaceholder")}
                         className="w-full pl-10 pr-10 py-2.5 rounded-md border border-[#E8E8E8] bg-white text-sm text-[#484848] placeholder-[#787878] focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] transition-all"
                       />
                       {searchQuery && (
@@ -2887,7 +2940,7 @@ export default function Forums() {
                       className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-[#2F3C96] bg-[#2F3C96] text-white text-sm font-semibold hover:bg-[#253075] hover:border-[#253075] transition-all w-full sm:w-auto"
                     >
                       <Plus className="w-4 h-4" />
-                      Propose a Community
+                      {t("forums.proposeCommunityCta")}
                     </button>
                   </div>
                 </div>
@@ -2955,8 +3008,7 @@ export default function Forums() {
                               <span
                                 className={`text-xs px-2 py-1 rounded-full shrink-0 self-start sm:self-auto ${colorClasses.badge}`}
                               >
-                                {count}{" "}
-                                {count === 1 ? "community" : "communities"}
+                                {t("forums.communityCount", { count })}
                               </span>
                             </button>
                             {isOpen && (
@@ -3688,14 +3740,18 @@ export default function Forums() {
                                                 openShareModal(thread);
                                               }}
                                               className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-[#2F3C96] hover:bg-[#2F3C96]/5"
-                                              title="Add to Discovery"
-                                              aria-label="Add to Discovery"
+                                              title={t("forums.addToDiscovery")}
+                                              aria-label={t(
+                                                "forums.addToDiscoveryAria",
+                                              )}
                                             >
                                               <Plus
                                                 className="w-4 h-4"
                                                 aria-hidden
                                               />
-                                              <span>Add to Discovery</span>
+                                              <span>
+                                                {t("forums.addToDiscovery")}
+                                              </span>
                                             </button>
                                           );
                                         })()}
@@ -3722,8 +3778,10 @@ export default function Forums() {
                                               }}
                                               disabled={isDeleting}
                                               className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all shrink-0 text-[#787878] hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
-                                              title="Delete thread"
-                                              aria-label="Delete thread"
+                                              title={t("forums.deleteThread")}
+                                              aria-label={t(
+                                                "forums.deleteThreadAria",
+                                              )}
                                             >
                                               {isDeleting ? (
                                                 <Loader2
@@ -3736,7 +3794,9 @@ export default function Forums() {
                                                   aria-hidden
                                                 />
                                               )}
-                                              <span>Delete</span>
+                                              <span>
+                                                {t("forums.deleteThread")}
+                                              </span>
                                             </button>
                                           );
                                         })()}
@@ -3830,7 +3890,7 @@ export default function Forums() {
                                         className="flex items-center gap-1.5 text-xs text-[#787878] hover:text-[#2F3C96] font-medium transition-colors group"
                                       >
                                         <ChevronUp className="w-3.5 h-3.5 group-hover:-translate-y-0.5 transition-transform" />
-                                        <span>Collapse</span>
+                                        <span>{t("forums.collapse")}</span>
                                       </button>
                                     </div>
 
@@ -3939,29 +3999,29 @@ export default function Forums() {
                     <MessageCircle className="w-12 h-12 text-[#D0C4E2] mx-auto mb-3" />
                     <h3 className="text-lg font-semibold text-[#2F3C96] mb-2">
                       {activeTab === "following" && !selectedCommunity
-                        ? "No Posts from Followed Communities"
+                        ? t("forums.emptyPostsFollowingTitle")
                         : activeTab === "forYou"
-                          ? "No Recommendations Yet"
+                          ? t("forums.emptyForYouTitle")
                           : activeTab === "involving"
-                            ? "No Posts Involving You"
+                            ? t("forums.emptyInvolvingTitle")
                             : activeTab === "researcherReplied"
-                              ? "No Posts with Researcher Replies"
+                              ? t("forums.emptyResearcherRepliedTitle")
                               : activeTab === "replied"
-                                ? "No Posts with Replies Yet"
-                                : "No Discussions Yet"}
+                                ? t("forums.emptyRepliedTitle")
+                                : t("forums.emptyDiscussionsDefaultTitle")}
                     </h3>
                     <p className="text-[#787878] max-w-md mx-auto text-sm">
                       {activeTab === "following" && !selectedCommunity
-                        ? "Join some communities to see posts in your feed!"
+                        ? t("forums.emptyPostsFollowingBody")
                         : activeTab === "forYou"
-                          ? "Complete your profile to get personalized recommendations."
+                          ? t("forums.emptyForYouBody")
                           : activeTab === "researcherReplied"
-                            ? "No researchers have replied to any posts yet. Check back soon!"
+                            ? t("forums.emptyResearcherRepliedBody")
                             : activeTab === "replied"
-                              ? "No posts have received replies yet. Be the first to respond!"
+                              ? t("forums.emptyRepliedBody")
                               : selectedCommunity && user
-                                ? "Be the first to start a discussion!"
-                                : "Select a community to view or start discussions."}
+                                ? t("forums.emptyDiscussionsCommunityBody")
+                                : t("forums.emptyDiscussionsSelectBody")}
                     </p>
                     {user && selectedCommunity && (
                       <button
@@ -4031,7 +4091,9 @@ export default function Forums() {
                           />
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-[#787878]">Creating in</p>
+                          <p className="text-xs text-[#787878]">
+                            {t("forums.creatingIn")}
+                          </p>
                           <p className="font-medium text-[#2F3C96]">
                             {selectedCommunity.name}
                           </p>
@@ -4554,7 +4616,7 @@ export default function Forums() {
                   <div className="p-5 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
                       <h2 className="text-lg font-semibold text-[#2F3C96]">
-                        Propose a Community
+                        {t("forums.proposeCommunityModalTitle")}
                       </h2>
                       <button
                         onClick={() => {
@@ -4575,32 +4637,35 @@ export default function Forums() {
                   >
                     <div>
                       <label className="block text-sm font-medium text-[#2F3C96] mb-2">
-                        Title <span className="text-red-500">*</span>
+                        {t("forums.proposeCommunityTitleLabel")}{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={proposeTitle}
                         onChange={(e) => setProposeTitle(e.target.value)}
-                        placeholder="Community name"
+                        placeholder={t("forums.proposeCommunityName")}
                         className="w-full rounded-lg border border-[#E8E8E8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] text-[#484848] placeholder-[#787878]"
                         required
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#2F3C96] mb-2">
-                        Description
+                        {t("forums.proposeCommunityDescription")}
                       </label>
                       <textarea
                         value={proposeDescription}
                         onChange={(e) => setProposeDescription(e.target.value)}
-                        placeholder="What is this community about?"
+                        placeholder={t(
+                          "forums.proposeCommunityDescriptionPlaceholder",
+                        )}
                         className="w-full rounded-lg border border-[#E8E8E8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] resize-none text-[#484848] placeholder-[#787878]"
                         rows="4"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#2F3C96] mb-2">
-                        Thumbnail (optional)
+                        {t("forums.proposeThumbnailOptional")}
                       </label>
                       <div className="flex items-start gap-3">
                         <label className="shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-[#E8E8E8] bg-[#F5F5F5] cursor-pointer hover:border-[#2F3C96]/40 hover:bg-[#2F3C96]/5 transition-all">
@@ -4616,7 +4681,7 @@ export default function Forums() {
                             <>
                               <Plus className="w-6 h-6 text-[#787878]" />
                               <span className="text-xs text-[#787878] mt-1">
-                                Upload
+                                {t("forums.proposeUpload")}
                               </span>
                             </>
                           )}
@@ -4629,15 +4694,16 @@ export default function Forums() {
                           />
                         </label>
                         <p className="text-xs text-[#787878]">
-                          Add a cover image for your community.
+                          {t("forums.proposeCoverHint")}
                         </p>
                       </div>
                     </div>
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                       <p className="text-sm text-amber-900">
-                        <span className="font-semibold">Moderator review:</span>{" "}
-                        Your proposal will be reviewed by moderators before it
-                        goes live.
+                        <span className="font-semibold">
+                          {t("forums.proposeModeratorReview")}
+                        </span>{" "}
+                        {t("forums.proposeModeratorReviewBody")}
                       </p>
                     </div>
                     <div className="flex gap-3">
@@ -4651,7 +4717,7 @@ export default function Forums() {
                         ) : (
                           <Send className="w-4 h-4" />
                         )}
-                        Submit Proposal
+                        {t("forums.submitProposal")}
                       </button>
                       <button
                         type="button"
@@ -4663,7 +4729,7 @@ export default function Forums() {
                         }}
                         className="px-6 py-2.5 bg-[#F5F5F5] text-[#787878] rounded-lg text-sm font-medium hover:bg-[#E8E8E8] transition-all"
                       >
-                        Cancel
+                        {t("ui.cancel")}
                       </button>
                     </div>
                   </form>
@@ -4678,7 +4744,7 @@ export default function Forums() {
                   <div className="p-6 border-b border-[#E8E8E8]">
                     <div className="flex items-center justify-between">
                       <h2 className="text-lg font-semibold text-[#2F3C96]">
-                        Welcome to the community
+                        {t("community.welcomeTitle")}
                       </h2>
                       <button
                         onClick={() => setJoinGuidelinesModalCommunity(null)}
@@ -4693,100 +4759,72 @@ export default function Forums() {
                   </div>
                   <div className="p-6 space-y-4">
                     <p className="text-sm text-[#484848]">
-                      Make sure to follow these rules:
+                      {t("community.followRulesTitle")}
                     </p>
                     <div className="bg-[#F5F5F5] rounded-lg p-4 border border-[#E8E8E8] space-y-4 text-sm text-[#484848]">
                       <h3 className="font-semibold text-[#2F3C96]">
-                        Community Guidelines
+                        {t("community.guidelinesTitle")}
                       </h3>
-                      <p>
-                        collabiora is a space for respectful, educational
-                        discussion about health research. By participating, you
-                        agree to:
-                      </p>
+                      <p>{t("community.guidelinesIntro")}</p>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">
-                          Respect & Conduct
+                          {t("community.respectTitle")}
                         </h4>
                         <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                          <li>Treat all members with respect and kindness</li>
-                          <li>
-                            Do not use offensive, discriminatory, or harassing
-                            language
-                          </li>
-                          <li>
-                            Do not promote political agendas, conspiracy
-                            theories, or misinformation
-                          </li>
-                          <li>
-                            Stay focused on health research and educational
-                            topics
-                          </li>
+                          <li>{t("community.respect1")}</li>
+                          <li>{t("community.respect2")}</li>
+                          <li>{t("community.respect3")}</li>
+                          <li>{t("community.respect4")}</li>
                         </ul>
                       </div>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">
-                          Medical Disclaimer
+                          {t("community.medicalTitle")}
                         </h4>
-                        <p className="mb-2">
-                          collabiora does not provide medical advice.
-                        </p>
+                        <p className="mb-2">{t("community.medicalLead")}</p>
                         <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                          <li>
-                            Do not ask for personal diagnoses or treatment
-                            recommendations
-                          </li>
-                          <li>
-                            Information shared is for educational purposes only
-                          </li>
-                          <li>
-                            Always consult your healthcare provider for medical
-                            decisions
-                          </li>
+                          <li>{t("community.medical1")}</li>
+                          <li>{t("community.medical2")}</li>
+                          <li>{t("community.medical3")}</li>
                         </ul>
                       </div>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">
-                          Privacy
+                          {t("community.privacyTitle")}
                         </h4>
                         <ul className="list-disc list-inside space-y-1 text-[#484848]">
-                          <li>
-                            Do not share personal identifying medical
-                            information
-                          </li>
-                          <li>
-                            Do not post another person&apos;s private data
-                          </li>
+                          <li>{t("community.privacy1")}</li>
+                          <li>{t("community.privacy2")}</li>
                         </ul>
                         <p className="mt-2 text-[#484848] text-sm">
-                          See our{" "}
-                          <Link
-                            to="/privacy"
-                            className="text-[#2F3C96] font-medium hover:underline"
-                          >
-                            Privacy Policy
-                          </Link>{" "}
-                          and{" "}
-                          <Link
-                            to="/terms"
-                            className="text-[#2F3C96] font-medium hover:underline"
-                          >
-                            Terms of Service
-                          </Link>{" "}
-                          for full details.
+                          <Trans
+                            i18nKey="forums.privacyTermsFooter"
+                            components={{
+                              privacyLink: (
+                                <Link
+                                  to="/privacy"
+                                  className="text-[#2F3C96] font-medium hover:underline"
+                                />
+                              ),
+                              termsLink: (
+                                <Link
+                                  to="/terms"
+                                  className="text-[#2F3C96] font-medium hover:underline"
+                                />
+                              ),
+                            }}
+                          />
                         </p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-[#2F3C96] mb-2">
-                          Moderation Rights
+                          {t("community.moderationTitle")}
                         </h4>
                         <p className="text-[#484848]">
-                          collabiora reserves the right to remove posts or
-                          restrict accounts that violate these guidelines.
+                          {t("community.moderationP1")}
                         </p>
                         <p className="mt-2 text-[#484848]">
-                          Our goal is to maintain a safe, supportive, and
-                          scientifically grounded community.
+                          {t("community.moderationP2")}
                         </p>
                       </div>
                     </div>

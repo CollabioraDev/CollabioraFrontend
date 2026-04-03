@@ -713,8 +713,7 @@ export default function AdminDashboard() {
     useState("auto");
   const [researcherInviteDraftName, setResearcherInviteDraftName] =
     useState("");
-  const [researcherInviteBulkText, setResearcherInviteBulkText] =
-    useState("");
+  const [researcherInviteBulkText, setResearcherInviteBulkText] = useState("");
   const [researcherInviteRecipients, setResearcherInviteRecipients] = useState(
     [],
   );
@@ -1521,7 +1520,8 @@ export default function AdminDashboard() {
     const q = (betaSurveySearchQuery || "").trim().toLowerCase();
     if (!q) return betaProgramUsers;
     return (betaProgramUsers || []).filter((u) => {
-      const hay = `${u.username || ""} ${u.email || ""} ${u.handle || ""} ${u.role || ""}`.toLowerCase();
+      const hay =
+        `${u.username || ""} ${u.email || ""} ${u.handle || ""} ${u.role || ""}`.toLowerCase();
       return hay.includes(q);
     });
   };
@@ -1552,7 +1552,9 @@ export default function AdminDashboard() {
   const handleSendBetaSurveyEmails = async () => {
     const url = (betaSurveyUrl || "").trim();
     if (!url || !/^https:\/\//i.test(url)) {
-      toast.error("Paste a valid https survey link (e.g. your Google Form URL).");
+      toast.error(
+        "Paste a valid https survey link (e.g. your Google Form URL).",
+      );
       return;
     }
     if (betaSelectedUserIds.length === 0) {
@@ -1564,9 +1566,7 @@ export default function AdminDashboard() {
     if (!token) return;
 
     const pipelineInit = betaSelectedUserIds.map((id, idx) => {
-      const u = betaProgramUsers.find(
-        (x) => String(x.userId) === String(id),
-      );
+      const u = betaProgramUsers.find((x) => String(x.userId) === String(id));
       return {
         idx,
         userId: id,
@@ -1756,9 +1756,7 @@ export default function AdminDashboard() {
       });
     }
     if (newOnes.length === 0) {
-      toast.error(
-        "No new emails to add (duplicates, invalid, or list full).",
-      );
+      toast.error("No new emails to add (duplicates, invalid, or list full).");
       return;
     }
     setResearcherInviteRecipients((prev) => [...prev, ...newOnes]);
@@ -4399,10 +4397,9 @@ export default function AdminDashboard() {
                         Daily active users (UTC)
                       </h3>
                       <p className="text-xs text-slate-500 mb-4">
-                        From{" "}
-                        {activeUserAnalytics.trackingStartedDate ?? "—"} through
-                        today — only days with tracking data (no backfilled
-                        history).
+                        From {activeUserAnalytics.trackingStartedDate ?? "—"}{" "}
+                        through today — only days with tracking data (no
+                        backfilled history).
                       </p>
                       <div className="grid grid-cols-1 gap-2 max-h-[min(70vh,520px)] overflow-y-auto pr-1">
                         {(() => {
@@ -4467,14 +4464,10 @@ export default function AdminDashboard() {
                     <select
                       id="search-channel-audience"
                       value={searchChannelAudience}
-                      onChange={(e) =>
-                        setSearchChannelAudience(e.target.value)
-                      }
+                      onChange={(e) => setSearchChannelAudience(e.target.value)}
                       className="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-800 min-w-[200px]"
                     >
-                      <option value="all">
-                        All (signed in + guests)
-                      </option>
+                      <option value="all">All (signed in + guests)</option>
                       <option value="signed_in">Signed in only</option>
                       <option value="guest">Guests only</option>
                     </select>
@@ -4497,260 +4490,260 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="mb-6 space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <BarChart3 className="w-5 h-5 text-brand-royal-blue" />
-                      <h3 className="font-semibold text-brand-gray text-base">
-                        Page search vs Yori (chatbot)
-                      </h3>
-                    </div>
-                    <p className="text-xs text-brand-gray mb-3 max-w-3xl">
-                      {searchChannelAudience === "all" && (
-                        <>
-                          <span className="font-medium text-slate-700">
-                            Everyone
-                          </span>{" "}
-                          — signed-in users (unlimited search on Trials,
-                          Publications, Experts) plus guests on the free tier.
-                          Guest uniques use{" "}
-                          <code className="text-[11px] bg-slate-100 px-1 rounded">
-                            x-device-id
-                          </code>{" "}
-                          when present; guests without a device id are counted in
-                          events but not in distinct actors.
-                        </>
-                      )}
-                      {searchChannelAudience === "signed_in" && (
-                        <>
-                          <span className="font-medium text-slate-700">
-                            Signed in only
-                          </span>{" "}
-                          — same cohort as unlimited search on the classic
-                          pages. Chatbot counts user messages when authenticated.
-                        </>
-                      )}
-                      {searchChannelAudience === "guest" && (
-                        <>
-                          <span className="font-medium text-slate-700">
-                            Guests only
-                          </span>{" "}
-                          — anonymous API usage (search limits apply). Distinct
-                          guests require{" "}
-                          <code className="text-[11px] bg-slate-100 px-1 rounded">
-                            x-device-id
-                          </code>
-                          .
-                        </>
-                      )}{" "}
-                      All views use{" "}
-                      <code className="text-[11px] bg-slate-100 px-1 rounded">
-                        POST /api/chatbot/chat
-                      </code>{" "}
-                      for Yori message events (filter applies the same way).
-                    </p>
-
-                    {loadingSearchChannels && !searchChannelAnalytics ? (
-                      <div className="flex justify-center py-4">
-                        <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
-                      </div>
-                    ) : searchChannelAnalytics ? (
+                  <div className="flex items-center gap-2 mb-1">
+                    <BarChart3 className="w-5 h-5 text-brand-royal-blue" />
+                    <h3 className="font-semibold text-brand-gray text-base">
+                      Page search vs Yori (chatbot)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-brand-gray mb-3 max-w-3xl">
+                    {searchChannelAudience === "all" && (
                       <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-blue-50/80 to-white p-4">
-                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                              <FlaskConical className="w-4 h-4 text-blue-600" />
-                              Trials
-                            </div>
-                            <p className="text-2xl font-bold text-brand-royal-blue mt-1 tabular-nums">
-                              {searchChannelAnalytics.totalsLastPeriod?.trials
-                                ?.events ?? 0}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1">
-                              distinct actors (range):{" "}
-                              {searchChannelAnalytics.totalsLastPeriod?.trials
-                                ?.uniqueUsersPeriod ?? 0}
-                            </p>
-                          </div>
-                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-violet-50/80 to-white p-4">
-                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                              <BookOpen className="w-4 h-4 text-violet-600" />
-                              Publications
-                            </div>
-                            <p className="text-2xl font-bold text-violet-700 mt-1 tabular-nums">
-                              {searchChannelAnalytics.totalsLastPeriod
-                                ?.publications?.events ?? 0}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1">
-                              distinct actors (range):{" "}
-                              {searchChannelAnalytics.totalsLastPeriod
-                                ?.publications?.uniqueUsersPeriod ?? 0}
-                            </p>
-                          </div>
-                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-emerald-50/80 to-white p-4">
-                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                              <Users className="w-4 h-4 text-emerald-600" />
-                              Experts
-                            </div>
-                            <p className="text-2xl font-bold text-emerald-700 mt-1 tabular-nums">
-                              {searchChannelAnalytics.totalsLastPeriod?.experts
-                                ?.events ?? 0}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1">
-                              distinct actors (range):{" "}
-                              {searchChannelAnalytics.totalsLastPeriod?.experts
-                                ?.uniqueUsersPeriod ?? 0}
-                            </p>
-                          </div>
-                          <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-amber-50/80 to-white p-4">
-                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                              <MessageSquare className="w-4 h-4 text-amber-600" />
-                              Yori (chat)
-                            </div>
-                            <p className="text-2xl font-bold text-amber-700 mt-1 tabular-nums">
-                              {searchChannelAnalytics.totalsLastPeriod?.chatbot
-                                ?.events ?? 0}
-                            </p>
-                            <p className="text-[11px] text-slate-500 mt-1">
-                              distinct actors (range):{" "}
-                              {searchChannelAnalytics.totalsLastPeriod?.chatbot
-                                ?.uniqueUsersPeriod ?? 0}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                            Comparison (last {searchChannelAnalytics.days} days,
-                            UTC
-                            {searchChannelAudience === "all"
-                              ? " · all users"
-                              : searchChannelAudience === "signed_in"
-                                ? " · signed in"
-                                : " · guests"}
-                            )
-                          </p>
-                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                            <span>
-                              <span className="text-slate-500">
-                                Classic search (trials + publications + experts):
-                              </span>{" "}
-                              <span className="font-semibold tabular-nums">
-                                {searchChannelAnalytics.comparison
-                                  ?.classicSearchEvents ?? 0}{" "}
-                                events
-                              </span>
-                              {searchChannelAnalytics.comparison
-                                ?.classicShare != null && (
-                                <span className="text-slate-500 ml-1">
-                                  (
-                                  {(
-                                    (searchChannelAnalytics.comparison
-                                      .classicShare || 0) * 100
-                                  ).toFixed(1)}
-                                  %)
-                                </span>
-                              )}
-                            </span>
-                            <span>
-                              <span className="text-slate-500">
-                                Chatbot messages:
-                              </span>{" "}
-                              <span className="font-semibold tabular-nums text-amber-800">
-                                {searchChannelAnalytics.comparison
-                                  ?.chatbotEvents ?? 0}{" "}
-                                events
-                              </span>
-                              {searchChannelAnalytics.comparison?.chatbotShare !=
-                                null && (
-                                <span className="text-slate-500 ml-1">
-                                  (
-                                  {(
-                                    (searchChannelAnalytics.comparison
-                                      .chatbotShare || 0) * 100
-                                  ).toFixed(1)}
-                                  %)
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 mt-2">
-                            Distinct users (any classic surface):{" "}
-                            <span className="font-medium text-slate-700">
-                              {searchChannelAnalytics.comparison
-                                ?.distinctUsersClassicAnyChannel ?? 0}
-                            </span>
-                            {" · "}
-                            Distinct chatbot actors:{" "}
-                            <span className="font-medium text-slate-700">
-                              {searchChannelAnalytics.comparison
-                                ?.distinctUsersChatbot ?? 0}
-                            </span>
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/80 bg-white p-3 overflow-x-auto">
-                          <p className="text-xs font-semibold text-slate-600 mb-2">
-                            Daily events (UTC) — filtered by audience
-                          </p>
-                          <table className="w-full text-xs text-left border-collapse min-w-[520px]">
-                            <thead>
-                              <tr className="border-b border-slate-200 text-slate-500">
-                                <th className="py-2 pr-2 font-medium">Date</th>
-                                <th className="py-2 pr-2 font-medium text-right">
-                                  Trials
-                                </th>
-                                <th className="py-2 pr-2 font-medium text-right">
-                                  Publications
-                                </th>
-                                <th className="py-2 pr-2 font-medium text-right">
-                                  Experts
-                                </th>
-                                <th className="py-2 pr-2 font-medium text-right">
-                                  Chat
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(searchChannelAnalytics.series || [])
-                                .slice()
-                                .reverse()
-                                .slice(0, 14)
-                                .map((row) => (
-                                  <tr
-                                    key={row.date}
-                                    className="border-b border-slate-100 hover:bg-slate-50/80"
-                                  >
-                                    <td className="py-1.5 pr-2 text-slate-600 whitespace-nowrap">
-                                      {row.date}
-                                    </td>
-                                    <td className="py-1.5 pr-2 text-right tabular-nums">
-                                      {row.trials?.events ?? 0}
-                                    </td>
-                                    <td className="py-1.5 pr-2 text-right tabular-nums">
-                                      {row.publications?.events ?? 0}
-                                    </td>
-                                    <td className="py-1.5 pr-2 text-right tabular-nums">
-                                      {row.experts?.events ?? 0}
-                                    </td>
-                                    <td className="py-1.5 pr-2 text-right tabular-nums text-amber-800">
-                                      {row.chatbot?.events ?? 0}
-                                    </td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                          <p className="text-[11px] text-slate-400 mt-2">
-                            Showing last 14 UTC days (newest first). Range:{" "}
-                            {searchChannelAnalytics.range?.start} →{" "}
-                            {searchChannelAnalytics.range?.end}
-                          </p>
-                        </div>
+                        <span className="font-medium text-slate-700">
+                          Everyone
+                        </span>{" "}
+                        — signed-in users (unlimited search on Trials,
+                        Publications, Experts) plus guests on the free tier.
+                        Guest uniques use{" "}
+                        <code className="text-[11px] bg-slate-100 px-1 rounded">
+                          x-device-id
+                        </code>{" "}
+                        when present; guests without a device id are counted in
+                        events but not in distinct actors.
                       </>
-                    ) : (
-                      <p className="text-sm text-slate-500">
-                        No search channel metrics yet. Data appears as users run
-                        searches and use the chatbot.
-                      </p>
                     )}
+                    {searchChannelAudience === "signed_in" && (
+                      <>
+                        <span className="font-medium text-slate-700">
+                          Signed in only
+                        </span>{" "}
+                        — same cohort as unlimited search on the classic pages.
+                        Chatbot counts user messages when authenticated.
+                      </>
+                    )}
+                    {searchChannelAudience === "guest" && (
+                      <>
+                        <span className="font-medium text-slate-700">
+                          Guests only
+                        </span>{" "}
+                        — anonymous API usage (search limits apply). Distinct
+                        guests require{" "}
+                        <code className="text-[11px] bg-slate-100 px-1 rounded">
+                          x-device-id
+                        </code>
+                        .
+                      </>
+                    )}{" "}
+                    All views use{" "}
+                    <code className="text-[11px] bg-slate-100 px-1 rounded">
+                      POST /api/chatbot/chat
+                    </code>{" "}
+                    for Yori message events (filter applies the same way).
+                  </p>
+
+                  {loadingSearchChannels && !searchChannelAnalytics ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                    </div>
+                  ) : searchChannelAnalytics ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-blue-50/80 to-white p-4">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            <FlaskConical className="w-4 h-4 text-blue-600" />
+                            Trials
+                          </div>
+                          <p className="text-2xl font-bold text-brand-royal-blue mt-1 tabular-nums">
+                            {searchChannelAnalytics.totalsLastPeriod?.trials
+                              ?.events ?? 0}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            distinct actors (range):{" "}
+                            {searchChannelAnalytics.totalsLastPeriod?.trials
+                              ?.uniqueUsersPeriod ?? 0}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-violet-50/80 to-white p-4">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            <BookOpen className="w-4 h-4 text-violet-600" />
+                            Publications
+                          </div>
+                          <p className="text-2xl font-bold text-violet-700 mt-1 tabular-nums">
+                            {searchChannelAnalytics.totalsLastPeriod
+                              ?.publications?.events ?? 0}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            distinct actors (range):{" "}
+                            {searchChannelAnalytics.totalsLastPeriod
+                              ?.publications?.uniqueUsersPeriod ?? 0}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-emerald-50/80 to-white p-4">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            <Users className="w-4 h-4 text-emerald-600" />
+                            Experts
+                          </div>
+                          <p className="text-2xl font-bold text-emerald-700 mt-1 tabular-nums">
+                            {searchChannelAnalytics.totalsLastPeriod?.experts
+                              ?.events ?? 0}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            distinct actors (range):{" "}
+                            {searchChannelAnalytics.totalsLastPeriod?.experts
+                              ?.uniqueUsersPeriod ?? 0}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-amber-50/80 to-white p-4">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">
+                            <MessageSquare className="w-4 h-4 text-amber-600" />
+                            Yori (chat)
+                          </div>
+                          <p className="text-2xl font-bold text-amber-700 mt-1 tabular-nums">
+                            {searchChannelAnalytics.totalsLastPeriod?.chatbot
+                              ?.events ?? 0}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            distinct actors (range):{" "}
+                            {searchChannelAnalytics.totalsLastPeriod?.chatbot
+                              ?.uniqueUsersPeriod ?? 0}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4">
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                          Comparison (last {searchChannelAnalytics.days} days,
+                          UTC
+                          {searchChannelAudience === "all"
+                            ? " · all users"
+                            : searchChannelAudience === "signed_in"
+                              ? " · signed in"
+                              : " · guests"}
+                          )
+                        </p>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                          <span>
+                            <span className="text-slate-500">
+                              Classic search (trials + publications + experts):
+                            </span>{" "}
+                            <span className="font-semibold tabular-nums">
+                              {searchChannelAnalytics.comparison
+                                ?.classicSearchEvents ?? 0}{" "}
+                              events
+                            </span>
+                            {searchChannelAnalytics.comparison?.classicShare !=
+                              null && (
+                              <span className="text-slate-500 ml-1">
+                                (
+                                {(
+                                  (searchChannelAnalytics.comparison
+                                    .classicShare || 0) * 100
+                                ).toFixed(1)}
+                                %)
+                              </span>
+                            )}
+                          </span>
+                          <span>
+                            <span className="text-slate-500">
+                              Chatbot messages:
+                            </span>{" "}
+                            <span className="font-semibold tabular-nums text-amber-800">
+                              {searchChannelAnalytics.comparison
+                                ?.chatbotEvents ?? 0}{" "}
+                              events
+                            </span>
+                            {searchChannelAnalytics.comparison?.chatbotShare !=
+                              null && (
+                              <span className="text-slate-500 ml-1">
+                                (
+                                {(
+                                  (searchChannelAnalytics.comparison
+                                    .chatbotShare || 0) * 100
+                                ).toFixed(1)}
+                                %)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-2">
+                          Distinct users (any classic surface):{" "}
+                          <span className="font-medium text-slate-700">
+                            {searchChannelAnalytics.comparison
+                              ?.distinctUsersClassicAnyChannel ?? 0}
+                          </span>
+                          {" · "}
+                          Distinct chatbot actors:{" "}
+                          <span className="font-medium text-slate-700">
+                            {searchChannelAnalytics.comparison
+                              ?.distinctUsersChatbot ?? 0}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200/80 bg-white p-3 overflow-x-auto">
+                        <p className="text-xs font-semibold text-slate-600 mb-2">
+                          Daily events (UTC) — filtered by audience
+                        </p>
+                        <table className="w-full text-xs text-left border-collapse min-w-[520px]">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-500">
+                              <th className="py-2 pr-2 font-medium">Date</th>
+                              <th className="py-2 pr-2 font-medium text-right">
+                                Trials
+                              </th>
+                              <th className="py-2 pr-2 font-medium text-right">
+                                Publications
+                              </th>
+                              <th className="py-2 pr-2 font-medium text-right">
+                                Experts
+                              </th>
+                              <th className="py-2 pr-2 font-medium text-right">
+                                Chat
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(searchChannelAnalytics.series || [])
+                              .slice()
+                              .reverse()
+                              .slice(0, 14)
+                              .map((row) => (
+                                <tr
+                                  key={row.date}
+                                  className="border-b border-slate-100 hover:bg-slate-50/80"
+                                >
+                                  <td className="py-1.5 pr-2 text-slate-600 whitespace-nowrap">
+                                    {row.date}
+                                  </td>
+                                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                                    {row.trials?.events ?? 0}
+                                  </td>
+                                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                                    {row.publications?.events ?? 0}
+                                  </td>
+                                  <td className="py-1.5 pr-2 text-right tabular-nums">
+                                    {row.experts?.events ?? 0}
+                                  </td>
+                                  <td className="py-1.5 pr-2 text-right tabular-nums text-amber-800">
+                                    {row.chatbot?.events ?? 0}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                        <p className="text-[11px] text-slate-400 mt-2">
+                          Showing last 14 UTC days (newest first). Range:{" "}
+                          {searchChannelAnalytics.range?.start} →{" "}
+                          {searchChannelAnalytics.range?.end}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      No search channel metrics yet. Data appears as users run
+                      searches and use the chatbot.
+                    </p>
+                  )}
                 </div>
 
                 {loadingStats ? (
@@ -8522,9 +8515,7 @@ export default function AdminDashboard() {
                         Last batch sent
                       </span>
                       {" · "}
-                      {new Date(
-                        betaSurveyLastBatch.sentAt,
-                      ).toLocaleString()}
+                      {new Date(betaSurveyLastBatch.sentAt).toLocaleString()}
                       {" · "}
                       <span className="font-medium text-[#2F3C96]">
                         {betaSurveyLastBatch.successCount}
@@ -8567,9 +8558,7 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       value={betaSurveySearchQuery}
-                      onChange={(e) =>
-                        setBetaSurveySearchQuery(e.target.value)
-                      }
+                      onChange={(e) => setBetaSurveySearchQuery(e.target.value)}
                       placeholder="Search by name, email, role…"
                       className="w-full px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
                       disabled={sendingBetaSurvey}
@@ -8799,8 +8788,8 @@ export default function AdminDashboard() {
                   <p className="text-xs text-brand-gray/80 mb-4">
                     Add up to 10 recipients. Names can be inferred from the part
                     before @ (e.g. AKeener@… → &quot;A Keener&quot;) or entered
-                    manually. The email uses &quot;Dear Dr. [last
-                    word]&quot;; if no name, &quot;Dear Doctor,&quot;.
+                    manually. The email uses &quot;Dear Dr. [last word]&quot;;
+                    if no name, &quot;Dear Doctor,&quot;.
                   </p>
 
                   <div className="space-y-3 mb-4">

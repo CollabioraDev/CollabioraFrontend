@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   X,
@@ -35,86 +36,68 @@ import {
   saveGuestChatMessages,
   restoreGuestGeneralMessages,
   YORI_GUEST_CHAT_STORAGE_KEY,
+  IORA_CHAT_STORAGE_KEY,
+  migrateGuestChatToIoraStorage,
 } from "../../utils/yoriGuestChatStorage.js";
 import { getApiLocale } from "../../i18n/getApiLocale.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
+import i18n from "i18next";
 
 // Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
-const IORA_STORAGE_KEY = "collabiora_iora_chat";
 const YORI_MOBILE_TEASER_STORAGE_KEY =
   "collabiora_yori_mobile_teaser_collapsed";
 
-const YORI_DISCLAIMER =
-  "Yori is an AI-powered health information tool. The content provided is for informational and educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis, treatment, or medical decisions. Your information will never be sold or used for commercial purposes.";
-
-const DEFAULT_GREETING = {
-  role: "assistant",
-  content:
-    "Hi! I'm **Yori**, your personal AI assistant from collabiora. I can help you find publications, clinical trials, and experts. What would you like to know?",
-  searchResults: null,
-};
-
-const CONTEXT_GREETING = {
-  role: "assistant",
-  content: "I'm here to help explain this. Ask me anything about it!",
-  searchResults: null,
-};
-
-const ASK_ABOUT_OPTIONS = {
-  trial: [
-    {
-      label: "Tell me more about this trial",
-      question:
-        "Tell me more about this trial. Summarize the key details and what it's testing.",
-    },
-    {
-      label: "What are the inclusion criteria?",
-      question:
-        "What are the inclusion and exclusion criteria for this trial? Explain who can participate.",
-    },
-    {
-      label: "How can I participate?",
-      question:
-        "How can I participate in this trial? What are the steps and who do I contact?",
-    },
-    {
-      label: "Get contact details",
-      question:
-        "What are the contact details for this trial? Give me phone numbers, emails, or links to sign up.",
-    },
-    {
-      label: "Where are the trial locations?",
-      question:
-        "Where is this trial being conducted? List the locations and sites.",
-    },
-  ],
-  publication: [
-    {
-      label: "Summarize this publication",
-      question:
-        "Summarize this publication. What are the main findings and conclusions?",
-    },
-    {
-      label: "What methods were used?",
-      question: "What methodology and methods were used in this study?",
-    },
-    {
-      label: "Key takeaways",
-      question: "What are the key takeaways and implications of this research?",
-    },
-  ],
-  expert: [
-    {
-      label: "Tell me more about this expert",
-      question:
-        "Tell me more about this researcher. What are their main contributions and expertise?",
-    },
-    {
-      label: "Research focus",
-      question: "What is this expert's research focus and recent work?",
-    },
-  ],
-};
+/** Uses current i18n language (for cards rendered outside useTranslation scope). */
+function getAskAboutOptions() {
+  return {
+    trial: [
+      {
+        label: i18n.t("chat.trialAskTellMore"),
+        question: i18n.t("chat.trialAskTellMoreQ"),
+      },
+      {
+        label: i18n.t("chat.trialAskInclusion"),
+        question: i18n.t("chat.trialAskInclusionQ"),
+      },
+      {
+        label: i18n.t("chat.trialAskParticipate"),
+        question: i18n.t("chat.trialAskParticipateQ"),
+      },
+      {
+        label: i18n.t("chat.trialAskContact"),
+        question: i18n.t("chat.trialAskContactQ"),
+      },
+      {
+        label: i18n.t("chat.trialAskLocations"),
+        question: i18n.t("chat.trialAskLocationsQ"),
+      },
+    ],
+    publication: [
+      {
+        label: i18n.t("chat.pubAskSummarize"),
+        question: i18n.t("chat.pubAskSummarizeQ"),
+      },
+      {
+        label: i18n.t("chat.pubAskMethods"),
+        question: i18n.t("chat.pubAskMethodsQ"),
+      },
+      {
+        label: i18n.t("chat.pubAskTakeaways"),
+        question: i18n.t("chat.pubAskTakeawaysQ"),
+      },
+    ],
+    expert: [
+      {
+        label: i18n.t("chat.expertAskTellMore"),
+        question: i18n.t("chat.expertAskTellMoreQ"),
+      },
+      {
+        label: i18n.t("chat.expertAskFocus"),
+        question: i18n.t("chat.expertAskFocusQ"),
+      },
+    ],
+  };
+}
 
 // Publication Card - compact; simplified title/summary for patients, full for researchers
 const PublicationCard = React.memo(
@@ -867,7 +850,7 @@ const TrialDetailsCard = ({
                   Ask more about this trial
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {ASK_ABOUT_OPTIONS.trial.map((opt, i) => (
+                  {getAskAboutOptions().trial.map((opt, i) => (
                     <button
                       key={i}
                       type="button"
@@ -909,7 +892,7 @@ const TrialAskMoreBar = ({
             Ask more about this trial
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {ASK_ABOUT_OPTIONS.trial.map((opt, i) => (
+            {getAskAboutOptions().trial.map((opt, i) => (
               <button
                 key={i}
                 type="button"
@@ -962,7 +945,7 @@ const PublicationAskMoreBar = ({
             Ask more about this publication
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {ASK_ABOUT_OPTIONS.publication.map((opt, i) => (
+            {getAskAboutOptions().publication.map((opt, i) => (
               <button
                 key={i}
                 type="button"
@@ -1115,7 +1098,7 @@ const PublicationDetailsCard = ({
                   Ask more about this publication
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {ASK_ABOUT_OPTIONS.publication.map((opt, i) => (
+                  {getAskAboutOptions().publication.map((opt, i) => (
                     <button
                       key={i}
                       type="button"
@@ -1274,7 +1257,7 @@ const getCannedReply = (messageText) => {
 
 const loadSavedChat = () => {
   try {
-    const raw = localStorage.getItem(IORA_STORAGE_KEY);
+    const raw = localStorage.getItem(IORA_CHAT_STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (data && Array.isArray(data.messages) && data.messages.length > 0) {
@@ -1289,7 +1272,7 @@ const loadSavedChat = () => {
 const saveChat = (messages, isOpen) => {
   try {
     localStorage.setItem(
-      IORA_STORAGE_KEY,
+      IORA_CHAT_STORAGE_KEY,
       JSON.stringify({ messages, isOpen, updatedAt: Date.now() }),
     );
   } catch (e) {
@@ -1297,15 +1280,67 @@ const saveChat = (messages, isOpen) => {
   }
 };
 
-// Rotating phrases for the speech bubble when chatbot is closed
-const SPEECH_BUBBLE_PHRASES = [
-  { primary: "Hi, I'm Yori", secondary: null },
-  { primary: "Ask me anything", secondary: null },
-];
-
 const FloatingChatbot = () => {
+  const { t, i18n } = useTranslation("common");
   const location = useLocation();
   const navigate = useNavigate();
+
+  // `t` is stable across language changes; include i18n.language so memos refresh when locale switches.
+  const localeKey = i18n.language;
+
+  const DEFAULT_GREETING = useMemo(
+    () => ({
+      role: "assistant",
+      content: t("yori.greetingDefault"),
+      searchResults: null,
+      yoriGreeting: "default",
+    }),
+    [t, localeKey],
+  );
+
+  const CONTEXT_GREETING = useMemo(
+    () => ({
+      role: "assistant",
+      content: t("yori.greetingContext"),
+      searchResults: null,
+      yoriGreeting: "context",
+    }),
+    [t, localeKey],
+  );
+
+  const speechBubblePhrases = useMemo(
+    () => [
+      { primary: t("yori.speechHi"), secondary: null },
+      { primary: t("yori.speechAskAnything"), secondary: null },
+    ],
+    [t, localeKey],
+  );
+
+  const generateContextQuestions = useCallback(
+    (type) => {
+      if (type === "trial") {
+        return [
+          t("yori.suggestionTrial1"),
+          t("yori.suggestionTrial2"),
+          t("yori.suggestionTrial3"),
+          t("yori.suggestionTrial4"),
+          t("yori.suggestionTrial5"),
+        ];
+      }
+      if (type === "publication") {
+        return [
+          t("yori.suggestionPub1"),
+          t("yori.suggestionPub2"),
+          t("yori.suggestionPub3"),
+          t("yori.suggestionPub4"),
+          t("yori.suggestionPub5"),
+        ];
+      }
+      return [];
+    },
+    [t, localeKey],
+  );
+
   // Marketing pages: `/` (guest Yori) and `/home` (Landing.jsx) — same bottom offset on mobile
   const isLandingPage =
     location.pathname === "/" || location.pathname === "/home";
@@ -1326,6 +1361,18 @@ const FloatingChatbot = () => {
   );
   const [messages, setMessages] = useState([DEFAULT_GREETING]);
   const [speechPhraseIndex, setSpeechPhraseIndex] = useState(0);
+
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0]?.yoriGreeting === "default") {
+        return [DEFAULT_GREETING];
+      }
+      if (prev.length === 1 && prev[0]?.yoriGreeting === "context") {
+        return [CONTEXT_GREETING];
+      }
+      return prev;
+    });
+  }, [DEFAULT_GREETING, CONTEXT_GREETING]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState(null);
@@ -1377,7 +1424,7 @@ const FloatingChatbot = () => {
     if (isOpen || isTrialPage || isPublicationPage || context) return;
     const interval = setInterval(() => {
       setSpeechPhraseIndex((prev) => {
-        const next = (prev + 1) % SPEECH_BUBBLE_PHRASES.length;
+        const next = (prev + 1) % speechBubblePhrases.length;
         return next;
       });
     }, 5000);
@@ -1442,12 +1489,12 @@ const FloatingChatbot = () => {
 
         setContext({ type, item });
         // Generate context-specific questions
-        const contextQuestions = generateContextQuestions(type, item);
+        const contextQuestions = generateContextQuestions(type);
         setSuggestions(contextQuestions);
         // Ensure we have context greeting
         if (
           messages.length === 1 &&
-          messages[0].content === DEFAULT_GREETING.content
+          messages[0].yoriGreeting === "default"
         ) {
           setMessages([CONTEXT_GREETING]);
         }
@@ -1485,7 +1532,7 @@ const FloatingChatbot = () => {
       // Clear saved chat for detail pages (signed-in only — never guest storage)
       if (wasOnDetailPage && user) {
         try {
-          localStorage.removeItem(IORA_STORAGE_KEY);
+          localStorage.removeItem(IORA_CHAT_STORAGE_KEY);
         } catch (e) {
           console.warn("Could not clear saved chat:", e);
         }
@@ -1504,7 +1551,7 @@ const FloatingChatbot = () => {
         abortControllerRef.current?.abort();
         // Generate context questions
         const type = isTrialPage ? "trial" : "publication";
-        const contextQuestions = generateContextQuestions(type, {});
+        const contextQuestions = generateContextQuestions(type);
         setSuggestions(contextQuestions);
       }
     }
@@ -1519,28 +1566,6 @@ const FloatingChatbot = () => {
     user,
   ]);
 
-  // Generate context-specific questions based on type and item
-  const generateContextQuestions = (type, item) => {
-    if (type === "trial") {
-      return [
-        "Tell me more about this trial",
-        "What are the inclusion criteria?",
-        "How can I participate?",
-        "Where are the trial locations?",
-        "What are the potential side effects?",
-      ];
-    } else if (type === "publication") {
-      return [
-        "Summarize this publication",
-        "What are the main findings?",
-        "What methods were used?",
-        "What are the key takeaways?",
-        "Who would benefit from this research?",
-      ];
-    }
-    return [];
-  };
-
   // Restore last conversation and open state when user is available
   // BUT: Never restore when on detail pages - always start fresh
   useEffect(() => {
@@ -1552,6 +1577,8 @@ const FloatingChatbot = () => {
       setHydrated(true);
       return;
     }
+    // Guest home-page thread → signed-in floating Yori (same browser)
+    migrateGuestChatToIoraStorage();
     // Only restore saved chat when NOT on detail pages
     const saved = loadSavedChat();
     if (saved) {
@@ -1665,7 +1692,7 @@ const FloatingChatbot = () => {
       setUser(userData);
     };
     const handleLogout = () => {
-      localStorage.removeItem(IORA_STORAGE_KEY);
+      localStorage.removeItem(IORA_CHAT_STORAGE_KEY);
       setSuggestions([]);
       checkUser();
       // Guest thread is restored from `collabiora_yori_guest_chat_v1` when user becomes null (see guest hydrate effect)
@@ -2188,18 +2215,18 @@ const FloatingChatbot = () => {
                 <p className="text-[9px] sm:text-[11px] font-semibold text-[#2F3C96] leading-snug text-center">
                   {isTrialPage || isPublicationPage || context ? (
                     <span className="block max-w-[min(13.5rem,calc(100vw-6rem))]">
-                      I'm here to help explain this
+                      {t("yori.speechContextHelp")}
                     </span>
                   ) : (
                     <span className="inline-block whitespace-nowrap">
-                      {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].secondary ? (
+                      {speechBubblePhrases[speechPhraseIndex].secondary ? (
                         <>
-                          {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].primary}
+                          {speechBubblePhrases[speechPhraseIndex].primary}
                           <br />
-                          {SPEECH_BUBBLE_PHRASES[speechPhraseIndex].secondary}
+                          {speechBubblePhrases[speechPhraseIndex].secondary}
                         </>
                       ) : (
-                        SPEECH_BUBBLE_PHRASES[speechPhraseIndex].primary
+                        speechBubblePhrases[speechPhraseIndex].primary
                       )}
                     </span>
                   )}
@@ -2220,7 +2247,7 @@ const FloatingChatbot = () => {
 
               transformOrigin: "bottom right",
             }}
-            aria-label="Open Yori chat"
+            aria-label={t("yori.ariaOpenChat")}
             data-tour="yori-chatbot"
           >
             <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-[opacity,transform] duration-300 rounded-lg" />
@@ -2236,12 +2263,12 @@ const FloatingChatbot = () => {
             type="button"
             onClick={handleOpen}
             className="flex items-center translate-x-2"
-            aria-label="Open Yori chat"
+            aria-label={t("yori.ariaOpenChat")}
           >
             <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
                 src="/Yorisidepeak.webp"
-                alt="Yori"
+                alt={t("yori.name")}
                 className="h-full w-full object-contain"
               />
             </span>
@@ -2257,12 +2284,12 @@ const FloatingChatbot = () => {
             type="button"
             onClick={() => setIsSideCollapsed(false)}
             className="flex items-center translate-x-2"
-            aria-label="Expand Yori chat"
+            aria-label={t("yori.ariaExpandChat")}
           >
             <span className="flex h-14 w-14 items-center justify-center overflow-visible drop-shadow-[0_8px_14px_rgba(47,60,150,0.35)]">
               <img
                 src="/Yorisidepeak.webp"
-                alt="Yori"
+                alt={t("yori.name")}
                 className="h-full w-full object-contain"
               />
             </span>
@@ -2293,14 +2320,14 @@ const FloatingChatbot = () => {
               <div className="absolute -left-2 -top-0 w-14 h-14 sm:w-16 sm:h-16 pointer-events-none drop-shadow-[0_8px_14px_rgba(47,60,150,0.45)]">
                 <img
                   src="/Yori's Face Outline.webp"
-                  alt="Yori"
+                  alt={t("yori.name")}
                   className="w-full h-full object-contain"
                 />
               </div>
               <div>
-                <h3 className="font-bold text-sm">Yori</h3>
+                <h3 className="font-bold text-sm">{t("yori.name")}</h3>
                 <p className="text-[11px] sm:text-xs text-white/80">
-                  Your personal AI assistant
+                  {t("yori.subtitle")}
                 </p>
               </div>
             </div>
@@ -2322,8 +2349,8 @@ const FloatingChatbot = () => {
                   abortControllerRef.current?.abort();
                 }}
                 className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
-                aria-label="Clear chat"
-                title="Clear chat"
+                aria-label={t("yori.clearChat")}
+                title={t("yori.clearChat")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -2776,7 +2803,7 @@ const FloatingChatbot = () => {
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {(ASK_ABOUT_OPTIONS[askAboutTarget.type] || []).map(
+                          {(getAskAboutOptions()[askAboutTarget.type] || []).map(
                             (opt, i) => (
                               <button
                                 key={i}
@@ -2805,7 +2832,7 @@ const FloatingChatbot = () => {
                           value={input}
                           onChange={(e) => setInput(e.target.value)}
                           onKeyPress={handleKeyPress}
-                          placeholder="Ask about publications, trials..."
+                          placeholder={t("yori.placeholderInput")}
                           className="flex-1 resize-none rounded-xl border border-[#D1D3E5] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2F3C96] focus:border-transparent transition-[colors,shadow] max-h-24"
                           rows={1}
                           disabled={isLoading}
@@ -2818,7 +2845,7 @@ const FloatingChatbot = () => {
                             background:
                               "linear-gradient(135deg, #2F3C96, #474F97)",
                           }}
-                          aria-label="Send message"
+                          aria-label={t("yori.ariaSendMessage")}
                         >
                           {isLoading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -2828,7 +2855,7 @@ const FloatingChatbot = () => {
                         </button>
                       </div>
                       <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
-                        {YORI_DISCLAIMER}
+                        {t("yori.disclaimer")}
                       </p>
                       <div className="sm:hidden mt-2 flex justify-center px-1">
                         <button
@@ -2836,7 +2863,7 @@ const FloatingChatbot = () => {
                           onClick={() => setDisclaimerOpen(true)}
                           className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
                         >
-                          View disclaimer
+                          {t("yori.viewDisclaimer")}
                         </button>
                       </div>
                     </div>
@@ -2865,7 +2892,7 @@ const FloatingChatbot = () => {
                 id="yori-floating-disclaimer-title"
                 className="text-base font-bold text-[#2F3C96] pr-2"
               >
-                Disclaimer
+                {t("yori.disclaimerTitle")}
               </h2>
               <button
                 type="button"
@@ -2877,7 +2904,7 @@ const FloatingChatbot = () => {
               </button>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
-              {YORI_DISCLAIMER}
+              {t("yori.disclaimer")}
             </p>
             <button
               type="button"
@@ -2885,7 +2912,7 @@ const FloatingChatbot = () => {
               className="mt-5 w-full rounded-xl py-3 text-sm font-semibold text-white"
               style={{ backgroundColor: "#2F3C96" }}
             >
-              Close
+              {t("yori.close")}
             </button>
           </div>
         </div>

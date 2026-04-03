@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { requireEmailVerification } from "../../utils/requireEmailVerification.js";
+import { appendLocaleToSearchParams } from "../../i18n/getApiLocale.js";
 import {
   Heart,
   MessageCircle,
@@ -208,7 +209,7 @@ function getDiscoveryAuthorName(author, fallback, authorRole) {
 }
 
 export default function Discovery() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -244,9 +245,21 @@ export default function Discovery() {
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const loadingPostsRef = useRef(false); // Prevent multiple simultaneous loads
+  const skipLocaleReloadRef = useRef(true);
 
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (skipLocaleReloadRef.current) {
+      skipLocaleReloadRef.current = false;
+      return;
+    }
+    setComments({});
+    setExpandedComments(new Set());
+    loadPosts(true);
+    loadCommunities();
+  }, [i18n.language]);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user") || "null");
@@ -370,6 +383,7 @@ export default function Discovery() {
       const userId = userData?._id || userData?.id || "";
       const params = new URLSearchParams();
       if (userId) params.set("userId", userId);
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(
         `${base}/api/communities?${params.toString()}`,
@@ -444,6 +458,7 @@ export default function Discovery() {
       params.set("page", currentPage.toString());
       params.set("pageSize", "20");
       if (userId) params.set("userId", userId);
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(`${base}/api/posts?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch posts");
@@ -638,6 +653,7 @@ export default function Discovery() {
       const userId = userData?._id || userData?.id || "";
       const params = new URLSearchParams();
       if (userId) params.set("userId", userId);
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(
         `${base}/api/posts/${postId}/comments?${params.toString()}`,

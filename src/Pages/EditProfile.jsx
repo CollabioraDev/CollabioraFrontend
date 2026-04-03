@@ -30,7 +30,6 @@ import {
   BookOpen,
   FileText,
   Mail,
-  AlertTriangle,
   Loader2,
   Globe,
 } from "lucide-react";
@@ -83,6 +82,25 @@ const getCommunityIcon = (slug, name) => {
   return IconComponent;
 };
 
+function AcademicLinkStatusBadge({ status }) {
+  const { t } = useTranslation("common");
+  if (!status) return null;
+  if (status === "verified") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+        <CheckCircle2 className="w-3 h-3" />
+        {t("editProfile.badgeAcademicConnected")}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+      <Clock className="w-3 h-3" />
+      {t("editProfile.badgePendingVerification")}
+    </span>
+  );
+}
+
 export default function EditProfile() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
@@ -125,7 +143,8 @@ export default function EditProfile() {
   const [meetingTimezone, setMeetingTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   );
-  const [stripeConnectStatus, setStripeConnectStatus] = useState("not_connected");
+  const [stripeConnectStatus, setStripeConnectStatus] =
+    useState("not_connected");
   const [stripeConnecting, setStripeConnecting] = useState(false);
   const [refreshingStripeStatus, setRefreshingStripeStatus] = useState(false);
   const [weeklyAvailability, setWeeklyAvailability] = useState(() =>
@@ -151,15 +170,24 @@ export default function EditProfile() {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpError, setOtpError] = useState("");
   const [otpSuccess, setOtpSuccess] = useState(false);
-  const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+  const otpRefs = [
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+    useRef(null),
+  ];
 
   // Generate 3 unique username suggestions (numbers used sparingly - only 30% chance)
   const [usernameSuggestions, setUsernameSuggestions] = useState(() =>
-    generateUniqueUsernames(3, false)
+    generateUniqueUsernames(3, false),
   );
 
   function normalizeHandle(value) {
-    return String(value || "").replace(/^@+/, "").trim();
+    return String(value || "")
+      .replace(/^@+/, "")
+      .trim();
   }
 
   // Function to refresh username suggestions
@@ -231,43 +259,19 @@ export default function EditProfile() {
           if (updated.emailVerified) {
             setUser((prev) => ({ ...prev, emailVerified: true }));
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Common medical conditions
-  const commonConditions = [
-    "Diabetes",
-    "Hypertension",
-    "Heart Disease",
-    "Prostate Cancer",
-    "Breast Cancer",
-    "Lung Cancer",
-    "Asthma",
-    "Arthritis",
-    "Depression",
-    "Anxiety",
-    "Chronic Pain",
-    "Migraine",
-    "Obesity",
-    "High Cholesterol",
-    "Thyroid Disorder",
-    "Sleep Apnea",
-    "COPD",
-    "Epilepsy",
-    "Parkinson's Disease",
-    "Alzheimer's Disease",
-    "Multiple Sclerosis",
-    "Crohn's Disease",
-    "IBD",
-    "Osteoporosis",
-    "Fibromyalgia",
-    "Lupus",
-    "Rheumatoid Arthritis",
-  ];
+  const commonConditions = useMemo(() => {
+    const arr = t("editProfile.conditionSuggestions", { returnObjects: true });
+    return Array.isArray(arr) && arr.length ? arr : [];
+  }, [t]);
 
   // Extract terms from ICD11 dataset for suggestions
   const icd11Suggestions = useMemo(() => {
@@ -321,7 +325,7 @@ export default function EditProfile() {
       if (!map.has(key)) map.set(key, label);
     }
     return map;
-  }, []);
+  }, [commonConditions]);
 
   async function extractConditions(text) {
     if (!text || text.length < 5) return;
@@ -335,32 +339,34 @@ export default function EditProfile() {
       }).then((r) => r.json());
       if (res.conditions?.length > 0) {
         const canonicalConditions = res.conditions.map((c) =>
-          resolveToCanonical(c, conditionsCanonicalMap)
+          resolveToCanonical(c, conditionsCanonicalMap),
         );
         const seenKey = (arr, label) =>
           arr.some((x) => buildNormalizedKey(x) === buildNormalizedKey(label));
         setIdentifiedConditions((prev) => {
           const newConditions = canonicalConditions.filter(
-            (c) => !seenKey(prev, c)
+            (c) => !seenKey(prev, c),
           );
           return [...prev, ...newConditions];
         });
         setSelectedConditions((prev) => {
           const newConditions = canonicalConditions.filter(
-            (c) => !seenKey(prev, c)
+            (c) => !seenKey(prev, c),
           );
           return [...prev, ...newConditions];
         });
         setConditionInput("");
         toast.success(
-          `Identified ${capitalizedConditions.length} condition(s)`
+          t("editProfile.toastConditionsIdentified", {
+            count: canonicalConditions.length,
+          }),
         );
       } else {
-        toast.error("Could not identify conditions from your description");
+        toast.error(t("editProfile.toastCouldNotIdentifyConditions"));
       }
     } catch (e) {
       console.error("Condition extraction failed", e);
-      toast.error("Failed to extract conditions. Please try again.");
+      toast.error(t("editProfile.toastExtractConditionsFailed"));
     } finally {
       setIsExtracting(false);
     }
@@ -403,8 +409,28 @@ export default function EditProfile() {
       ];
       const looksLikeSymptom =
         symptomKeywords.some((keyword) =>
-          trimmed.toLowerCase().includes(keyword)
+          trimmed.toLowerCase().includes(keyword),
         ) || trimmed.length > 15;
+
+      // Known suggestion / ICD term: add directly. Otherwise long names or labels
+      // containing words like "pain" or "pressure" wrongly triggered AI extraction
+      // and "failed to identify keywords" when picking from the dropdown.
+      const mapKey = buildNormalizedKey(trimmed);
+      const knownLabel = conditionsCanonicalMap?.get(mapKey);
+      if (knownLabel) {
+        const k = buildNormalizedKey(knownLabel);
+        const alreadyAdded = selectedConditions.some(
+          (c) => buildNormalizedKey(c) === k,
+        );
+        if (!alreadyAdded) {
+          setSelectedConditions((prev) => [...prev, knownLabel]);
+          setConditionInput("");
+          setIdentifiedConditions((prev) =>
+            prev.filter((c) => buildNormalizedKey(c) !== k),
+          );
+        }
+        return;
+      }
 
       if (looksLikeSymptom) {
         extractConditions(trimmed);
@@ -415,12 +441,14 @@ export default function EditProfile() {
       if (!canonical) return;
       const key = buildNormalizedKey(canonical);
       const alreadyAdded = selectedConditions.some(
-        (c) => buildNormalizedKey(c) === key
+        (c) => buildNormalizedKey(c) === key,
       );
       if (!alreadyAdded) {
         setSelectedConditions((prev) => [...prev, canonical]);
         setConditionInput("");
-        setIdentifiedConditions((prev) => prev.filter((c) => buildNormalizedKey(c) !== key));
+        setIdentifiedConditions((prev) =>
+          prev.filter((c) => buildNormalizedKey(c) !== key),
+        );
       }
     }
   }
@@ -438,7 +466,9 @@ export default function EditProfile() {
         // For researchers, fetch community posts count
         if (profileObj.researcher) {
           try {
-            const statsRes = await fetch(`${base}/api/profile/${userId}/landing-stats`);
+            const statsRes = await fetch(
+              `${base}/api/profile/${userId}/landing-stats`,
+            );
             if (statsRes.ok) {
               const stats = await statsRes.json();
               setCommunityPostsCount(stats.communityPosts ?? 0);
@@ -463,14 +493,14 @@ export default function EditProfile() {
           setOrcid(profileObj.researcher.orcid || "");
           setResearchGate(profileObj.researcher.researchGate || "");
           setResearchGateVerification(
-            profileObj.researcher.researchGateVerification || null
+            profileObj.researcher.researchGateVerification || null,
           );
           setAcademiaEdu(profileObj.researcher.academiaEdu || "");
           setAcademiaEduVerification(
-            profileObj.researcher.academiaEduVerification || null
+            profileObj.researcher.academiaEduVerification || null,
           );
           setInstitutionAffiliation(
-            profileObj.researcher.institutionAffiliation || ""
+            profileObj.researcher.institutionAffiliation || "",
           );
           setSpecialties((profileObj.researcher.specialties || []).join(", "));
           setInterests((profileObj.researcher.interests || []).join(", "));
@@ -478,7 +508,7 @@ export default function EditProfile() {
           setGender(profileObj.researcher.gender || "");
           setAge(profileObj.researcher.age?.toString() || "");
           setInterestedInMeetings(
-            profileObj.researcher.interestedInMeetings || false
+            profileObj.researcher.interestedInMeetings || false,
           );
           if (profileObj.researcher.meetingRate != null) {
             setMeetingRate(String(profileObj.researcher.meetingRate));
@@ -493,7 +523,7 @@ export default function EditProfile() {
       }
     } catch (error) {
       console.error("Error loading profile:", error);
-      toast.error("Failed to load profile");
+      toast.error(t("editProfile.toastLoadProfileFailed"));
     } finally {
       setLoading(false);
     }
@@ -501,7 +531,9 @@ export default function EditProfile() {
 
   async function loadPersistedUser(userId, fallbackUser = {}) {
     try {
-      const response = await fetch(`${base}/api/profile/${userId}/forum-profile`);
+      const response = await fetch(
+        `${base}/api/profile/${userId}/forum-profile`,
+      );
       if (!response.ok) return;
 
       const data = await response.json();
@@ -539,9 +571,7 @@ export default function EditProfile() {
 
       setWeeklyAvailability((prev) =>
         prev.map((day) => {
-          const dayRules = rules.filter(
-            (r) => r.dayOfWeek === day.dayOfWeek,
-          );
+          const dayRules = rules.filter((r) => r.dayOfWeek === day.dayOfWeek);
           return {
             ...day,
             enabled: dayRules.length > 0,
@@ -588,7 +618,7 @@ export default function EditProfile() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        toast.error("Please sign in first");
+        toast.error(t("editProfile.toastSignInFirst"));
         return;
       }
       setStripeConnecting(true);
@@ -602,26 +632,33 @@ export default function EditProfile() {
       });
       const createData = await createRes.json();
       if (!createRes.ok || !createData.ok) {
-        throw new Error(createData.error || "Failed to create Stripe account");
+        throw new Error(
+          createData.error || t("editProfile.errStripeCreateAccount"),
+        );
       }
 
-      const linkRes = await fetch(`${base}/api/stripe/connect/onboarding-link`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const linkRes = await fetch(
+        `${base}/api/stripe/connect/onboarding-link`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       const linkData = await linkRes.json();
       if (!linkRes.ok || !linkData.ok || !linkData.url) {
-        throw new Error(linkData.error || "Failed to create onboarding link");
+        throw new Error(
+          linkData.error || t("editProfile.errStripeOnboardingLink"),
+        );
       }
 
       setStripeConnectStatus(createData.stripeConnectStatus || "pending");
       window.location.href = linkData.url;
     } catch (err) {
       console.error("Error connecting Stripe account:", err);
-      toast.error(err.message || "Failed to connect Stripe");
+      toast.error(err.message || t("editProfile.toastStripeConnectFailed"));
     } finally {
       setStripeConnecting(false);
     }
@@ -632,7 +669,7 @@ export default function EditProfile() {
     try {
       // Fetch followed communities
       const communitiesResponse = await fetch(
-        `${base}/api/communities/user/${userId}/following`
+        `${base}/api/communities/user/${userId}/following`,
       );
       if (communitiesResponse.ok) {
         const communitiesData = await communitiesResponse.json();
@@ -641,7 +678,7 @@ export default function EditProfile() {
 
       // Fetch followed people
       const followingResponse = await fetch(
-        `${base}/api/insights/${userId}/following`
+        `${base}/api/insights/${userId}/following`,
       );
       if (followingResponse.ok) {
         const followingData = await followingResponse.json();
@@ -660,9 +697,12 @@ export default function EditProfile() {
       urlToUse?.trim();
     if (!url) {
       toast.error(
-        `Enter your ${
-          platform === "researchgate" ? "ResearchGate" : "Academia.edu"
-        } profile URL first`
+        t("editProfile.toastEnterAcademicUrl", {
+          platform:
+            platform === "researchgate"
+              ? t("editProfile.platformResearchGate")
+              : t("editProfile.platformAcademiaEdu"),
+        }),
       );
       return;
     }
@@ -679,7 +719,7 @@ export default function EditProfile() {
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save link");
+      if (!res.ok) throw new Error(data.error || t("editProfile.errSaveLink"));
       if (data.normalizedUrl) {
         if (data.platform === "researchgate") {
           setResearchGate(data.normalizedUrl);
@@ -689,34 +729,13 @@ export default function EditProfile() {
           setAcademiaEduVerification("pending");
         }
       }
-      toast.success(
-        data.message ||
-          "Your profile will be reviewed by a moderator and verified."
-      );
+      toast.success(data.message || t("editProfile.toastModeratorReview"));
     } catch (err) {
-      toast.error(err.message || "Could not save link");
+      toast.error(err.message || t("editProfile.toastCouldNotSaveLink"));
     } finally {
       setLinkingResearchGate(false);
       setLinkingAcademia(false);
     }
-  }
-
-  function AcademicLinkStatusBadge({ status }) {
-    if (!status) return null;
-    if (status === "verified") {
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-          <CheckCircle2 className="w-3 h-3" />
-          Academic Profile Connected
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-        <Clock className="w-3 h-3" />
-        Pending verification
-      </span>
-    );
   }
 
   async function handlePictureUpload(file) {
@@ -739,7 +758,7 @@ export default function EditProfile() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to upload picture");
+        throw new Error(errorData.error || t("editProfile.errUploadPicture"));
       }
 
       const data = await response.json();
@@ -752,7 +771,7 @@ export default function EditProfile() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ picture: data.url }),
-        }
+        },
       );
 
       if (userUpdateResponse.ok) {
@@ -761,13 +780,13 @@ export default function EditProfile() {
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
         window.dispatchEvent(new Event("login"));
-        toast.success("Profile picture updated!");
+        toast.success(t("editProfile.toastPictureUpdated"));
       } else {
-        throw new Error("Failed to update user with new picture");
+        throw new Error(t("editProfile.errUpdateUserPicture"));
       }
     } catch (error) {
       console.error("Error uploading picture:", error);
-      toast.error(error.message || "Failed to upload picture");
+      toast.error(error.message || t("editProfile.errUploadPicture"));
       throw error; // Re-throw so component knows upload failed
     } finally {
       setUploadingPicture(false);
@@ -776,18 +795,18 @@ export default function EditProfile() {
 
   async function handleSave() {
     if (!user?._id && !user?.id) {
-      toast.error("Please sign in");
+      toast.error(t("editProfile.toastPleaseSignIn"));
       return;
     }
 
     // Validation: Name and conditions are mandatory
     if (!username.trim()) {
-      toast.error("Full name is required");
+      toast.error(t("editProfile.toastFullNameRequired"));
       return;
     }
 
     if (user.role === "patient" && selectedConditions.length === 0) {
-      toast.error("At least one medical condition is required");
+      toast.error(t("editProfile.toastConditionRequired"));
       return;
     }
 
@@ -878,7 +897,7 @@ export default function EditProfile() {
           profileObj.researcher?.specialties || []
         ).join(", ");
         const originalInterests = (profileObj.researcher?.interests || []).join(
-          ", "
+          ", ",
         );
         const originalInstitutionAffiliation =
           profileObj.researcher?.institutionAffiliation || "";
@@ -946,7 +965,7 @@ export default function EditProfile() {
       // - For researchers, we still want to persist meeting settings + availability,
       //   so we do NOT return early here.
       if (!hasUserChanges && !hasProfileChanges && user.role !== "researcher") {
-        toast.success("All changes are up to date!");
+        toast.success(t("editProfile.toastAllUpToDate"));
         setSaving(false);
         return;
       }
@@ -962,13 +981,13 @@ export default function EditProfile() {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userUpdateData),
-          }
+          },
         );
 
         if (!userUpdateResponse.ok) {
           const errorData = await userUpdateResponse.json();
           throw new Error(
-            errorData.error || "Failed to update user information"
+            errorData.error || t("editProfile.errUpdateUserInfo"),
           );
         }
 
@@ -1048,12 +1067,14 @@ export default function EditProfile() {
 
         if (!profileResponse.ok) {
           const errorData = await profileResponse.json();
-          throw new Error(errorData.error || "Failed to update profile");
+          throw new Error(
+            errorData.error || t("editProfile.toastUpdateProfileFailed"),
+          );
         }
 
         // Reload profile to get latest data
         await loadProfile(userId);
-        
+
         // Update user object in localStorage with new medicalInterests
         const updatedUserData = {
           ...currentUser,
@@ -1086,10 +1107,7 @@ export default function EditProfile() {
               if (!d.enabled || !Array.isArray(d.windows)) return [];
               return d.windows
                 .filter(
-                  (w) =>
-                    w.startTime &&
-                    w.endTime &&
-                    w.startTime !== w.endTime,
+                  (w) => w.startTime && w.endTime && w.startTime !== w.endTime,
                 )
                 .map((w) => ({
                   dayOfWeek: d.dayOfWeek,
@@ -1108,9 +1126,7 @@ export default function EditProfile() {
               interestedInMeetings ||
               hasAnyAvailability;
             if (wantsPaidMeetings && stripeConnectStatus !== "verified") {
-              throw new Error(
-                "Connect and verify Stripe in your profile before enabling patient meetings.",
-              );
+              throw new Error(t("editProfile.errStripeBeforeMeetings"));
             }
             await fetch(`${base}/api/researchers/${userId}/meeting-settings`, {
               method: "PUT",
@@ -1122,7 +1138,9 @@ export default function EditProfile() {
                 meetingRate: rateNumber,
                 // If they have set any availability at all, automatically
                 // mark that they accept meetings so patients can see slots.
-                interestedInMeetings: hasAnyAvailability ? true : interestedInMeetings,
+                interestedInMeetings: hasAnyAvailability
+                  ? true
+                  : interestedInMeetings,
                 meetingTimezone: meetingTimezone || undefined,
                 meetingDurationMinutes: 30,
               }),
@@ -1153,15 +1171,37 @@ export default function EditProfile() {
       // Trigger login event to update Navbar and other components
       window.dispatchEvent(new Event("login"));
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("editProfile.toastProfileUpdated"));
       // Don't redirect - stay on edit page
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error(error.message || "Failed to update profile");
+      toast.error(error.message || t("editProfile.toastUpdateProfileFailed"));
     } finally {
       setSaving(false);
     }
   }
+
+  const weekdayShortLabels = useMemo(() => {
+    const arr = t("editProfile.weekdaysShort", { returnObjects: true });
+    return Array.isArray(arr) && arr.length === 7
+      ? arr
+      : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  }, [t]);
+
+  const weekdayLongLabels = useMemo(() => {
+    const arr = t("editProfile.weekdaysLong", { returnObjects: true });
+    return Array.isArray(arr) && arr.length === 7
+      ? arr
+      : [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+  }, [t]);
 
   if (loading) {
     return (
@@ -1169,19 +1209,17 @@ export default function EditProfile() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-slate-700">Loading profile...</p>
+            <p className="text-slate-700">{t("editProfile.loading")}</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  const needsEmailVerification = user && !user.emailVerified;
-
   const handleSendVerificationEmail = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("You need to be logged in to verify your email");
+      toast.error(t("editProfile.toastVerifyEmailLogin"));
       return;
     }
     setSendingVerification(true);
@@ -1200,13 +1238,17 @@ export default function EditProfile() {
         setOtp(["", "", "", "", "", ""]);
         setOtpError("");
         setOtpSuccess(false);
-        toast.success(`Verification email sent to ${data.email || user.email}`);
+        toast.success(
+          t("editProfile.toastVerificationSentTo", {
+            email: data.email || user.email,
+          }),
+        );
         setTimeout(() => otpRefs[0]?.current?.focus(), 200);
       } else {
-        toast.error(data.error || "Failed to send verification email");
+        toast.error(data.error || t("editProfile.toastSendVerificationFailed"));
       }
     } catch {
-      toast.error("Failed to send verification email. Please try again.");
+      toast.error(t("editProfile.toastSendVerificationRetry"));
     } finally {
       setSendingVerification(false);
     }
@@ -1235,7 +1277,10 @@ export default function EditProfile() {
 
   const handleOtpPaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
     if (!pasted) return;
     const newOtp = [...otp];
     for (let i = 0; i < 6; i++) {
@@ -1250,7 +1295,7 @@ export default function EditProfile() {
   const handleVerifyOtp = async (code) => {
     const otpCode = code || otp.join("");
     if (otpCode.length !== 6) {
-      setOtpError("Please enter the full 6-digit code");
+      setOtpError(t("editProfile.otpEnterFullCode"));
       return;
     }
     const token = localStorage.getItem("token");
@@ -1274,13 +1319,13 @@ export default function EditProfile() {
         localStorage.setItem("user", JSON.stringify(userData));
         setUser((prev) => ({ ...prev, emailVerified: true }));
         window.dispatchEvent(new Event("login"));
-        toast.success("Email verified successfully!");
+        toast.success(t("editProfile.toastEmailVerified"));
         setTimeout(() => setShowOtpModal(false), 1500);
       } else {
-        setOtpError(data.error || "Invalid OTP. Please try again.");
+        setOtpError(data.error || t("editProfile.otpInvalid"));
       }
     } catch {
-      setOtpError("Verification failed. Please try again.");
+      setOtpError(t("editProfile.otpVerificationFailed"));
     } finally {
       setVerifyingOtp(false);
     }
@@ -1299,81 +1344,20 @@ export default function EditProfile() {
                 speed={2.5}
                 colors={["#2F3C96", "#474F97", "#757BB1", "#B8A5D5", "#D0C4E2"]}
               >
-                My Profile
+                {t("editProfile.title")}
               </AuroraText>
             </h1>
           </div>
-
-          {needsEmailVerification && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-amber-800">
-                    Email verification pending
-                  </h3>
-                  <p className="mt-0.5 text-sm text-amber-700">
-                    Verify your email ({user.email}) to secure your account and unlock all features.
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    {!verificationSent ? (
-                      <button
-                        onClick={handleSendVerificationEmail}
-                        disabled={sendingVerification}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#474F97] disabled:opacity-60"
-                      >
-                        {sendingVerification ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Sending…
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="h-4 w-4" />
-                            Send verification email
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => {
-                            setShowOtpModal(true);
-                            setOtpError("");
-                            setTimeout(() => otpRefs[0]?.current?.focus(), 200);
-                          }}
-                          className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#474F97]"
-                        >
-                          <Mail className="h-4 w-4" />
-                          Enter verification code
-                        </button>
-                        <button
-                          onClick={() => {
-                            setVerificationSent(false);
-                            handleSendVerificationEmail();
-                          }}
-                          disabled={sendingVerification}
-                          className="text-sm font-medium text-[#2F3C96] underline underline-offset-2 hover:text-[#474F97]"
-                        >
-                          Resend email
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* OTP Verification Modal */}
           {showOtpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl sm:p-8">
                 <button
+                  type="button"
                   onClick={() => setShowOtpModal(false)}
                   className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  aria-label={t("ui.close")}
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -1383,8 +1367,12 @@ export default function EditProfile() {
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                       <CheckCircle2 className="h-9 w-9 text-green-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-800">Email Verified!</h3>
-                    <p className="mt-1 text-sm text-slate-500">Your email has been verified successfully.</p>
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      {t("editProfile.otpEmailVerifiedTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {t("editProfile.otpEmailVerifiedBody")}
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -1392,13 +1380,21 @@ export default function EditProfile() {
                       <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E8E9F2]">
                         <Mail className="h-7 w-7 text-[#2F3C96]" />
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-800">Enter verification code</h3>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        {t("editProfile.otpEnterTitle")}
+                      </h3>
                       <p className="mt-1 text-sm text-slate-500">
-                        We sent a 6-digit code to <span className="font-medium text-slate-700">{user.email}</span>
+                        {t("editProfile.otpSentIntro")}{" "}
+                        <span className="font-medium text-slate-700">
+                          {user.email}
+                        </span>
                       </p>
                     </div>
 
-                    <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+                    <div
+                      className="flex justify-center gap-2 sm:gap-3"
+                      onPaste={handleOtpPaste}
+                    >
                       {otp.map((digit, i) => (
                         <input
                           key={i}
@@ -1419,7 +1415,9 @@ export default function EditProfile() {
                     </div>
 
                     {otpError && (
-                      <p className="mt-3 text-center text-sm text-red-600">{otpError}</p>
+                      <p className="mt-3 text-center text-sm text-red-600">
+                        {otpError}
+                      </p>
                     )}
 
                     <button
@@ -1430,17 +1428,18 @@ export default function EditProfile() {
                       {verifyingOtp ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Verifying…
+                          {t("editProfile.verifying")}
                         </>
                       ) : (
-                        "Verify email"
+                        t("editProfile.verifyEmail")
                       )}
                     </button>
 
                     <div className="mt-4 text-center">
                       <p className="text-xs text-slate-400">
-                        Didn't get the code?{" "}
+                        {t("editProfile.otpDidntGet")}{" "}
                         <button
+                          type="button"
                           onClick={() => {
                             setVerificationSent(false);
                             handleSendVerificationEmail();
@@ -1448,11 +1447,13 @@ export default function EditProfile() {
                           disabled={sendingVerification}
                           className="font-medium text-[#2F3C96] hover:underline disabled:opacity-50"
                         >
-                          {sendingVerification ? "Sending…" : "Resend"}
+                          {sendingVerification
+                            ? t("editProfile.sending")
+                            : t("editProfile.otpResend")}
                         </button>
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
-                        Or click the link in the email to verify directly.
+                        {t("editProfile.otpOrLinkHint")}
                       </p>
                     </div>
                   </>
@@ -1488,14 +1489,19 @@ export default function EditProfile() {
                   onChange={async (lng) => {
                     const r = await savePreferredLanguageToApi(lng);
                     if (r.ok) {
-                      toast.success("Language updated");
+                      toast.success(t("editProfile.toastLanguageUpdated"));
                       try {
-                        const u = JSON.parse(localStorage.getItem("user") || "{}");
+                        const u = JSON.parse(
+                          localStorage.getItem("user") || "{}",
+                        );
                         setUser((prev) => ({ ...prev, ...u }));
                       } catch {
                         /* ignore */
                       }
-                    } else toast.error(r.error || "Failed to save language");
+                    } else
+                      toast.error(
+                        r.error || t("editProfile.toastLanguageSaveFailed"),
+                      );
                   }}
                 />
               </div>
@@ -1505,814 +1511,883 @@ export default function EditProfile() {
             </p>
 
             <div className="space-y-6 p-6">
-            {/* Profile Picture Upload + Email badge + Researcher name */}
-            <div className="flex flex-wrap items-start gap-4">
-              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                <div className="shrink-0">
-                  <ProfilePictureUpload
-                    currentPicture={currentPicture}
-                    onUpload={handlePictureUpload}
-                    uploading={uploadingPicture}
-                  />
-                </div>
-                {user?.emailVerified ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700 whitespace-nowrap">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                    Email verified
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (verificationSent) {
-                        setShowOtpModal(true);
-                        setOtpError("");
-                        setTimeout(() => otpRefs[0]?.current?.focus(), 200);
-                      } else {
-                        handleSendVerificationEmail();
-                      }
-                    }}
-                    disabled={sendingVerification}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors whitespace-nowrap"
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    Email not verified
-                  </button>
-                )}
-              </div>
-              {user?.role === "researcher" && (
-                <div className="ml-auto flex flex-col items-end text-right min-w-0">
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    {getDisplayName(
-                      {
-                        username: username || user?.username,
-                        name: username || user?.username,
-                        role: "researcher",
-                        profession: profile?.researcher?.profession,
-                        certifications: profile?.researcher?.certifications,
-                      },
-                      "Researcher"
-                    )}
-                  </h3>
-                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600 mt-0.5">
-                    <FileText className="w-4 h-4 text-[#2F3C96] shrink-0" />
-                    {communityPostsCount} post{communityPostsCount !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Personal Information Section */}
-            <div className="pt-6 border-t border-slate-200">
-              <h2 className="text-xl font-bold text-slate-800 mb-6">Personal Information</h2>
-            </div>
-
-            {/* Full Name - Mandatory */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your full name"
-                required
-              />
-            </div>
-
-            {/* Handle/Username */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Handle / Username <span className="text-red-500">*</span>
-              </label>
-              <div className="relative" data-username-suggestions>
-                <input
-                  type="text"
-                  value={handle}
-                  onChange={(e) => {
-                    let value = e.target.value.replace(/^@+/, "");
-                    setHandle(value);
-                    setShowUsernameSuggestions(value.length === 0);
-                  }}
-                  onFocus={() => setShowUsernameSuggestions(true)}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., @username or choose from suggestions below"
-                />
-                {showUsernameSuggestions && usernameSuggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg">
-                    <div className="p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-slate-600">
-                          Suggested usernames:
-                        </p>
-                        <button
-                          type="button"
-                          onClick={refreshUsernameSuggestions}
-                          className="flex items-center gap-1 text-xs text-[#2F3C96] hover:text-[#253075] transition-colors"
-                          title="Refresh suggestions"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Refresh</span>
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {usernameSuggestions.map((suggestion, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setHandle(suggestion);
-                              setShowUsernameSuggestions(false);
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium bg-[#2F3C96]/10 text-[#2F3C96] rounded-lg hover:bg-[#2F3C96]/20 transition-all"
-                          >
-                            @{suggestion}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowUsernameSuggestions(false)}
-                        className="text-xs text-slate-500 hover:text-slate-700"
-                      >
-                        Hide suggestions
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Your unique handle – choose from suggestions or type your own; your username will be used to keep you anonymous.
-              </p>
-            </div>
-
-            {/* Age */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Age
-              </label>
-              <input
-                type="number"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                min="0"
-                max="120"
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your age"
-              />
-            </div>
-
-            {/* Gender/Sex */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Gender / Sex
-              </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer-not-to-say">Prefer not to say</option>
-              </select>
-            </div>
-
-            {/* Location */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  onBlur={(e) => {
-                    const corrected = capitalizeText(e.target.value);
-                    setCity(corrected);
-                  }}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter city"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  onBlur={(e) => {
-                    const corrected = capitalizeText(e.target.value);
-                    setCountry(corrected);
-                  }}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter country"
-                />
-              </div>
-            </div>
-
-            {/* Medical Information Section */}
-            <div className="pt-6 border-t border-slate-200">
-              <h2 className="text-xl font-bold text-slate-800 mb-6">Medical Information</h2>
-            </div>
-
-            {/* Role-specific fields */}
-            {user?.role === "patient" ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Medical conditions you are interested in{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative group">
-                    <Info
-                      size={16}
-                      className="text-slate-400 hover:text-slate-600 cursor-help transition-colors"
-                      onMouseEnter={() => setShowInfoTooltip(true)}
-                      onMouseLeave={() => setShowInfoTooltip(false)}
+              {/* Profile Picture Upload + Email badge + Researcher name */}
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                  <div className="shrink-0">
+                    <ProfilePictureUpload
+                      currentPicture={currentPicture}
+                      onUpload={handlePictureUpload}
+                      uploading={uploadingPicture}
                     />
-                    {showInfoTooltip && (
-                      <div className="absolute left-0 top-6 z-50 w-72 p-3 bg-white border border-slate-200 rounded-lg shadow-xl text-xs text-slate-700 pointer-events-none">
-                        <p className="font-semibold mb-2 text-slate-900">
-                          Enter symptoms in your own words
-                        </p>
-                        <p className="leading-relaxed">
-                          You can describe symptoms naturally, like{" "}
-                          <span className="font-medium">"I have high BP"</span>{" "}
-                          or <span className="font-medium">"chest pain"</span>.
-                          Our system will automatically identify the medical
-                          condition (e.g.,{" "}
-                          <span className="font-medium">"Hypertension"</span> or{" "}
-                          <span className="font-medium">"Cardiac issues"</span>)
-                          and add it to your profile.
-                        </p>
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                {/* Search Input */}
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <SmartSearchInput
-                      value={conditionInput}
-                      onChange={setConditionInput}
-                      onSubmit={handleConditionSubmit}
-                      placeholder="Search or describe symptoms..."
-                      extraTerms={[
-                        ...commonConditions,
-                        ...SMART_SUGGESTION_KEYWORDS,
-                        ...icd11Suggestions,
-                      ]}
-                      canonicalMap={conditionsCanonicalMap}
-                      maxSuggestions={8}
-                      autoSubmitOnSelect={true}
-                      inputClassName="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    {isExtracting && (
-                      <div className="absolute right-3 top-2.5 flex items-center gap-1">
-                        <Sparkles
-                          size={14}
-                          className="animate-pulse text-blue-600"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  {conditionInput && conditionInput.trim().length >= 1 && (
+                  {user?.emailVerified ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-medium text-green-700 whitespace-nowrap">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                      {t("editProfile.emailVerifiedBadge")}
+                    </span>
+                  ) : (
                     <button
                       type="button"
-                      onClick={() => handleConditionSubmit(conditionInput)}
-                      disabled={isExtracting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      onClick={() => {
+                        if (verificationSent) {
+                          setShowOtpModal(true);
+                          setOtpError("");
+                          setTimeout(() => otpRefs[0]?.current?.focus(), 200);
+                        } else {
+                          handleSendVerificationEmail();
+                        }
+                      }}
+                      disabled={sendingVerification}
+                      className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100/90 transition-colors whitespace-nowrap disabled:opacity-60"
                     >
-                      Add
+                      {sendingVerification ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                          {t("editProfile.sending")}
+                        </>
+                      ) : verificationSent ? (
+                        <>
+                          <Mail className="h-3 w-3 shrink-0" />
+                          {t("editProfile.enterCode")}
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-3 w-3 shrink-0" />
+                          {t("editProfile.verifyEmail")}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
-
-                {/* Selected Conditions Chips */}
-                {selectedConditions.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {selectedConditions.map((condition, idx) => {
-                      const isIdentified =
-                        identifiedConditions.includes(condition);
-                      return (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200"
-                        >
-                          {isIdentified && (
-                            <Sparkles size={12} className="text-blue-600" />
-                          )}
-                          {condition}
-                          <button
-                            type="button"
-                            onClick={() => toggleCondition(condition)}
-                            className="ml-1 hover:opacity-70 transition-opacity text-blue-600"
-                          >
-                            <X size={14} />
-                          </button>
-                        </span>
-                      );
-                    })}
+                {user?.role === "researcher" && (
+                  <div className="ml-auto flex flex-col items-end text-right min-w-0">
+                    <h3 className="text-lg font-semibold text-slate-800">
+                      {getDisplayName(
+                        {
+                          username: username || user?.username,
+                          name: username || user?.username,
+                          role: "researcher",
+                          profession: profile?.researcher?.profession,
+                          certifications: profile?.researcher?.certifications,
+                        },
+                        t("editProfile.roleResearcher"),
+                      )}
+                    </h3>
+                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-600 mt-0.5">
+                      <FileText className="w-4 h-4 text-[#2F3C96] shrink-0" />
+                      {t("editProfile.postsCount", {
+                        count: communityPostsCount,
+                      })}
+                    </span>
                   </div>
                 )}
+              </div>
 
-                {/* Helper text */}
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  <Sparkles size={10} className="text-slate-400" />
-                  You can describe symptoms if you're unsure of the condition...
+              {/* Personal Information Section */}
+              <div className="pt-6 border-t border-slate-200">
+                <h2 className="text-xl font-bold text-slate-800 mb-6">
+                  {t("editProfile.personalInfo")}
+                </h2>
+              </div>
+
+              {/* Full Name - Mandatory */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  {t("editProfile.fullNameLabel")}{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t("editProfile.fullNamePlaceholder")}
+                  required
+                />
+              </div>
+
+              {/* Handle/Username */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  {t("editProfile.handleLabel")}{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="relative" data-username-suggestions>
+                  <input
+                    type="text"
+                    value={handle}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/^@+/, "");
+                      setHandle(value);
+                      setShowUsernameSuggestions(value.length === 0);
+                    }}
+                    onFocus={() => setShowUsernameSuggestions(true)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={t("editProfile.handlePlaceholder")}
+                  />
+                  {showUsernameSuggestions &&
+                    usernameSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg">
+                        <div className="p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-semibold text-slate-600">
+                              {t("editProfile.suggestedUsernames")}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={refreshUsernameSuggestions}
+                              className="flex items-center gap-1 text-xs text-[#2F3C96] hover:text-[#253075] transition-colors"
+                              title={t("editProfile.refreshSuggestionsTitle")}
+                            >
+                              <RefreshCw className="w-3 h-3" />
+                              <span>{t("editProfile.refresh")}</span>
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {usernameSuggestions.map((suggestion, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setHandle(suggestion);
+                                  setShowUsernameSuggestions(false);
+                                }}
+                                className="px-3 py-1.5 text-xs font-medium bg-[#2F3C96]/10 text-[#2F3C96] rounded-lg hover:bg-[#2F3C96]/20 transition-all"
+                              >
+                                @{suggestion}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowUsernameSuggestions(false)}
+                            className="text-xs text-slate-500 hover:text-slate-700"
+                          >
+                            {t("editProfile.hideSuggestions")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {t("editProfile.handleHint")}
                 </p>
               </div>
-            ) : (
-              <>
+
+              {/* Age */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  {t("editProfile.ageLabel")}
+                </label>
+                <input
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  min="0"
+                  max="120"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={t("editProfile.agePlaceholder")}
+                />
+              </div>
+
+              {/* Gender/Sex */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  {t("editProfile.genderLabel")}
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">{t("editProfile.genderSelect")}</option>
+                  <option value="male">{t("editProfile.genderMale")}</option>
+                  <option value="female">
+                    {t("editProfile.genderFemale")}
+                  </option>
+                  <option value="other">{t("editProfile.genderOther")}</option>
+                  <option value="prefer-not-to-say">
+                    {t("editProfile.genderPreferNot")}
+                  </option>
+                </select>
+              </div>
+
+              {/* Location */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Specialties <span className="text-red-500">*</span>
-                    <span className="ml-2 text-xs font-normal text-slate-500">
-                      (Comma-separated)
-                    </span>
+                    {t("editProfile.cityLabel")}
                   </label>
                   <input
                     type="text"
-                    value={specialties}
-                    onChange={(e) => setSpecialties(e.target.value)}
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
                     onBlur={(e) => {
-                      const corrected = capitalizeCommaSeparated(
-                        e.target.value
-                      );
-                      setSpecialties(corrected);
+                      const corrected = capitalizeText(e.target.value);
+                      setCity(corrected);
                     }}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Cardiology, Neurology"
-                    required
+                    placeholder={t("editProfile.cityPlaceholder")}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Research Interests <span className="text-red-500">*</span>
-                    <span className="ml-2 text-xs font-normal text-slate-500">
-                      (Comma-separated)
-                    </span>
+                    {t("editProfile.countryLabel")}
                   </label>
                   <input
                     type="text"
-                    value={interests}
-                    onChange={(e) => setInterests(e.target.value)}
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
                     onBlur={(e) => {
-                      const corrected = capitalizeCommaSeparated(
-                        e.target.value
-                      );
-                      setInterests(corrected);
+                      const corrected = capitalizeText(e.target.value);
+                      setCountry(corrected);
                     }}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Clinical Trials, Drug Development"
-                    required
+                    placeholder={t("editProfile.countryPlaceholder")}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Institution / University
-                  </label>
-                  <UniversityInput
-                    value={institutionAffiliation}
-                    onChange={setInstitutionAffiliation}
-                    onBlur={(e) => {
-                      if (
-                        institutionAffiliation &&
-                        institutionAffiliation.trim()
-                      ) {
-                        const corrected = capitalizeText(
-                          institutionAffiliation
+              </div>
+
+              {/* Medical Information Section */}
+              <div className="pt-6 border-t border-slate-200">
+                <h2 className="text-xl font-bold text-slate-800 mb-6">
+                  {t("editProfile.medicalInfo")}
+                </h2>
+              </div>
+
+              {/* Role-specific fields */}
+              {user?.role === "patient" ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-sm font-semibold text-slate-700">
+                      {t("editProfile.conditionsInterestedLabel")}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <Info
+                        size={16}
+                        className="text-slate-400 hover:text-slate-600 cursor-help transition-colors"
+                        onMouseEnter={() => setShowInfoTooltip(true)}
+                        onMouseLeave={() => setShowInfoTooltip(false)}
+                      />
+                      {showInfoTooltip && (
+                        <div className="absolute left-0 top-6 z-50 w-72 p-3 bg-white border border-slate-200 rounded-lg shadow-xl text-xs text-slate-700 pointer-events-none">
+                          <p className="font-semibold mb-2 text-slate-900">
+                            {t("editProfile.symptomTooltipTitle")}
+                          </p>
+                          <p className="leading-relaxed">
+                            {t("editProfile.symptomTooltipBody")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <SmartSearchInput
+                        value={conditionInput}
+                        onChange={setConditionInput}
+                        onSubmit={handleConditionSubmit}
+                        placeholder={t(
+                          "editProfile.conditionSearchPlaceholder",
+                        )}
+                        extraTerms={[
+                          ...commonConditions,
+                          ...SMART_SUGGESTION_KEYWORDS,
+                          ...icd11Suggestions,
+                        ]}
+                        canonicalMap={conditionsCanonicalMap}
+                        maxSuggestions={8}
+                        autoSubmitOnSelect={true}
+                        inputClassName="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      {isExtracting && (
+                        <div className="absolute right-3 top-2.5 flex items-center gap-1">
+                          <Sparkles
+                            size={14}
+                            className="animate-pulse text-blue-600"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {conditionInput && conditionInput.trim().length >= 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleConditionSubmit(conditionInput)}
+                        disabled={isExtracting}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {t("editProfile.add")}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Selected Conditions Chips */}
+                  {selectedConditions.length > 0 && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {selectedConditions.map((condition, idx) => {
+                        const isIdentified =
+                          identifiedConditions.includes(condition);
+                        return (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200"
+                          >
+                            {isIdentified && (
+                              <Sparkles size={12} className="text-blue-600" />
+                            )}
+                            {condition}
+                            <button
+                              type="button"
+                              onClick={() => toggleCondition(condition)}
+                              className="ml-1 hover:opacity-70 transition-opacity text-blue-600"
+                            >
+                              <X size={14} />
+                            </button>
+                          </span>
                         );
-                        setInstitutionAffiliation(corrected);
-                      }
-                    }}
-                    allowManualFallback
-                    placeholder="Search for your university (e.g. Harvard, MIT)"
-                    maxSuggestions={10}
-                    className="w-full"
-                    inputClassName="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Type at least 2 characters to search institutions
-                    via ROR (e.g. Harvard, MIT, Johns Hopkins)
+                      })}
+                    </div>
+                  )}
+
+                  {/* Helper text */}
+                  <p className="text-xs text-slate-500">
+                    {t("editProfile.conditionHelper")}
                   </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    ORCID ID
-                  </label>
-                  <input
-                    type="text"
-                    value={orcid}
-                    onChange={(e) => setOrcid(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0000-0000-0000-0000"
-                  />
-                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      {t("editProfile.specialtiesLabel")}{" "}
+                      <span className="text-red-500">*</span>
+                      <span className="ml-2 text-xs font-normal text-slate-500">
+                        {t("editProfile.commaSeparated")}
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={specialties}
+                      onChange={(e) => setSpecialties(e.target.value)}
+                      onBlur={(e) => {
+                        const corrected = capitalizeCommaSeparated(
+                          e.target.value,
+                        );
+                        setSpecialties(corrected);
+                      }}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={t("editProfile.specialtiesPlaceholder")}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      {t("editProfile.researchInterestsLabel")}{" "}
+                      <span className="text-red-500">*</span>
+                      <span className="ml-2 text-xs font-normal text-slate-500">
+                        {t("editProfile.commaSeparated")}
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={interests}
+                      onChange={(e) => setInterests(e.target.value)}
+                      onBlur={(e) => {
+                        const corrected = capitalizeCommaSeparated(
+                          e.target.value,
+                        );
+                        setInterests(corrected);
+                      }}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={t("editProfile.interestsPlaceholder")}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      {t("editProfile.institutionLabel")}
+                    </label>
+                    <UniversityInput
+                      value={institutionAffiliation}
+                      onChange={setInstitutionAffiliation}
+                      onBlur={(e) => {
+                        if (
+                          institutionAffiliation &&
+                          institutionAffiliation.trim()
+                        ) {
+                          const corrected = capitalizeText(
+                            institutionAffiliation,
+                          );
+                          setInstitutionAffiliation(corrected);
+                        }
+                      }}
+                      allowManualFallback
+                      placeholder={t("editProfile.institutionPlaceholder")}
+                      maxSuggestions={10}
+                      className="w-full"
+                      inputClassName="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      {t("editProfile.institutionHint")}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      {t("editProfile.orcidLabel")}
+                    </label>
+                    <input
+                      type="text"
+                      value={orcid}
+                      onChange={(e) => setOrcid(e.target.value)}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={t("editProfile.orcidPlaceholder")}
+                    />
+                  </div>
 
-                {/* Select publications to display on profile — ORCID + OpenAlex */}
-                {orcid?.trim() && (
+                  {/* Select publications to display on profile — ORCID + OpenAlex */}
+                  {orcid?.trim() && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-[#2F3C96]" />
+                          <div>
+                            <h3 className="text-sm font-semibold text-slate-800">
+                              {t("editProfile.publicationsDisplayTitle")}
+                            </h3>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              {t("editProfile.publicationsDisplayHint")}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowManagePublications(true)}
+                          className="shrink-0 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors"
+                        >
+                          {t("editProfile.managePublications")}
+                        </button>
+                      </div>
+                      {profile?.researcher?.selectedPublications?.length >
+                        0 && (
+                        <p className="text-xs text-slate-500 mt-2">
+                          {t("editProfile.publicationsCountHint", {
+                            count:
+                              profile.researcher.selectedPublications.length,
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-[#2F3C96]" />
                         <div>
                           <h3 className="text-sm font-semibold text-slate-800">
-                            Publications to display on your profile
+                            {t("editProfile.addWorkTitle")}
                           </h3>
                           <p className="text-xs text-slate-600 mt-0.5">
-                            Choose which publications from your ORCID + OpenAlex (exact match) to show when visitors view your profile.
+                            {t("editProfile.addWorkHint")}
                           </p>
                         </div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => setShowManagePublications(true)}
+                        onClick={() => setShowSubmitWorkModal(true)}
                         className="shrink-0 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors"
                       >
-                        Manage publications
+                        {t("editProfile.submitWork")}
                       </button>
                     </div>
-                    {profile?.researcher?.selectedPublications?.length > 0 && (
-                      <p className="text-xs text-slate-500 mt-2">
-                        {profile.researcher.selectedPublications.length} publication(s) currently displayed on your profile
-                      </p>
-                    )}
                   </div>
-                )}
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5">
-                  <div className="flex items-center justify-between gap-4">
+                  {/* Academic profiles: ResearchGate & Academia.edu — moderator verification */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-5">
                     <div className="flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-[#2F3C96]" />
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-800">
-                          Add your work to your public profile
-                        </h3>
-                        <p className="text-xs text-slate-600 mt-0.5">
-                          Submit publication or trial details. Admin will moderate and approve before it appears to patients and researchers.
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSubmitWorkModal(true)}
-                      className="shrink-0 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors"
-                    >
-                      Submit work
-                    </button>
-                  </div>
-                </div>
-
-                {/* Academic profiles: ResearchGate & Academia.edu — moderator verification */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 space-y-5">
-                  <div className="flex items-center gap-2">
-                    <Link2 className="w-5 h-5 text-[#2F3C96]" />
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      Academic profiles
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-600">
-                    Add your ResearchGate or Academia.edu profile. After
-                    linking, your profile will be reviewed by a moderator and
-                    verified.
-                  </p>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        ResearchGate
-                      </label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="url"
-                          value={researchGate}
-                          onChange={(e) => setResearchGate(e.target.value)}
-                          placeholder="https://www.researchgate.net/profile/Your-Name"
-                          className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        />
-                        <div className="flex items-center gap-2 shrink-0">
-                          {!researchGateVerification && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleLinkAcademic(researchGate, "researchgate")
-                              }
-                              disabled={
-                                linkingResearchGate || !researchGate?.trim()
-                              }
-                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {linkingResearchGate ? (
-                                <>
-                                  <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
-                                  Verifying…
-                                </>
-                              ) : (
-                                "Link"
-                              )}
-                            </button>
-                          )}
-                          <AcademicLinkStatusBadge
-                            status={researchGateVerification}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                        Academia.edu
-                      </label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="url"
-                          value={academiaEdu}
-                          onChange={(e) => setAcademiaEdu(e.target.value)}
-                          placeholder="https://university-name.academia.edu/YourName"
-                          className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        />
-                        <div className="flex items-center gap-2 shrink-0">
-                          {!academiaEduVerification && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleLinkAcademic(academiaEdu, "academia")
-                              }
-                              disabled={linkingAcademia || !academiaEdu?.trim()}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {linkingAcademia ? (
-                                <>
-                                  <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
-                                  Verifying…
-                                </>
-                              ) : (
-                                "Link"
-                              )}
-                            </button>
-                          )}
-                          <AcademicLinkStatusBadge
-                            status={academiaEduVerification}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1.5">
-                        Example: https://university-name.academia.edu/YourName
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Bio
-                  </label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="available"
-                    checked={available}
-                    onChange={(e) => setAvailable(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="available" className="text-sm text-slate-700">
-                    Available for collaboration
-                  </label>
-                </div>
-
-                {/* Meetings configuration */}
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">
-                          Stripe payouts
-                        </p>
-                        <p className="text-[11px] text-slate-600">
-                          Connect Stripe before enabling paid meetings.
-                        </p>
-                      </div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                          stripeConnectStatus === "verified"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : stripeConnectStatus === "pending"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {stripeConnectStatus === "verified"
-                          ? "Verified"
-                          : stripeConnectStatus === "pending"
-                            ? "Onboarding pending"
-                            : "Not connected"}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={connectStripeAccount}
-                        disabled={stripeConnecting}
-                        className="inline-flex items-center rounded-lg bg-[#2F3C96] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#253075] disabled:opacity-60"
-                      >
-                        {stripeConnecting
-                          ? "Opening Stripe..."
-                          : stripeConnectStatus === "verified"
-                            ? "Reconnect Stripe"
-                            : "Connect Stripe"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={refreshStripeConnectStatus}
-                        disabled={refreshingStripeStatus}
-                        className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
-                      >
-                        {refreshingStripeStatus ? "Refreshing..." : "Refresh status"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
+                      <Link2 className="w-5 h-5 text-[#2F3C96]" />
                       <h3 className="text-sm font-semibold text-slate-800">
-                        1:1 Meetings with patients
+                        {t("editProfile.academicProfilesTitle")}
                       </h3>
-                      <p className="text-xs text-slate-600">
-                        Turn on meetings, set your rate, and choose your weekly availability.
-                      </p>
                     </div>
-                    <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={interestedInMeetings}
-                        onChange={(e) => {
-                          if (
-                            e.target.checked &&
-                            stripeConnectStatus !== "verified"
-                          ) {
-                            toast.error(
-                              "Connect and verify Stripe before enabling patient meetings.",
-                            );
-                            return;
-                          }
-                          setInterestedInMeetings(e.target.checked);
-                        }}
-                        disabled={stripeConnectStatus !== "verified"}
-                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                      />
-                      Accept patient meeting requests
+                    <p className="text-xs text-slate-600">
+                      {t("editProfile.academicProfilesHint")}
+                    </p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          {t("editProfile.researchGateLabel")}
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="url"
+                            value={researchGate}
+                            onChange={(e) => setResearchGate(e.target.value)}
+                            placeholder={t(
+                              "editProfile.researchGatePlaceholder",
+                            )}
+                            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!researchGateVerification && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleLinkAcademic(
+                                    researchGate,
+                                    "researchgate",
+                                  )
+                                }
+                                disabled={
+                                  linkingResearchGate || !researchGate?.trim()
+                                }
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {linkingResearchGate ? (
+                                  <>
+                                    <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                                    {t("editProfile.verifyingLink")}
+                                  </>
+                                ) : (
+                                  t("editProfile.link")
+                                )}
+                              </button>
+                            )}
+                            <AcademicLinkStatusBadge
+                              status={researchGateVerification}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          {t("editProfile.academiaLabel")}
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="url"
+                            value={academiaEdu}
+                            onChange={(e) => setAcademiaEdu(e.target.value)}
+                            placeholder={t("editProfile.academiaPlaceholder")}
+                            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                          <div className="flex items-center gap-2 shrink-0">
+                            {!academiaEduVerification && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleLinkAcademic(academiaEdu, "academia")
+                                }
+                                disabled={
+                                  linkingAcademia || !academiaEdu?.trim()
+                                }
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2F3C96] text-white rounded-lg text-sm font-medium hover:bg-[#253075] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {linkingAcademia ? (
+                                  <>
+                                    <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                                    {t("editProfile.verifyingLink")}
+                                  </>
+                                ) : (
+                                  t("editProfile.link")
+                                )}
+                              </button>
+                            )}
+                            <AcademicLinkStatusBadge
+                              status={academiaEduVerification}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1.5">
+                          {t("editProfile.academiaExampleHint")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      {t("editProfile.bioLabel")}
+                    </label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder={t("editProfile.bioPlaceholder")}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="available"
+                      checked={available}
+                      onChange={(e) => setAvailable(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor="available"
+                      className="text-sm text-slate-700"
+                    >
+                      {t("editProfile.availableCollaboration")}
                     </label>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Rate per 30 min (USD)
-                      </label>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-slate-500">$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={meetingRate}
-                          onChange={(e) => setMeetingRate(e.target.value)}
-                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="e.g. 75"
-                        />
+                  {/* Meetings configuration */}
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+                    <div className="rounded-lg border border-slate-200 bg-white p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">
+                            {t("editProfile.stripePayouts")}
+                          </p>
+                          <p className="text-[11px] text-slate-600">
+                            {t("editProfile.stripeConnectHint")}
+                          </p>
+                        </div>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                            stripeConnectStatus === "verified"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : stripeConnectStatus === "pending"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {stripeConnectStatus === "verified"
+                            ? t("editProfile.stripeVerified")
+                            : stripeConnectStatus === "pending"
+                              ? t("editProfile.stripeOnboardingPending")
+                              : t("editProfile.stripeNotConnected")}
+                        </span>
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        Patients will see this on your public expert profile.
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={connectStripeAccount}
+                          disabled={stripeConnecting}
+                          className="inline-flex items-center rounded-lg bg-[#2F3C96] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#253075] disabled:opacity-60"
+                        >
+                          {stripeConnecting
+                            ? t("editProfile.stripeOpening")
+                            : stripeConnectStatus === "verified"
+                              ? t("editProfile.stripeReconnect")
+                              : t("editProfile.stripeConnect")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={refreshStripeConnectStatus}
+                          disabled={refreshingStripeStatus}
+                          className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                        >
+                          {refreshingStripeStatus
+                            ? t("editProfile.stripeRefreshing")
+                            : t("editProfile.stripeRefreshStatus")}
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                        Timezone
-                      </label>
-                      <select
-                        value={meetingTimezone}
-                        onChange={(e) => setMeetingTimezone(e.target.value)}
-                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        {/* Recommended readable timezones */}
-                        <option value="UTC">UTC</option>
-                        <option value="America/Los_Angeles">Los Angeles (Pacific Time)</option>
-                        <option value="America/New_York">New York (Eastern Time)</option>
-                        <option value="Europe/London">London (GMT)</option>
-                        <option value="Europe/Berlin">Berlin (Central European Time)</option>
-                        <option value="Asia/Kolkata">Kolkata (India Standard Time)</option>
-                        <option value="Asia/Singapore">Singapore (Singapore Time)</option>
-                        <option value="Australia/Sydney">Sydney (Australian Eastern Time)</option>
-                        {/* Preserve any previously-saved custom timezone */}
-                        {!["UTC","America/Los_Angeles","America/New_York","Europe/London","Europe/Berlin","Asia/Kolkata","Asia/Singapore","Australia/Sydney"].includes(meetingTimezone) && (
-                          <option value={meetingTimezone}>{meetingTimezone}</option>
-                        )}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setMeetingTimezone(
-                            Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-                          )
-                        }
-                        className="mt-1 text-[11px] font-medium text-blue-600 hover:text-blue-700"
-                      >
-                        Use my current timezone (detected)
-                      </button>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        Slots are generated using this timezone. Patients will always see times in their own local timezone.
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Availability UX */}
-                  <div className="mt-2 space-y-4">
-                    {/* Select days & quick presets */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <label className="block text-xs font-semibold text-slate-700">
-                          Select days
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-800">
+                          {t("editProfile.meetingsTitle")}
+                        </h3>
+                        <p className="text-xs text-slate-600">
+                          {t("editProfile.meetingsHint")}
+                        </p>
+                      </div>
+                      <label className="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={interestedInMeetings}
+                          onChange={(e) => {
+                            if (
+                              e.target.checked &&
+                              stripeConnectStatus !== "verified"
+                            ) {
+                              toast.error(
+                                t("editProfile.errStripeBeforeMeetings"),
+                              );
+                              return;
+                            }
+                            setInterestedInMeetings(e.target.checked);
+                          }}
+                          disabled={stripeConnectStatus !== "verified"}
+                          className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                        />
+                        {t("editProfile.acceptMeetingRequests")}
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                          {t("editProfile.rateUsdLabel")}
                         </label>
-                        <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Weekdays 9–5
-                              const preset = [1, 2, 3, 4, 5];
-                              setWeeklyAvailability((prev) =>
-                                prev.map((day) => {
-                                  if (preset.includes(day.dayOfWeek)) {
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-slate-500">$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={meetingRate}
+                            onChange={(e) => setMeetingRate(e.target.value)}
+                            className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder={t("editProfile.ratePlaceholder")}
+                          />
+                        </div>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          {t("editProfile.rateHint")}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                          {t("editProfile.timezoneLabel")}
+                        </label>
+                        <select
+                          value={meetingTimezone}
+                          onChange={(e) => setMeetingTimezone(e.target.value)}
+                          className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {/* Recommended readable timezones */}
+                          <option value="UTC">{t("editProfile.tzUTC")}</option>
+                          <option value="America/Los_Angeles">
+                            {t("editProfile.tzLosAngeles")}
+                          </option>
+                          <option value="America/New_York">
+                            {t("editProfile.tzNewYork")}
+                          </option>
+                          <option value="Europe/London">
+                            {t("editProfile.tzLondon")}
+                          </option>
+                          <option value="Europe/Berlin">
+                            {t("editProfile.tzBerlin")}
+                          </option>
+                          <option value="Asia/Kolkata">
+                            {t("editProfile.tzKolkata")}
+                          </option>
+                          <option value="Asia/Singapore">
+                            {t("editProfile.tzSingapore")}
+                          </option>
+                          <option value="Australia/Sydney">
+                            {t("editProfile.tzSydney")}
+                          </option>
+                          {/* Preserve any previously-saved custom timezone */}
+                          {![
+                            "UTC",
+                            "America/Los_Angeles",
+                            "America/New_York",
+                            "Europe/London",
+                            "Europe/Berlin",
+                            "Asia/Kolkata",
+                            "Asia/Singapore",
+                            "Australia/Sydney",
+                          ].includes(meetingTimezone) && (
+                            <option value={meetingTimezone}>
+                              {meetingTimezone}
+                            </option>
+                          )}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMeetingTimezone(
+                              Intl.DateTimeFormat().resolvedOptions()
+                                .timeZone || "UTC",
+                            )
+                          }
+                          className="mt-1 text-[11px] font-medium text-blue-600 hover:text-blue-700"
+                        >
+                          {t("editProfile.useDetectedTimezone")}
+                        </button>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          {t("editProfile.timezoneSlotsHint")}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Availability UX */}
+                    <div className="mt-2 space-y-4">
+                      {/* Select days & quick presets */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="block text-xs font-semibold text-slate-700">
+                            {t("editProfile.selectDays")}
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Weekdays 9–5
+                                const preset = [1, 2, 3, 4, 5];
+                                setWeeklyAvailability((prev) =>
+                                  prev.map((day) => {
+                                    if (preset.includes(day.dayOfWeek)) {
+                                      return {
+                                        ...day,
+                                        enabled: true,
+                                        windows: [
+                                          {
+                                            startTime: "09:00",
+                                            endTime: "17:00",
+                                          },
+                                        ],
+                                      };
+                                    }
                                     return {
                                       ...day,
-                                      enabled: true,
-                                      windows: [
-                                        { startTime: "09:00", endTime: "17:00" },
-                                      ],
+                                      enabled: false,
+                                      windows: [],
                                     };
-                                  }
-                                  return { ...day, enabled: false, windows: [] };
-                                }),
-                              );
-                            }}
-                            className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
-                          >
-                            Weekdays 9–5
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Evenings every day 18–21
-                              setWeeklyAvailability((prev) =>
-                                prev.map((day) => ({
-                                  ...day,
-                                  enabled: true,
-                                  windows: [
-                                    { startTime: "18:00", endTime: "21:00" },
-                                  ],
-                                })),
-                              );
-                            }}
-                            className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
-                          >
-                            Evenings
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Custom = clear, let user choose
-                              setWeeklyAvailability((prev) =>
-                                prev.map((day) => ({
-                                  ...day,
-                                  enabled: false,
-                                  windows: [],
-                                })),
-                              );
-                            }}
-                            className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
-                          >
-                            Custom
-                          </button>
+                                  }),
+                                );
+                              }}
+                              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                            >
+                              {t("editProfile.presetWeekdays")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Evenings every day 18–21
+                                setWeeklyAvailability((prev) =>
+                                  prev.map((day) => ({
+                                    ...day,
+                                    enabled: true,
+                                    windows: [
+                                      { startTime: "18:00", endTime: "21:00" },
+                                    ],
+                                  })),
+                                );
+                              }}
+                              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                            >
+                              {t("editProfile.presetEvenings")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Custom = clear, let user choose
+                                setWeeklyAvailability((prev) =>
+                                  prev.map((day) => ({
+                                    ...day,
+                                    enabled: false,
+                                    windows: [],
+                                  })),
+                                );
+                              }}
+                              className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
+                            >
+                              {t("editProfile.presetCustom")}
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="inline-flex flex-wrap gap-1.5 rounded-lg bg-white px-2.5 py-2 border border-slate-200">
-                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                          (label, idx) => {
+                        <div className="inline-flex flex-wrap gap-1.5 rounded-lg bg-white px-2.5 py-2 border border-slate-200">
+                          {weekdayShortLabels.map((label, idx) => {
                             const day = weeklyAvailability[idx];
                             const active = day?.enabled;
                             return (
@@ -2327,8 +2402,14 @@ export default function EditProfile() {
                                             ...d,
                                             enabled: !d.enabled,
                                             windows:
-                                              !d.enabled && d.windows.length === 0
-                                                ? [{ startTime: "09:00", endTime: "13:00" }]
+                                              !d.enabled &&
+                                              d.windows.length === 0
+                                                ? [
+                                                    {
+                                                      startTime: "09:00",
+                                                      endTime: "13:00",
+                                                    },
+                                                  ]
                                                 : d.windows,
                                           }
                                         : d,
@@ -2344,22 +2425,20 @@ export default function EditProfile() {
                                 {label}
                               </button>
                             );
-                          },
-                        )}
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Time windows */}
-                    <div className="space-y-2">
-                      <label className="block text-xs font-semibold text-slate-700">
-                        Time windows
-                      </label>
-                      <p className="text-[11px] text-slate-500 mb-1">
-                        Choose the time ranges when you&apos;re available. You can add more than one window per day.
-                      </p>
+                      {/* Time windows */}
                       <div className="space-y-2">
-                        {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map(
-                          (label, idx) => {
+                        <label className="block text-xs font-semibold text-slate-700">
+                          {t("editProfile.timeWindows")}
+                        </label>
+                        <p className="text-[11px] text-slate-500 mb-1">
+                          {t("editProfile.timeWindowsHint")}
+                        </p>
+                        <div className="space-y-2">
+                          {weekdayLongLabels.map((label, idx) => {
                             const day = weeklyAvailability[idx];
                             if (!day.enabled) return null;
                             return (
@@ -2381,7 +2460,10 @@ export default function EditProfile() {
                                                 ...d,
                                                 windows: [
                                                   ...d.windows,
-                                                  { startTime: "09:00", endTime: "13:00" },
+                                                  {
+                                                    startTime: "09:00",
+                                                    endTime: "13:00",
+                                                  },
                                                 ],
                                               }
                                             : d,
@@ -2390,7 +2472,7 @@ export default function EditProfile() {
                                     }
                                     className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-700 hover:bg-slate-100"
                                   >
-                                    + Add window
+                                    {t("editProfile.addWindow")}
                                   </button>
                                 </div>
                                 {(day.windows.length > 0
@@ -2402,7 +2484,11 @@ export default function EditProfile() {
                                     className="flex items-center gap-2 justify-between"
                                   >
                                     <span className="text-[11px] text-slate-500">
-                                      {day.windows.length > 1 ? `Window ${wIdx + 1}` : "Window"}
+                                      {day.windows.length > 1
+                                        ? t("editProfile.windowNumber", {
+                                            n: wIdx + 1,
+                                          })
+                                        : t("editProfile.windowLabel")}
                                     </span>
                                     <div className="flex items-center gap-1.5">
                                       <select
@@ -2413,13 +2499,15 @@ export default function EditProfile() {
                                               i === idx
                                                 ? {
                                                     ...d,
-                                                    windows: d.windows.map((w, j) =>
-                                                      j === wIdx
-                                                        ? {
-                                                            ...w,
-                                                            startTime: e.target.value,
-                                                          }
-                                                        : w,
+                                                    windows: d.windows.map(
+                                                      (w, j) =>
+                                                        j === wIdx
+                                                          ? {
+                                                              ...w,
+                                                              startTime:
+                                                                e.target.value,
+                                                            }
+                                                          : w,
                                                     ),
                                                   }
                                                 : d,
@@ -2428,21 +2516,24 @@ export default function EditProfile() {
                                         }
                                         className="w-22 px-1.5 py-1 border border-slate-300 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                       >
-                                        {Array.from({ length: 48 }).map((_, i) => {
-                                          const hours = Math.floor(i / 2)
-                                            .toString()
-                                            .padStart(2, "0");
-                                          const minutes = i % 2 === 0 ? "00" : "30";
-                                          const value = `${hours}:${minutes}`;
-                                          return (
-                                            <option key={value} value={value}>
-                                              {value}
-                                            </option>
-                                          );
-                                        })}
+                                        {Array.from({ length: 48 }).map(
+                                          (_, i) => {
+                                            const hours = Math.floor(i / 2)
+                                              .toString()
+                                              .padStart(2, "0");
+                                            const minutes =
+                                              i % 2 === 0 ? "00" : "30";
+                                            const value = `${hours}:${minutes}`;
+                                            return (
+                                              <option key={value} value={value}>
+                                                {value}
+                                              </option>
+                                            );
+                                          },
+                                        )}
                                       </select>
                                       <span className="text-[10px] text-slate-500">
-                                        to
+                                        {t("editProfile.timeTo")}
                                       </span>
                                       <select
                                         value={window.endTime || "13:00"}
@@ -2452,13 +2543,15 @@ export default function EditProfile() {
                                               i === idx
                                                 ? {
                                                     ...d,
-                                                    windows: d.windows.map((w, j) =>
-                                                      j === wIdx
-                                                        ? {
-                                                            ...w,
-                                                            endTime: e.target.value,
-                                                          }
-                                                        : w,
+                                                    windows: d.windows.map(
+                                                      (w, j) =>
+                                                        j === wIdx
+                                                          ? {
+                                                              ...w,
+                                                              endTime:
+                                                                e.target.value,
+                                                            }
+                                                          : w,
                                                     ),
                                                   }
                                                 : d,
@@ -2467,18 +2560,21 @@ export default function EditProfile() {
                                         }
                                         className="w-22 px-1.5 py-1 border border-slate-300 rounded-md text-[11px] bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                       >
-                                        {Array.from({ length: 48 }).map((_, i) => {
-                                          const hours = Math.floor(i / 2)
-                                            .toString()
-                                            .padStart(2, "0");
-                                          const minutes = i % 2 === 0 ? "00" : "30";
-                                          const value = `${hours}:${minutes}`;
-                                          return (
-                                            <option key={value} value={value}>
-                                              {value}
-                                            </option>
-                                          );
-                                        })}
+                                        {Array.from({ length: 48 }).map(
+                                          (_, i) => {
+                                            const hours = Math.floor(i / 2)
+                                              .toString()
+                                              .padStart(2, "0");
+                                            const minutes =
+                                              i % 2 === 0 ? "00" : "30";
+                                            const value = `${hours}:${minutes}`;
+                                            return (
+                                              <option key={value} value={value}>
+                                                {value}
+                                              </option>
+                                            );
+                                          },
+                                        )}
                                       </select>
                                     </div>
                                     {day.windows.length > 1 && (
@@ -2500,36 +2596,37 @@ export default function EditProfile() {
                                         }
                                         className="text-[11px] text-slate-500 hover:text-rose-600"
                                       >
-                                        Remove
+                                        {t("editProfile.remove")}
                                       </button>
                                     )}
                                   </div>
                                 ))}
                               </div>
                             );
-                          },
-                        )}
+                          })}
+                        </div>
                       </div>
+
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {t("editProfile.slotsBookableHint")}
+                      </p>
                     </div>
-
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      Patients will see bookable 30-minute slots inside your available windows, only where you&apos;re not already booked.
-                    </p>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            {/* Save Button */}
-            <div className="pt-4 border-t border-slate-200">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
+              {/* Save Button */}
+              <div className="pt-4 border-t border-slate-200">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving
+                    ? t("editProfile.saving")
+                    : t("editProfile.saveChanges")}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2541,7 +2638,7 @@ export default function EditProfile() {
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-purple-600" />
                   <h2 className="text-lg font-bold text-slate-800">
-                    Communities
+                    {t("editProfile.communitiesTitle")}
                   </h2>
                   <span className="ml-auto px-2 py-0.5 bg-purple-600 text-white rounded-full text-xs font-medium">
                     {followedCommunities.length}
@@ -2549,75 +2646,80 @@ export default function EditProfile() {
                 </div>
               </div>
               <div className="p-4 max-h-[600px] overflow-y-auto">
-              {loadingFollowed ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                </div>
-              ) : followedCommunities.length > 0 ? (
-                <div className="space-y-3">
-                  {followedCommunities.map((community) => (
-                    <div
-                      key={community._id}
-                      className="bg-white border border-slate-200 rounded-lg p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => navigate(`/forums?communityId=${community._id}`)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-                          {(() => {
-                            const IconComponent = getCommunityIcon(
-                              community.slug,
-                              community.name
-                            );
-                            const iconColor = community.color || "#9333ea";
-                            return (
-                              <IconComponent
-                                className="shrink-0"
-                                style={{
-                                  color: iconColor,
-                                  width: "1.25rem",
-                                  height: "1.25rem",
-                                }}
-                                stroke={1.5}
-                              />
-                            );
-                          })()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-slate-800 mb-1">
-                            {community.name}
-                          </h3>
-                          {community.description && (
-                            <p className="text-xs text-slate-600 mb-2 line-clamp-2">
-                              {community.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-slate-500">
-                            <span className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {community.memberCount || 0}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageCircle className="w-3 h-3" />
-                              {community.threadCount || 0}
-                            </span>
+                {loadingFollowed ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  </div>
+                ) : followedCommunities.length > 0 ? (
+                  <div className="space-y-3">
+                    {followedCommunities.map((community) => (
+                      <div
+                        key={community._id}
+                        className="bg-white border border-slate-200 rounded-lg p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
+                        onClick={() =>
+                          navigate(`/forums?communityId=${community._id}`)
+                        }
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+                            {(() => {
+                              const IconComponent = getCommunityIcon(
+                                community.slug,
+                                community.name,
+                              );
+                              const iconColor = community.color || "#9333ea";
+                              return (
+                                <IconComponent
+                                  className="shrink-0"
+                                  style={{
+                                    color: iconColor,
+                                    width: "1.25rem",
+                                    height: "1.25rem",
+                                  }}
+                                  stroke={1.5}
+                                />
+                              );
+                            })()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-slate-800 mb-1">
+                              {community.name}
+                            </h3>
+                            {community.description && (
+                              <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+                                {community.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {community.memberCount || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="w-3 h-3" />
+                                {community.threadCount || 0}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  <Users className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm">You haven't followed any communities yet</p>
-                  <button
-                    onClick={() => navigate("/forums")}
-                    className="mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm"
-                  >
-                    Explore Communities →
-                  </button>
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    <Users className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">
+                      {t("editProfile.noCommunitiesYet")}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/forums")}
+                      className="mt-3 text-purple-600 hover:text-purple-700 font-medium text-sm"
+                    >
+                      {t("editProfile.exploreCommunities")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2627,7 +2729,7 @@ export default function EditProfile() {
                 <div className="flex items-center gap-2">
                   <UserCheck className="w-5 h-5 text-green-600" />
                   <h2 className="text-lg font-bold text-slate-800">
-                    Following
+                    {t("editProfile.followingTitle")}
                   </h2>
                   <span className="ml-auto px-2 py-0.5 bg-green-600 text-white rounded-full text-xs font-medium">
                     {followedPeople.length}
@@ -2635,84 +2737,86 @@ export default function EditProfile() {
                 </div>
               </div>
               <div className="p-4 max-h-[600px] overflow-y-auto">
-              {loadingFollowed ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                </div>
-              ) : followedPeople.length > 0 ? (
-                <div className="space-y-3">
-                  {followedPeople.map((person) => {
-                    const personInitial = (person.username || "U")
-                      .charAt(0)
-                      .toUpperCase();
-                    return (
-                      <div
-                        key={person._id}
-                        className="bg-white border border-slate-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
-                        onClick={() => {
-                          if (person.role === "researcher") {
-                            navigate(`/expert/${person._id}`);
-                          } else {
-                            navigate(`/profile/${person._id}`);
-                          }
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          {person.picture ? (
-                            <img
-                              src={person.picture}
-                              alt={person.username}
-                              className="w-12 h-12 rounded-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                                e.target.nextSibling.style.display = "flex";
-                              }}
-                            />
-                          ) : null}
-                          <div
-                            className={`w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-lg shrink-0 ${
-                              person.picture ? "hidden" : ""
-                            }`}
-                          >
-                            {personInitial}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-slate-800">
-                                {person.username || "Anonymous"}
-                              </h3>
-                              {person.role && (
-                                <span
-                                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    person.role === "researcher"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-blue-100 text-blue-700"
-                                  }`}
-                                >
-                                  {person.role === "researcher"
-                                    ? "Researcher"
-                                    : "Patient"}
-                                </span>
-                              )}
+                {loadingFollowed ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                  </div>
+                ) : followedPeople.length > 0 ? (
+                  <div className="space-y-3">
+                    {followedPeople.map((person) => {
+                      const personInitial = (person.username || "U")
+                        .charAt(0)
+                        .toUpperCase();
+                      return (
+                        <div
+                          key={person._id}
+                          className="bg-white border border-slate-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all cursor-pointer"
+                          onClick={() => {
+                            if (person.role === "researcher") {
+                              navigate(`/expert/${person._id}`);
+                            } else {
+                              navigate(`/profile/${person._id}`);
+                            }
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            {person.picture ? (
+                              <img
+                                src={person.picture}
+                                alt={person.username}
+                                className="w-12 h-12 rounded-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = "none";
+                                  e.target.nextSibling.style.display = "flex";
+                                }}
+                              />
+                            ) : null}
+                            <div
+                              className={`w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-lg shrink-0 ${
+                                person.picture ? "hidden" : ""
+                              }`}
+                            >
+                              {personInitial}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-slate-800">
+                                  {person.username ||
+                                    t("editProfile.anonymousUser")}
+                                </h3>
+                                {person.role && (
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      person.role === "researcher"
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-blue-100 text-blue-700"
+                                    }`}
+                                  >
+                                    {person.role === "researcher"
+                                      ? t("editProfile.roleResearcher")
+                                      : t("editProfile.rolePatient")}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  <UserCheck className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                  <p className="text-sm">You haven't followed anyone yet</p>
-                  <button
-                    onClick={() => navigate("/discovery")}
-                    className="mt-3 text-green-600 hover:text-green-700 font-medium text-sm"
-                  >
-                    Discover People →
-                  </button>
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    <UserCheck className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm">{t("editProfile.noFollowingYet")}</p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/discovery")}
+                      className="mt-3 text-green-600 hover:text-green-700 font-medium text-sm"
+                    >
+                      {t("editProfile.discoverPeople")}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2728,7 +2832,7 @@ export default function EditProfile() {
             existingSelected={profile?.researcher?.selectedPublications || []}
             onSaved={() => {
               loadProfile(user._id || user.id);
-              toast.success("Publications updated");
+              toast.success(t("editProfile.toastPublicationsUpdated"));
             }}
           />
         )}

@@ -66,6 +66,7 @@ import {
   isDummyThreadId,
   getDummyThreadDetails,
 } from "../../data/dummyForumThreads.js";
+import { appendLocaleToSearchParams } from "../../i18n/getApiLocale.js";
 
 // Icon mapping for communities
 const getCommunityIcon = (slug, name) => {
@@ -264,7 +265,7 @@ const buildConditionTags = (community, threads = []) => {
 };
 
 export default function ResearcherForums() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [communities, setCommunities] = useState([]);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
@@ -489,6 +490,7 @@ export default function ResearcherForums() {
     sortBy,
     searchQuery,
     selectedConditionTag,
+    i18n.language,
   ]);
 
   async function loadFavorites() {
@@ -644,7 +646,10 @@ export default function ResearcherForums() {
   async function loadPatientThreads(overrideUserId) {
     try {
       const uid = overrideUserId ?? user?._id ?? user?.id;
-      const url = uid ? `${base}/api/forums/threads?userId=${encodeURIComponent(uid)}` : `${base}/api/forums/threads`;
+      const params = new URLSearchParams();
+      if (uid) params.set("userId", uid);
+      appendLocaleToSearchParams(params);
+      const url = `${base}/api/forums/threads?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch patient threads");
       const data = await response.json();
@@ -665,8 +670,10 @@ export default function ResearcherForums() {
   async function loadAllThreads(skipCache = false) {
     setLoading(true);
     try {
-      // Use researcher forums endpoint to get researcher forum threads
-      const url = `${base}/api/researcher-forums/threads${skipCache ? "?skipCache=true" : ""}`;
+      const params = new URLSearchParams();
+      if (skipCache) params.set("skipCache", "true");
+      appendLocaleToSearchParams(params);
+      const url = `${base}/api/researcher-forums/threads?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch threads");
       const data = await response.json();
@@ -724,6 +731,7 @@ export default function ResearcherForums() {
       const params = new URLSearchParams();
       params.set("sort", sortBy);
       // Tag filtering is done client-side now
+      appendLocaleToSearchParams(params);
 
       const response = await fetch(
         `${base}/api/communities/${
@@ -760,6 +768,7 @@ export default function ResearcherForums() {
       params.set("sort", sortBy);
       params.set("subcategoryId", selectedSubcategory._id);
       // Tag filtering is done client-side now
+      appendLocaleToSearchParams(params);
 
       // Filter threads client-side by subcategory for now
       // In production, add server-side filtering
@@ -796,8 +805,11 @@ export default function ResearcherForums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/recommended/${user._id || user.id}?limit=20`
+        `${base}/api/communities/recommended/${user._id || user.id}?${params.toString()}`
       );
       if (!response.ok) throw new Error("Failed to fetch recommendations");
 
@@ -815,8 +827,11 @@ export default function ResearcherForums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/involving/${user._id || user.id}?limit=20`
+        `${base}/api/communities/involving/${user._id || user.id}?${params.toString()}`
       );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
@@ -834,8 +849,11 @@ export default function ResearcherForums() {
     if (!user?._id && !user?.id) return;
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      appendLocaleToSearchParams(params);
       const response = await fetch(
-        `${base}/api/communities/feed/${user._id || user.id}?limit=20`
+        `${base}/api/communities/feed/${user._id || user.id}?${params.toString()}`
       );
       if (!response.ok) throw new Error("Failed to fetch feed");
 
@@ -880,8 +898,11 @@ export default function ResearcherForums() {
     }
     setLoading(true);
     try {
-      // Search in researcher forums
-      const response = await fetch(`${base}/api/researcher-forums/threads`);
+      const sp = new URLSearchParams();
+      appendLocaleToSearchParams(sp);
+      const response = await fetch(
+        `${base}/api/researcher-forums/threads?${sp.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to fetch threads");
 
       const data = await response.json();
@@ -1068,7 +1089,11 @@ export default function ResearcherForums() {
 
     setLoadingThreadDetails((prev) => new Set(prev).add(threadId));
     try {
-      const response = await fetch(`${base}/api/forums/threads/${threadId}`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads/${threadId}?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to load thread");
 
       const data = await response.json();
@@ -1092,7 +1117,11 @@ export default function ResearcherForums() {
 
     setLoadingPatientThreadDetails((prev) => new Set(prev).add(threadId));
     try {
-      const response = await fetch(`${base}/api/forums/threads/${threadId}`);
+      const params = new URLSearchParams();
+      appendLocaleToSearchParams(params);
+      const response = await fetch(
+        `${base}/api/forums/threads/${threadId}?${params.toString()}`,
+      );
       if (!response.ok) throw new Error("Failed to load thread");
 
       const data = await response.json();

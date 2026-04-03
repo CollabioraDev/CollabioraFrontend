@@ -16,6 +16,7 @@ import { RouteFallback } from "./app/routeFallback.jsx";
 import { FloatingChatbot, LandingNavbar, Navbar } from "./app/lazyPages.js";
 import LanguageShell from "./i18n/LanguageShell.jsx";
 import { syncI18nFromUser } from "./i18n/syncUserLanguage.js";
+import { migrateGuestChatToIoraStorage } from "./utils/yoriGuestChatStorage.js";
 
 const AppContent = () => {
   const location = useLocation();
@@ -82,6 +83,10 @@ const AppContent = () => {
         setIsSignedIn(Boolean(stored?._id || stored?.id));
         setUserRole(stored?.role || "patient");
         syncI18nFromUser(stored || {});
+        // Guest home-page Yori → signed-in floating chat (even before FloatingChatbot mounts)
+        if (stored && (stored._id || stored.id) && stored.emailVerified) {
+          migrateGuestChatToIoraStorage();
+        }
       } catch {
         setIsSignedIn(false);
         setUserRole("patient");
