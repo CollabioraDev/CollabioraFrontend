@@ -72,7 +72,8 @@
   },
   "profile": {
     "languageTitle": "لغة",
-    "languageHint": "ينطبق عبر الموقع ورسائل البريد الإلكتروني."
+    "languageHint": "ينطبق عبر الموقع ورسائل البريد الإلكتروني.",
+    "languageBetaNotice": "This feature is still in beta. Some parts of the site or emails may not be fully translated yet—we’re improving it all the time. Let us know how it feels for you (rough spots, missing text, or anything confusing)."
   },
   "pdf": {
     "patientContext": "سياق المريض",

@@ -72,7 +72,8 @@
   },
   "profile": {
     "languageTitle": "Язык",
-    "languageHint": "Применяется ко всему сайту и электронной почте."
+    "languageHint": "Применяется ко всему сайту и электронной почте.",
+    "languageBetaNotice": "This feature is still in beta. Some parts of the site or emails may not be fully translated yet—we’re improving it all the time. Let us know how it feels for you (rough spots, missing text, or anything confusing)."
   },
   "pdf": {
     "patientContext": "Контекст пациента",

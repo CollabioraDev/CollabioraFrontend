@@ -86,6 +86,7 @@ import {
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
+import { getApiLocale } from "../../i18n/getApiLocale.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -1498,7 +1499,7 @@ export default function DashboardPatient() {
 
         // Fetch simplified trial details
         const response = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified`,
+          `${base}/api/search/trial/${nctId}/simplified?locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {
@@ -1907,7 +1908,7 @@ export default function DashboardPatient() {
         const sourceParam = `source=${encodeURIComponent(source)}`;
 
         const response = await fetch(
-          `${base}/api/search/publication/${id}/simplified?${sourceParam}`,
+          `${base}/api/search/publication/${id}/simplified?${sourceParam}&locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {

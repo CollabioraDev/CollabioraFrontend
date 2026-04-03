@@ -1281,9 +1281,47 @@ export default function AdminDashboard() {
       const name = p?.name || "";
       const email = p?.email || "";
       const cond = Array.isArray(p?.conditions) ? p.conditions.join(" ") : "";
-      const hay = `${name} ${email} ${cond}`.toLowerCase();
+      const loc = p?.location;
+      const locStr =
+        loc && typeof loc === "object"
+          ? [loc.city, loc.state, loc.country]
+              .map((x) => (x == null ? "" : String(x).trim()))
+              .filter(Boolean)
+              .join(" ")
+          : "";
+      const hay = `${name} ${email} ${cond} ${locStr}`.toLowerCase();
       return hay.includes(q);
     });
+  };
+
+  /** Conditions that drive the weekly digest: primary selections when set, else full list (matches backend). */
+  const getWeeklyMailerPatientConditions = (p) => {
+    const list = Array.isArray(p?.conditions) ? p.conditions : [];
+    const rawIdx = Array.isArray(p?.primaryConditionIndices)
+      ? p.primaryConditionIndices
+      : [];
+    const picked = rawIdx
+      .filter(
+        (i) =>
+          typeof i === "number" &&
+          Number.isFinite(i) &&
+          i >= 0 &&
+          i < list.length,
+      )
+      .map((i) => list[i])
+      .filter(Boolean);
+    if (picked.length > 0) return picked;
+    return list;
+  };
+
+  /** Same string as expert pipeline / weekly digest: city, state, country. */
+  const getWeeklyMailerPatientLocationLabel = (p) => {
+    const loc = p?.location;
+    if (!loc || typeof loc !== "object") return "";
+    const parts = [loc.city, loc.state, loc.country]
+      .map((x) => (x == null ? "" : String(x).trim()))
+      .filter(Boolean);
+    return parts.join(", ");
   };
 
   const handleToggleSelectAllWeeklyMailer = () => {
@@ -1309,11 +1347,13 @@ export default function AdminDashboard() {
     // Initialize per-user pipeline so the admin can see progress "1 by 1"
     const pipelineInit = weeklyMailerSelectedUserIds.map((id, idx) => {
       const u = (patients || []).find((p) => p.userId === id);
+      const locationLabel = u ? getWeeklyMailerPatientLocationLabel(u) : "";
       return {
         idx,
         userId: id,
         name: u?.name || "Patient",
         email: u?.email || "",
+        locationLabel,
         status: "pending",
         message: "",
       };
@@ -8202,7 +8242,8 @@ export default function AdminDashboard() {
                 <p className="text-sm text-brand-gray mb-4">
                   Search patients, select who should receive the weekly digest,
                   then send. The email is personalized using your backend
-                  pipeline.
+                  pipeline. Profile location is shown when set (used for expert
+                  matching in the digest).
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -8214,7 +8255,7 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setWeeklyMailerSearchQuery(e.target.value)
                       }
-                      placeholder="Search users (name, email, condition)..."
+                      placeholder="Search users (name, email, condition, location)..."
                       className="w-full px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-xs md:text-sm bg-white"
                       disabled={sendingWeeklyMailer}
                     />
@@ -8333,6 +8374,14 @@ export default function AdminDashboard() {
                                   {entry.email}
                                 </p>
                               )}
+                              {!!entry.locationLabel && (
+                                <p className="text-[11px] text-brand-gray/80 flex items-center gap-1 mt-0.5 min-w-0">
+                                  <MapPin className="w-3 h-3 shrink-0 text-brand-royal-blue/60" />
+                                  <span className="truncate">
+                                    {entry.locationLabel}
+                                  </span>
+                                </p>
+                              )}
                               {!!entry.message && (
                                 <p className="text-[11px] text-brand-gray mt-1">
                                   {entry.message}
@@ -8374,7 +8423,8 @@ export default function AdminDashboard() {
                     </p>
                     {weeklyMailerSearchQuery.trim() && (
                       <p className="text-sm text-brand-gray/70 mt-1">
-                        Try a different search (name, email, or condition).
+                        Try a different search (name, email, condition, or
+                        location).
                       </p>
                     )}
                   </div>
@@ -8410,14 +8460,36 @@ export default function AdminDashboard() {
                                 {p.email}
                               </p>
                             )}
-                            {Array.isArray(p.conditions) &&
-                              p.conditions.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                    {p.conditions[0]}
+                            {(() => {
+                              const locLabel =
+                                getWeeklyMailerPatientLocationLabel(p);
+                              if (!locLabel) return null;
+                              return (
+                                <p className="text-xs text-brand-gray/85 flex items-center gap-1 mt-1 min-w-0">
+                                  <MapPin className="w-3.5 h-3.5 shrink-0 text-brand-royal-blue/65" />
+                                  <span className="truncate" title={locLabel}>
+                                    {locLabel}
                                   </span>
+                                </p>
+                              );
+                            })()}
+                            {(() => {
+                              const shown = getWeeklyMailerPatientConditions(p);
+                              if (!shown.length) return null;
+                              return (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {shown.map((c, i) => (
+                                    <span
+                                      key={`${p.userId}-${i}-${c}`}
+                                      className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200 max-w-full truncate"
+                                      title={c}
+                                    >
+                                      {c}
+                                    </span>
+                                  ))}
                                 </div>
-                              )}
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

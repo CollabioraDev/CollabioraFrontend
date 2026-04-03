@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { getApiLocale } from "../i18n/getApiLocale.js";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -592,7 +593,7 @@ export default function Favorites() {
 
           // Fetch simplified trial details
           const response = await fetch(
-            `${base}/api/search/trial/${nctId}/simplified`,
+            `${base}/api/search/trial/${nctId}/simplified?locale=${encodeURIComponent(getApiLocale())}`,
           );
 
           if (response.ok) {

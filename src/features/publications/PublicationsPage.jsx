@@ -1653,7 +1653,7 @@ export default function Publications() {
         const audience = isResearcher ? "researcher" : "patient";
 
         const response = await fetch(
-          `${base}/api/search/publication/${pmid}/simplified?audience=${audience}`,
+          `${base}/api/search/publication/${pmid}/simplified?audience=${encodeURIComponent(audience)}&locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {
@@ -1669,7 +1669,7 @@ export default function Publications() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/publication/${pmid}/simplified`,
+          `${base}/api/search/publication/${pmid}/simplified?locale=${encodeURIComponent(getApiLocale())}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();

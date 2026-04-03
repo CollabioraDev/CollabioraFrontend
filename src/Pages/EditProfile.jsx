@@ -1500,6 +1500,9 @@ export default function EditProfile() {
                 />
               </div>
             </div>
+            <p className="border-t border-slate-100 px-4 pb-4 pt-3 text-[11px] leading-relaxed text-slate-500 sm:px-6">
+              {t("profile.languageBetaNotice")}
+            </p>
 
             <div className="space-y-6 p-6">
             {/* Profile Picture Upload + Email badge + Researcher name */}

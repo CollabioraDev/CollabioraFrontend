@@ -85,6 +85,7 @@ import {
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
+import { getApiLocale } from "../../i18n/getApiLocale.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -1110,7 +1111,7 @@ export default function DashboardResearcher() {
         const nctId = trial.id || trial._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const response = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified?audience=researcher`,
+          `${base}/api/search/trial/${nctId}/simplified?audience=researcher&locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {
@@ -1129,7 +1130,7 @@ export default function DashboardResearcher() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified`,
+          `${base}/api/search/trial/${nctId}/simplified?locale=${encodeURIComponent(getApiLocale())}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
@@ -1257,7 +1258,7 @@ export default function DashboardResearcher() {
         const nctId = trial.id || trial._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
         const response = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified?audience=researcher`,
+          `${base}/api/search/trial/${nctId}/simplified?audience=researcher&locale=${encodeURIComponent(getApiLocale())}`,
         );
         if (response.ok) {
           const data = await response.json();
@@ -1477,7 +1478,7 @@ export default function DashboardResearcher() {
         const sourceParam = `source=${encodeURIComponent(source)}`;
 
         const response = await fetch(
-          `${base}/api/search/publication/${id}/simplified?audience=researcher&${sourceParam}`,
+          `${base}/api/search/publication/${id}/simplified?audience=researcher&${sourceParam}&locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {
@@ -1493,7 +1494,7 @@ export default function DashboardResearcher() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/publication/${id}/simplified?${sourceParam}`,
+          `${base}/api/search/publication/${id}/simplified?${sourceParam}&locale=${encodeURIComponent(getApiLocale())}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();

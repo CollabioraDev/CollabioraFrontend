@@ -72,7 +72,8 @@
   },
   "profile": {
     "languageTitle": "言語",
-    "languageHint": "サイトと電子メール全体に適用されます。"
+    "languageHint": "サイトと電子メール全体に適用されます。",
+    "languageBetaNotice": "This feature is still in beta. Some parts of the site or emails may not be fully translated yet—we’re improving it all the time. Let us know how it feels for you (rough spots, missing text, or anything confusing)."
   },
   "pdf": {
     "patientContext": "患者のコンテキスト",

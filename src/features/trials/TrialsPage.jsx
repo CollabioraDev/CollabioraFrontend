@@ -1670,7 +1670,7 @@ export default function Trials() {
         );
 
         const response = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified?audience=${audience}&source=${sourceParam}`,
+          `${base}/api/search/trial/${nctId}/simplified?audience=${encodeURIComponent(audience)}&source=${sourceParam}&locale=${encodeURIComponent(getApiLocale())}`,
         );
 
         if (response.ok) {
@@ -1697,7 +1697,7 @@ export default function Trials() {
         }
 
         const fallbackResponse = await fetch(
-          `${base}/api/search/trial/${nctId}/simplified?source=${sourceParam}`,
+          `${base}/api/search/trial/${nctId}/simplified?source=${sourceParam}&locale=${encodeURIComponent(getApiLocale())}`,
         );
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
