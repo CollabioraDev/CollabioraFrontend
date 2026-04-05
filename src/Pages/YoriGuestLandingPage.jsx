@@ -13,6 +13,7 @@ import {
   saveGuestChatMessages,
   YORI_GUEST_CHAT_STORAGE_KEY,
 } from "../utils/yoriGuestChatStorage.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 
 const SAMPLE_PROMPTS = [
   "How much water should I drink?",
@@ -338,7 +339,7 @@ export default function YoriGuestLandingPage() {
               <p className="truncate text-sm font-semibold text-[#2F3C96]">
                 Meet Yori, your health information companion!
               </p>
-              {!showSignupGate && (
+              {!showSignupGate && !GUEST_BROWSE_MODE_ENABLED && (
                 <p
                   className="truncate text-[11px] sm:text-xs text-slate-500"
                   aria-live="polite"

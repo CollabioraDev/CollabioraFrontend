@@ -11,6 +11,7 @@ import {
   resetLocalSearchCount,
   MAX_FREE_SEARCHES,
 } from "../utils/searchLimit.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 import apiFetch from "../utils/api.js";
 
 const FREE_SEARCHES_POPUP_KEY = "free_searches_popup_shown";
@@ -41,6 +42,13 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
       resetLocalSearchCount();
       setShowPopup(false);
       setFreeSearches(null);
+      return;
+    }
+
+    if (GUEST_BROWSE_MODE_ENABLED) {
+      resetLocalSearchCount();
+      setFreeSearches(null);
+      setLoadingSearches(false);
       return;
     }
 
@@ -78,6 +86,10 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
 
     // Listen for custom event for same-tab updates (only update when search is made)
     const handleFreeSearchUsed = (event) => {
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        setFreeSearches(null);
+        return;
+      }
       if (event.detail && event.detail.remaining !== undefined) {
         const remaining = event.detail.remaining;
         setFreeSearches(remaining);
@@ -104,6 +116,8 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
         resetLocalSearchCount();
         setFreeSearches(null);
         setLoadingSearches(false);
+      } else if (GUEST_BROWSE_MODE_ENABLED) {
+        setFreeSearches(null);
       } else {
         try {
           const response = await apiFetch("/api/search/remaining");
@@ -131,6 +145,10 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
 
   if (user) {
     return null; // Don't show for signed-in users
+  }
+
+  if (GUEST_BROWSE_MODE_ENABLED) {
+    return null; // Guest browse: unlimited searches, no count / "Unlimited" pill
   }
 
   return (
@@ -299,7 +317,12 @@ export default function FreeSearchesIndicator({ user, onSearch, centered = false
 
 // Export function to check and get remaining free searches
 export function useFreeSearches() {
-  const [freeSearches, setFreeSearches] = useState(getLocalRemainingSearches());
+  const [freeSearches, setFreeSearches] = useState(() => {
+    if (GUEST_BROWSE_MODE_ENABLED) {
+      return null;
+    }
+    return getLocalRemainingSearches();
+  });
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -312,7 +335,17 @@ export function useFreeSearches() {
       return;
     }
 
+    if (GUEST_BROWSE_MODE_ENABLED) {
+      resetLocalSearchCount();
+      setFreeSearches(null);
+      return;
+    }
+
     const updateFreeSearches = async (event) => {
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        setFreeSearches(null);
+        return;
+      }
       if (event && event.detail && event.detail.remaining !== undefined) {
         const remaining = event.detail.remaining;
         setFreeSearches(remaining);
@@ -341,6 +374,10 @@ export function useFreeSearches() {
       return true;
     }
 
+    if (GUEST_BROWSE_MODE_ENABLED) {
+      return true;
+    }
+
     // Check local first (fast), backend enforces
     const localRemaining = getLocalRemainingSearches();
     if (localRemaining <= 0) return false;
@@ -363,6 +400,10 @@ export function useFreeSearches() {
 
     // Signed-in users have unlimited searches
     if (user && token) {
+      return null;
+    }
+
+    if (GUEST_BROWSE_MODE_ENABLED) {
       return null;
     }
 

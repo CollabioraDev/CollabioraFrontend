@@ -46,6 +46,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { getGuestDeviceIdHeaders } from "../utils/api.js";
 
 export default function OnboardPatient() {
   const [searchParams] = useSearchParams();
@@ -1358,7 +1359,10 @@ export default function OnboardPatient() {
 
       const registerRes = await fetch(`${base}/api/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getGuestDeviceIdHeaders(),
+        },
         body: JSON.stringify({
           username,
           email,

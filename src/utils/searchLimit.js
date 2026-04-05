@@ -3,7 +3,11 @@
  *
  * Guest limit (6 searches): server tracks by deviceId (x-device-id header).
  * localStorage syncs with backend for fast UI. Lenient: fail open when deviceId missing.
+ *
+ * When guestBrowseMode is enabled, local limits are not applied (see guestBrowseMode.js).
  */
+
+import { GUEST_BROWSE_MODE_ENABLED } from "./guestBrowseMode.js";
 
 const MAX_FREE_SEARCHES = 6;
 const STORAGE_KEY = "collabiora_search_count";
@@ -44,6 +48,9 @@ export function setLocalSearchCount(count) {
  * Increment local search count
  */
 export function incrementLocalSearchCount() {
+  if (GUEST_BROWSE_MODE_ENABLED) {
+    return getLocalSearchCount();
+  }
   const current = getLocalSearchCount();
   const newCount = current + 1;
   setLocalSearchCount(newCount);
@@ -54,6 +61,9 @@ export function incrementLocalSearchCount() {
  * Get remaining searches based on local storage
  */
 export function getLocalRemainingSearches() {
+  if (GUEST_BROWSE_MODE_ENABLED) {
+    return MAX_FREE_SEARCHES;
+  }
   const count = getLocalSearchCount();
   return Math.max(0, MAX_FREE_SEARCHES - count);
 }
@@ -62,6 +72,7 @@ export function getLocalRemainingSearches() {
  * Check if user can search based on local storage
  */
 export function canSearchLocally() {
+  if (GUEST_BROWSE_MODE_ENABLED) return true;
   const count = getLocalSearchCount();
   return count < MAX_FREE_SEARCHES;
 }
@@ -91,7 +102,12 @@ export async function syncWithBackend() {
 
     if (response && response.ok) {
       const data = await response.json();
-      
+
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        resetLocalSearchCount();
+        return { unlimited: true, count: 0, remaining: null };
+      }
+
       if (data.unlimited) {
         // User is signed in - reset local count
         resetLocalSearchCount();

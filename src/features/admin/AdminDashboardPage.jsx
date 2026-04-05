@@ -589,6 +589,9 @@ export default function AdminDashboard() {
   const [searchChannelAnalytics, setSearchChannelAnalytics] = useState(null);
   const [loadingSearchChannels, setLoadingSearchChannels] = useState(false);
   const [searchChannelAudience, setSearchChannelAudience] = useState("all");
+  const [guestBrowseAnalytics, setGuestBrowseAnalytics] = useState(null);
+  const [loadingGuestBrowse, setLoadingGuestBrowse] = useState(false);
+  const [guestBrowseDays, setGuestBrowseDays] = useState(30);
   const [resetting, setResetting] = useState({
     deviceTokens: false,
     ipLimits: false,
@@ -2336,6 +2339,42 @@ export default function AdminDashboard() {
     if (activeSection !== "search") return;
     fetchSearchChannelAnalytics();
   }, [activeSection, searchChannelAudience]);
+
+  const fetchGuestBrowseAnalytics = async () => {
+    setLoadingGuestBrowse(true);
+    try {
+      const adminToken = localStorage.getItem("adminToken");
+      if (!adminToken) return;
+
+      const response = await fetch(
+        `${base}/api/admin/analytics/guest-browse?days=${guestBrowseDays}`,
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        },
+      );
+
+      if (handleAdminAuthFailure(response)) return;
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch guest browse metrics");
+      }
+
+      const data = await response.json();
+      setGuestBrowseAnalytics(data);
+    } catch (error) {
+      console.error("Error fetching guest browse analytics:", error);
+      toast.error("Failed to load guest browse metrics");
+    } finally {
+      setLoadingGuestBrowse(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection !== "search") return;
+    fetchGuestBrowseAnalytics();
+  }, [activeSection, guestBrowseDays]);
 
   const fetchActiveUserStats = async () => {
     setLoadingActiveUsers(true);
@@ -4476,17 +4515,128 @@ export default function AdminDashboard() {
                     onClick={() => {
                       fetchSearchStats();
                       fetchSearchChannelAnalytics();
+                      fetchGuestBrowseAnalytics();
                     }}
-                    disabled={loadingStats || loadingSearchChannels}
+                    disabled={
+                      loadingStats ||
+                      loadingSearchChannels ||
+                      loadingGuestBrowse
+                    }
                     className="flex items-center gap-2 px-3 py-1.5 bg-brand-royal-blue hover:bg-brand-blue-600 text-white rounded-lg text-sm transition-all disabled:opacity-50"
                   >
-                    {loadingStats || loadingSearchChannels ? (
+                    {loadingStats ||
+                    loadingSearchChannels ||
+                    loadingGuestBrowse ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}
                     Refresh
                   </Button>
+                </div>
+
+                <div className="mb-8 rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/60 to-white p-4 md:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <UserCircle className="w-5 h-5 text-emerald-700" />
+                      <h3 className="font-semibold text-slate-800 text-base">
+                        Guest browse (signed-out search)
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="guest-browse-days"
+                        className="text-xs font-medium text-slate-600 whitespace-nowrap"
+                      >
+                        Period
+                      </label>
+                      <select
+                        id="guest-browse-days"
+                        value={guestBrowseDays}
+                        onChange={(e) =>
+                          setGuestBrowseDays(Number(e.target.value))
+                        }
+                        className="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-800"
+                      >
+                        <option value={7}>Last 7 days</option>
+                        <option value={30}>Last 30 days</option>
+                        <option value={90}>Last 90 days</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-4 max-w-3xl">
+                    Tracks anonymous use of Trials, Publications, and Experts
+                    search via{" "}
+                    <code className="text-[11px] bg-white/80 px-1 rounded border border-slate-200/80">
+                      x-device-id
+                    </code>
+                    . Counts persist even when guest unlimited-search mode skips
+                    the free-tier counter. Signups are linked when the same device
+                    id is sent on registration or OAuth account creation.
+                  </p>
+                  {loadingGuestBrowse && !guestBrowseAnalytics ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-700" />
+                    </div>
+                  ) : guestBrowseAnalytics ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="rounded-lg border border-emerald-100 bg-white/90 p-3">
+                        <p className="text-[11px] font-semibold uppercase text-slate-500">
+                          Unique guest devices
+                        </p>
+                        <p className="text-2xl font-bold text-emerald-800 tabular-nums mt-1">
+                          {guestBrowseAnalytics.uniqueGuestDevicesInPeriod ?? "—"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Had ≥1 classic search (UTC range)
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-100 bg-white/90 p-3">
+                        <p className="text-[11px] font-semibold uppercase text-slate-500">
+                          Guest search requests
+                        </p>
+                        <p className="text-2xl font-bold text-emerald-800 tabular-nums mt-1">
+                          {guestBrowseAnalytics.totalGuestSearchEventsInPeriod ??
+                            "—"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Total API searches (same window)
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-100 bg-white/90 p-3">
+                        <p className="text-[11px] font-semibold uppercase text-slate-500">
+                          Signups linked to guest device
+                        </p>
+                        <p className="text-2xl font-bold text-emerald-800 tabular-nums mt-1">
+                          {guestBrowseAnalytics.signupsLinkedToGuestDevice ?? "—"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          New accounts created in range with device match
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-100 bg-white/90 p-3">
+                        <p className="text-[11px] font-semibold uppercase text-slate-500">
+                          Approx. signup rate
+                        </p>
+                        <p className="text-2xl font-bold text-emerald-800 tabular-nums mt-1">
+                          {guestBrowseAnalytics.approxGuestToSignupRate != null
+                            ? `${(guestBrowseAnalytics.approxGuestToSignupRate * 100).toFixed(1)}%`
+                            : "—"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Signups ÷ unique guest devices (same period)
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">No data.</p>
+                  )}
+                  {guestBrowseAnalytics?.range && (
+                    <p className="text-[11px] text-slate-400 mt-3">
+                      Range: {guestBrowseAnalytics.range.start} →{" "}
+                      {guestBrowseAnalytics.range.end} (UTC)
+                    </p>
+                  )}
                 </div>
 
                 <div className="mb-6 space-y-4">

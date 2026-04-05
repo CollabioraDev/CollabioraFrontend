@@ -27,6 +27,7 @@ import {
   FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { getGuestDeviceIdHeaders } from "../utils/api.js";
 import { useTranslation } from "react-i18next";
 import icd11Dataset from "../data/icd11Dataset.json";
 import {
@@ -450,7 +451,10 @@ export default function OnboardingNew() {
 
     const registerRes = await fetch(`${base}/api/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getGuestDeviceIdHeaders(),
+      },
       body: JSON.stringify({
         username,
         email: email.trim(),
@@ -1061,7 +1065,10 @@ export default function OnboardingNew() {
 
       const res = await fetch(`${base}/api/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getGuestDeviceIdHeaders(),
+        },
         body: JSON.stringify({
           username,
           email: email.trim(),

@@ -2854,14 +2854,11 @@ const FloatingChatbot = () => {
                           )}
                         </button>
                       </div>
-                      <p className="mt-2 max-w-full px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
-                        {t("yori.disclaimer")}
-                      </p>
-                      <div className="sm:hidden mt-2 flex justify-center px-1">
+                      <div className="mt-2 flex justify-center px-1">
                         <button
                           type="button"
                           onClick={() => setDisclaimerOpen(true)}
-                          className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
+                          className="text-[10px] sm:text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
                         >
                           {t("yori.viewDisclaimer")}
                         </button>

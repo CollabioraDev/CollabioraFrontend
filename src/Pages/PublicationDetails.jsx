@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import InlinePdfViewer from "../components/InlinePdfViewer.jsx";
 import { inferPublicationSourceFromId } from "../utils/publicationRouting.js";
+import { getEffectiveUiRole } from "../utils/guestBrowseMode.js";
 
 const SOURCE_LABELS = {
   pubmed: "PubMed",
@@ -47,8 +48,7 @@ export default function PublicationDetails() {
   const [showEmbeddedPdf, setShowEmbeddedPdf] = useState(false);
   const [fullTextData, setFullTextData] = useState(null);
   const [fullTextLoading, setFullTextLoading] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const isResearcher = user?.role === "researcher";
+  const isResearcher = getEffectiveUiRole() === "researcher";
   const listPath = isResearcher ? "/publications" : "/library";
 
   const pdfUrl =

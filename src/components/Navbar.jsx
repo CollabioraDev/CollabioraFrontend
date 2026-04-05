@@ -7,6 +7,7 @@ import { listenForMessages } from "../utils/crossTabSync.js";
 import { getDisplayName } from "../utils/researcherDisplayName.js";
 import { IconBell } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 
 export default function Navbar() {
   const { t } = useTranslation("common");
@@ -30,6 +31,9 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAtTop, setIsAtTop] = useState(true);
+
+  const isLoggedInUser = Boolean(user && (user._id || user.id));
+  const effectiveNavRole = isLoggedInUser ? user.role || "patient" : "patient";
 
   // Check if we're on the landing page (`/` = Yori guest preview)
   const isLandingPage = location.pathname === "/";
@@ -103,9 +107,13 @@ export default function Navbar() {
     location.pathname.startsWith("/publication/") ||
     location.pathname === "/experts";
 
-  // Discovery, Forums: when not signed in, show Explore, Forums, Discovery (same as Explore page)
+  // Discovery, Forums (patient + researcher): when not signed in, show Explore, Forums, Discovery (same as Explore page)
   const isDiscoveryOrForumsPage =
-    location.pathname === "/discovery" || location.pathname === "/forums";
+    location.pathname === "/discovery" ||
+    location.pathname === "/forums" ||
+    location.pathname.startsWith("/forums/") ||
+    location.pathname === "/researcher-forums" ||
+    location.pathname.startsWith("/researcher-forums/");
 
   // Determine navigation items based on route and auth state
   // About/Contact/Sign-in/Onboarding + NOT signed in: About Us, FAQ, Contact (basic options)
@@ -146,6 +154,9 @@ export default function Navbar() {
       return ["explore", "forums", "discovery"];
     }
     if (isLandingPage && !user) {
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        return ["explore", "forums", "discovery"];
+      }
       return ["explore"];
     }
     if (isSignInOrExplorePage) {
@@ -178,20 +189,35 @@ export default function Navbar() {
 
   const navItems = getNavItems();
 
+  /** Guest browse: show For Researchers → onboarding beside Explore · Forums · Discovery (not on About/FAQ-only routes). */
+  const showGuestResearcherSignIn =
+    GUEST_BROWSE_MODE_ENABLED &&
+    !isLoggedInUser &&
+    navItems.includes("explore") &&
+    navItems.includes("forums");
+
+  /** Guest browse on /onboarding: show Sign In next to About Us · FAQ · Contact (desktop + mobile). */
+  const showGuestSignInOnOnboarding =
+    GUEST_BROWSE_MODE_ENABLED && !isLoggedInUser && isOnboardingPage;
+
   // When signed in as researcher, show "Collaborators" / "Publications" / "Clinical Trials"; for patients use friendlier terms
   const expertsNavLabel = t(
-    user?.role === "researcher" ? "nav.collaborators" : "nav.healthExperts",
+    effectiveNavRole === "researcher"
+      ? "nav.collaborators"
+      : "nav.healthExperts",
   );
   const publicationsNavLabel = t(
-    user?.role === "researcher"
+    effectiveNavRole === "researcher"
       ? "nav.publicationsResearcher"
       : "nav.healthLibrary",
   );
   const trialsNavLabel = t(
-    user?.role === "researcher" ? "nav.clinicalTrials" : "nav.newTreatments",
+    effectiveNavRole === "researcher"
+      ? "nav.clinicalTrials"
+      : "nav.newTreatments",
   );
   const publicationsNavRoute =
-    user?.role === "researcher" ? "/publications" : "/library";
+    effectiveNavRole === "researcher" ? "/publications" : "/library";
 
   useEffect(() => {
     const updateUser = () => {
@@ -417,20 +443,22 @@ export default function Navbar() {
                 contact: "/contact",
                 dashboard: getDashboardPath(),
                 forums:
-                  user?.role === "researcher"
+                  effectiveNavRole === "researcher"
                     ? "/researcher-forums"
                     : "/forums",
                 discovery: "/discovery",
                 trials: "/trials",
                 publications:
-                  user?.role === "researcher" ? "/publications" : "/library",
+                  effectiveNavRole === "researcher"
+                    ? "/publications"
+                    : "/library",
                 experts: "/experts",
               };
               const route = routeMap[item];
 
               // Handle Explore dropdown separately (guest Yori `/` uses a single link to public Explore page)
               if (item === "explore") {
-                if (isLandingPage && !user) {
+                if (isLandingPage && !user && !GUEST_BROWSE_MODE_ENABLED) {
                   return (
                     <Fragment key={`${item}-guest-landing`}>
                       <PrefetchLink
@@ -1103,6 +1131,35 @@ export default function Navbar() {
                     </div>
                   )}
                 </div>
+              ) : showGuestResearcherSignIn ? (
+                <PrefetchLink
+                  to="/onboarding"
+                  className="px-5 py-2.5 rounded-xl font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  {t("auth.forResearchers")}
+                </PrefetchLink>
+              ) : showGuestSignInOnOnboarding ? (
+                <div>
+                  <PrefetchLink
+                    to="/signin"
+                    className="px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-2 text-white"
+                    style={{
+                      background: "linear-gradient(135deg, #2F3C96, #474F97)",
+                      borderColor: "#D0C4E2",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background =
+                        "linear-gradient(135deg, #474F97, #2F3C96)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background =
+                        "linear-gradient(135deg, #2F3C96, #474F97)";
+                    }}
+                  >
+                    {t("auth.signIn")}
+                  </PrefetchLink>
+                </div>
               ) : isLandingPage ? (
                 <button
                   type="button"
@@ -1112,7 +1169,7 @@ export default function Navbar() {
                 >
                   {t("auth.getStarted")}
                 </button>
-              ) : (
+              ) : GUEST_BROWSE_MODE_ENABLED ? null : (
                 <div>
                   <PrefetchLink
                     to="/signin"
@@ -1217,8 +1274,43 @@ export default function Navbar() {
               <GlobalSearch />
             </div> */}
 
-          {/* `/` Yori guest: Explore → /explore (matches desktop nav item) */}
-          {!user && isLandingPage && (
+          {/* Guest browse on onboarding: same links as desktop (About · FAQ · Contact) */}
+          {!user && showGuestSignInOnOnboarding && (
+            <div
+              className="space-y-1.5 pb-3 border-b"
+              style={{ borderColor: "#D0C4E2" }}
+            >
+              {["aboutUs", "faq", "contact"].map((item) => {
+                const routeMap = {
+                  aboutUs: "/about",
+                  faq: "/faq",
+                  contact: "/contact",
+                };
+                return (
+                  <PrefetchLink
+                    key={item}
+                    to={routeMap[item]}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                    style={{ color: "#2F3C96" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#E8E0EF";
+                      e.currentTarget.style.color = "#474F97";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#2F3C96";
+                    }}
+                  >
+                    {t(`nav.${item}`)}
+                  </PrefetchLink>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Guest: Explore + subnav (landing or any route with Explore · Forums · Discovery) */}
+          {!user && showGuestResearcherSignIn && (
             <div
               className="space-y-1.5 pb-3 border-b"
               style={{ borderColor: "#D0C4E2" }}
@@ -1257,6 +1349,54 @@ export default function Navbar() {
                 </span>
                 {t("nav.explore")}
               </PrefetchLink>
+              {GUEST_BROWSE_MODE_ENABLED && (
+                <>
+                  <PrefetchLink
+                    to={publicationsNavRoute}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-sm font-medium rounded-xl py-2 px-3 pl-8 transition-all duration-200"
+                    style={{ color: "#474F97" }}
+                  >
+                    {publicationsNavLabel}
+                  </PrefetchLink>
+                  <PrefetchLink
+                    to="/experts"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-sm font-medium rounded-xl py-2 px-3 pl-8 transition-all duration-200"
+                    style={{ color: "#474F97" }}
+                  >
+                    {expertsNavLabel}
+                  </PrefetchLink>
+                  <PrefetchLink
+                    to="/trials"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-sm font-medium rounded-xl py-2 px-3 pl-8 transition-all duration-200"
+                    style={{ color: "#474F97" }}
+                  >
+                    {trialsNavLabel}
+                  </PrefetchLink>
+                  <PrefetchLink
+                    to={
+                      effectiveNavRole === "researcher"
+                        ? "/researcher-forums"
+                        : "/forums"
+                    }
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                    style={{ color: "#2F3C96" }}
+                  >
+                    {t("nav.forums")}
+                  </PrefetchLink>
+                  <PrefetchLink
+                    to="/discovery"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                    style={{ color: "#2F3C96" }}
+                  >
+                    {t("nav.discovery")}
+                  </PrefetchLink>
+                </>
+              )}
             </div>
           )}
 
@@ -1361,6 +1501,34 @@ export default function Navbar() {
               >
                 {t("userMenu.signOut")}
               </button>
+            ) : showGuestResearcherSignIn ? (
+              <PrefetchLink
+                to="/onboarding"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex w-full items-center justify-center text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                style={{ backgroundColor: "#2F3C96" }}
+              >
+                {t("auth.forResearchers")}
+              </PrefetchLink>
+            ) : showGuestSignInOnOnboarding ? (
+              <PrefetchLink
+                to="/signin"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center justify-center w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #2F3C96, #474F97)",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #474F97, #2F3C96)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background =
+                    "linear-gradient(135deg, #2F3C96, #474F97)";
+                }}
+              >
+                {t("auth.signIn")}
+              </PrefetchLink>
             ) : isLandingPage ? (
               <button
                 type="button"
@@ -1373,7 +1541,7 @@ export default function Navbar() {
               >
                 {t("auth.getStarted")}
               </button>
-            ) : (
+            ) : GUEST_BROWSE_MODE_ENABLED ? null : (
               <PrefetchLink
                 to="/signin"
                 onClick={() => setIsMobileMenuOpen(false)}

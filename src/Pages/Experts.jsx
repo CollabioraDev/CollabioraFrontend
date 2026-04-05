@@ -62,6 +62,7 @@ import {
   resolveToCanonical,
 } from "../utils/canonicalLabels.js";
 import { loadTutorialSampleExperts } from "../utils/tutorialSampleData.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 
 export default function Experts() {
   const { t, i18n } = useTranslation("common");
@@ -656,8 +657,12 @@ export default function Experts() {
         }
       }
 
-      // Guest: sync with backend response
-      if (!isUserSignedIn && backendRemaining !== null) {
+      // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+      if (
+        !GUEST_BROWSE_MODE_ENABLED &&
+        !isUserSignedIn &&
+        backendRemaining !== null
+      ) {
         const remaining = backendRemaining;
         setLocalSearchCount(MAX_FREE_SEARCHES - remaining);
 
@@ -1026,8 +1031,12 @@ export default function Experts() {
           }
         }
 
-        // Guest: sync with backend response
-        if (!isUserSignedIn && backendRemaining !== null) {
+        // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+        if (
+          !GUEST_BROWSE_MODE_ENABLED &&
+          !isUserSignedIn &&
+          backendRemaining !== null
+        ) {
           const remaining = backendRemaining;
 
           if (remaining === 0) {

@@ -220,6 +220,12 @@ export function recordDailyPlatformActivity() {
     .catch(() => {});
 }
 
+/** Merge into auth/register and OAuth sync fetches so signups can link to guest search history. */
+export function getGuestDeviceIdHeaders() {
+  const id = getOrCreateDeviceId();
+  return id ? { "x-device-id": id } : {};
+}
+
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("token");
   

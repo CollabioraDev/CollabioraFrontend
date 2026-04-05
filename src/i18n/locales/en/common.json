@@ -1271,6 +1271,7 @@
   },
   "auth": {
     "getStarted": "Get Started",
+    "forResearchers": "For Researchers",
     "signIn": "Sign In",
     "forgotPassword": {
       "toastEmailRequired": "Please enter your email address",

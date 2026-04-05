@@ -64,6 +64,7 @@ import {
   MAX_FREE_SEARCHES,
 } from "../../utils/searchLimit.js";
 import { loadTutorialSampleTrials } from "../../utils/tutorialSampleData.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../../utils/guestBrowseMode.js";
 
 /** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
 function buildGmailComposeUrl(toEmails, subject, body) {
@@ -744,8 +745,12 @@ export default function Trials() {
       const sortedResults = sortTrialsByMatch(searchResults);
       setResults(sortedResults);
 
-      // Guest: sync with backend response (server tracks by deviceId)
-      if (!isUserSignedIn && data.remaining !== undefined) {
+      // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+      if (
+        !GUEST_BROWSE_MODE_ENABLED &&
+        !isUserSignedIn &&
+        data.remaining !== undefined
+      ) {
         const remaining = data.remaining;
         setLocalSearchCount(MAX_FREE_SEARCHES - remaining);
 
@@ -1188,8 +1193,12 @@ export default function Trials() {
           const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
           setTotalPages(calculatedTotalPages);
 
-          // Guest: sync with backend response
-          if (!isUserSignedIn && data.remaining !== undefined) {
+          // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+          if (
+            !GUEST_BROWSE_MODE_ENABLED &&
+            !isUserSignedIn &&
+            data.remaining !== undefined
+          ) {
             const remaining = data.remaining;
             setLocalSearchCount(MAX_FREE_SEARCHES - remaining);
 

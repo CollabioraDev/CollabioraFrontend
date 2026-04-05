@@ -59,6 +59,7 @@ import {
   MAX_FREE_SEARCHES,
 } from "../../utils/searchLimit.js";
 import { loadTutorialSamplePublications } from "../../utils/tutorialSampleData.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../../utils/guestBrowseMode.js";
 import ReactMarkdown from "react-markdown";
 
 /** Stopwords to strip when turning a query into display keywords (matches backend). */
@@ -1076,8 +1077,12 @@ export default function Publications() {
       // Calculate total pages for server-side pagination
       const totalPages = Math.ceil((data.totalCount || 0) / 6);
 
-      // Guest: sync with backend response
-      if (!isUserSignedIn && data.remaining !== undefined) {
+      // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+      if (
+        !GUEST_BROWSE_MODE_ENABLED &&
+        !isUserSignedIn &&
+        data.remaining !== undefined
+      ) {
         const remaining = data.remaining;
         setLocalSearchCount(MAX_FREE_SEARCHES - remaining);
 
@@ -1401,8 +1406,12 @@ export default function Publications() {
         const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
         setTotalPages(calculatedTotalPages);
 
-        // Guest: sync with backend response
-        if (!isUserSignedIn && data.remaining !== undefined) {
+        // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
+        if (
+          !GUEST_BROWSE_MODE_ENABLED &&
+          !isUserSignedIn &&
+          data.remaining !== undefined
+        ) {
           const remaining = data.remaining;
           setLocalSearchCount(MAX_FREE_SEARCHES - remaining);
 

@@ -26,6 +26,7 @@ import {
   setLocalSearchCount,
   MAX_FREE_SEARCHES,
 } from "../utils/searchLimit.js";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 
 const FREE_SEARCHES_TOTAL = 6;
 
@@ -34,9 +35,19 @@ export default function Explore() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const localRemaining = getLocalRemainingSearches();
-  const [freeSearches, setFreeSearches] = useState(
-    localRemaining !== null ? localRemaining : FREE_SEARCHES_TOTAL,
-  );
+  const [freeSearches, setFreeSearches] = useState(() => {
+    if (GUEST_BROWSE_MODE_ENABLED) {
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "null");
+        const token = localStorage.getItem("token");
+        if (u && token && u.emailVerified) return null;
+        return null;
+      } catch {
+        return null;
+      }
+    }
+    return localRemaining !== null ? localRemaining : FREE_SEARCHES_TOTAL;
+  });
   const [loadingSearches, setLoadingSearches] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -121,6 +132,9 @@ export default function Explore() {
     if (userData && token && userData.emailVerified) {
       setFreeSearches(null);
       setLoadingSearches(false);
+    } else if (GUEST_BROWSE_MODE_ENABLED) {
+      setFreeSearches(null);
+      setLoadingSearches(false);
     } else {
       const fetchRemaining = async () => {
         try {
@@ -155,6 +169,10 @@ export default function Explore() {
     window.addEventListener("resize", checkMobile);
 
     const handleFreeSearchUsed = (event) => {
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        setFreeSearches(null);
+        return;
+      }
       if (event.detail && event.detail.remaining !== undefined) {
         const remaining = event.detail.remaining;
         setFreeSearches(remaining);
@@ -182,6 +200,9 @@ export default function Explore() {
         setUser(null);
       }
       if (userData && token && userData.emailVerified) {
+        setFreeSearches(null);
+        setLoadingSearches(false);
+      } else if (GUEST_BROWSE_MODE_ENABLED) {
         setFreeSearches(null);
         setLoadingSearches(false);
       } else {

@@ -7,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import Button from "../components/ui/Button.jsx";
 import AnimatedBackgroundDiff from "../components/ui/AnimatedBackgroundDiff.jsx";
 import { User, Microscope } from "lucide-react";
+import { getGuestDeviceIdHeaders } from "../utils/api.js";
 
 /**
  * Complete Profile Page
@@ -95,6 +96,7 @@ export default function CompleteProfile() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...getGuestDeviceIdHeaders(),
           ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify(requestBody),

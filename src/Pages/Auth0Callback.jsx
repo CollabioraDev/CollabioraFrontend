@@ -5,6 +5,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
+import { getGuestDeviceIdHeaders } from "../utils/api.js";
 
 /**
  * Auth0 Callback Page
@@ -68,7 +69,10 @@ export default function Auth0Callback() {
         // Sync user with backend
         const res = await fetch(`${base}/api/auth/oauth-sync`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...getGuestDeviceIdHeaders(),
+          },
           credentials: "include",
           body: JSON.stringify({
             auth0Id: user.sub,
@@ -114,7 +118,10 @@ export default function Auth0Callback() {
 
           const completeRes = await fetch(`${base}/api/auth/complete-oauth-profile`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...getGuestDeviceIdHeaders(),
+            },
             body: JSON.stringify({
               role: onboardingData?.role || "patient",
               auth0Id: pendingAuth0Data.auth0Id,
