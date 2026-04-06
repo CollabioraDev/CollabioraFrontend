@@ -1430,6 +1430,7 @@
     "done": "Done",
     "skipTour": "Skip tour",
     "skipAria": "Skip tutorial",
+    "hintDismiss": "Got it",
     "yorisTour": "Yori's Tour",
     "stepOf": "Step {{current}} of {{total}}",
     "clickSearchContinue": "Click the Search button to continue →"
@@ -1532,7 +1533,8 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "Use Explore in the top bar to open Health Library, new treatments, and Health Experts."
   },
   "meetingRoom": {
     "feedbackRequired": "Please tell us what went wrong.",

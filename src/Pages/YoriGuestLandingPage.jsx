@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Send, Loader2, ExternalLink, X, Trash2 } from "lucide-react";
+import { PageTutorialHintBar } from "../components/PageTutorial.jsx";
 import ReactMarkdown from "react-markdown";
 import {
   getGuestTrialCount,
@@ -107,6 +109,7 @@ const markdownComponents = {
 };
 
 export default function YoriGuestLandingPage() {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const [messages, setMessages] = useState(() => {
     if (typeof window === "undefined") return [];
@@ -367,6 +370,13 @@ export default function YoriGuestLandingPage() {
               <X className="h-5 w-5" strokeWidth={2} />
             </Link>
           </div>
+
+          <PageTutorialHintBar
+            pageId="yori_guest_explore"
+            enabled={GUEST_BROWSE_MODE_ENABLED}
+            message={t("yori.exploreNavTipLine")}
+            dismissLabel={t("pageTutorial.hintDismiss")}
+          />
 
           <div
             ref={messagesContainerRef}

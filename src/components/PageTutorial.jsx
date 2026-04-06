@@ -64,6 +64,47 @@ export function resetTutorialCompleted(pageId) {
   }
 }
 
+/**
+ * Single-line dismissible hint bar (no overlay or spotlight).
+ * Uses the same completion storage as PageTutorial (`pageId` + `_completed`).
+ */
+export function PageTutorialHintBar({
+  pageId,
+  enabled = true,
+  message,
+  dismissLabel,
+  className = "",
+}) {
+  const { t } = useTranslation("common");
+  const completed = useTutorialCompleted(pageId);
+  const [dismissedLocal, setDismissedLocal] = useState(false);
+
+  const handleDismiss = useCallback(() => {
+    markTutorialCompleted(pageId);
+    setDismissedLocal(true);
+  }, [pageId]);
+
+  if (!enabled || completed || dismissedLocal) return null;
+
+  return (
+    <div
+      role="note"
+      className={`flex shrink-0 items-center gap-2 border-b border-[#D1D3E5] bg-[#E8E9F2]/35 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2 ${className}`}
+    >
+      <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-700 sm:text-xs">
+        {message}
+      </p>
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="shrink-0 rounded-md border border-[#D0C4E2]/90 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-[#2F3C96] shadow-sm transition-colors hover:bg-[#F5F2F8] sm:py-1 sm:text-xs"
+      >
+        {dismissLabel ?? t("pageTutorial.hintDismiss")}
+      </button>
+    </div>
+  );
+}
+
 export const TUTORIAL_ADVANCE_EVENT = "curlinkTutorialAdvance";
 
 function getScrollParent(el) {

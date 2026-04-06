@@ -36,6 +36,8 @@ import GlobalSearch from "../components/GlobalSearch";
 import { ChevronDown } from "lucide-react";
 import Button from "../components/ui/Button";
 import { getDisplayName } from "../utils/researcherDisplayName";
+import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
+
 export default function Landing() {
   const { t } = useTranslation("common");
   const [mounted, setMounted] = useState(false);
@@ -61,6 +63,9 @@ export default function Landing() {
       // These live in the same Pages/ directory as Landing.jsx
       import("./OnboardingNew.jsx").catch(() => {});
       import("./SignIn.jsx").catch(() => {});
+      if (GUEST_BROWSE_MODE_ENABLED) {
+        import("./YoriGuestLandingPage.jsx").catch(() => {});
+      }
     };
     if (typeof requestIdleCallback !== "undefined") {
       const id = requestIdleCallback(prefetch, { timeout: 2000 });
@@ -291,18 +296,26 @@ export default function Landing() {
             </div>
             {!user ? (
               <div className="flex flex-col gap-4 w-full">
-                {/* Primary — solid box button */}
+                {/* Primary — guest browse: Yori landing (/); else onboarding */}
                 <button
-                  onClick={() => navigate("/onboarding")}
+                  onClick={() =>
+                    GUEST_BROWSE_MODE_ENABLED
+                      ? navigate("/")
+                      : navigate("/onboarding")
+                  }
                   className="w-full py-4 rounded-lg font-bold text-[15px] uppercase tracking-wider border border-[#1c2459] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96] hover:opacity-90"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
                   {t("landing.getStarted")}
                 </button>
 
-                {/* Secondary — outlined box button */}
+                {/* Secondary — guest browse: For Researchers → onboarding; else sign in */}
                 <button
-                  onClick={() => navigate("/signin")}
+                  onClick={() =>
+                    GUEST_BROWSE_MODE_ENABLED
+                      ? navigate("/onboarding")
+                      : navigate("/signin")
+                  }
                   className="w-full py-4 rounded-lg font-bold text-[15px] uppercase tracking-wider border-2 border-[#D0C4E2] bg-white transition-colors hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D0C4E2]"
                   style={{
                     borderColor: "#D0C4E2",
@@ -310,7 +323,9 @@ export default function Landing() {
                     backgroundColor: "#FFFFFF",
                   }}
                 >
-                  {t("landing.haveAccount")}
+                  {GUEST_BROWSE_MODE_ENABLED
+                    ? t("auth.forResearchers")
+                    : t("landing.haveAccount")}
                 </button>
               </div>
             ) : (
