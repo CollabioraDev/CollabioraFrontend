@@ -1257,6 +1257,27 @@
     "tryAgain": "Versuchen Sie es erneut",
     "goBack": "Geh zurück"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "E-Mail-Zustellstatistik, Webhook-Integration ausstehend",
+      "headingWeekly": "Letzte Sammelaktion — Zustellung und Engagement",
+      "headingBetaSurvey": "Umfrageversand — Zustellung und Engagement",
+      "headingResearcherInvites": "Einladungsversand — Zustellung und Engagement",
+      "headingDefault": "Zustellung und Engagement",
+      "delivered": "Zugestellt",
+      "opened": "Geöffnet",
+      "bounced": "Zurückgewiesen",
+      "emDash": "—",
+      "footnote": "Verbinden Sie Azure-Webhooks, um Zustellungen, Öffnungen und Bounces pro Versand (und optional pro Empfänger unten) anzuzeigen.",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "zugestellt —",
+      "webhookOpened": "geöffnet —",
+      "webhookBounced": "zurückgewiesen —",
+      "titleDelivered": "Zugestellt (Azure-Webhook)",
+      "titleOpened": "Geöffnet (Azure-Webhook)",
+      "titleBounced": "Bounce (Azure-Webhook)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "Wie es funktioniert",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "Nutzen Sie das Dropdown „Entdecken“ in der oberen Leiste, um Gesundheitsbibliothek, neue Behandlungen und Gesundheitsexperten anzuzeigen."
   }
 }

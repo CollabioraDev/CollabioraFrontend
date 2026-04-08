@@ -368,7 +368,7 @@
   "landing": {
     "heroTitle1": "Empower Your",
     "heroTitle2": "Health Decisions",
-    "bullet1": "Learn more about you and your loved one's health",
+    "bullet1": "Learn more about yours and your loved one's health",
     "bullet2": "Learn and participate in latest treatments",
     "bullet3": "Connect with others who are experiencing the same",
     "getStarted": "Get Started",
@@ -1466,8 +1466,8 @@
       "step2Content": "Edit your medical conditions here to personalize your feed. Use Refresh to fetch new recommendations based on your updated profile.",
       "step3Title": "View details for a card",
       "step3Content": "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
-      "step4Title": "Explore tab in the navbar",
-      "step4Content": "Use the Explore menu in the navbar to search new treatments, health library, and health experts from one place. It's your gateway to discovering new research.",
+      "step4Title": "Explore dropdown in the top bar",
+      "step4Content": "Use the Explore dropdown in the top bar to view Health Library, New Treatments, and Health Experts. It's your gateway to discovering new research.",
       "step5Title": "Forums and Discovery",
       "step5Content": "Forums lets you join community discussions. Discovery is the next link to the right in the navbar; it shows a feed of activity and content across the platform.",
       "step6Title": "Dashboard tabs",
@@ -1492,8 +1492,8 @@
       "step3Content": "Switch to the Publications tab to see recommended papers. We'll show you a card and how to view its details.",
       "step4Title": "View details for a card",
       "step4Content": "In the publications section, use 'View full details' or 'Simplify' on any card to read more. This opens the full abstract and key takeaways.",
-      "step5Title": "Explore tab in the navbar",
-      "step5Content": "Use the Explore menu to search clinical trials, publications, and experts from one place. It's your gateway to discovering new research.",
+      "step5Title": "Explore dropdown in the top bar",
+      "step5Content": "Use the Explore dropdown in the top bar to view clinical trials, publications, and experts. It's your gateway to discovering new research.",
       "step6Title": "Forums and Discovery",
       "step6Content": "Forums lets you join community discussions. Discovery is the next link to the right in the navbar; it shows a feed of activity across the platform.",
       "step7Title": "Dashboard tabs",
@@ -1534,7 +1534,7 @@
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
     "suggestionPub5": "Who would benefit from this research?",
-    "exploreNavTipLine": "Use Explore in the top bar to open Health Library, new treatments, and Health Experts."
+    "exploreNavTipLine": "Use the Explore dropdown in the top bar to view Health Library, New Treatments, and Health Experts."
   },
   "meetingRoom": {
     "feedbackRequired": "Please tell us what went wrong.",
@@ -1557,6 +1557,27 @@
     "unableToJoinBody": "This meeting is no longer available or you do not have permission to join it.",
     "tryAgain": "Try again",
     "goBack": "Go back"
+  },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "Email delivery statistics, pending webhook integration",
+      "headingWeekly": "Last batch — delivery & engagement",
+      "headingBetaSurvey": "Survey sends — delivery & engagement",
+      "headingResearcherInvites": "Invite sends — delivery & engagement",
+      "headingDefault": "Delivery & engagement",
+      "delivered": "Delivered",
+      "opened": "Opened",
+      "bounced": "Bounced",
+      "emDash": "—",
+      "footnote": "Connect Azure webhooks to populate delivered, open, and bounce counts per send (and optionally per recipient below).",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "delivered —",
+      "webhookOpened": "opened —",
+      "webhookBounced": "bounced —",
+      "titleDelivered": "Delivered (Azure webhook)",
+      "titleOpened": "Opened (Azure webhook)",
+      "titleBounced": "Bounced (Azure webhook)"
+    }
   },
   "marketing": {
     "howItWorks": {

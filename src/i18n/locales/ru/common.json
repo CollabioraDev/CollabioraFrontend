@@ -1257,6 +1257,27 @@
     "tryAgain": "Попробуйте еще раз",
     "goBack": "Возвращаться"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "Статистика доставки писем, интеграция вебхука в ожидании",
+      "headingWeekly": "Последняя рассылка — доставка и вовлечённость",
+      "headingBetaSurvey": "Рассылка опроса — доставка и вовлечённость",
+      "headingResearcherInvites": "Приглашения — доставка и вовлечённость",
+      "headingDefault": "Доставка и вовлечённость",
+      "delivered": "Доставлено",
+      "opened": "Открыто",
+      "bounced": "Возвраты",
+      "emDash": "—",
+      "footnote": "Подключите вебхуки Azure, чтобы отображать число доставок, открытий и отказов для каждой отправки (и при необходимости для каждого получателя ниже).",
+      "webhookLabel": "Вебхук",
+      "webhookDelivered": "доставлено —",
+      "webhookOpened": "открыто —",
+      "webhookBounced": "возврат —",
+      "titleDelivered": "Доставлено (вебхук Azure)",
+      "titleOpened": "Открыто (вебхук Azure)",
+      "titleBounced": "Возврат (вебхук Azure)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "Как это работает",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "Используйте меню «Обзор» на верхней панели, чтобы просматривать библиотеку здоровья, новые методы лечения и экспертов."
   }
 }

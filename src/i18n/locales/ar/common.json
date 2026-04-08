@@ -1257,6 +1257,27 @@
     "tryAgain": "حاول ثانية",
     "goBack": "عُد"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "إحصاءات تسليم البريد، تكامل الويب هوك قيد الانتظار",
+      "headingWeekly": "آخر دفعة — التسليم والتفاعل",
+      "headingBetaSurvey": "إرسال الاستبيان — التسليم والتفاعل",
+      "headingResearcherInvites": "إرسال الدعوات — التسليم والتفاعل",
+      "headingDefault": "التسليم والتفاعل",
+      "delivered": "تم التسليم",
+      "opened": "تم الفتح",
+      "bounced": "مرتد",
+      "emDash": "—",
+      "footnote": "اربط ويب هوكات Azure لعرض أعداد التسليم والفتح والارتداد لكل إرسال (ولكل مستلم أدناه عند الحاجة).",
+      "webhookLabel": "ويب هوك",
+      "webhookDelivered": "تم التسليم —",
+      "webhookOpened": "تم الفتح —",
+      "webhookBounced": "مرتد —",
+      "titleDelivered": "تم التسليم (ويب هوك Azure)",
+      "titleOpened": "تم الفتح (ويب هوك Azure)",
+      "titleBounced": "مرتد (ويب هوك Azure)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "كيف يعمل",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "استخدم قائمة Explore المنسدلة في الشريط العلوي لعرض مكتبة الصحة والعلاجات الجديدة وخبراء الصحة."
   }
 }

@@ -1257,6 +1257,27 @@
     "tryAgain": "再试一次",
     "goBack": "回去"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "邮件送达统计，Webhook 集成待定",
+      "headingWeekly": "最近一批 — 送达与互动",
+      "headingBetaSurvey": "问卷发送 — 送达与互动",
+      "headingResearcherInvites": "邀请发送 — 送达与互动",
+      "headingDefault": "送达与互动",
+      "delivered": "已送达",
+      "opened": "已打开",
+      "bounced": "退回",
+      "emDash": "—",
+      "footnote": "连接 Azure Webhook 以显示每次发送（以及下方每位收件人）的送达、打开和退回数量。",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "已送达 —",
+      "webhookOpened": "已打开 —",
+      "webhookBounced": "退回 —",
+      "titleDelivered": "已送达（Azure Webhook）",
+      "titleOpened": "已打开（Azure Webhook）",
+      "titleBounced": "退回（Azure Webhook）"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "它是如何运作的",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "使用顶部栏中的 Explore 下拉菜单查看健康资料库、新疗法和健康专家。"
   }
 }

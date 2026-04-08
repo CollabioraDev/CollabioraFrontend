@@ -1257,6 +1257,27 @@
     "tryAgain": "Tente novamente",
     "goBack": "Volte"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "Estatísticas de entrega de e-mail, integração de webhook pendente",
+      "headingWeekly": "Último lote — entrega e engajamento",
+      "headingBetaSurvey": "Envios da pesquisa — entrega e engajamento",
+      "headingResearcherInvites": "Envios de convites — entrega e engajamento",
+      "headingDefault": "Entrega e engajamento",
+      "delivered": "Entregue",
+      "opened": "Aberto",
+      "bounced": "Rejeitado",
+      "emDash": "—",
+      "footnote": "Conecte webhooks do Azure para preencher contagens de entrega, abertura e rejeição por envio (e, se desejar, por destinatário abaixo).",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "entregue —",
+      "webhookOpened": "aberto —",
+      "webhookBounced": "rejeitado —",
+      "titleDelivered": "Entregue (webhook Azure)",
+      "titleOpened": "Aberto (webhook Azure)",
+      "titleBounced": "Rejeitado (webhook Azure)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "Como funciona",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "Use o menu suspenso Explorar na barra superior para ver a Biblioteca de Saúde, Novos Tratamentos e Especialistas em Saúde."
   }
 }

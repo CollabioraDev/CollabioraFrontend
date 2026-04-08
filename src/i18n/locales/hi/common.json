@@ -1257,6 +1257,27 @@
     "tryAgain": "पुनः प्रयास करें",
     "goBack": "वापस जाओ"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "ईमेल डिलीवरी आँकड़े, वेबहुक एकीकरण लंबित",
+      "headingWeekly": "अंतिम बैच — डिलीवरी और सगाई",
+      "headingBetaSurvey": "सर्वे भेजना — डिलीवरी और सगाई",
+      "headingResearcherInvites": "आमंत्रण भेजना — डिलीवरी और सगाई",
+      "headingDefault": "डिलीवरी और सगाई",
+      "delivered": "वितरित",
+      "opened": "खोला गया",
+      "bounced": "बाउंस",
+      "emDash": "—",
+      "footnote": "प्रत्येक भेजने (और नीचे प्रति प्राप्तकर्ता) के लिए वितरण, खुलने और बाउंस की गिनती दिखाने के लिए Azure वेबहुक कनेक्ट करें।",
+      "webhookLabel": "वेबहुक",
+      "webhookDelivered": "वितरित —",
+      "webhookOpened": "खोला —",
+      "webhookBounced": "बाउंस —",
+      "titleDelivered": "वितरित (Azure वेबहुक)",
+      "titleOpened": "खोला गया (Azure वेबहुक)",
+      "titleBounced": "बाउंस (Azure वेबहुक)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "यह काम किस प्रकार करता है",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "ऊपर की पट्टी में Explore ड्रॉपडाउन का उपयोग करके हेल्थ लायब्रेरी, नए उपचार और हेल्थ एक्सपर्ट देखें।"
   }
 }

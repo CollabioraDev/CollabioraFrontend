@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -557,6 +558,92 @@ const SECTIONS = [
   },
   { id: "meeting-requests", label: "Meeting Requests", icon: Calendar },
 ];
+
+/** Placeholder until Azure email webhooks supply per-message delivery stats. */
+function AdminEmailDeliveryPlaceholder({ variant = "default" }) {
+  const { t } = useTranslation();
+  const heading =
+    variant === "weekly"
+      ? t("admin.emailDelivery.headingWeekly")
+      : variant === "beta"
+        ? t("admin.emailDelivery.headingBetaSurvey")
+        : variant === "researcher"
+          ? t("admin.emailDelivery.headingResearcherInvites")
+          : t("admin.emailDelivery.headingDefault");
+
+  return (
+    <div
+      className="mb-4 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 md:p-4"
+      role="region"
+      aria-label={t("admin.emailDelivery.ariaRegion")}
+    >
+      <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide mb-2">
+        {heading}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="rounded-lg border border-slate-200/90 bg-white px-3 py-2 flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase text-slate-500">
+              {t("admin.emailDelivery.delivered")}
+            </p>
+            <p className="text-lg font-bold tabular-nums text-slate-400">
+              {t("admin.emailDelivery.emDash")}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200/90 bg-white px-3 py-2 flex items-center gap-2">
+          <Eye className="w-4 h-4 text-sky-600 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase text-slate-500">
+              {t("admin.emailDelivery.opened")}
+            </p>
+            <p className="text-lg font-bold tabular-nums text-slate-400">
+              {t("admin.emailDelivery.emDash")}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200/90 bg-white px-3 py-2 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase text-slate-500">
+              {t("admin.emailDelivery.bounced")}
+            </p>
+            <p className="text-lg font-bold tabular-nums text-slate-400">
+              {t("admin.emailDelivery.emDash")}
+            </p>
+          </div>
+        </div>
+      </div>
+      <p className="text-[11px] text-slate-500 mt-2">
+        {t("admin.emailDelivery.footnote")}
+      </p>
+    </div>
+  );
+}
+
+function AdminEmailWebhookRowPlaceholder() {
+  const { t } = useTranslation();
+  return (
+    <p className="text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-100/90 leading-relaxed">
+      <span className="font-semibold text-slate-600">
+        {t("admin.emailDelivery.webhookLabel")}
+      </span>
+      {": "}
+      <span title={t("admin.emailDelivery.titleDelivered")}>
+        {t("admin.emailDelivery.webhookDelivered")}
+      </span>
+      {" · "}
+      <span title={t("admin.emailDelivery.titleOpened")}>
+        {t("admin.emailDelivery.webhookOpened")}
+      </span>
+      {" · "}
+      <span title={t("admin.emailDelivery.titleBounced")}>
+        {t("admin.emailDelivery.webhookBounced")}
+      </span>
+    </p>
+  );
+}
 
 const SIDEBAR_GROUPS = [
   { title: "MENU", items: ["overview", "active-users", "work"] },
@@ -4535,6 +4622,15 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
 
+                {searchChannelAnalytics?.legacyUndifferentiatedDailyRows &&
+                  searchChannelAudience === "guest" && (
+                    <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+                      Some days in this period still have legacy daily totals (before
+                      the guest vs signed-in split). Those searches are not counted
+                      under Guests only; newer traffic is split correctly.
+                    </p>
+                  )}
+
                 <div className="mb-8 rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/60 to-white p-4 md:p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
@@ -8389,6 +8485,8 @@ export default function AdminDashboard() {
                   matching in the digest).
                 </p>
 
+                <AdminEmailDeliveryPlaceholder variant="weekly" />
+
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <div className="flex items-center gap-2 flex-1 min-w-[260px]">
                     <Search className="w-4 h-4 text-brand-gray/70 shrink-0" />
@@ -8530,6 +8628,7 @@ export default function AdminDashboard() {
                                   {entry.message}
                                 </p>
                               )}
+                              <AdminEmailWebhookRowPlaceholder />
                             </div>
                             <div
                               className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}
@@ -8656,6 +8755,8 @@ export default function AdminDashboard() {
                   Emails are sent through the same Azure mail as the rest of the
                   app. You can select everyone or individual participants.
                 </p>
+
+                <AdminEmailDeliveryPlaceholder variant="beta" />
 
                 <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-brand-gray border border-brand-purple-200/50 bg-brand-purple-50/50 rounded-lg px-3 py-2.5">
                   <History className="w-4 h-4 text-brand-royal-blue shrink-0" />
@@ -8820,6 +8921,7 @@ export default function AdminDashboard() {
                                   {entry.message}
                                 </p>
                               )}
+                              <AdminEmailWebhookRowPlaceholder />
                             </div>
                             <div
                               className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}
@@ -8941,6 +9043,8 @@ export default function AdminDashboard() {
                     manually. The email uses &quot;Dear Dr. [last word]&quot;;
                     if no name, &quot;Dear Doctor,&quot;.
                   </p>
+
+                  <AdminEmailDeliveryPlaceholder variant="researcher" />
 
                   <div className="space-y-3 mb-4">
                     <div className="flex flex-wrap gap-2 items-center">
@@ -9188,6 +9292,7 @@ export default function AdminDashboard() {
                                     {entry.message}
                                   </p>
                                 )}
+                                <AdminEmailWebhookRowPlaceholder />
                               </div>
                               <div
                                 className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-semibold ${pillClass}`}

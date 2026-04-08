@@ -1257,6 +1257,27 @@
     "tryAgain": "Essayer à nouveau",
     "goBack": "Retourner"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "Statistiques de livraison e-mail, intégration webhook en attente",
+      "headingWeekly": "Dernier envoi groupé — livraison et engagement",
+      "headingBetaSurvey": "Envois d’enquête — livraison et engagement",
+      "headingResearcherInvites": "Envois d’invitations — livraison et engagement",
+      "headingDefault": "Livraison et engagement",
+      "delivered": "Livré",
+      "opened": "Ouvert",
+      "bounced": "Rebond",
+      "emDash": "—",
+      "footnote": "Connectez les webhooks Azure pour afficher les livraisons, ouvertures et rebonds par envoi (et par destinataire ci-dessous si besoin).",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "livré —",
+      "webhookOpened": "ouvert —",
+      "webhookBounced": "rebond —",
+      "titleDelivered": "Livré (webhook Azure)",
+      "titleOpened": "Ouvert (webhook Azure)",
+      "titleBounced": "Rebond (webhook Azure)"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "Comment ça marche",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "Utilisez le menu déroulant Explorer dans la barre supérieure pour afficher la bibliothèque santé, les nouveaux traitements et les experts santé."
   }
 }

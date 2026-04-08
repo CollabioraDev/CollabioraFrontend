@@ -1257,6 +1257,27 @@
     "tryAgain": "もう一度やり直してください",
     "goBack": "戻る"
   },
+  "admin": {
+    "emailDelivery": {
+      "ariaRegion": "メール配信の統計（Webhook連携は未実装です）",
+      "headingWeekly": "直近の一括送信 — 配信とエンゲージメント",
+      "headingBetaSurvey": "アンケート送信 — 配信とエンゲージメント",
+      "headingResearcherInvites": "招待メール送信 — 配信とエンゲージメント",
+      "headingDefault": "配信とエンゲージメント",
+      "delivered": "配信済み",
+      "opened": "開封",
+      "bounced": "バウンス",
+      "emDash": "—",
+      "footnote": "Azure Webhook を接続すると、各送信および下記の各宛先について、配信・開封・バウンス数を表示できます。",
+      "webhookLabel": "Webhook",
+      "webhookDelivered": "配信済み —",
+      "webhookOpened": "開封 —",
+      "webhookBounced": "バウンス —",
+      "titleDelivered": "配信済み（Azure Webhook）",
+      "titleOpened": "開封（Azure Webhook）",
+      "titleBounced": "バウンス（Azure Webhook）"
+    }
+  },
   "marketing": {
     "howItWorks": {
       "title": "仕組み",
@@ -1585,6 +1606,7 @@
     "suggestionPub2": "What are the main findings?",
     "suggestionPub3": "What methods were used?",
     "suggestionPub4": "What are the key takeaways?",
-    "suggestionPub5": "Who would benefit from this research?"
+    "suggestionPub5": "Who would benefit from this research?",
+    "exploreNavTipLine": "上部バーの Explore ドロップダウンから、ヘルスライブラリ、新規治療法、ヘルス専門家を表示できます。"
   }
 }
