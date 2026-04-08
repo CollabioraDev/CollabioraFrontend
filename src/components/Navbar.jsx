@@ -35,8 +35,10 @@ export default function Navbar() {
   const isLoggedInUser = Boolean(user && (user._id || user.id));
   const effectiveNavRole = isLoggedInUser ? user.role || "patient" : "patient";
 
-  // Check if we're on the landing page (`/` = Yori guest preview)
-  const isLandingPage = location.pathname === "/";
+  /** Guest Yori chat landing; marketing `/` uses `LandingNavbar` instead of this bar. */
+  const isGuestYoriHome = location.pathname === "/home";
+
+  const isSignInPage = location.pathname === "/signin";
 
   // Check if we're on a dashboard page
   const isDashboardPage = location.pathname.includes("/dashboard");
@@ -118,7 +120,7 @@ export default function Navbar() {
   // Determine navigation items based on route and auth state
   // About/Contact/Sign-in/Onboarding + NOT signed in: About Us, FAQ, Contact (basic options)
   // About/Contact/Sign-in/Onboarding + signed in: Explore, Forums, Discovery
-  // `/` (Yori guest) + NOT signed in: single Explore → `/explore` (public page), not the signed-in dropdown
+  // `/home` (Yori guest) + NOT signed in: single Explore → `/explore` (public page), not the signed-in dropdown
   // Explore: Explore, Forums, Discovery
   // When signed in (other pages): Dashboard, Explore, Forums, Discovery
   const getNavItems = () => {
@@ -153,7 +155,7 @@ export default function Navbar() {
     if (isSimpleNavPage && user) {
       return ["explore", "forums", "discovery"];
     }
-    if (isLandingPage && !user) {
+    if (isGuestYoriHome && !user) {
       if (GUEST_BROWSE_MODE_ENABLED) {
         return ["explore", "forums", "discovery"];
       }
@@ -189,7 +191,7 @@ export default function Navbar() {
 
   const navItems = getNavItems();
 
-  /** Guest browse: show For Researchers → onboarding beside Explore · Forums · Discovery (not on About/FAQ-only routes). */
+  /** Guest browse: show Create Account → onboarding beside Explore · Forums · Discovery (not on About/FAQ-only routes). */
   const showGuestResearcherSignIn =
     GUEST_BROWSE_MODE_ENABLED &&
     !isLoggedInUser &&
@@ -199,6 +201,9 @@ export default function Navbar() {
   /** Guest browse on /onboarding: show Sign In next to About Us · FAQ · Contact (desktop + mobile). */
   const showGuestSignInOnOnboarding =
     GUEST_BROWSE_MODE_ENABLED && !isLoggedInUser && isOnboardingPage;
+
+  /** Sign-in page: show Create Account beside Contact in the nav (desktop + mobile). */
+  const showCreateAccountOnSignInPage = !isLoggedInUser && isSignInPage;
 
   // When signed in as researcher, show "Collaborators" / "Publications" / "Clinical Trials"; for patients use friendlier terms
   const expertsNavLabel = t(
@@ -414,7 +419,7 @@ export default function Navbar() {
       >
         {/* Logo */}
         <PrefetchLink
-          to={user ? "/yori" : isLandingPage ? "/home" : "/"}
+          to={user ? "/yori" : "/"}
           className="group relative flex items-center"
         >
           {/* Logo Image */}
@@ -456,9 +461,9 @@ export default function Navbar() {
               };
               const route = routeMap[item];
 
-              // Handle Explore dropdown separately (guest Yori `/` uses a single link to public Explore page)
+              // Handle Explore dropdown separately (guest Yori `/home` uses a single link to public Explore page)
               if (item === "explore") {
-                if (isLandingPage && !user && !GUEST_BROWSE_MODE_ENABLED) {
+                if (isGuestYoriHome && !user && !GUEST_BROWSE_MODE_ENABLED) {
                   return (
                     <Fragment key={`${item}-guest-landing`}>
                       <PrefetchLink
@@ -668,8 +673,24 @@ export default function Navbar() {
               );
             })}
 
-            {/* Separator before buttons */}
-            {navItems.length > 0 && (
+            {showCreateAccountOnSignInPage && (
+              <>
+                <div
+                  className="h-6 w-px"
+                  style={{ backgroundColor: "#D0C4E2" }}
+                />
+                <PrefetchLink
+                  to="/onboarding"
+                  className="px-5 py-2.5 rounded-xl font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  {t("auth.createAccount")}
+                </PrefetchLink>
+              </>
+            )}
+
+            {/* Separator before buttons (omit on /signin guest: nothing follows except empty slot) */}
+            {navItems.length > 0 && !showCreateAccountOnSignInPage && (
               <div
                 className="h-6 w-px ml-2"
                 style={{ backgroundColor: "#D0C4E2" }}
@@ -1137,30 +1158,17 @@ export default function Navbar() {
                   className="px-5 py-2.5 rounded-xl font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >
-                  {t("auth.forResearchers")}
+                  {t("auth.createAccount")}
                 </PrefetchLink>
               ) : showGuestSignInOnOnboarding ? (
-                <div>
-                  <PrefetchLink
-                    to="/signin"
-                    className="px-6 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-2 text-white"
-                    style={{
-                      background: "linear-gradient(135deg, #2F3C96, #474F97)",
-                      borderColor: "#D0C4E2",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background =
-                        "linear-gradient(135deg, #474F97, #2F3C96)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background =
-                        "linear-gradient(135deg, #2F3C96, #474F97)";
-                    }}
-                  >
-                    {t("auth.signIn")}
-                  </PrefetchLink>
-                </div>
-              ) : isLandingPage ? (
+                <PrefetchLink
+                  to="/signin"
+                  className="px-5 py-2.5 rounded-xl font-bold text-[13px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  {t("auth.signIn")}
+                </PrefetchLink>
+              ) : isGuestYoriHome ? (
                 <button
                   type="button"
                   onClick={() => navigate("/onboarding")}
@@ -1169,7 +1177,7 @@ export default function Navbar() {
                 >
                   {t("auth.getStarted")}
                 </button>
-              ) : GUEST_BROWSE_MODE_ENABLED ? null : (
+              ) : showCreateAccountOnSignInPage ? null : GUEST_BROWSE_MODE_ENABLED ? null : (
                 <div>
                   <PrefetchLink
                     to="/signin"
@@ -1273,6 +1281,46 @@ export default function Navbar() {
           {/* <div className="pb-4 border-b" style={{ borderColor: "#D0C4E2" }}>
               <GlobalSearch />
             </div> */}
+
+          {/* Sign-in page: About · FAQ · Contact + Create Account (matches desktop nav) */}
+          {!user && showCreateAccountOnSignInPage && (
+            <div className="space-y-1.5">
+              {["aboutUs", "faq", "contact"].map((item) => {
+                const routeMap = {
+                  aboutUs: "/about",
+                  faq: "/faq",
+                  contact: "/contact",
+                };
+                return (
+                  <PrefetchLink
+                    key={item}
+                    to={routeMap[item]}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                    style={{ color: "#2F3C96" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#E8E0EF";
+                      e.currentTarget.style.color = "#474F97";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "#2F3C96";
+                    }}
+                  >
+                    {t(`nav.${item}`)}
+                  </PrefetchLink>
+                );
+              })}
+              <PrefetchLink
+                to="/onboarding"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex w-full items-center justify-center text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459] mt-1"
+                style={{ backgroundColor: "#2F3C96" }}
+              >
+                {t("auth.createAccount")}
+              </PrefetchLink>
+            </div>
+          )}
 
           {/* Guest browse on onboarding: same links as desktop (About · FAQ · Contact) */}
           {!user && showGuestSignInOnOnboarding && (
@@ -1508,28 +1556,18 @@ export default function Navbar() {
                 className="flex w-full items-center justify-center text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                 style={{ backgroundColor: "#2F3C96" }}
               >
-                {t("auth.forResearchers")}
+                {t("auth.createAccount")}
               </PrefetchLink>
             ) : showGuestSignInOnOnboarding ? (
               <PrefetchLink
                 to="/signin"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center w-full text-center text-base font-semibold text-white py-2.5 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                style={{
-                  background: "linear-gradient(135deg, #2F3C96, #474F97)",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background =
-                    "linear-gradient(135deg, #474F97, #2F3C96)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background =
-                    "linear-gradient(135deg, #2F3C96, #474F97)";
-                }}
+                className="flex w-full items-center justify-center text-center text-base font-bold uppercase tracking-wider text-white py-2.5 rounded-xl shadow-[0_4px_0_0_#1c2459] transition-all duration-200 transform hover:scale-[1.02] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
+                style={{ backgroundColor: "#2F3C96" }}
               >
                 {t("auth.signIn")}
               </PrefetchLink>
-            ) : isLandingPage ? (
+            ) : isGuestYoriHome ? (
               <button
                 type="button"
                 onClick={() => {
@@ -1541,7 +1579,7 @@ export default function Navbar() {
               >
                 {t("auth.getStarted")}
               </button>
-            ) : GUEST_BROWSE_MODE_ENABLED ? null : (
+            ) : showCreateAccountOnSignInPage ? null : GUEST_BROWSE_MODE_ENABLED ? null : (
               <PrefetchLink
                 to="/signin"
                 onClick={() => setIsMobileMenuOpen(false)}

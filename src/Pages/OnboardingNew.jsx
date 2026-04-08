@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, startTransition } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "../components/Layout.jsx";
 import Input from "../components/ui/Input.jsx";
@@ -1408,6 +1408,28 @@ export default function OnboardingNew() {
                         />
                         <span className="text-base font-semibold">No</span>
                       </button>
+                    </div>
+                    <div className="-mx-5 sm:-mx-6 -mb-5 sm:-mb-6 mt-6 overflow-hidden rounded-b-xl">
+                      <div
+                        className="border-t"
+                        style={{ borderColor: "#E8E8E8" }}
+                        aria-hidden
+                      />
+                      <div
+                        className="px-5 sm:px-6 pt-4 pb-5 sm:pb-6 flex flex-col items-center gap-1 text-center text-sm"
+                        style={{ backgroundColor: "#FDF2F8" }}
+                      >
+                        <span style={{ color: "#2F3C96" }}>
+                          Already have an account?
+                        </span>
+                        <Link
+                          to="/signin"
+                          className="font-semibold underline decoration-2 underline-offset-2 hover:opacity-80"
+                          style={{ color: "#2F3C96" }}
+                        >
+                          Sign in
+                        </Link>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -2920,24 +2942,6 @@ export default function OnboardingNew() {
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Below the card: Continue as guest (step 1) */}
-            {step === STEP_MEDICAL && (
-              <div className="w-full flex justify-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate("/explore")}
-                  className="px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    borderColor: "#D0C4E2",
-                    color: "#2F3C96",
-                    backgroundColor: "rgba(208, 196, 226, 0.15)",
-                  }}
-                >
-                  Continue as guest
-                </button>
-              </div>
-            )}
 
             {/* Below the card: Skip for now (step 4 onwards) */}
             {step >= 4 && (

@@ -163,6 +163,7 @@
     "logoAlt": "logotipo de colaboración"
   },
   "landing": {
+    "heroTitle": "Tu compañero de salud",
     "heroTitle1": "Potencia tu",
     "heroTitle2": "Decisiones de salud",
     "bullet1": "Obtenga más información sobre su salud y la de su ser querido",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "Empezar",
+    "createAccount": "Crear cuenta",
     "signIn": "Iniciar sesión",
     "forgotPassword": {
       "toastEmailRequired": "Por favor ingrese su dirección de correo electrónico",

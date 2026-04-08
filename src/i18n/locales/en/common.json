@@ -366,12 +366,13 @@
     "logoAlt": "collabiora Logo"
   },
   "landing": {
+    "heroTitle": "Your Health Companion",
     "heroTitle1": "Empower Your",
     "heroTitle2": "Health Decisions",
     "bullet1": "Learn more about yours and your loved one's health",
     "bullet2": "Learn and participate in latest treatments",
     "bullet3": "Connect with others who are experiencing the same",
-    "getStarted": "Get Started",
+    "getStarted": "GET STARTED",
     "haveAccount": "I already have an account",
     "welcomeBack": "Welcome back, {{name}}!",
     "goToDashboard": "Go to Dashboard",
@@ -1271,6 +1272,7 @@
   },
   "auth": {
     "getStarted": "Get Started",
+    "createAccount": "Create Account",
     "forResearchers": "For Researchers",
     "signIn": "Sign In",
     "forgotPassword": {

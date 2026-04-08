@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Send, Loader2, ExternalLink, X, Trash2 } from "lucide-react";
-import { PageTutorialHintBar } from "../components/PageTutorial.jsx";
 import ReactMarkdown from "react-markdown";
 import {
   getGuestTrialCount,
@@ -363,20 +362,13 @@ export default function YoriGuestLandingPage() {
               </button>
             )}
             <Link
-              to="/home"
+              to="/"
               className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#2F3C96] hover:bg-[#E8E9F2]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
               aria-label="Close and go to home"
             >
               <X className="h-5 w-5" strokeWidth={2} />
             </Link>
           </div>
-
-          <PageTutorialHintBar
-            pageId="yori_guest_explore"
-            enabled={GUEST_BROWSE_MODE_ENABLED}
-            message={t("yori.exploreNavTipLine")}
-            dismissLabel={t("pageTutorial.hintDismiss")}
-          />
 
           <div
             ref={messagesContainerRef}
@@ -518,7 +510,7 @@ export default function YoriGuestLandingPage() {
               <p className="mt-4 text-center text-xs text-slate-600">
                 Want to browse first?{" "}
                 <Link
-                  to="/home"
+                  to="/"
                   className="font-semibold text-[#2F3C96] underline"
                 >
                   Explore collabiora

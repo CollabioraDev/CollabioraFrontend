@@ -1341,7 +1341,7 @@ const FloatingChatbot = () => {
     [t, localeKey],
   );
 
-  // Marketing pages: `/` (guest Yori) and `/home` (Landing.jsx) — same bottom offset on mobile
+  // Marketing landing `/` and guest Yori `/home` — same bottom offset on mobile when chatbot is shown
   const isLandingPage =
     location.pathname === "/" || location.pathname === "/home";
   const [isOpen, setIsOpen] = useState(false);

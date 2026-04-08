@@ -163,6 +163,7 @@
     "logoAlt": "Colabora Logo"
   },
   "landing": {
+    "heroTitle": "Seu companheiro de saúde",
     "heroTitle1": "Capacite seu",
     "heroTitle2": "Decisões de Saúde",
     "bullet1": "Saiba mais sobre você e a saúde do seu ente querido",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "Comece",
+    "createAccount": "Criar conta",
     "signIn": "Entrar",
     "forgotPassword": {
       "toastEmailRequired": "Por favor insira seu endereço de e-mail",

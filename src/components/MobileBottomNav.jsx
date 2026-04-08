@@ -24,7 +24,8 @@ export default function MobileBottomNav({ isPatient }) {
 
   const isActiveTab = (key) => {
     const path = location.pathname || "/";
-    if (key === "home") return path === "/" || path === "/yori";
+    if (key === "home")
+      return path === "/" || path === "/home" || path === "/yori";
     if (key === "dashboard") return path.startsWith("/dashboard");
     if (key === "explore") {
       return (

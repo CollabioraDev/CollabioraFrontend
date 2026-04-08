@@ -163,6 +163,7 @@
     "logoAlt": "合作标志"
   },
   "landing": {
+    "heroTitle": "您的健康伙伴",
     "heroTitle1": "增强您的能力",
     "heroTitle2": "健康决策",
     "bullet1": "进一步了解您和您所爱之人的健康状况",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "开始使用",
+    "createAccount": "创建账户",
     "signIn": "登入",
     "forgotPassword": {
       "toastEmailRequired": "请输入您的电子邮件地址",

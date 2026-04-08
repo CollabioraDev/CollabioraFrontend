@@ -163,6 +163,7 @@
     "logoAlt": "コラボラのロゴ"
   },
   "landing": {
+    "heroTitle": "あなたの健康コンパニオン",
     "heroTitle1": "あなたに力を与える",
     "heroTitle2": "健康に関する決定",
     "bullet1": "あなたとあなたの愛する人の健康について詳しく知る",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "始めましょう",
+    "createAccount": "アカウントを作成",
     "signIn": "サインイン",
     "forgotPassword": {
       "toastEmailRequired": "メールアドレスを入力してください",

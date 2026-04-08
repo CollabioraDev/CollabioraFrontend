@@ -59,15 +59,15 @@ import {
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route
-        path="/"
+        path="/home"
         element={
           <AuthenticatedRedirect>
             <YoriGuestLandingPage />
           </AuthenticatedRedirect>
         }
       />
-      <Route path="/home" element={<Landing />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
       <Route path="/contact" element={<ContactUs />} />

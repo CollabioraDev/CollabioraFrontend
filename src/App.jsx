@@ -28,8 +28,8 @@ const AppContent = () => {
   const isVerifyEmailPage = location.pathname === "/verify-email";
   const isAdminPage = location.pathname.startsWith("/admin");
   const isErrorPage = location.pathname === "/404";
-  const isHomePage = location.pathname === "/";
-  const isMarketingHome = location.pathname === "/home";
+  const isHomePage = location.pathname === "/home";
+  const isMarketingHome = location.pathname === "/";
   const isSignInPage = location.pathname === "/signin";
   const isOnboardingPage = location.pathname === "/onboarding";
   const isEditProfilePage = location.pathname === "/profile";
@@ -129,6 +129,7 @@ const AppContent = () => {
       )}
       {showLayout &&
         showChatbot &&
+        !isMarketingHome &&
         !isHomePage &&
         !isSignInPage &&
         !isYoriPage &&

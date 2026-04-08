@@ -163,6 +163,7 @@
     "logoAlt": "Logo de la collaboration"
   },
   "landing": {
+    "heroTitle": "Votre compagnon santé",
     "heroTitle1": "Donnez du pouvoir à votre",
     "heroTitle2": "Décisions en matière de santé",
     "bullet1": "Apprenez-en davantage sur votre santé et celle de votre proche",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "Commencer",
+    "createAccount": "Créer un compte",
     "signIn": "Se connecter",
     "forgotPassword": {
       "toastEmailRequired": "Veuillez entrer votre adresse e-mail",

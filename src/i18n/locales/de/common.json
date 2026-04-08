@@ -163,6 +163,7 @@
     "logoAlt": "collabiora-Logo"
   },
   "landing": {
+    "heroTitle": "Dein Gesundheitsbegleiter",
     "heroTitle1": "Stärken Sie Ihre",
     "heroTitle2": "Gesundheitsentscheidungen",
     "bullet1": "Erfahren Sie mehr über Ihre Gesundheit und die Ihrer Liebsten",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "Legen Sie los",
+    "createAccount": "Konto erstellen",
     "signIn": "Anmelden",
     "forgotPassword": {
       "toastEmailRequired": "Bitte geben Sie Ihre E-Mail-Adresse ein",

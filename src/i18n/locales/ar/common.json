@@ -163,6 +163,7 @@
     "logoAlt": "شعار التعاون"
   },
   "landing": {
+    "heroTitle": "رفيقك الصحي",
     "heroTitle1": "تمكين الخاص بك",
     "heroTitle2": "القرارات الصحية",
     "bullet1": "اعرف المزيد عنك وصحة من تحب",
@@ -1067,6 +1068,7 @@
   },
   "auth": {
     "getStarted": "ابدأ",
+    "createAccount": "إنشاء حساب",
     "signIn": "تسجيل الدخول",
     "forgotPassword": {
       "toastEmailRequired": "الرجاء إدخال عنوان البريد الإلكتروني الخاص بك",
