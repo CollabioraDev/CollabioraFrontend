@@ -243,12 +243,6 @@ export default function Landing() {
               >
                 {t("landing.getStarted")}
               </button>
-              <p
-                className="w-full max-w-md px-2 text-sm sm:text-[15px] md:text-base font-semibold leading-snug text-balance text-center"
-                style={{ color: "#474F96" }}
-              >
-                {t("landing.bullet1")}
-              </p>
             </>
           ) : (
             <div
