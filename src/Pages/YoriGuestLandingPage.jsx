@@ -15,12 +15,17 @@ import {
   YORI_GUEST_CHAT_STORAGE_KEY,
 } from "../utils/yoriGuestChatStorage.js";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
+import { getApiLocale } from "../i18n/getApiLocale.js";
+import {
+  SearchResultsCards,
+  GroundingSources,
+} from "../features/chat/ChatbotPage.jsx";
 
 const SAMPLE_PROMPTS = [
-  "How much water should I drink?",
-  "Tell me about stem cell therapy in Parkinson's disease",
-  "Treatments for metastatic breast cancer",
-  "What are common vitamin deficiencies?",
+  "How much water should I drink in a day?",
+  "What are new treatments for breast cancer?",
+  "Is exercise good for Parkinson's disease?",
+  "Should I be taking multivitamins?",
 ];
 
 const YORI_DISCLAIMER =
@@ -198,6 +203,9 @@ export default function YoriGuestLandingPage() {
         role: "assistant",
         content: "",
         searchResults: null,
+        trialDetails: null,
+        publicationDetails: null,
+        communityResults: null,
         groundingSources: null,
       },
     ]);
@@ -214,7 +222,10 @@ export default function YoriGuestLandingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ messages: messagesToSend }),
+        body: JSON.stringify({
+          messages: messagesToSend,
+          locale: getApiLocale(),
+        }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -232,39 +243,57 @@ export default function YoriGuestLandingPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
+      let searchResults = null;
+      let trialDetails = null;
+      let publicationDetails = null;
+      let communityResults = null;
+      let groundingSources = null;
+      let buffer = "";
+
+      const applyUpdate = () => {
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[assistantMessageIndex] = {
+            role: "assistant",
+            content: assistantContent,
+            searchResults,
+            trialDetails,
+            publicationDetails,
+            communityResults,
+            groundingSources,
+          };
+          return updated;
+        });
+      };
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        if (value) buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        if (done && buffer.trim()) lines.push(buffer);
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.error) throw new Error(data.error);
-              if (data.text) {
-                assistantContent += data.text;
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  updated[assistantMessageIndex] = {
-                    role: "assistant",
-                    content: assistantContent,
-                    searchResults: null,
-                    groundingSources: null,
-                  };
-                  return updated;
-                });
-              }
-              if (data.done) break;
-            } catch (e) {
-              console.warn("Invalid JSON in stream:", e);
-            }
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.error) throw new Error(data.error);
+            if (data.trialDetails) trialDetails = data.trialDetails;
+            if (data.publicationDetails) publicationDetails = data.publicationDetails;
+            if (data.text) assistantContent += data.text;
+            if (data.groundingSources) groundingSources = data.groundingSources;
+            if (data.searchResults) searchResults = data.searchResults;
+            if (data.communityResults) communityResults = data.communityResults;
+            applyUpdate();
+            if (data.done) break;
+          } catch (e) {
+            if (e.message && !e.message.includes("JSON")) throw e;
           }
         }
+        if (done) break;
       }
+      applyUpdate();
 
       incrementGuestTrialAfterMessage();
       syncTrial();
@@ -280,6 +309,9 @@ export default function YoriGuestLandingPage() {
           role: "assistant",
           content: displayMsg,
           searchResults: null,
+          trialDetails: null,
+          publicationDetails: null,
+          communityResults: null,
           groundingSources: null,
         };
         return updated;
@@ -288,6 +320,16 @@ export default function YoriGuestLandingPage() {
       setIsLoading(false);
       abortControllerRef.current = null;
     }
+  };
+
+  const handleAskAbout = (item, type) => {
+    const question =
+      type === "publication"
+        ? `Tell me more about this publication: "${item.title}"`
+        : type === "trial"
+          ? `Tell me more about this trial: "${item.title}"`
+          : `Tell me more about this researcher: "${item.name}"`;
+    handleSendMessage(question);
   };
 
   const handleKeyDown = (e) => {
@@ -430,7 +472,10 @@ export default function YoriGuestLandingPage() {
                                 isLoading &&
                                 index === messages.length - 1 &&
                                 !message.content &&
-                                !message.searchResults
+                                !message.searchResults &&
+                                !message.trialDetails &&
+                                !message.publicationDetails &&
+                                !message.communityResults
                                   ? "/yori-thinking.webp"
                                   : "/Yorisidepeak.webp"
                               }
@@ -451,8 +496,28 @@ export default function YoriGuestLandingPage() {
                               </div>
                             )}
 
+                            {message.searchResults && (
+                              <SearchResultsCards
+                                searchResults={message.searchResults}
+                                onAskAbout={handleAskAbout}
+                                onSave={undefined}
+                                userId={null}
+                                userRole={null}
+                              />
+                            )}
+
+                            {Array.isArray(message.groundingSources) &&
+                              message.groundingSources.length > 0 && (
+                                <GroundingSources
+                                  sources={message.groundingSources}
+                                />
+                              )}
+
                             {!message.content &&
                               !message.searchResults &&
+                              !message.trialDetails &&
+                              !message.publicationDetails &&
+                              !message.communityResults &&
                               isLoading &&
                               index === messages.length - 1 && (
                                 <div className="ml-2 sm:ml-3 inline-flex items-center gap-1.5 rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-2.5 sm:px-4">

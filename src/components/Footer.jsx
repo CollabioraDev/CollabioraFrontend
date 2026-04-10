@@ -52,8 +52,12 @@ export default function Footer() {
               style={{ color: "#2F3C96" }}
             >
               {t("footer.brandTagline1")}
-              <br />
-              {t("footer.brandTagline2")}
+              {t("footer.brandTagline2") ? (
+                <>
+                  <br />
+                  {t("footer.brandTagline2")}
+                </>
+              ) : null}
             </p>
           </div>
 

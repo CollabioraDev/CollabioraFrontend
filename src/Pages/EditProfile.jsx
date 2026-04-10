@@ -60,6 +60,41 @@ import {
   IconStethoscope,
 } from "@tabler/icons-react";
 
+/** Public-folder filenames for patient preset profile pictures (served from /). */
+const PRESET_PATIENT_AVATAR_FILENAMES = [
+  "1stAvatarPublic.png",
+  "2ndAvatarPublic.png",
+  "3rdAvatarPublic.png",
+  "4thAvatarPublic.png",
+  "5thAvatarPublic.png",
+  "6thAvatarPublic.png",
+];
+
+const PRESET_RESEARCHER_AVATAR_FILENAMES = [
+  "1stAvatarResearcher.png",
+  "2ndAvatarResearcher.png",
+  "3rdAvatarResearcher.png",
+  "4thAvatarResearcher.png",
+  "5thAvatarResearcher.png",
+  "6thAvatarResearcher.png",
+];
+
+function normalizePicturePath(url) {
+  if (!url || typeof url !== "string") return "";
+  try {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return new URL(url).pathname || url;
+    }
+  } catch {
+    /* ignore */
+  }
+  return url.startsWith("/") ? url : `/${url}`;
+}
+
+function isSameProfilePicture(a, b) {
+  return normalizePicturePath(a) === normalizePicturePath(b);
+}
+
 // Icon mapping for communities
 const getCommunityIcon = (slug, name) => {
   const iconMap = {
@@ -111,6 +146,19 @@ export default function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [savingPresetAvatarUrl, setSavingPresetAvatarUrl] = useState(null);
+
+  const patientPresetAvatarUrls = useMemo(() => {
+    const root = import.meta.env.BASE_URL || "/";
+    const prefix = root.endsWith("/") ? root : `${root}/`;
+    return PRESET_PATIENT_AVATAR_FILENAMES.map((f) => `${prefix}${f}`);
+  }, []);
+
+  const researcherPresetAvatarUrls = useMemo(() => {
+    const root = import.meta.env.BASE_URL || "/";
+    const prefix = root.endsWith("/") ? root : `${root}/`;
+    return PRESET_RESEARCHER_AVATAR_FILENAMES.map((f) => `${prefix}${f}`);
+  }, []);
 
   // User fields
   const [username, setUsername] = useState("");
@@ -790,6 +838,43 @@ export default function EditProfile() {
       throw error; // Re-throw so component knows upload failed
     } finally {
       setUploadingPicture(false);
+    }
+  }
+
+  async function handlePresetAvatar(pictureUrl) {
+    const userId = user?._id || user?.id;
+    if (!userId) {
+      toast.error(t("editProfile.toastPleaseSignIn"));
+      return;
+    }
+    if (!pictureUrl) return;
+
+    setSavingPresetAvatarUrl(pictureUrl);
+    try {
+      const userUpdateResponse = await fetch(
+        `${base}/api/auth/update-user/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ picture: pictureUrl }),
+        },
+      );
+
+      if (!userUpdateResponse.ok) {
+        throw new Error(t("editProfile.errUpdateUserPicture"));
+      }
+
+      const userData = await userUpdateResponse.json();
+      const updatedUser = { ...user, ...userData.user, picture: pictureUrl };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      window.dispatchEvent(new Event("login"));
+      toast.success(t("editProfile.toastPictureUpdated"));
+    } catch (error) {
+      console.error("Error setting preset avatar:", error);
+      toast.error(error.message || t("editProfile.errUpdateUserPicture"));
+    } finally {
+      setSavingPresetAvatarUrl(null);
     }
   }
 
@@ -1583,6 +1668,133 @@ export default function EditProfile() {
                   </div>
                 )}
               </div>
+
+              {user?.role === "patient" && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-4 sm:p-5">
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    {t("editProfile.patientPresetAvatarsTitle")}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {t("editProfile.patientPresetAvatarsHint")}
+                  </p>
+                  <div
+                    className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4"
+                    role="list"
+                    aria-label={t("editProfile.patientPresetAvatarsTitle")}
+                  >
+                    {patientPresetAvatarUrls.map((url, idx) => {
+                      const selected = isSameProfilePicture(
+                        currentPicture,
+                        url,
+                      );
+                      const busy = savingPresetAvatarUrl === url;
+                      return (
+                        <button
+                          key={url}
+                          type="button"
+                          role="listitem"
+                          aria-pressed={selected}
+                          aria-label={t("editProfile.patientPresetAvatarOption", {
+                            n: idx + 1,
+                          })}
+                          disabled={
+                            busy ||
+                            !!savingPresetAvatarUrl ||
+                            uploadingPicture
+                          }
+                          onClick={() => handlePresetAvatar(url)}
+                          className={`relative flex aspect-square w-full max-w-[88px] mx-auto items-center justify-center rounded-full border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2 disabled:opacity-60 ${
+                            selected
+                              ? "border-[#2F3C96] bg-white shadow-md ring-2 ring-[#2F3C96]/25"
+                              : "border-slate-200 bg-white hover:border-[#474F97]/60 hover:shadow-sm"
+                          }`}
+                        >
+                          <img
+                            src={url}
+                            alt=""
+                            className="h-full w-full rounded-full object-cover"
+                            draggable={false}
+                          />
+                          {selected && (
+                            <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#2F3C96] text-white shadow">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          {busy && (
+                            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70">
+                              <Loader2 className="h-6 w-6 animate-spin text-[#2F3C96]" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {user?.role === "researcher" && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50/90 p-4 sm:p-5">
+                  <h3 className="text-sm font-semibold text-slate-800">
+                    {t("editProfile.researcherPresetAvatarsTitle")}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {t("editProfile.researcherPresetAvatarsHint")}
+                  </p>
+                  <div
+                    className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4"
+                    role="list"
+                    aria-label={t("editProfile.researcherPresetAvatarsTitle")}
+                  >
+                    {researcherPresetAvatarUrls.map((url, idx) => {
+                      const selected = isSameProfilePicture(
+                        currentPicture,
+                        url,
+                      );
+                      const busy = savingPresetAvatarUrl === url;
+                      return (
+                        <button
+                          key={url}
+                          type="button"
+                          role="listitem"
+                          aria-pressed={selected}
+                          aria-label={t(
+                            "editProfile.researcherPresetAvatarOption",
+                            { n: idx + 1 },
+                          )}
+                          disabled={
+                            busy ||
+                            !!savingPresetAvatarUrl ||
+                            uploadingPicture
+                          }
+                          onClick={() => handlePresetAvatar(url)}
+                          className={`relative flex aspect-square w-full max-w-[88px] mx-auto items-center justify-center rounded-full border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2 disabled:opacity-60 ${
+                            selected
+                              ? "border-[#2F3C96] bg-white shadow-md ring-2 ring-[#2F3C96]/25"
+                              : "border-slate-200 bg-white hover:border-[#474F97]/60 hover:shadow-sm"
+                          }`}
+                        >
+                          <img
+                            src={url}
+                            alt=""
+                            className="h-full w-full rounded-full object-cover"
+                            draggable={false}
+                          />
+                          {selected && (
+                            <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#2F3C96] text-white shadow">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          {busy && (
+                            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70">
+                              <Loader2 className="h-6 w-6 animate-spin text-[#2F3C96]" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Personal Information Section */}
               <div className="pt-6 border-t border-slate-200">

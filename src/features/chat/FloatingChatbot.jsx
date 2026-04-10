@@ -1803,9 +1803,7 @@ const FloatingChatbot = () => {
 
     if (!user) {
       if (getGuestTrialCount() >= MAX_GUEST_TRIALS) {
-        toast.error(
-          "You've used your free Yori messages. Sign up to keep chatting.",
-        );
+        toast.error(t("yori.guestTrialLimit"));
         navigate("/signin");
         return;
       }
@@ -2357,7 +2355,11 @@ const FloatingChatbot = () => {
               <button
                 onClick={handleMinimize}
                 className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
-                aria-label={isMobileView ? "Collapse to side" : "Minimize"}
+                aria-label={
+                  isMobileView
+                    ? t("yori.ariaCollapseDock")
+                    : t("yori.ariaMinimizeWindow")
+                }
               >
                 {isMobileView ? (
                   <ChevronRight className="w-4 h-4" />
@@ -2368,7 +2370,7 @@ const FloatingChatbot = () => {
               <button
                 onClick={handleClose}
                 className="w-8 h-8 hover:bg-white/20 rounded-lg transition-colors flex items-center justify-center"
-                aria-label="Close chat"
+                aria-label={t("yori.ariaCloseChatWindow")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2387,7 +2389,7 @@ const FloatingChatbot = () => {
                     : "text-slate-600 hover:text-[#2F3C96]"
                 }`}
               >
-                Yori
+                {t("yori.name")}
               </button>
               <button
                 type="button"
@@ -2401,12 +2403,12 @@ const FloatingChatbot = () => {
                 {user?.role === "patient" ? (
                   <>
                     <Users className="w-3.5 h-3.5" />
-                    Researcher updates
+                    {t("yori.tabResearcherUpdates")}
                   </>
                 ) : (
                   <>
                     <Calendar className="w-3.5 h-3.5" />
-                    Meeting requests
+                    {t("yori.tabMeetingRequests")}
                   </>
                 )}
               </button>
@@ -2417,11 +2419,10 @@ const FloatingChatbot = () => {
             (isGuest ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80 rounded-b-2xl">
                 <p className="text-slate-800 font-semibold mb-1">
-                  Sign in to use Yori at its fullest
+                  {t("yori.guestPanelTitle")}
                 </p>
                 <p className="text-sm text-slate-600 mb-5 max-w-[260px]">
-                  Chat with me for personalized help on publications, trials,
-                  and research.
+                  {t("yori.guestPanelBody")}
                 </p>
                 <Link
                   to="/signin"
@@ -2431,7 +2432,7 @@ const FloatingChatbot = () => {
                   }}
                 >
                   <User className="w-4 h-4" />
-                  Sign In
+                  {t("yori.signIn")}
                 </Link>
               </div>
             ) : (
@@ -2441,8 +2442,8 @@ const FloatingChatbot = () => {
                     <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-br from-[#E8E9F2]/50 via-white to-slate-50/80">
                       <p className="text-sm text-slate-700 mb-3">
                         {user?.role === "patient"
-                          ? "Here are your meeting requests. Check status and any replies from researchers in Activity."
-                          : "Patients who requested to meet you. View full details and respond in Activity."}
+                          ? t("yori.meetingsIntroPatient")
+                          : t("yori.meetingsIntroResearcher")}
                       </p>
                       <div className="space-y-3">
                         {meetingRequests.map((req) => {
@@ -2465,11 +2466,11 @@ const FloatingChatbot = () => {
                               : null;
                           const statusLabel =
                             req.status === "pending"
-                              ? "Pending"
+                              ? t("yori.meetingStatusPending")
                               : req.status === "accepted"
-                                ? "Accepted"
+                                ? t("yori.meetingStatusAccepted")
                                 : req.status === "rejected"
-                                  ? "Rejected"
+                                  ? t("yori.meetingStatusRejected")
                                   : req.status || "";
                           return (
                             <div
@@ -2479,7 +2480,7 @@ const FloatingChatbot = () => {
                               <div className="flex items-center justify-between gap-2 mb-2">
                                 <span className="font-semibold text-sm text-slate-800 truncate">
                                   {user?.role === "patient"
-                                    ? "Request to "
+                                    ? t("yori.meetingRequestToPrefix")
                                     : ""}
                                   {name}
                                 </span>

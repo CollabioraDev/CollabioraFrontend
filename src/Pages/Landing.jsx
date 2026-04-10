@@ -221,7 +221,7 @@ export default function Landing() {
                 className="pointer-events-none select-none absolute start-0 top-1/2 z-0 h-[3rem] w-auto sm:h-[3.75rem] md:h-[4.5rem] -translate-y-1/2 -translate-x-[8%] sm:-translate-x-[5%] object-contain object-left drop-shadow-[0_8px_20px_rgba(47,60,150,0.22)]"
               />
               <h1
-                className="relative z-10 ps-[2.65rem] sm:ps-[3.35rem] md:ps-16 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.12] tracking-tight text-balance"
+                className="relative z-10 ps-[2.65rem] sm:ps-[3.35rem] md:ps-16 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.12] tracking-tight whitespace-nowrap"
                 style={{ color: "#2F3C96" }}
               >
                 {t("landing.heroTitle")}

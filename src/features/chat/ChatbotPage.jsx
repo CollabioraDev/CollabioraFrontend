@@ -76,9 +76,6 @@ const loadStoredUser = () => {
 // v1 incorrectly persisted dismiss on Maybe Later; using a new key resets that.
 const BETA_PROMPT_DISMISSED_KEY = "collabiora_beta_prompt_dismissed_v2";
 
-const YORI_DISCLAIMER =
-  "Yori is an AI-powered health information tool. The content provided is for informational and educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for diagnosis, treatment, or medical decisions. Your information will never be sold or used for commercial purposes.";
-
 const getChatStorageKey = (user) => {
   const identity =
     user?._id || user?.id || user?.email || user?.username || "guest";
@@ -190,14 +187,17 @@ const isTokenExpiringSoon = (token, thresholdMs = 10 * 60 * 1000) => {
   return expMs - Date.now() <= thresholdMs;
 };
 
-const formatRelativeTime = (timestamp) => {
+function formatRelativeTimeLocalized(timestamp, t) {
   const diff = Date.now() - timestamp;
-  if (diff < 60 * 1000) return "Just now";
-  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / (60 * 1000))}m ago`;
-  if (diff < 24 * 60 * 60 * 1000)
-    return `${Math.floor(diff / (60 * 60 * 1000))}h ago`;
-  return `${Math.floor(diff / (24 * 60 * 60 * 1000))}d ago`;
-};
+  if (diff < 60 * 1000) return t("chat.justNow");
+  if (diff < 60 * 60 * 1000) {
+    return t("chat.minutesAgo", { count: Math.floor(diff / (60 * 1000)) });
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    return t("chat.hoursAgo", { count: Math.floor(diff / (60 * 60 * 1000)) });
+  }
+  return t("chat.daysAgo", { count: Math.floor(diff / (24 * 60 * 60 * 1000)) });
+}
 
 const hasDismissedBetaPrompt = () => {
   try {
@@ -397,6 +397,7 @@ const getMarkdownComponents = (t) => ({
 
 const PublicationCard = React.memo(
   ({ publication, onAskAbout, onSave, userId, useSimplified }) => {
+    const { t } = useTranslation("common");
     const publicationRoute = getPublicationPath(publication);
     const displayTitle =
       useSimplified && publication.simplifiedTitle
@@ -433,7 +434,7 @@ const PublicationCard = React.memo(
             }
             className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
             style={{ color: "#2F3C96" }}
-            aria-label="Save publication"
+            aria-label={t("chat.savePublication")}
           >
             <Heart className="w-4 h-4" />
           </button>
@@ -485,7 +486,8 @@ const PublicationCard = React.memo(
                   borderColor: "rgba(47, 60, 150, 0.25)",
                 }}
               >
-                View full Publication <ExternalLink className="w-3 h-3" />
+                {t("chat.viewFullPublication")}{" "}
+                <ExternalLink className="w-3 h-3" />
               </Link>
             ) : publication.url ? (
               <a
@@ -499,7 +501,8 @@ const PublicationCard = React.memo(
                   borderColor: "rgba(47, 60, 150, 0.25)",
                 }}
               >
-                View full Publication <ExternalLink className="w-3 h-3" />
+                {t("chat.viewFullPublication")}{" "}
+                <ExternalLink className="w-3 h-3" />
               </a>
             ) : null}
             {onAskAbout && (
@@ -509,7 +512,7 @@ const PublicationCard = React.memo(
                 className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
                 style={{ color: "#2F3C96" }}
               >
-                <MessageSquare className="w-3 h-3" /> Ask about this
+                <MessageSquare className="w-3 h-3" /> {t("chat.askAboutThis")}
               </button>
             )}
           </div>
@@ -521,6 +524,7 @@ const PublicationCard = React.memo(
 
 const TrialCard = React.memo(
   ({ trial, onAskAbout, onSave, userId, useSimplified }) => {
+    const { t } = useTranslation("common");
     const displayTitle =
       useSimplified && trial.simplifiedTitle
         ? trial.simplifiedTitle
@@ -552,7 +556,7 @@ const TrialCard = React.memo(
             }
             className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-black/5 transition-colors"
             style={{ color: "#2F3C96" }}
-            aria-label="Save trial"
+            aria-label={t("chat.saveTrial")}
           >
             <Heart className="w-4 h-4" />
           </button>
@@ -641,7 +645,8 @@ const TrialCard = React.memo(
                   borderColor: "rgba(47, 60, 150, 0.25)",
                 }}
               >
-                View full Trial <ExternalLink className="w-3 h-3" />
+                {t("chat.viewFullTrial")}{" "}
+                <ExternalLink className="w-3 h-3" />
               </Link>
             )}
             {onAskAbout && (
@@ -651,7 +656,7 @@ const TrialCard = React.memo(
                 className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
                 style={{ color: "#2F3C96" }}
               >
-                <MessageSquare className="w-3 h-3" /> Ask about this
+                <MessageSquare className="w-3 h-3" /> {t("chat.askAboutThis")}
               </button>
             )}
           </div>
@@ -662,6 +667,7 @@ const TrialCard = React.memo(
 );
 
 const ExpertCard = React.memo(({ expert, onAskAbout }) => {
+  const { t } = useTranslation("common");
   const profileUrl =
     expert.userId || expert.id || expert._id
       ? `/collabiora-expert/profile/${expert.userId || expert.id || expert._id}`
@@ -696,7 +702,7 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
           expert.researchInterests !== "Not specified" && (
             <div>
               <h5 className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-1">
-                Research Interests
+                {t("chat.researchInterests")}
               </h5>
               <p className="text-sm text-slate-700">
                 {expert.researchInterests}
@@ -711,13 +717,14 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
                 <span className="flex items-center gap-1">
                   <BookOpen className="w-3.5 h-3.5 text-[#2F3C96]" />
                   {expert.metrics.totalPublications.toLocaleString()}{" "}
-                  publications
+                  {t("chat.publicationsCount")}
                 </span>
               )}
               {expert.metrics.totalCitations > 0 && (
                 <span className="flex items-center gap-1">
                   <Microscope className="w-3.5 h-3.5 text-[#2F3C96]" />
-                  {expert.metrics.totalCitations.toLocaleString()} citations
+                  {expert.metrics.totalCitations.toLocaleString()}{" "}
+                  {t("chat.citationsCount")}
                 </span>
               )}
             </div>
@@ -732,7 +739,7 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
             to={profileUrl}
             className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#2F3C96] bg-[#E8E9F2] border border-[#D1D3E5] rounded-lg hover:bg-[#D1D3E5] transition-colors"
           >
-            <User className="w-3.5 h-3.5" /> View profile
+            <User className="w-3.5 h-3.5" /> {t("chat.viewProfile")}
           </Link>
           {expert.orcidUrl && (
             <a
@@ -749,7 +756,8 @@ const ExpertCard = React.memo(({ expert, onAskAbout }) => {
               onClick={() => onAskAbout(expert, "expert")}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-[#2F3C96] hover:text-[#474F97] hover:underline"
             >
-              <MessageSquare className="w-3.5 h-3.5" /> Ask about this expert
+              <MessageSquare className="w-3.5 h-3.5" />{" "}
+              {t("chat.askAboutThisExpert")}
             </button>
           )}
         </div>
@@ -1330,7 +1338,10 @@ const GroundingSources = ({ sources }) => {
   );
 };
 
+export { SearchResultsCards, GroundingSources };
+
 const CommunityCards = ({ communities }) => {
+  const { t } = useTranslation("common");
   if (!communities?.length) return null;
   return (
     <div className="w-full">
@@ -1338,10 +1349,10 @@ const CommunityCards = ({ communities }) => {
         <div className="border-b border-[#D1D3E5] bg-[#E8E9F2]/60 px-5 py-4">
           <p className="text-sm font-semibold text-[#2F3C96] flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Communities on collabiora
+            {t("yori.communitiesCardTitle")}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Join these communities to connect with others.
+            {t("yori.communitiesCardSubtitle")}
           </p>
         </div>
         <div className="grid gap-2 p-4 sm:grid-cols-2">
@@ -1414,6 +1425,7 @@ const ChatHistoryItem = ({
   onDelete,
   isDeleting,
 }) => {
+  const { t } = useTranslation("common");
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef(null);
 
@@ -1444,13 +1456,13 @@ const ChatHistoryItem = ({
           className="flex-1 text-left min-w-0"
         >
           <p className="truncate text-sm font-semibold text-[#2F3C96]">
-            {session.title || "New chat"}
+            {session.title || t("chat.newChat")}
           </p>
           <p className="mt-1 line-clamp-2 text-xs text-slate-500">
             {session.preview || getChatPreview(session.messages)}
           </p>
           <p className="mt-2 text-[11px] text-slate-400">
-            {formatRelativeTime(session.updatedAt)}
+            {formatRelativeTimeLocalized(session.updatedAt, t)}
           </p>
         </button>
 
@@ -1460,7 +1472,7 @@ const ChatHistoryItem = ({
             type="button"
             onClick={() => setMenuOpen((prev) => !prev)}
             className="mt-0.5 rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-[#2F3C96] transition-colors"
-            aria-label="Chat options"
+            aria-label={t("chat.sessionOptions")}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
@@ -1476,7 +1488,7 @@ const ChatHistoryItem = ({
                 className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 hover:bg-[#E8E9F2]/60 transition-colors"
               >
                 <Download className="h-3.5 w-3.5 text-[#2F3C96] shrink-0" />
-                Download as PDF
+                {t("chat.downloadSessionPdf")}
               </button>
               <div className="border-t border-[#E5E7EB]" />
               <button
@@ -1494,7 +1506,7 @@ const ChatHistoryItem = ({
                 ) : (
                   <Trash2 className="h-3.5 w-3.5 shrink-0" />
                 )}
-                {isDeleting ? "Deleting…" : "Delete chat"}
+                {isDeleting ? t("chat.deletingSession") : t("chat.deleteSession")}
               </button>
             </div>
           )}
@@ -1553,20 +1565,23 @@ export default function YoriAI() {
   const authToken = getAuthToken();
   const isRemoteChatUser = Boolean(userId && authToken && !authExpired);
   const chatStorageKey = useMemo(() => getChatStorageKey(user), [user]);
-  const handleAuthExpired = useCallback((errorMessage) => {
-    setAuthExpired(true);
-    setUser(null);
-    try {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    } catch {
-      // Ignore storage errors and still recover chat locally.
-    }
-    window.dispatchEvent(new Event("logout"));
-    setSessionLimitNotice(
-      errorMessage || "Your session expired. Please sign in again.",
-    );
-  }, []);
+  const handleAuthExpired = useCallback(
+    (errorMessage) => {
+      setAuthExpired(true);
+      setUser(null);
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } catch {
+        // Ignore storage errors and still recover chat locally.
+      }
+      window.dispatchEvent(new Event("logout"));
+      setSessionLimitNotice(
+        errorMessage || t("discovery.sessionExpired"),
+      );
+    },
+    [t],
+  );
 
   useEffect(() => {
     if (userId && authToken) {
@@ -1877,17 +1892,21 @@ export default function YoriAI() {
   const suggestionOptions = useMemo(() => {
     const first = userConditions[0];
     const second = userConditions[1];
-    const diseaseLabel = (c) => c || "my condition";
+    const diseaseLabel = (c) => c || t("yori.myConditionFallback");
     return [
-      `Find treatments for ${diseaseLabel(first)}`,
-      `Find treatments for ${diseaseLabel(second || first)}`,
+      t("yori.suggestionFindTreatments", { condition: diseaseLabel(first) }),
+      t("yori.suggestionFindTreatments", {
+        condition: diseaseLabel(second || first),
+      }),
       first
-        ? `Find experts in ${first}`
-        : "Find experts in my area of interest",
-      first ? `Latest research on ${first}` : "Latest research on my condition",
-      "What communities can I join on collabiora?",
+        ? t("yori.suggestionFindExpertsIn", { topic: first })
+        : t("yori.suggestionFindExpertsDefault"),
+      first
+        ? t("yori.suggestionLatestResearch", { condition: first })
+        : t("yori.suggestionLatestResearchDefault"),
+      t("yori.suggestionCommunitiesCollabiora"),
     ];
-  }, [userConditions]);
+  }, [userConditions, t, i18n.language]);
   const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
   const activeChatLoaded = activeChat?.loaded !== false;
   const hasUserMessages = messages.some((message) => message.role === "user");
@@ -2630,7 +2649,9 @@ export default function YoriAI() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {isCreatingNewChat ? "Creating…" : "New chat"}
+                {isCreatingNewChat
+                  ? t("chat.creatingChat")
+                  : t("chat.newChat")}
               </button>
               {isMobile && (
                 <button
@@ -2681,14 +2702,14 @@ export default function YoriAI() {
           <div className="relative flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
             <div className="relative flex items-center gap-3 min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-[#2F3C96] min-w-0">
-                {activeChat?.title || "New chat"}
+                {activeChat?.title || t("chat.newChat")}
               </p>
             </div>
             {/* Placeholder notification icon to mirror navbar */}
             <button
               type="button"
               className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-[#2F3C96] hover:bg-[#E8E9F2]/60 transition-colors"
-              aria-label="Notifications"
+              aria-label={t("chat.notifications")}
             >
               <Loader2 className="h-4 w-4 animate-spin opacity-0" />
             </button>
@@ -2696,7 +2717,9 @@ export default function YoriAI() {
               type="button"
               onClick={() => setSidebarOpen((prev) => !prev)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#D1D3E5] bg-white text-[#2F3C96] hover:bg-[#E8E9F2]/60 transition-colors"
-              aria-label={sidebarOpen ? "Hide chats" : "Show chats"}
+              aria-label={
+                sidebarOpen ? t("chat.hideChats") : t("chat.showChats")
+              }
             >
               <PanelLeft className="h-4 w-4" />
             </button>
@@ -2712,7 +2735,7 @@ export default function YoriAI() {
               <div className="flex min-h-full items-center justify-center">
                 <div className="flex items-center gap-3 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin text-[#2F3C96]" />
-                  Loading chat history...
+                  {t("yori.pageLoadingHistory")}
                 </div>
               </div>
             ) : !hasUserMessages ? (
@@ -2721,11 +2744,11 @@ export default function YoriAI() {
                 <div className="mb-3 text-center sm:mb-6 yori-section-enter yori-delay-1">
                   <img
                     src="/bot.webp"
-                    alt="Yori"
+                    alt={t("yori.name")}
                     className="mx-auto mb-2 h-14 w-14 sm:mb-3 sm:h-24 sm:w-24 object-contain"
                   />
                   <h1 className="text-lg font-bold text-[#2F3C96] sm:text-3xl">
-                    Hey, I'm Yori!
+                    {t("yori.pageHeroGreeting")}
                   </h1>
                 </div>
 
@@ -2742,8 +2765,8 @@ export default function YoriAI() {
                       <ChevronDown className="h-4 w-4 shrink-0" />
                     )}
                     {sampleQuestionsOpen
-                      ? "Hide questions"
-                      : "What can I help with?"}
+                      ? t("yori.sampleQuestionsHide")
+                      : t("yori.sampleQuestionsShow")}
                   </button>
                   {sampleQuestionsOpen && (
                     <div className="flex flex-wrap gap-2 mt-2 justify-center">
@@ -2795,7 +2818,7 @@ export default function YoriAI() {
                                 ? "/yori-thinking.webp"
                                 : "/Yorisidepeak.webp"
                             }
-                            alt="Yori"
+                            alt={t("yori.name")}
                             className="h-full w-full object-contain"
                           />
                         </div>
@@ -2962,8 +2985,7 @@ export default function YoriAI() {
           <div className="px-2 pb-2 pt-1 sm:px-6 sm:pb-3">
             {activeChatIsFull && (
               <p className="mx-auto mb-2 w-full max-w-4xl text-center text-xs text-amber-600">
-                This chat reached its limit. Download it if needed, then start a
-                new chat.
+                {t("yori.chatReachedLimitNotice")}
               </p>
             )}
             <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
@@ -2978,13 +3000,13 @@ export default function YoriAI() {
                   onKeyDown={handleKeyDown}
                   placeholder={
                     activeChatIsFull
-                      ? "This chat is full. Start a new chat to continue."
+                      ? t("yori.placeholderChatFull")
                       : isHydratingChats ||
                           (isRemoteChatUser &&
                             activeChatId &&
                             !activeChatLoaded)
-                        ? "Loading chat history..."
-                        : "Ask Yori anything..."
+                        ? t("yori.placeholderLoadingChat")
+                        : t("yori.placeholderAskAnything")
                   }
                   className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
                   rows={1}
@@ -3005,7 +3027,7 @@ export default function YoriAI() {
               </div>
             </div>
             <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
-              {YORI_DISCLAIMER}
+              {t("yori.disclaimer")}
             </p>
             <div className="sm:hidden mt-2 flex justify-center px-1">
               <button
@@ -3013,7 +3035,7 @@ export default function YoriAI() {
                 onClick={() => setDisclaimerOpen(true)}
                 className="text-[11px] font-medium text-[#2F3C96] underline underline-offset-2 decoration-[#2F3C96]/60"
               >
-                View disclaimer
+                {t("yori.viewDisclaimer")}
               </button>
             </div>
           </div>
@@ -3145,19 +3167,19 @@ export default function YoriAI() {
                 id="yori-chat-disclaimer-title"
                 className="text-base font-bold text-[#2F3C96] pr-2"
               >
-                Disclaimer
+                {t("yori.disclaimerTitle")}
               </h2>
               <button
                 type="button"
                 onClick={() => setDisclaimerOpen(false)}
                 className="shrink-0 rounded-lg p-1.5 text-[#2F3C96] hover:bg-[#F5F2F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
-                aria-label="Close disclaimer"
+                aria-label={t("yori.close")}
               >
                 <X className="h-5 w-5" strokeWidth={2} />
               </button>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
-              {YORI_DISCLAIMER}
+              {t("yori.disclaimer")}
             </p>
             <button
               type="button"
@@ -3165,7 +3187,7 @@ export default function YoriAI() {
               className="mt-5 w-full rounded-xl py-3 text-sm font-semibold text-white"
               style={{ backgroundColor: "#2F3C96" }}
             >
-              Close
+              {t("yori.close")}
             </button>
           </div>
         </div>
