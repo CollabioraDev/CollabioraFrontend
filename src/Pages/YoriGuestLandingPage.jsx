@@ -14,12 +14,16 @@ import {
   saveGuestChatMessages,
   YORI_GUEST_CHAT_STORAGE_KEY,
 } from "../utils/yoriGuestChatStorage.js";
+import {
+  preprocessMarkdownWithGroundingCitations,
+  flattenMarkdownChildrenToString,
+  isLikelyGroundingSourceUrl,
+  looksLikeHostnameChip,
+  GROUNDING_SOURCE_CHIP_CLASSNAME,
+} from "../utils/groundingCitations.js";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 import { getApiLocale } from "../i18n/getApiLocale.js";
-import {
-  SearchResultsCards,
-  GroundingSources,
-} from "../features/chat/ChatbotPage.jsx";
+import { SearchResultsCards } from "../features/chat/ChatbotPage.jsx";
 
 const SAMPLE_PROMPTS = [
   "How much water should I drink in a day?",
@@ -67,7 +71,33 @@ const markdownComponents = {
   li: ({ children }) => (
     <li className="text-[15px] leading-relaxed">{children}</li>
   ),
+  hr: () => (
+    <hr
+      className="my-5 border-0 border-t border-brand-purple-200/90 dark:border-brand-purple-400/40"
+      role="separator"
+    />
+  ),
   a: ({ href, children }) => {
+    const linkText = flattenMarkdownChildrenToString(children).trim();
+    const isNumericCitation = /^\[\d+\]$/.test(linkText);
+    if (
+      href &&
+      (isLikelyGroundingSourceUrl(href) ||
+        looksLikeHostnameChip(linkText) ||
+        isNumericCitation)
+    ) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={href}
+          className={GROUNDING_SOURCE_CHIP_CLASSNAME}
+        >
+          <span className="truncate">{children}</span>
+        </a>
+      );
+    }
     const isInternal = href && href.startsWith("/") && !href.startsWith("//");
     const isPubMed = href && /pubmed\.ncbi\.nlm\.nih\.gov/i.test(href);
     const isClinicalTrials = href && /clinicaltrials\.gov/i.test(href);
@@ -490,7 +520,10 @@ export default function YoriGuestLandingPage() {
                                   <ReactMarkdown
                                     components={markdownComponents}
                                   >
-                                    {message.content}
+                                    {preprocessMarkdownWithGroundingCitations(
+                                      message.content,
+                                      message.groundingSources,
+                                    )}
                                   </ReactMarkdown>
                                 </div>
                               </div>
@@ -505,13 +538,6 @@ export default function YoriGuestLandingPage() {
                                 userRole={null}
                               />
                             )}
-
-                            {Array.isArray(message.groundingSources) &&
-                              message.groundingSources.length > 0 && (
-                                <GroundingSources
-                                  sources={message.groundingSources}
-                                />
-                              )}
 
                             {!message.content &&
                               !message.searchResults &&

@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
+import {
+  preprocessMarkdownWithGroundingCitations,
+  flattenMarkdownChildrenToString,
+  isLikelyGroundingSourceUrl,
+  looksLikeHostnameChip,
+  GROUNDING_SOURCE_CHIP_CLASSNAME,
+} from "../../utils/groundingCitations.js";
 import toast from "react-hot-toast";
 import { getDisplayName } from "../../utils/researcherDisplayName.js";
 import {
@@ -492,7 +499,33 @@ const markdownComponents = {
     </ol>
   ),
   li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+  hr: () => (
+    <hr
+      className="my-5 border-0 border-t border-brand-purple-200/90 dark:border-brand-purple-400/40"
+      role="separator"
+    />
+  ),
   a: ({ href, children }) => {
+    const linkText = flattenMarkdownChildrenToString(children).trim();
+    const isNumericCitation = /^\[\d+\]$/.test(linkText);
+    if (
+      href &&
+      (isLikelyGroundingSourceUrl(href) ||
+        looksLikeHostnameChip(linkText) ||
+        isNumericCitation)
+    ) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={href}
+          className={GROUNDING_SOURCE_CHIP_CLASSNAME}
+        >
+          <span className="truncate">{children}</span>
+        </a>
+      );
+    }
     const isInternal = href && href.startsWith("/") && !href.startsWith("//");
     const isPubMed = href && /pubmed\.ncbi\.nlm\.nih\.gov/i.test(href);
     const isClinicalTrials = href && /clinicaltrials\.gov/i.test(href);
@@ -554,7 +587,10 @@ const MessageBubble = React.memo(({ message, isUser }) => {
         ) : (
           <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
             <ReactMarkdown components={markdownComponents}>
-              {message.content}
+              {preprocessMarkdownWithGroundingCitations(
+                message.content,
+                message.groundingSources,
+              )}
             </ReactMarkdown>
           </div>
         )}
@@ -2731,38 +2767,6 @@ const FloatingChatbot = () => {
                                 userId={user?._id || user?.id}
                                 userRole={user?.role}
                               />
-                            )}
-                          {/* Sources from grounded responses - publications to support claims */}
-                          {message.role === "assistant" &&
-                            message.groundingSources &&
-                            Array.isArray(message.groundingSources) &&
-                            message.groundingSources.length > 0 && (
-                              <div className="flex justify-start mb-3">
-                                <div className="max-w-[85%] w-full">
-                                  <div className="bg-white border border-[#D1D3E5] rounded-xl px-4 py-3 shadow-sm">
-                                    <p className="text-xs font-semibold text-[#2F3C96] uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                      <BookOpen className="w-3.5 h-3.5" />
-                                      Sources for further reading
-                                    </p>
-                                    <ul className="space-y-1.5">
-                                      {message.groundingSources.map((src) => (
-                                        <li key={src.index}>
-                                          <a
-                                            href={src.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-sm text-[#2F3C96] hover:text-[#474F97] font-medium hover:underline inline-flex items-center gap-1.5"
-                                          >
-                                            [{src.index}]{" "}
-                                            {src.title || `Source ${src.index}`}
-                                            <ExternalLink className="w-3 h-3 shrink-0" />
-                                          </a>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                </div>
-                              </div>
                             )}
                         </React.Fragment>
                       ))}

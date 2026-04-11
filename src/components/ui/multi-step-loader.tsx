@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const CheckIcon = ({ className }: { className?: string }) => {
   return (
@@ -46,6 +47,7 @@ const LoaderCore = ({
   loadingStates: LoadingState[];
   value?: number;
 }) => {
+  const { t } = useTranslation("common");
   const progressPercent = ((value + 1) / loadingStates.length) * 100;
 
   return (
@@ -58,7 +60,10 @@ const LoaderCore = ({
           />
         </div>
         <div className="text-xs font-medium text-[#2F3C96]/90 dark:text-white/60 mt-2">
-          Step {value + 1} of {loadingStates.length}
+          {t("dashboardLoader.stepProgress", {
+            current: value + 1,
+            total: loadingStates.length,
+          })}
         </div>
       </div>
 

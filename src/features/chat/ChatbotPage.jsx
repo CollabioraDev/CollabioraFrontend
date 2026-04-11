@@ -33,6 +33,13 @@ import ReactMarkdown from "react-markdown";
 import { buildChatExportHtml } from "../../components/ChatExportPdf.js";
 import { getApiLocale } from "../../i18n/getApiLocale.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
+import {
+  preprocessMarkdownWithGroundingCitations,
+  flattenMarkdownChildrenToString,
+  isLikelyGroundingSourceUrl,
+  looksLikeHostnameChip,
+  GROUNDING_SOURCE_CHIP_CLASSNAME,
+} from "../../utils/groundingCitations.js";
 import { useTranslation } from "react-i18next";
 import Button from "../../components/ui/Button.jsx";
 import { X } from "lucide-react";
@@ -348,7 +355,33 @@ const getMarkdownComponents = (t) => ({
   li: ({ children }) => (
     <li className="text-[15px] leading-relaxed">{children}</li>
   ),
+  hr: () => (
+    <hr
+      className="my-5 border-0 border-t border-brand-purple-200/90 dark:border-brand-purple-400/40"
+      role="separator"
+    />
+  ),
   a: ({ href, children }) => {
+    const linkText = flattenMarkdownChildrenToString(children).trim();
+    const isNumericCitation = /^\[\d+\]$/.test(linkText);
+    const isGoogleStyleInlineSource =
+      href &&
+      (isLikelyGroundingSourceUrl(href) ||
+        looksLikeHostnameChip(linkText) ||
+        isNumericCitation);
+    if (isGoogleStyleInlineSource) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={href}
+          className={GROUNDING_SOURCE_CHIP_CLASSNAME}
+        >
+          <span className="truncate">{children}</span>
+        </a>
+      );
+    }
     const isInternal = href && href.startsWith("/") && !href.startsWith("//");
     const isPubMed = href && /pubmed\.ncbi\.nlm\.nih\.gov/i.test(href);
     const isClinicalTrials = href && /clinicaltrials\.gov/i.test(href);
@@ -1287,58 +1320,7 @@ const SearchResultsCards = ({
   );
 };
 
-const GroundingSources = ({ sources }) => {
-  if (!sources?.length) return null;
-  return (
-    <div className="w-full">
-      <div className="rounded-2xl border border-[#D1D3E5] bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-[#D1D3E5] bg-[#E8E9F2]/60 px-5 py-4">
-          <p className="text-sm font-semibold text-[#2F3C96] flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
-            Sources
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Supporting references used for the answer above.
-          </p>
-        </div>
-        <div className="grid gap-2 p-4 sm:grid-cols-2">
-          {sources.map((src) => {
-            let domain = "";
-            try {
-              domain = new URL(src.url).hostname.replace("www.", "");
-            } catch {
-              domain = "";
-            }
-            return (
-              <a
-                key={src.index}
-                href={src.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-start gap-3 rounded-xl border border-[#D1D3E5] p-3 hover:bg-[#E8E9F2]/50 transition-colors"
-              >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#E8E9F2] text-xs font-bold text-[#2F3C96]">
-                  {src.index}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-medium text-[#2F3C96] group-hover:underline">
-                    {src.title || `Source ${src.index}`}
-                  </p>
-                  {domain && (
-                    <p className="mt-1 text-xs text-slate-500">{domain}</p>
-                  )}
-                </div>
-                <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-slate-400" />
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export { SearchResultsCards, GroundingSources };
+export { SearchResultsCards };
 
 const CommunityCards = ({ communities }) => {
   const { t } = useTranslation("common");
@@ -2833,7 +2815,10 @@ export default function YoriAI() {
                                   <ReactMarkdown
                                     components={markdownComponents}
                                   >
-                                    {message.content}
+                                    {preprocessMarkdownWithGroundingCitations(
+                                      message.content,
+                                      message.groundingSources,
+                                    )}
                                   </ReactMarkdown>
                                 </div>
                               </div>
@@ -2951,12 +2936,6 @@ export default function YoriAI() {
                               />
                             )}
 
-                          {Array.isArray(message.groundingSources) &&
-                            message.groundingSources.length > 0 && (
-                              <GroundingSources
-                                sources={message.groundingSources}
-                              />
-                            )}
                         </div>
                       </div>
                     )}

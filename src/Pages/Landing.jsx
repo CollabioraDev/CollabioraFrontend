@@ -6,11 +6,7 @@ import { useTranslation, Trans } from "react-i18next";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
-  ArrowRight,
-  CheckCircle2,
   Search,
-  Sparkles,
-  BookOpen,
   User,
   LogIn,
   MessageSquare,
@@ -34,6 +30,38 @@ import { ChevronDown } from "lucide-react";
 import Button from "../components/ui/Button";
 import { getDisplayName } from "../utils/researcherDisplayName";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
+
+const heroDescriptorList = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.11, delayChildren: 0.18 },
+  },
+};
+
+const heroDescriptorItem = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 420, damping: 32 },
+  },
+};
+
+const HERO_FEATURE_ROWS = [
+  {
+    headingKey: "landing.heroFeatureHeading1",
+    descKey: "landing.heroFeatureDesc1",
+  },
+  {
+    headingKey: "landing.heroFeatureHeading2",
+    descKey: "landing.heroFeatureDesc2",
+  },
+  {
+    headingKey: "landing.heroFeatureHeading3",
+    descKey: "landing.heroFeatureDesc3",
+  },
+];
 
 export default function Landing() {
   const { t } = useTranslation("common");
@@ -208,103 +236,167 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-20 sm:pb-10 md:pt-28 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
-        <div className="max-w-3xl relative z-10 w-full mx-auto flex flex-col items-center text-center gap-6 sm:gap-8">
-          {/* Headline + Yori peeking beside copy */}
-          <div className="flex w-full justify-center px-1 sm:px-2">
-            <div className="relative inline-flex items-center justify-center min-h-[3.5rem] sm:min-h-[4.5rem] md:min-h-[5.25rem]">
-              <img
-                src="/Yorisidepeak.webp"
-                alt=""
-                aria-hidden
-                fetchPriority="high"
-                decoding="async"
-                className="pointer-events-none select-none absolute start-0 top-1/2 z-0 h-[3rem] w-auto sm:h-[3.75rem] md:h-[4.5rem] -translate-y-1/2 -translate-x-[8%] sm:-translate-x-[5%] object-contain object-left drop-shadow-[0_8px_20px_rgba(47,60,150,0.22)]"
-              />
-              <h1
-                className="relative z-10 ps-[2.65rem] sm:ps-[3.35rem] md:ps-16 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.12] tracking-tight whitespace-nowrap"
-                style={{ color: "#2F3C96" }}
+        <div className="max-w-6xl relative z-10 w-full mx-auto flex flex-col items-stretch gap-10 lg:gap-12 pt-10">
+          <div className="flex flex-col lg:flex-row lg:items-stretch lg:justify-between gap-10 lg:gap-6 xl:gap-10 w-full px-1 sm:px-2">
+            {/* Left: badge, headline, CTAs */}
+            <div className="flex-1 min-w-0 flex flex-col items-center lg:items-start text-center lg:text-left">
+              <div className="relative w-full flex justify-center lg:justify-start">
+                <div className="relative inline-flex flex-col items-center lg:items-start justify-center min-h-[4rem] sm:min-h-[5rem] lg:min-h-[6rem]">
+                  <img
+                    src="/Yorisidepeak.webp"
+                    alt=""
+                    aria-hidden
+                    fetchPriority="high"
+                    decoding="async"
+                    className="pointer-events-none select-none absolute start-0 top-[42%] z-0 h-[2.75rem] w-auto sm:h-[3.5rem] md:h-[4rem] -translate-y-1/2 -translate-x-[8%] sm:-translate-x-[5%] object-contain object-left drop-shadow-[0_8px_20px_rgba(47,60,150,0.2)]"
+                  />
+                  <h1 className="relative z-10 ps-[2.5rem] sm:ps-[3.25rem] md:ps-[3.75rem] lg:ps-14 flex flex-col items-center lg:items-start font-extrabold leading-[1.06] tracking-tight gap-1 sm:gap-1.5 text-[clamp(1.35rem,calc(0.65rem+2.8vw),3.65rem)] sm:text-5xl md:text-6xl lg:text-[3.35rem] xl:text-[3.75rem]">
+                    <span
+                      className="block whitespace-nowrap"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {t("landing.heroTitleLine1")}
+                    </span>
+                    <span className="block whitespace-nowrap text-brand-purple-400">
+                      {t("landing.heroTitleLine2")}
+                    </span>
+                    <span
+                      className="block whitespace-nowrap"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {t("landing.heroTitleLine3")}
+                    </span>
+                    <span
+                      className="block whitespace-nowrap"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {t("landing.heroTitleLine4")}
+                    </span>
+                  </h1>
+                </div>
+              </div>
+
+              {!user && (
+                <div className="mt-8 flex w-full flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center justify-center gap-3 sm:gap-4 lg:justify-start lg:max-w-xl ps-[2.5rem] sm:ps-[3.25rem] md:ps-[3.75rem] lg:ps-14">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      GUEST_BROWSE_MODE_ENABLED
+                        ? navigate("/home")
+                        : navigate("/onboarding")
+                    }
+                    className="min-h-[3.25rem] rounded-full border-2 bg-white/95 px-8 py-3.5 text-base sm:text-lg font-bold shadow-sm transition-[transform,box-shadow,opacity] hover:bg-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96]"
+                    style={{
+                      borderColor: "#D0C4E2",
+                      color: "#2F3C96",
+                    }}
+                  >
+                    {t("landing.getStarted")}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div
+              className="lg:hidden h-px w-full max-w-xs mx-auto shrink-0 bg-gradient-to-r from-transparent via-[#c4b8e0]/95 to-transparent"
+              aria-hidden
+            />
+            <div
+              className="hidden lg:block w-px shrink-0 self-stretch min-h-[17rem] bg-gradient-to-b from-transparent via-[#c8bddc] to-transparent"
+              aria-hidden
+            />
+
+            {/* Right: numbered feature blocks */}
+            <div className="flex-1 min-w-0 w-full lg:max-w-lg flex flex-col justify-center">
+              <Motion.div
+                role="group"
+                aria-label={t("landing.heroDescriptorsAria")}
+                className="flex w-full flex-col gap-10 sm:gap-12"
+                variants={heroDescriptorList}
+                initial="hidden"
+                animate={mounted ? "show" : "hidden"}
               >
-                {t("landing.heroTitle")}
-              </h1>
+                {HERO_FEATURE_ROWS.map(({ headingKey, descKey }) => (
+                    <Motion.div
+                      key={headingKey}
+                      variants={heroDescriptorItem}
+                      className="flex flex-col items-center text-center lg:items-start lg:text-left"
+                    >
+                      <p className="mb-2 text-lg sm:text-xl font-bold leading-snug text-[#2F3C96]">
+                        {t(headingKey)}
+                      </p>
+                      <p className="max-w-md text-sm leading-relaxed text-[#5c6488]">
+                        {t(descKey)}
+                      </p>
+                    </Motion.div>
+                ))}
+              </Motion.div>
             </div>
           </div>
 
-          {!user ? (
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  GUEST_BROWSE_MODE_ENABLED
-                    ? navigate("/home")
-                    : navigate("/onboarding")
-                }
-                className="min-w-[min(100%,18rem)] px-12 sm:px-14 py-4 sm:py-[1.125rem] rounded-full text-lg sm:text-xl font-bold  shadow-sm transition-[transform,box-shadow,opacity] hover:opacity-[0.96] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96]"
-                style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+          {user && (
+            <div className="w-full flex justify-center pt-2">
+              <div
+                className="w-full max-w-md flex flex-col gap-5 p-6 rounded-2xl border-2 text-left"
+                style={{
+                  borderColor: "#D0C4E2",
+                  backgroundColor: "rgba(245, 242, 248, 0.95)",
+                }}
               >
-                {t("landing.getStarted")}
-              </button>
-            </>
-          ) : (
-            <div
-              className="w-full max-w-md flex flex-col gap-5 p-6 rounded-2xl border-2 text-left"
-              style={{
-                borderColor: "#D0C4E2",
-                backgroundColor: "rgba(245, 242, 248, 0.95)",
-              }}
-            >
-              <p
-                className="text-xl font-extrabold text-center"
-                style={{ color: "#2F3C96" }}
-              >
-                {t("landing.welcomeBack", { name: landingWelcomeName })}
-              </p>
+                <p
+                  className="text-xl font-extrabold text-center"
+                  style={{ color: "#2F3C96" }}
+                >
+                  {t("landing.welcomeBack", { name: landingWelcomeName })}
+                </p>
 
-              <button
-                type="button"
-                onClick={handleDashboardClick}
-                className="w-full py-4 rounded-xl font-bold text-[15px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459] flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
-              >
-                <LayoutDashboard className="w-5 h-5" />
-                {t("landing.goToDashboard")}
-              </button>
+                <button
+                  type="button"
+                  onClick={handleDashboardClick}
+                  className="w-full py-4 rounded-xl font-bold text-[15px] uppercase tracking-wider transition-all active:scale-[0.98] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459] flex items-center justify-center gap-2"
+                  style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  {t("landing.goToDashboard")}
+                </button>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
-                  <UserPlus
-                    className="w-5 h-5 mb-1"
-                    style={{ color: "#2F3C96" }}
-                  />
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
-                    style={{ color: "#474F96" }}
-                  >
-                    {t("landing.statFollowing")}
-                  </span>
-                  <span
-                    className="text-xl font-extrabold"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    {userStats.peopleFollowed}
-                  </span>
-                </div>
-                <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
-                  <MessageSquare
-                    className="w-5 h-5 mb-1"
-                    style={{ color: "#2F3C96" }}
-                  />
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-wider mb-1"
-                    style={{ color: "#474F96" }}
-                  >
-                    {t("landing.statCommunities")}
-                  </span>
-                  <span
-                    className="text-xl font-extrabold"
-                    style={{ color: "#2F3C96" }}
-                  >
-                    {communitiesJoinedDisplay}
-                  </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
+                    <UserPlus
+                      className="w-5 h-5 mb-1"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: "#474F96" }}
+                    >
+                      {t("landing.statFollowing")}
+                    </span>
+                    <span
+                      className="text-xl font-extrabold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {userStats.peopleFollowed}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white/70 rounded-xl border border-[#D0C4E2] flex flex-col items-center text-center">
+                    <MessageSquare
+                      className="w-5 h-5 mb-1"
+                      style={{ color: "#2F3C96" }}
+                    />
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider mb-1"
+                      style={{ color: "#474F96" }}
+                    >
+                      {t("landing.statCommunities")}
+                    </span>
+                    <span
+                      className="text-xl font-extrabold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {communitiesJoinedDisplay}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -339,7 +431,10 @@ export default function Landing() {
       <GetStartedSection />
 
       {/* How It Works Section */}
-      <div className={isMobile ? "py-8" : ""}>
+      <div
+        id="how-it-works"
+        className={`scroll-mt-24 ${isMobile ? "py-8" : ""}`}
+      >
         {isMobile ? <HowItWorksMobile /> : <HowItWorks />}
       </div>
 

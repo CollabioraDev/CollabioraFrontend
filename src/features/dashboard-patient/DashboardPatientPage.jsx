@@ -86,7 +86,7 @@ import {
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
-import { getApiLocale } from "../../i18n/getApiLocale.js";
+import { getApiLocale, withApiLocale } from "../../i18n/getApiLocale.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -102,7 +102,7 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardPatient() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const pdfReportLabels = useMemo(
     () => ({
       patientContext: t("pdf.patientContext"),
@@ -948,7 +948,7 @@ export default function DashboardPatient() {
           // Only wait for the recommendation payload needed to paint the page.
           // Secondary data loads in the background so first render is not blocked.
           const recsResponse = await fetch(
-            `${base}/api/recommendations/${userId}`,
+            withApiLocale(`${base}/api/recommendations/${userId}`),
             { signal },
           );
 
@@ -975,7 +975,7 @@ export default function DashboardPatient() {
               recsResponse.status,
               errorText,
             );
-            toast.error("Failed to load recommendations");
+            toast.error(t("dashboardPatient.toastLoadRecommendationsFailed"));
             setData({ trials: [], publications: [], experts: [] });
             setGlobalExperts([]);
           } else {
@@ -1215,7 +1215,7 @@ export default function DashboardPatient() {
         } catch (error) {
           if (error?.name === "AbortError") return;
           console.error("Error fetching dashboard data:", error);
-          toast.error("Failed to load dashboard data");
+          toast.error(t("dashboardPatient.toastLoadDashboardFailed"));
           setData({ trials: [], publications: [], experts: [] });
           setGlobalExperts([]);
         }
@@ -2736,6 +2736,19 @@ export default function DashboardPatient() {
     }
   }
 
+  const sectionLabelForRefresh = (sectionType) => {
+    switch (sectionType) {
+      case "trials":
+        return t("dashboardPatient.tabNewTreatments");
+      case "publications":
+        return t("dashboardPatient.tabHealthLibrary");
+      case "experts":
+        return expertsLabel;
+      default:
+        return sectionType;
+    }
+  };
+
   // Refresh recommendations by section: active section first, then other two in background (per conditions).
   // Always refreshes trials, publications, experts; uses current tab as "active" only if it's one of those.
   async function refreshRecommendationsBySection() {
@@ -2762,7 +2775,9 @@ export default function DashboardPatient() {
 
     const fetchSection = async (type) => {
       const res = await fetch(
-        `${base}/api/recommendations/${userId}/section?type=${type}`,
+        withApiLocale(
+          `${base}/api/recommendations/${userId}/section?type=${type}`,
+        ),
       );
       if (!res.ok) throw new Error(await res.text());
       return res.json();
@@ -2787,7 +2802,9 @@ export default function DashboardPatient() {
     } catch (err) {
       console.error("Error refreshing active section:", err);
       toast.error(
-        t("dashboardPatient.toastRefreshFailed", { section: active }),
+        t("dashboardPatient.toastRefreshFailed", {
+          section: sectionLabelForRefresh(active),
+        }),
       );
     } finally {
       setRefreshingSection(null);
@@ -2960,12 +2977,15 @@ export default function DashboardPatient() {
   // from the recommendations endpoint, improving load times when switching categories
 
   // Loading states for multi-step loader (only shown on first load)
-  const loadingStates = [
-    { text: "Searching clinical trials..." },
-    { text: "Gathering research publications..." },
-    { text: "Finding relevant experts..." },
-    { text: "Preparing your dashboard..." },
-  ];
+  const loadingStates = useMemo(
+    () => [
+      { text: t("dashboardLoader.searchingTrials") },
+      { text: t("dashboardLoader.patient.gatheringPublications") },
+      { text: t("dashboardLoader.patient.findingExperts") },
+      { text: t("dashboardLoader.preparingDashboard") },
+    ],
+    [t, i18n.language],
+  );
 
   // Skeleton loader for subsequent loads — matches new layout (profile card, tabs, conditions bar, content)
   function SimpleLoader() {
@@ -3164,17 +3184,17 @@ export default function DashboardPatient() {
   const getCategoryLabel = (category) => {
     switch (category) {
       case "publications":
-        return "Health Library";
+        return t("dashboardPatient.tabHealthLibrary");
       case "trials":
-        return "New Treatments";
+        return t("dashboardPatient.tabNewTreatments");
       case "experts":
         return expertsLabel;
       case "forums":
-        return "Forums";
+        return t("dashboardPatient.tabForums");
       case "favorites":
-        return "Favourites";
+        return t("dashboardPatient.tabFavourites");
       case "meetings":
-        return "Meetings";
+        return t("dashboardPatient.tabMeetings");
       default:
         return "";
     }
@@ -3184,7 +3204,7 @@ export default function DashboardPatient() {
   const userDisease =
     userProfile?.patient?.conditions?.[0] ||
     user?.medicalInterests?.[0] ||
-    "Not specified";
+    t("pdf.notSpecified");
   const userConditions =
     userProfile?.patient?.conditions || user?.medicalInterests || [];
   const primaryConditionIndicesDisplay = (() => {
@@ -3207,8 +3227,8 @@ export default function DashboardPatient() {
   const locationText = userLocation
     ? `${userLocation.city || ""}${
         userLocation.city && userLocation.country ? ", " : ""
-      }${userLocation.country || ""}`.trim() || "Not specified"
-    : "Not specified";
+      }${userLocation.country || ""}`.trim() || t("pdf.notSpecified")
+    : t("pdf.notSpecified");
 
   return (
     <div className="min-h-scren relative ">
@@ -3411,7 +3431,7 @@ export default function DashboardPatient() {
                   if (total === 0) {
                     setSelectedCategory("favorites");
                     toast.error(
-                      "Select items from Favourites to include in your report, then try again.",
+                      t("dashboardPatient.toastSelectFavouritesForReport"),
                     );
                     return;
                   }
@@ -3422,10 +3442,10 @@ export default function DashboardPatient() {
                   backgroundColor: "#2F3C96",
                   borderColor: "#2F3C96",
                 }}
-                title="Generate a PDF summary of your saved items to share with your doctor"
+                title={t("dashboardPatient.generateSummaryReportTitle")}
               >
                 <FileText className="w-3.5 h-3.5" />
-                Generate Summary Report
+                {t("dashboardPatient.generateSummaryReport")}
               </button>
             </div>
           </div>
@@ -3437,17 +3457,16 @@ export default function DashboardPatient() {
               onClose={() =>
                 !savingConditions && setEditConditionsModalOpen(false)
               }
-              title="Edit Medical Conditions"
+              title={t("dashboardPatient.editMedicalConditionsTitle")}
             >
               <div className="space-y-5 max-w-md">
                 <p className="text-sm text-slate-600">
-                  Add or remove conditions. Choose up to two to use for
-                  personalized search—tap the checkmark to select.
+                  {t("dashboardPatient.conditionsModalIntro")}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {conditionsDraft.length === 0 && (
                     <span className="text-sm text-slate-400 italic">
-                      No conditions yet. Add one below.
+                      {t("dashboardPatient.conditionsEmptyHint")}
                     </span>
                   )}
                   {conditionsDraft.map((c, i) => (
@@ -3493,7 +3512,7 @@ export default function DashboardPatient() {
                         type="button"
                         onClick={() => removeCondition(i)}
                         className="p-1 rounded-md hover:bg-black/10 text-slate-500 hover:text-slate-700"
-                        aria-label="Remove"
+                        aria-label={t("dashboardPatient.removeAria")}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -3515,7 +3534,9 @@ export default function DashboardPatient() {
                       extraTerms={icd11SuggestionTerms}
                       canonicalMap={conditionsCanonicalMap}
                       maxSuggestions={10}
-                      placeholder="Search or select a condition (ICD-11)..."
+                      placeholder={t(
+                        "dashboardPatient.conditionSearchPlaceholderIcd",
+                      )}
                       autoSubmitOnSelect={true}
                       inputClassName="rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)] w-full px-3 py-2.5"
                       className="w-full"
@@ -3537,14 +3558,12 @@ export default function DashboardPatient() {
                       backgroundColor: "rgba(208, 196, 226, 0.4)",
                     }}
                   >
-                    Add
+                    {t("editProfile.add")}
                   </button>
                 </div>
                 {conditionsDraft.length > 1 && (
                   <p className="text-xs text-slate-500">
-                    Selected conditions (with checkmark) are used for trials,
-                    publications, and experts. Save then Refresh on the
-                    dashboard to update results.
+                    {t("dashboardPatient.conditionsPrimaryFooterHint")}
                   </p>
                 )}
                 <div className="flex justify-end gap-3 pt-2 border-t border-slate-200">
@@ -3554,7 +3573,7 @@ export default function DashboardPatient() {
                     disabled={savingConditions}
                     className="px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                   >
-                    Cancel
+                    {t("editProfile.cancel")}
                   </button>
                   <button
                     type="button"
@@ -3566,7 +3585,7 @@ export default function DashboardPatient() {
                     {savingConditions ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : null}
-                    Save changes
+                    {t("editProfile.saveChanges")}
                   </button>
                 </div>
               </div>
@@ -3590,14 +3609,16 @@ export default function DashboardPatient() {
               >
                 <div className="space-y-0.5 min-w-0">
                   <span className="block text-xs font-semibold">
-                    Medical Conditions
+                    {t("dashboardPatient.medicalConditions")}
                   </span>
                   <span className="block text-[11px] text-slate-500">
                     {isMedicalConditionsExpanded
-                      ? "Tap to collapse"
+                      ? t("dashboardPatient.tapToCollapse")
                       : userConditions.length > 0
-                        ? `${userConditions.length} condition${userConditions.length !== 1 ? "s" : ""} · Tap to view details`
-                        : "Complete your profile first"}
+                        ? t("dashboardPatient.conditionsCountLine", {
+                            count: userConditions.length,
+                          })
+                        : t("dashboardPatient.mobileCompleteProfileLine")}
                   </span>
                 </div>
                 {isMedicalConditionsExpanded ? (
@@ -3650,8 +3671,9 @@ export default function DashboardPatient() {
                         className="text-xs font-medium py-0.5"
                         style={{ color: "#2F3C96" }}
                       >
-                        Complete your profile first to see personalized
-                        recommendations.
+                        {t(
+                          "dashboardPatient.mobileCompleteProfileRecommendations",
+                        )}
                       </span>
                     )}
                   </div>
@@ -3665,7 +3687,7 @@ export default function DashboardPatient() {
                       }}
                     >
                       <Edit3 className="w-3.5 h-3.5 shrink-0" />
-                      Edit conditions
+                      {t("dashboardPatient.editConditionsLabel")}
                     </button>
                     <button
                       type="button"
@@ -3681,14 +3703,14 @@ export default function DashboardPatient() {
                       }
                       className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium border text-[#2F3C96] bg-white/90 transition-all duration-200 select-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-indigo-50/80 active:scale-[0.99]"
                       style={{ borderColor: "#2F3C96" }}
-                      title="Refresh trials, publications and experts based on your conditions"
+                      title={t("dashboardPatient.refreshTitle")}
                     >
                       {refreshingSection || refreshingSectionsBg.size > 0 ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                       ) : (
                         <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                       )}
-                      <span>Refresh recommendations</span>
+                      <span>{t("dashboardPatient.refreshRecommendations")}</span>
                     </button>
                     <button
                       type="button"
@@ -3700,7 +3722,7 @@ export default function DashboardPatient() {
                         if (total === 0) {
                           setSelectedCategory("favorites");
                           toast.error(
-                            "Select items from Favourites to include in your report, then try again.",
+                            t("dashboardPatient.toastSelectFavouritesForReport"),
                           );
                           return;
                         }
@@ -3711,10 +3733,12 @@ export default function DashboardPatient() {
                         backgroundColor: "#2F3C96",
                         borderColor: "#2F3C96",
                       }}
-                      title="Generate a PDF summary to share with your doctor"
+                      title={t(
+                        "dashboardPatient.generateSummaryReportTitleShort",
+                      )}
                     >
                       <FileText className="w-3.5 h-3.5 shrink-0" />
-                      Generate Summary Report
+                      {t("dashboardPatient.generateSummaryReport")}
                     </button>
                   </div>
                 </div>
@@ -3848,7 +3872,7 @@ export default function DashboardPatient() {
                                     className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
                                     style={{ color: "#2F3C96" }}
                                   >
-                                    <span>Read more details</span>
+                                    <span>{t("trials.readMoreDetails")}</span>
                                     <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
                                       →
                                     </span>
@@ -4175,7 +4199,7 @@ export default function DashboardPatient() {
                                       className="mt-1.5 flex items-center gap-1 font-medium transition-all duration-200"
                                       style={{ color: "#2F3C96" }}
                                     >
-                                      <span>View full details</span>
+                                      <span>{t("publications.viewFullDetails")}</span>
                                       <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-200">
                                         →
                                       </span>
@@ -6611,7 +6635,7 @@ export default function DashboardPatient() {
                                 }}
                                 data-tour="dashboard-favorites-generate-summary"
                               >
-                                Generate summary
+                                {t("dashboardPatient.generateSummaryShort")}
                               </button>
                             </div>
                           </div>
@@ -6779,7 +6803,7 @@ export default function DashboardPatient() {
                                                   className="mt-1.5 flex items-center gap-1 font-medium"
                                                   style={{ color: "#2F3C96" }}
                                                 >
-                                                  <span>View full details</span>
+                                                  <span>{t("publications.viewFullDetails")}</span>
                                                   <span className="inline-block group-hover:translate-x-0.5 transition-transform">
                                                     →
                                                   </span>
@@ -6998,7 +7022,7 @@ export default function DashboardPatient() {
                                                   className="mt-1.5 flex items-center gap-1 font-medium"
                                                   style={{ color: "#2F3C96" }}
                                                 >
-                                                  <span>Read more details</span>
+                                                  <span>{t("trials.readMoreDetails")}</span>
                                                   <span className="inline-block group-hover:translate-x-0.5 transition-transform">
                                                     →
                                                   </span>

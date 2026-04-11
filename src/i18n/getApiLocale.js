@@ -9,3 +9,9 @@ export function getApiLocale() {
 export function appendLocaleToSearchParams(params) {
   params.set("locale", getApiLocale());
 }
+
+/** Appends `locale=` for recommendations and other Azure-translated API responses. */
+export function withApiLocale(url) {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}locale=${encodeURIComponent(getApiLocale())}`;
+}

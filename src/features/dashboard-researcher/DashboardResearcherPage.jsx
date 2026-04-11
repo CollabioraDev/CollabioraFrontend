@@ -85,7 +85,7 @@ import {
   formatPublicationDateLine,
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
-import { getApiLocale } from "../../i18n/getApiLocale.js";
+import { getApiLocale, withApiLocale } from "../../i18n/getApiLocale.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -101,7 +101,7 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardResearcher() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const pdfReportLabels = useMemo(
     () => ({
       patientContext: t("pdf.patientContext"),
@@ -124,8 +124,8 @@ export default function DashboardResearcher() {
   const [loading, setLoading] = useState(true);
 
   // Researcher dashboard always shows "Collaborators" instead of "Experts"
-  const expertLabel = "Collaborator";
-  const expertsLabel = "Collaborators";
+  const expertLabel = t("dashboardPatient.collaborator");
+  const expertsLabel = t("dashboardPatient.collaborators");
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Track if this is the first load (cache miss)
   const [selectedCategory, setSelectedCategory] = useState("profile"); // "profile", "collaborators", "forums", "publications", "trials", "favorites"
   const [trialFilter, setTrialFilter] = useState("RECRUITING"); // Status filter for trials - default to RECRUITING
@@ -901,7 +901,7 @@ export default function DashboardResearcher() {
 
         try {
           const recsResponse = await fetch(
-            `${base}/api/recommendations/${userId}`,
+            withApiLocale(`${base}/api/recommendations/${userId}`),
             { signal },
           );
 
@@ -927,7 +927,7 @@ export default function DashboardResearcher() {
               recsResponse.status,
               errorText,
             );
-            toast.error("Failed to load recommendations");
+            toast.error(t("dashboardResearcher.toastLoadRecommendationsFailed"));
             setData({ trials: [], publications: [], experts: [] });
             setGlobalExperts([]);
           } else {
@@ -1028,7 +1028,7 @@ export default function DashboardResearcher() {
         } catch (error) {
           if (error?.name === "AbortError") return;
           console.error("Error fetching dashboard data:", error);
-          toast.error("Failed to load dashboard data");
+          toast.error(t("dashboardResearcher.toastLoadDashboardFailed"));
           setData({ trials: [], publications: [], experts: [] });
           setGlobalExperts([]);
         }
@@ -2598,13 +2598,28 @@ export default function DashboardResearcher() {
           },
         }));
       setEditInterestsModalOpen(false);
-      toast.success("Research interests updated");
+      toast.success(t("dashboardResearcher.toastResearchInterestsUpdated"));
     } catch (e) {
-      toast.error(e.message || "Failed to save interests");
+      toast.error(
+        e.message || t("dashboardResearcher.toastSaveInterestsFailed"),
+      );
     } finally {
       setSavingInterests(false);
     }
   }
+
+  const sectionLabelForRefresh = (sectionType) => {
+    switch (sectionType) {
+      case "trials":
+        return t("dashboardResearcher.tabClinicalTrials");
+      case "publications":
+        return t("dashboardResearcher.tabPublications");
+      case "collaborators":
+        return t("dashboardResearcher.tabCollaborators");
+      default:
+        return sectionType;
+    }
+  };
 
   async function refreshRecommendationsBySection() {
     const userId = user?._id || user?.id;
@@ -2630,7 +2645,9 @@ export default function DashboardResearcher() {
     const fetchSection = async (type) => {
       const apiTypeForFetch = type === "collaborators" ? "experts" : type;
       const res = await fetch(
-        `${base}/api/recommendations/${userId}/section?type=${apiTypeForFetch}`,
+        withApiLocale(
+          `${base}/api/recommendations/${userId}/section?type=${apiTypeForFetch}`,
+        ),
       );
       if (!res.ok) throw new Error(await res.text());
       return res.json();
@@ -2654,7 +2671,11 @@ export default function DashboardResearcher() {
       }
     } catch (err) {
       console.error("Error refreshing active section:", err);
-      toast.error("Failed to refresh " + active);
+      toast.error(
+        t("dashboardResearcher.toastRefreshFailed", {
+          section: sectionLabelForRefresh(active),
+        }),
+      );
     } finally {
       setRefreshingSection(null);
     }
@@ -2816,13 +2837,16 @@ export default function DashboardResearcher() {
   }, [selectedCategory, user?._id]);
 
   // Loading states for multi-step loader (only shown on first load)
-  const loadingStates = [
-    { text: "Searching clinical trials..." },
-    { text: "Collecting research publications..." },
-    { text: "Discovering global experts..." },
-    { text: "Finding potential collaborators..." },
-    { text: "Preparing your dashboard..." },
-  ];
+  const loadingStates = useMemo(
+    () => [
+      { text: t("dashboardLoader.searchingTrials") },
+      { text: t("dashboardLoader.researcher.collectingPublications") },
+      { text: t("dashboardLoader.researcher.discoveringExperts") },
+      { text: t("dashboardLoader.researcher.findingCollaborators") },
+      { text: t("dashboardLoader.preparingDashboard") },
+    ],
+    [t, i18n.language],
+  );
 
   // Skeleton loader for subsequent loads — matches new layout (profile card, tabs, interests bar, content)
   function SimpleLoader() {
@@ -3031,19 +3055,19 @@ export default function DashboardResearcher() {
   const getCategoryLabel = (category) => {
     switch (category) {
       case "profile":
-        return "Your Profile";
+        return t("dashboardResearcher.tabYourProfile");
       case "collaborators":
-        return "Collaborators";
+        return t("dashboardResearcher.tabCollaborators");
       case "forums":
-        return "Forums";
+        return t("dashboardResearcher.tabForums");
       case "publications":
-        return "Publications";
+        return t("dashboardResearcher.tabPublications");
       case "trials":
-        return "Clinical Trials";
+        return t("dashboardResearcher.tabClinicalTrials");
       case "favorites":
-        return "Favourites";
+        return t("dashboardResearcher.tabFavourites");
       case "meetings":
-        return "Meetings";
+        return t("dashboardResearcher.tabMeetings");
       default:
         return "";
     }
@@ -3052,7 +3076,7 @@ export default function DashboardResearcher() {
   const userInterests =
     userProfile?.researcher?.interests?.[0] ||
     userProfile?.researcher?.specialties?.[0] ||
-    "Research";
+    t("dashboardResearcher.defaultResearchTopic");
   const userInterestsList =
     userProfile?.researcher?.interests?.length > 0
       ? userProfile.researcher.interests
@@ -3076,8 +3100,8 @@ export default function DashboardResearcher() {
   const locationText = userLocation
     ? `${userLocation.city || ""}${
         userLocation.city && userLocation.country ? ", " : ""
-      }${userLocation.country || ""}`.trim() || "Not specified"
-    : "Not specified";
+      }${userLocation.country || ""}`.trim() || t("pdf.notSpecified")
+    : t("pdf.notSpecified");
 
   return (
     <div className="min-h-screen relative">
@@ -3105,13 +3129,41 @@ export default function DashboardResearcher() {
             data-tour="dashboard-researcher-tabs"
           >
             {[
-              { key: "profile", label: "Your Profile", icon: User },
-              { key: "collaborators", label: "Collaborators", icon: Users },
-              { key: "forums", label: "Forums", icon: MessageCircle },
-              { key: "publications", label: "Publications", icon: FileText },
-              { key: "trials", label: "Clinical Trials", icon: Beaker },
-              { key: "favorites", label: "Favourites", icon: Star },
-              { key: "meetings", label: "Meetings", icon: Calendar },
+              {
+                key: "profile",
+                label: t("dashboardResearcher.tabYourProfile"),
+                icon: User,
+              },
+              {
+                key: "collaborators",
+                label: t("dashboardResearcher.tabCollaborators"),
+                icon: Users,
+              },
+              {
+                key: "forums",
+                label: t("dashboardResearcher.tabForums"),
+                icon: MessageCircle,
+              },
+              {
+                key: "publications",
+                label: t("dashboardResearcher.tabPublications"),
+                icon: FileText,
+              },
+              {
+                key: "trials",
+                label: t("dashboardResearcher.tabClinicalTrials"),
+                icon: Beaker,
+              },
+              {
+                key: "favorites",
+                label: t("dashboardResearcher.tabFavourites"),
+                icon: Star,
+              },
+              {
+                key: "meetings",
+                label: t("dashboardResearcher.tabMeetings"),
+                icon: Calendar,
+              },
             ].map((category) => {
               const Icon = category.icon;
               const isSelected = selectedCategory === category.key;
@@ -3190,8 +3242,8 @@ export default function DashboardResearcher() {
                   "rgba(208, 196, 226, 0.2)";
                 e.currentTarget.style.borderColor = "rgba(47, 60, 150, 0.3)";
               }}
-              title="View / Redo dashboard tutorial"
-              aria-label="View dashboard tutorial"
+              title={t("dashboardResearcher.viewTutorialTitle")}
+              aria-label={t("dashboardResearcher.viewTutorialAria")}
             >
               <HelpCircle className="w-5 h-5" />
             </button>
@@ -3207,10 +3259,10 @@ export default function DashboardResearcher() {
                 className="block text-sm font-semibold"
                 style={{ color: "#2F3C96" }}
               >
-                Research interests
+                {t("dashboardResearcher.researchInterests")}
               </span>
               <span className="block text-xs text-slate-500">
-                Used to personalize your recommendations
+                {t("dashboardResearcher.personalizeRecommendationsHint")}
               </span>
             </div>
             <div className="flex flex-1 min-w-0 flex-wrap items-center gap-2">
@@ -3235,7 +3287,7 @@ export default function DashboardResearcher() {
                         <CheckCircle2
                           className="w-4 h-4 shrink-0"
                           style={{ color: "#2F3C96" }}
-                          aria-label="Used for search"
+                          aria-label={t("dashboardPatient.usedForSearchAria")}
                         />
                       )}
                       <span>{c}</span>
@@ -3257,7 +3309,7 @@ export default function DashboardResearcher() {
                 }}
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                Edit
+                {t("dashboardPatient.edit")}
               </button>
               <button
                 type="button"
@@ -3273,14 +3325,14 @@ export default function DashboardResearcher() {
                 style={{
                   borderColor: "#2F3C96",
                 }}
-                title="Refresh publications, trials and collaborators based on your interests"
+                title={t("dashboardResearcher.refreshTitleResearcher")}
               >
                 {refreshingSection || refreshingSectionsBg.size > 0 ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                 ) : (
                   <RefreshCw className="w-3.5 h-3.5 shrink-0" />
                 )}
-                <span>Refresh</span>
+                <span>{t("dashboardPatient.refresh")}</span>
               </button>
               <button
                 type="button"
@@ -3292,7 +3344,7 @@ export default function DashboardResearcher() {
                   if (total === 0) {
                     setSelectedCategory("favorites");
                     toast.error(
-                      "Select items from Favourites to include in your report, then try again.",
+                      t("dashboardResearcher.toastSelectFavouritesForReport"),
                     );
                     return;
                   }
@@ -3304,10 +3356,10 @@ export default function DashboardResearcher() {
                   color: "#2F3C96",
                   borderColor: "rgba(47, 60, 150, 0.4)",
                 }}
-                title="Generate a PDF summary of your saved items to share"
+                title={t("dashboardResearcher.generateSummaryReportTitle")}
               >
                 <FileText className="w-3.5 h-3.5" />
-                Generate Summary Report
+                {t("dashboardResearcher.generateSummaryReport")}
               </button>
             </div>
           </div>
@@ -3319,17 +3371,16 @@ export default function DashboardResearcher() {
               onClose={() =>
                 !savingInterests && setEditInterestsModalOpen(false)
               }
-              title="Edit Research Interests"
+              title={t("dashboardResearcher.editResearchInterestsTitle")}
             >
               <div className="space-y-5 max-w-md">
                 <p className="text-sm text-slate-600">
-                  Add or remove interests. Choose up to two to use for
-                  personalized search—tap the checkmark to select.
+                  {t("dashboardResearcher.interestsModalIntro")}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {interestsDraft.length === 0 && (
                     <span className="text-sm text-slate-400 italic">
-                      No interests yet. Add one below.
+                      {t("dashboardResearcher.interestsEmptyHint")}
                     </span>
                   )}
                   {interestsDraft.map((c, i) => (
@@ -3353,8 +3404,8 @@ export default function DashboardResearcher() {
                           className="p-0.5 rounded-md hover:bg-black/10 flex items-center shrink-0"
                           title={
                             primaryIndicesDraft.includes(i)
-                              ? "Used for search (click to deselect)"
-                              : "Use for search (max 2)"
+                              ? t("dashboardPatient.usedForSearchClickDeselect")
+                              : t("dashboardPatient.useForSearchMaxTwo")
                           }
                         >
                           {primaryIndicesDraft.includes(i) ? (
@@ -3375,7 +3426,7 @@ export default function DashboardResearcher() {
                         type="button"
                         onClick={() => removeInterest(i)}
                         className="p-1 rounded-md hover:bg-black/10 text-slate-500 hover:text-slate-700"
-                        aria-label="Remove"
+                        aria-label={t("dashboardPatient.removeAria")}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -3397,7 +3448,9 @@ export default function DashboardResearcher() {
                       extraTerms={icd11SuggestionTerms}
                       canonicalMap={interestsCanonicalMap}
                       maxSuggestions={10}
-                      placeholder="Search or select a condition/interest (ICD-11)..."
+                      placeholder={t(
+                        "dashboardResearcher.interestSearchPlaceholderIcd",
+                      )}
                       autoSubmitOnSelect={true}
                       inputClassName="rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)] w-full px-3 py-2.5"
                       className="w-full"
@@ -3419,14 +3472,12 @@ export default function DashboardResearcher() {
                       backgroundColor: "rgba(208, 196, 226, 0.4)",
                     }}
                   >
-                    Add
+                    {t("editProfile.add")}
                   </button>
                 </div>
                 {interestsDraft.length > 1 && (
                   <p className="text-xs text-slate-500">
-                    Selected interests (with checkmark) are used for
-                    publications, trials, and collaborators. Save then Refresh
-                    on the dashboard to update results.
+                    {t("dashboardResearcher.interestsPrimaryFooterHint")}
                   </p>
                 )}
                 <div className="flex justify-end gap-3 pt-2 border-t border-slate-200">
@@ -3436,7 +3487,7 @@ export default function DashboardResearcher() {
                     disabled={savingInterests}
                     className="px-4 py-2.5 rounded-xl text-sm font-medium border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                   >
-                    Cancel
+                    {t("editProfile.cancel")}
                   </button>
                   <button
                     type="button"
@@ -3448,7 +3499,7 @@ export default function DashboardResearcher() {
                     {savingInterests ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : null}
-                    Save changes
+                    {t("editProfile.saveChanges")}
                   </button>
                 </div>
               </div>
