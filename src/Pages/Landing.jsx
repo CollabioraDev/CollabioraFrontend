@@ -15,6 +15,7 @@ import {
   FileText,
   Smartphone,
   X,
+  ChevronDown,
 } from "lucide-react";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import TrustedNetworksMarquee from "../components/TrustedNetworksMarquee";
@@ -26,7 +27,6 @@ import Footer from "../components/Footer";
 import { AuroraText } from "@/components/ui/aurora-text";
 import { ShinyButton } from "@/components/ui/shiny-button";
 import GlobalSearch from "../components/GlobalSearch";
-import { ChevronDown } from "lucide-react";
 import Button from "../components/ui/Button";
 import { getDisplayName } from "../utils/researcherDisplayName";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
@@ -77,7 +77,17 @@ export default function Landing() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIphoneAddModal, setShowIphoneAddModal] = useState(false);
   const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
+  /** Mobile hero feature accordion: which rows are expanded (independent toggles). */
+  const [heroFeaturesOpen, setHeroFeaturesOpen] = useState([true, false, false]);
   const navigate = useNavigate();
+
+  const toggleHeroFeature = (idx) => {
+    setHeroFeaturesOpen((prev) => {
+      const next = [...prev];
+      next[idx] = !next[idx];
+      return next;
+    });
+  };
 
   // Prefetch the two primary CTA chunks during idle time so they are
   // already cached by the time the user clicks "Get Started" or "Sign In".
@@ -235,39 +245,39 @@ export default function Landing() {
       <AnimatedBackground isMobile={isMobile} />
 
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-24 sm:pt-20 sm:pb-10 md:pt-28 md:pb-16 overflow-hidden min-h-[calc(80vh)]">
-        <div className="max-w-6xl relative z-10 w-full mx-auto flex flex-col items-stretch gap-10 lg:gap-12 pt-10">
-          <div className="flex flex-col lg:flex-row lg:items-stretch lg:justify-between gap-10 lg:gap-6 xl:gap-10 w-full px-1 sm:px-2">
+      <section className="relative flex flex-col items-center justify-center px-4 sm:px-6 pt-20 sm:pt-20 sm:pb-10 md:pt-28 md:pb-16 overflow-x-hidden min-h-[min(80vh,44rem)] sm:min-h-[calc(80vh)]">
+        <div className="max-w-6xl relative z-10 w-full mx-auto flex flex-col items-stretch gap-8 sm:gap-10 lg:gap-12 pt-6 sm:pt-10">
+          <div className="flex flex-col lg:flex-row lg:items-stretch lg:justify-between gap-8 sm:gap-10 lg:gap-6 xl:gap-10 w-full px-0 sm:px-2">
             {/* Left: badge, headline, CTAs */}
             <div className="flex-1 min-w-0 flex flex-col items-center lg:items-start text-center lg:text-left">
-              <div className="relative w-full flex justify-center lg:justify-start">
-                <div className="relative inline-flex flex-col items-center lg:items-start justify-center min-h-[4rem] sm:min-h-[5rem] lg:min-h-[6rem]">
+              <div className="relative w-full max-w-full flex justify-center lg:justify-start">
+                <div className="relative inline-flex w-full max-w-full flex-col items-center lg:items-start justify-center min-h-0 md:min-h-[5rem] lg:min-h-[6rem]">
                   <img
                     src="/Yorisidepeak.webp"
                     alt=""
                     aria-hidden
                     fetchPriority="high"
                     decoding="async"
-                    className="pointer-events-none select-none absolute start-0 top-[42%] z-0 h-[2.75rem] w-auto sm:h-[3.5rem] md:h-[4rem] -translate-y-1/2 -translate-x-[8%] sm:-translate-x-[5%] object-contain object-left drop-shadow-[0_8px_20px_rgba(47,60,150,0.2)]"
+                    className="pointer-events-none select-none absolute start-0 top-[42%] z-0 hidden h-[3.5rem] w-auto md:block md:h-[4rem] -translate-y-1/2 -translate-x-[5%] object-contain object-left drop-shadow-[0_8px_20px_rgba(47,60,150,0.2)]"
                   />
-                  <h1 className="relative z-10 ps-[2.5rem] sm:ps-[3.25rem] md:ps-[3.75rem] lg:ps-14 flex flex-col items-center lg:items-start font-extrabold leading-[1.06] tracking-tight gap-1 sm:gap-1.5 text-[clamp(1.35rem,calc(0.65rem+2.8vw),3.65rem)] sm:text-5xl md:text-6xl lg:text-[3.35rem] xl:text-[3.75rem]">
+                  <h1 className="relative z-10 w-full max-w-full min-w-0 md:ps-[3.75rem] lg:ps-14 flex flex-col items-center lg:items-start font-extrabold leading-[1.1] md:leading-[1.06] tracking-tight gap-1 sm:gap-1.5 text-[clamp(1.45rem,calc(0.65rem+4vw),3.65rem)] sm:text-5xl md:text-6xl lg:text-[3.35rem] xl:text-[3.75rem] text-balance">
                     <span
-                      className="block whitespace-nowrap"
+                      className="block max-w-full break-words md:whitespace-nowrap"
                       style={{ color: "#2F3C96" }}
                     >
                       {t("landing.heroTitleLine1")}
                     </span>
-                    <span className="block whitespace-nowrap text-brand-purple-400">
+                    <span className="block max-w-full break-words text-brand-purple-400 md:whitespace-nowrap">
                       {t("landing.heroTitleLine2")}
                     </span>
                     <span
-                      className="block whitespace-nowrap"
+                      className="block max-w-full break-words md:whitespace-nowrap"
                       style={{ color: "#2F3C96" }}
                     >
                       {t("landing.heroTitleLine3")}
                     </span>
                     <span
-                      className="block whitespace-nowrap"
+                      className="block max-w-full break-words md:whitespace-nowrap"
                       style={{ color: "#2F3C96" }}
                     >
                       {t("landing.heroTitleLine4")}
@@ -277,7 +287,7 @@ export default function Landing() {
               </div>
 
               {!user && (
-                <div className="mt-8 flex w-full flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center justify-center gap-3 sm:gap-4 lg:justify-start lg:max-w-xl ps-[2.5rem] sm:ps-[3.25rem] md:ps-[3.75rem] lg:ps-14">
+                <div className="mt-6 sm:mt-8 flex w-full max-w-full min-w-0 flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center justify-center gap-3 sm:gap-4 lg:justify-start lg:max-w-xl px-0 ps-0 md:ps-[3.75rem] lg:ps-14">
                   <button
                     type="button"
                     onClick={() => {
@@ -295,7 +305,7 @@ export default function Landing() {
                         navigate("/onboarding");
                       }
                     }}
-                    className="min-h-[3.25rem] rounded-full border-2 bg-white/95 px-8 py-3.5 text-base sm:text-lg font-bold shadow-sm transition-[transform,box-shadow,opacity] hover:bg-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96]"
+                    className="w-full min-h-[3rem] sm:min-h-[3.25rem] rounded-full border-2 bg-white/95 px-6 sm:px-8 py-3 sm:py-3.5 text-[0.95rem] sm:text-base md:text-lg font-bold shadow-sm transition-[transform,box-shadow,opacity] hover:bg-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96] sm:w-auto sm:shrink-0"
                     style={{
                       borderColor: "#D0C4E2",
                       color: "#2F3C96",
@@ -308,7 +318,7 @@ export default function Landing() {
             </div>
 
             <div
-              className="lg:hidden h-px w-full max-w-xs mx-auto shrink-0 bg-gradient-to-r from-transparent via-[#c4b8e0]/95 to-transparent"
+              className="lg:hidden h-px w-full max-w-sm mx-auto shrink-0 my-1 bg-gradient-to-r from-transparent via-[#c4b8e0]/95 to-transparent"
               aria-hidden
             />
             <div
@@ -316,29 +326,86 @@ export default function Landing() {
               aria-hidden
             />
 
-            {/* Right: numbered feature blocks */}
-            <div className="flex-1 min-w-0 w-full lg:max-w-lg flex flex-col justify-center">
+            {/* Right: feature blocks — collapsible on small screens, static on lg+ */}
+            <div className="flex-1 min-w-0 w-full lg:max-w-lg flex flex-col justify-center px-0.5 sm:px-0">
+              <div
+                className="lg:hidden w-full max-w-md mx-auto flex flex-col gap-2"
+                role="region"
+                aria-label={t("landing.heroDescriptorsAria")}
+              >
+                {HERO_FEATURE_ROWS.map(({ headingKey, descKey }, idx) => {
+                  const isOpen = heroFeaturesOpen[idx];
+                  const panelId = `landing-hero-feature-panel-${idx}`;
+                  const headerId = `landing-hero-feature-header-${idx}`;
+                  return (
+                    <div
+                      key={headingKey}
+                      className="rounded-2xl border-2 overflow-hidden bg-white/90 shadow-sm"
+                      style={{ borderColor: "#D0C4E2" }}
+                    >
+                      <button
+                        type="button"
+                        id={headerId}
+                        aria-expanded={isOpen}
+                        aria-controls={panelId}
+                        onClick={() => toggleHeroFeature(idx)}
+                        className="w-full flex items-center justify-between gap-3 py-3.5 px-4 text-left min-h-[3rem] active:bg-[#F5F2F8]/80 transition-colors"
+                      >
+                        <span className="font-bold text-[#2F3C96] text-[0.95rem] leading-snug pr-1">
+                          {t(headingKey)}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                          style={{ color: "#474F96" }}
+                          aria-hidden
+                        />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <Motion.div
+                            id={panelId}
+                            aria-labelledby={headerId}
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                            className="overflow-hidden border-t"
+                            style={{ borderColor: "#E8E0EF" }}
+                          >
+                            <p className="px-4 py-3 text-sm leading-relaxed text-[#5c6488]">
+                              {t(descKey)}
+                            </p>
+                          </Motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+
               <Motion.div
                 role="group"
                 aria-label={t("landing.heroDescriptorsAria")}
-                className="flex w-full flex-col gap-10 sm:gap-12"
+                className="hidden lg:flex w-full flex-col gap-10 xl:gap-12"
                 variants={heroDescriptorList}
                 initial="hidden"
                 animate={mounted ? "show" : "hidden"}
               >
                 {HERO_FEATURE_ROWS.map(({ headingKey, descKey }) => (
-                    <Motion.div
-                      key={headingKey}
-                      variants={heroDescriptorItem}
-                      className="flex flex-col items-center text-center lg:items-start lg:text-left"
-                    >
-                      <p className="mb-2 text-lg sm:text-xl font-bold leading-snug text-[#2F3C96]">
-                        {t(headingKey)}
-                      </p>
-                      <p className="max-w-md text-sm leading-relaxed text-[#5c6488]">
-                        {t(descKey)}
-                      </p>
-                    </Motion.div>
+                  <Motion.div
+                    key={headingKey}
+                    variants={heroDescriptorItem}
+                    className="flex flex-col items-center text-center lg:items-start lg:text-left"
+                  >
+                    <p className="mb-2 text-lg sm:text-xl font-bold leading-snug text-[#2F3C96]">
+                      {t(headingKey)}
+                    </p>
+                    <p className="max-w-md text-sm leading-relaxed text-[#5c6488]">
+                      {t(descKey)}
+                    </p>
+                  </Motion.div>
                 ))}
               </Motion.div>
             </div>
@@ -433,9 +500,7 @@ export default function Landing() {
       </section>
 
       {/* Trusted Research Networks Marquee */}
-      <div className={isMobile ? "py-8" : ""}>
-        <TrustedNetworksMarquee />
-      </div>
+      <TrustedNetworksMarquee />
       <StatsSection />
       {/* Get Started Section */}
       <GetStartedSection />

@@ -15,7 +15,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "**Forums** is right there when you want community discussions; **Discovery** is where you can browse the latest articles, research, and updates in one place.",
       "Ready to stay signed in and unlock everything? Use **Create account** to set up your profile and tailor collabiora to you.",
     ],
-    imageSrc: "/NavbarSS.png",
+    imageSrc: "/NavbarSS.webp",
     imageAlt:
       "collabiora site header showing Explore, Forums, Discovery, and Create account",
   },
@@ -27,7 +27,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "Once you create an account, your **dashboard** becomes home base: quick links to Health Library, treatments, experts, forums, favourites, and meetings.",
       "You can **generate summary reports**, **refresh** tailored content, and keep the topics you care about in one place.",
     ],
-    imageSrc: "/DashboardSS.png",
+    imageSrc: "/DashboardSS.webp",
     imageAlt:
       "collabiora dashboard with feature cards and medical condition filters",
   },
@@ -39,7 +39,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "Search with keywords and filters to surface papers and evidence. Each result shows a **match score** so you see what fits best first.",
       "Use **Simplify** to turn dense studies into plain language, save favourites, and open the full publication when you need depth.",
     ],
-    imageSrc: "/HealthLibrary.png",
+    imageSrc: "/HealthLibrary.webp",
     imageAlt: "Health Library search results with match percentages",
   },
   {
@@ -50,7 +50,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "Under **News & Articles**, browse curated health stories and updates tailored to your interests — search what matters to you, then read or simplify content so it’s easier to digest.",
       "Switch to **Community** when you want to join the conversation: share experiences, ask questions, and see what others are posting in a space built for open, supportive discussion.",
     ],
-    imageSrc: "/DiscoverySS.png",
+    imageSrc: "/DiscoverySS.webp",
     imageAlt:
       "Discovery page with News and Articles tab, Community tab, search, and article cards",
   },
@@ -62,7 +62,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "The **Communities** tab is where you explore and join groups — search for topics that matter to you, discover research-focused spaces, and become part of conversations with people on similar paths.",
       "Switch to **Posts** to read threads or start your own: ask questions, share what you’ve learned, and get replies from community members and **researchers** who participate in those groups — so you’re not just browsing, you’re connecting.",
     ],
-    imageSrc: "/ForumsSS.png",
+    imageSrc: "/ForumsSS.webp",
     imageAlt:
       "Health Forums page with Communities and Posts tabs, search, and community cards",
   },
@@ -74,7 +74,7 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
       "This is where you **chat with Yori** — ask health questions, try suggested prompts, and follow up naturally.",
       "Sign in anytime to sync your journey across the full collabiora experience.",
     ],
-    imageSrc: "/YoriLandingSS.png",
+    imageSrc: "/YoriLandingSS.webp",
     imageAlt: "Yori assistant welcome panel with sample questions",
   },
 ];

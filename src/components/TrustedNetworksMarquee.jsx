@@ -82,7 +82,7 @@ const TrustedNetworksMarquee = () => {
         <img
           src={network.imageUrl}
           alt={network.name}
-          className="h-13 md:h-16 w-auto object-contain"
+          className="h-10 w-auto max-h-10 sm:h-12 sm:max-h-12 md:h-16 md:max-h-16 object-contain object-center"
           onError={(e) => {
             e.target.style.display = "none";
           }}
@@ -95,31 +95,31 @@ const TrustedNetworksMarquee = () => {
 
   return (
     <section
-      className="relative   sm:py-12 overflow-hidden "
+      className="relative overflow-hidden py-6 sm:py-10 md:py-12"
       style={{ borderColor: "#D0C4E2", backgroundColor: "transparent" }}
     >
-      <div className="relative z-10">
+      <div className="relative z-10 px-3 sm:px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center mb-6"
+          className="text-center mb-4 sm:mb-6"
         >
           <p
-            className="text-sm font-semibold uppercase tracking-wider"
+            className="text-[11px] sm:text-xs md:text-sm font-semibold uppercase tracking-[0.12em] sm:tracking-wider leading-snug max-w-[20rem] sm:max-w-none mx-auto px-1"
             style={{ color: "#787878" }}
           >
             Built on Trusted Research Networks
           </p>
         </motion.div>
 
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative max-w-6xl mx-auto -mx-1 sm:mx-auto">
           <InfiniteMovingCards
             items={cardItems}
             direction="left"
             speed="slow"
             pauseOnHover={true}
-            className="[&_li]:w-[200px] md:[&_li]:w-[250px] [&_li]:h-auto [&_li]:bg-transparent [&_li]:border-0 [&_li]:px-0 [&_li]:py-4 [&_ul]:gap-2"
+            className="[&_li]:w-[148px] sm:[&_li]:w-[200px] md:[&_li]:w-[250px] [&_li]:h-auto [&_li]:bg-transparent [&_li]:border-0 [&_li]:px-1 [&_li]:py-3 sm:[&_li]:py-4 [&_ul]:gap-1.5 sm:[&_ul]:gap-2"
           />
         </div>
       </div>
