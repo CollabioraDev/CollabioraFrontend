@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import { recordTrialEngagement } from "../utils/productAnalytics.js";
 import {
   Beaker,
   FileText,
@@ -52,6 +53,7 @@ export default function TrialDetails() {
 
         const data = await response.json();
         if (data.trial) {
+          recordTrialEngagement("trial_detail_view");
           setTrial(data.trial);
           // Dispatch context event for chatbot
           const item = {

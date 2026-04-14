@@ -2805,24 +2805,21 @@ export default function YoriAI() {
                           />
                         </div>
                         <div className="min-w-0 flex-1 space-y-3">
-                          {message.content &&
-                            !(
-                              message.publicationDetails &&
-                              message.publicationDetails.showFullCard !== false
-                            ) && (
-                              <div className="rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-3 sm:px-5 sm:py-4">
-                                <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
-                                  <ReactMarkdown
-                                    components={markdownComponents}
-                                  >
-                                    {preprocessMarkdownWithGroundingCitations(
-                                      message.content,
-                                      message.groundingSources,
-                                    )}
-                                  </ReactMarkdown>
-                                </div>
+                          {/* Same as YoriGuestLandingPage: always show prose + grounding chips when there is content */}
+                          {message.content && (
+                            <div className="rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-3 sm:px-5 sm:py-4">
+                              <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
+                                <ReactMarkdown
+                                  components={markdownComponents}
+                                >
+                                  {preprocessMarkdownWithGroundingCitations(
+                                    message.content,
+                                    message.groundingSources,
+                                  )}
+                                </ReactMarkdown>
                               </div>
-                            )}
+                            </div>
+                          )}
 
                           {!message.content &&
                             !message.searchResults &&
@@ -2846,6 +2843,17 @@ export default function YoriAI() {
                                 />
                               </div>
                             )}
+
+                          {/* Match guest order: search result cards directly under the answer */}
+                          {message.searchResults && (
+                            <SearchResultsCards
+                              searchResults={message.searchResults}
+                              onAskAbout={handleAskAbout}
+                              onSave={handleSaveToFavourites}
+                              userId={userId}
+                              userRole={userRole}
+                            />
+                          )}
 
                           {message.trialDetails &&
                             message.trialDetails.showCard !== false && (
@@ -2915,16 +2923,6 @@ export default function YoriAI() {
                                 askAboutOptions={askAboutOptions}
                               />
                             )}
-
-                          {message.searchResults && (
-                            <SearchResultsCards
-                              searchResults={message.searchResults}
-                              onAskAbout={handleAskAbout}
-                              onSave={handleSaveToFavourites}
-                              userId={userId}
-                              userRole={userRole}
-                            />
-                          )}
 
                           {message.communityResults &&
                             message.communityResults.communities?.length >

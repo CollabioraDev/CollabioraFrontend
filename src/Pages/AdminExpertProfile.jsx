@@ -12,7 +12,6 @@ import {
   Loader2,
   ArrowLeft,
   Link as LinkIcon,
-  Shield,
   BookOpen,
   FileText,
   Users,
@@ -31,7 +30,6 @@ export default function AdminExpertProfile() {
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
   const [showIosInstallPrompt, setShowIosInstallPrompt] = useState(false);
 
   const getAuth = () => {
@@ -92,35 +90,6 @@ export default function AdminExpertProfile() {
       setShowIosInstallPrompt(true);
     }
   }, []);
-
-  const handleVerifyToggle = async () => {
-    const { token } = getAuth();
-    if (!token) return;
-    setVerifying(true);
-    try {
-      const newStatus = !profile.isVerified;
-      const res = await fetch(`${base}/api/admin/experts/${userId}/verify`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ isVerified: newStatus }),
-      });
-      if (res.status === 401) {
-        localStorage.removeItem("adminToken");
-        navigate("/admin/login");
-        return;
-      }
-      if (!res.ok) throw new Error("Failed to update verification");
-      setProfile((prev) => ({ ...prev, isVerified: newStatus }));
-      toast.success(newStatus ? "Expert verified" : "Expert unverified");
-    } catch (err) {
-      toast.error(err.message || "Failed to update verification");
-    } finally {
-      setVerifying(false);
-    }
-  };
 
   const locationText =
     profile?.location &&
@@ -239,38 +208,30 @@ export default function AdminExpertProfile() {
                     )}
                     <div className="flex flex-wrap gap-2 mt-3">
                       {profile.isVerified ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/25 text-white rounded-full text-xs font-semibold border border-emerald-400/40 backdrop-blur-sm">
-                          <CheckCircle className="w-3.5 h-3.5" /> Verified
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/25 text-white rounded-full text-xs font-semibold border border-emerald-400/40 backdrop-blur-sm"
+                          title="Automatic when ORCID or proof document is on file"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {profile.verificationSource === "orcid"
+                            ? "Verified · ORCID"
+                            : profile.verificationSource === "document"
+                              ? "Verified · Proof uploaded"
+                              : profile.verificationSource === "orcid_and_document"
+                                ? "Verified · ORCID + proof"
+                                : "Verified"}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/25 text-white rounded-full text-xs font-semibold border border-amber-400/40 backdrop-blur-sm">
-                          <XCircle className="w-3.5 h-3.5" /> Pending verification
+                          <XCircle className="w-3.5 h-3.5" /> No credential yet
                         </span>
                       )}
                     </div>
+                    <p className="text-white/75 text-xs mt-2 max-w-md">
+                      Account verification is automatic (linked ORCID or uploaded
+                      proof). This page is read-only for status.
+                    </p>
                   </div>
-                </div>
-                <div className="shrink-0">
-                  <Button
-                    onClick={handleVerifyToggle}
-                    disabled={verifying}
-                    className={
-                      profile.isVerified
-                        ? "bg-white/20 hover:bg-white/30 text-white border-2 border-white/50 px-5 py-2.5 rounded-xl font-semibold transition-all"
-                        : "bg-emerald-500 hover:bg-emerald-600 text-white border-0 px-5 py-2.5 rounded-xl font-semibold shadow-lg transition-all"
-                    }
-                  >
-                    {verifying ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : profile.isVerified ? (
-                      "Unverify"
-                    ) : (
-                      <>
-                        <Shield className="w-4 h-4 inline mr-2" />
-                        Verify expert
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
             </div>
@@ -344,6 +305,31 @@ export default function AdminExpertProfile() {
                   </div>
                 ) : (
                   <p className="text-sm text-brand-gray">No ORCID linked</p>
+                )}
+              </div>
+            </div>
+
+            {/* Uploaded verification proof (alternative to ORCID) */}
+            <div className={sectionCardClass}>
+              <div className={sectionHeaderClass}>
+                <div className="p-2 rounded-lg bg-brand-royal-blue/10">
+                  <FileText className="w-5 h-5 text-brand-royal-blue" />
+                </div>
+                <h2 className={sectionTitleClass}>Verification document</h2>
+              </div>
+              <div className="p-5 sm:p-6">
+                {profile.verificationDocumentUrl ? (
+                  <a
+                    href={profile.verificationDocumentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={linkClass}
+                  >
+                    View uploaded proof
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <p className="text-sm text-brand-gray">No document on file</p>
                 )}
               </div>
             </div>

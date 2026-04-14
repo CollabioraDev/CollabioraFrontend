@@ -65,6 +65,7 @@ import {
 } from "../../utils/searchLimit.js";
 import { loadTutorialSampleTrials } from "../../utils/tutorialSampleData.js";
 import { GUEST_BROWSE_MODE_ENABLED } from "../../utils/guestBrowseMode.js";
+import { recordTrialEngagement } from "../../utils/productAnalytics.js";
 
 /** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
 function buildGmailComposeUrl(toEmails, subject, body) {
@@ -1822,6 +1823,7 @@ export default function Trials() {
   }
 
   async function openContactInfoModal(trial) {
+    recordTrialEngagement("contact_modal");
     setContactInfoModal({
       open: true,
       trial: trial, // Show basic info immediately
@@ -1931,6 +1933,7 @@ export default function Trials() {
 
   function copyGeneratedMessage() {
     if (contactInfoModal.generatedMessage) {
+      recordTrialEngagement("email_click");
       navigator.clipboard.writeText(contactInfoModal.generatedMessage);
       setContactInfoModal((prev) => ({ ...prev, copied: true }));
       toast.success(t("trials.toastMessageCopied"));
@@ -2011,6 +2014,7 @@ export default function Trials() {
 
   function copyGeneratedEmail() {
     if (contactStepsModal.generatedEmail) {
+      recordTrialEngagement("email_click");
       navigator.clipboard.writeText(contactStepsModal.generatedEmail);
       setContactStepsModal((prev) => ({ ...prev, copied: true }));
       toast.success(t("trials.toastEmailCopied"));
@@ -2041,6 +2045,7 @@ export default function Trials() {
     const openGmail = () =>
       window.open(gmailUrl, "_blank", "noopener,noreferrer");
 
+    recordTrialEngagement("email_click");
     navigator.clipboard
       .writeText(clipboardText)
       .then(() => {

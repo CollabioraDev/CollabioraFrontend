@@ -280,11 +280,21 @@ export default function Landing() {
                 <div className="mt-8 flex w-full flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-center justify-center gap-3 sm:gap-4 lg:justify-start lg:max-w-xl ps-[2.5rem] sm:ps-[3.25rem] md:ps-[3.75rem] lg:ps-14">
                   <button
                     type="button"
-                    onClick={() =>
-                      GUEST_BROWSE_MODE_ENABLED
-                        ? navigate("/home")
-                        : navigate("/onboarding")
-                    }
+                    onClick={() => {
+                      if (GUEST_BROWSE_MODE_ENABLED) {
+                        try {
+                          sessionStorage.setItem(
+                            "collabiora_show_yori_tutorial",
+                            "1",
+                          );
+                        } catch {
+                          /* ignore */
+                        }
+                        navigate("/home");
+                      } else {
+                        navigate("/onboarding");
+                      }
+                    }}
                     className="min-h-[3.25rem] rounded-full border-2 bg-white/95 px-8 py-3.5 text-base sm:text-lg font-bold shadow-sm transition-[transform,box-shadow,opacity] hover:bg-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96]"
                     style={{
                       borderColor: "#D0C4E2",

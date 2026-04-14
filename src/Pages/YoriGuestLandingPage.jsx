@@ -24,6 +24,9 @@ import {
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 import { getApiLocale } from "../i18n/getApiLocale.js";
 import { SearchResultsCards } from "../features/chat/ChatbotPage.jsx";
+import YoriGuestTutorialOverlay, {
+  isYoriGuestTutorialDone,
+} from "../components/YoriGuestTutorialOverlay.jsx";
 
 const SAMPLE_PROMPTS = [
   "How much water should I drink in a day?",
@@ -145,6 +148,7 @@ const markdownComponents = {
 export default function YoriGuestLandingPage() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
     if (typeof window === "undefined") return [];
     const loaded = loadGuestChatMessages();
@@ -168,6 +172,30 @@ export default function YoriGuestLandingPage() {
     window.addEventListener("yoriGuestTrialUpdated", onTrial);
     return () => window.removeEventListener("yoriGuestTrialUpdated", onTrial);
   }, [syncTrial]);
+
+  useEffect(() => {
+    let fromLanding = false;
+    try {
+      if (sessionStorage.getItem("collabiora_show_yori_tutorial") === "1") {
+        sessionStorage.removeItem("collabiora_show_yori_tutorial");
+        fromLanding = true;
+      }
+    } catch {
+      /* ignore */
+    }
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("tutorial") === "1";
+    if (fromQuery) {
+      setTutorialOpen(true);
+    } else if (fromLanding && !isYoriGuestTutorialDone()) {
+      setTutorialOpen(true);
+    }
+    if (fromQuery) {
+      params.delete("tutorial");
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+      navigate(next, { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -655,6 +683,11 @@ export default function YoriGuestLandingPage() {
           )}
         </div>
       </div>
+
+      <YoriGuestTutorialOverlay
+        open={tutorialOpen}
+        onClose={() => setTutorialOpen(false)}
+      />
 
       {disclaimerOpen && (
         <div

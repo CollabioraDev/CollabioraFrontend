@@ -25,6 +25,7 @@ import {
   EyeOff,
   CheckCircle,
   FileText,
+  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getGuestDeviceIdHeaders } from "../utils/api.js";
@@ -89,6 +90,20 @@ const STEP_NAME = 3;
 const ONBOARDING_DRAFT_KEY = "onboard_new_draft";
 // Patient: 4=Conditions, 5=Location, 6=Enter Platform
 // Researcher: 4=Professional Info, 5=Specialty, 6=Location, 7=Enter Platform
+
+/** Maps to existing researcher vs patient onboarding flows */
+const ABOUT_SELF_OPTIONS = [
+  { id: "patient", label: "Patient", researcher: false },
+  { id: "caregiver", label: "Caregiver", researcher: false },
+  { id: "clinical_researcher", label: "Clinical Researcher", researcher: true },
+  {
+    id: "allied_health",
+    label: "Allied Health Professional",
+    researcher: true,
+  },
+  { id: "pharma_biotech", label: "Pharma/Biotech", researcher: true },
+  { id: "other", label: "Other", researcher: false },
+];
 
 function getCombinedConditions(conditions, symptomsText) {
   const list = Array.isArray(conditions) ? [...conditions] : [];
@@ -208,6 +223,8 @@ export default function OnboardingNew() {
   const [step, setStep] = useState(STEP_MEDICAL);
   const [maxStepReached, setMaxStepReached] = useState(STEP_MEDICAL);
   const [isMedicalProfessional, setIsMedicalProfessional] = useState(null);
+  const [aboutYourself, setAboutYourself] = useState(null);
+  const [aboutYourselfDetail, setAboutYourselfDetail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [handle, setHandle] = useState("");
@@ -305,6 +322,8 @@ export default function OnboardingNew() {
     step,
     maxStepReached,
     isMedicalProfessional,
+    aboutYourself,
+    aboutYourselfDetail,
     isAcademicResearcher,
     firstName,
     lastName,
@@ -343,6 +362,10 @@ export default function OnboardingNew() {
     if (!draft || typeof draft !== "object") return;
     if (draft.isMedicalProfessional != null)
       setIsMedicalProfessional(draft.isMedicalProfessional);
+    if (typeof draft.aboutYourself === "string")
+      setAboutYourself(draft.aboutYourself);
+    if (typeof draft.aboutYourselfDetail === "string")
+      setAboutYourselfDetail(draft.aboutYourselfDetail);
     if (draft.isAcademicResearcher != null)
       setIsAcademicResearcher(draft.isAcademicResearcher);
     if (typeof draft.firstName === "string") setFirstName(draft.firstName);
@@ -524,6 +547,15 @@ export default function OnboardingNew() {
 
   const goToStep = (nextStep) => {
     startTransition(() => setStep(nextStep));
+  };
+
+  const handleAboutSelfSelect = (option) => {
+    setAboutYourself(option.id);
+    setIsMedicalProfessional(option.researcher);
+    if (option.id !== "other") {
+      setAboutYourselfDetail("");
+      goToStep(STEP_EMAIL);
+    }
   };
 
   useEffect(() => {
@@ -1320,7 +1352,7 @@ export default function OnboardingNew() {
               }}
             >
               <AnimatePresence mode="wait">
-                {/* Step 1: Are you a healthcare professional? */}
+                {/* Step 1: Tell us about yourself */}
                 {step === STEP_MEDICAL && (
                   <motion.div
                     key="step1"
@@ -1329,107 +1361,92 @@ export default function OnboardingNew() {
                     animate="visible"
                     exit="exit"
                     transition={{ duration: 0.25 }}
-                    className="space-y-6"
+                    className="space-y-4"
                   >
                     <h1
                       className="text-xl sm:text-2xl font-bold text-center"
                       style={{ color: "#2F3C96" }}
                     >
-                      Are you a Medical or Allied Care Professional?
+                      Tell us about yourself
                     </h1>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMedicalProfessional(true);
-                          goToStep(STEP_EMAIL);
-                        }}
-                        className="relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                        style={{
-                          borderColor:
-                            isMedicalProfessional === true
-                              ? "#2F3C96"
-                              : "#D0C4E2",
-                          backgroundColor:
-                            isMedicalProfessional === true
-                              ? "rgba(47, 60, 150, 0.10)"
-                              : "rgba(47, 60, 150, 0.03)",
-                          color: "#2F3C96",
-                        }}
-                      >
-                        {isMedicalProfessional === true && (
-                          <span
-                            className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#2F3C96" }}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {ABOUT_SELF_OPTIONS.map((option) => {
+                        const selected = aboutYourself === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => handleAboutSelfSelect(option)}
+                            className="relative flex min-h-[2.75rem] items-center justify-center rounded-lg border px-2 py-2 text-center transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            style={{
+                              borderColor: selected ? "#2F3C96" : "#D0C4E2",
+                              backgroundColor: selected
+                                ? "rgba(47, 60, 150, 0.10)"
+                                : "rgba(47, 60, 150, 0.03)",
+                              color: "#2F3C96",
+                            }}
                           >
-                            <CheckCircle className="w-3.5 h-3.5 text-white" />
-                          </span>
-                        )}
-                        <img
-                          src="/medic.webp"
-                          alt=""
-                          className="w-16 h-16 object-contain"
-                          aria-hidden
-                        />
-                        <span className="text-base font-semibold">Yes</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMedicalProfessional(false);
-                          goToStep(STEP_EMAIL);
-                        }}
-                        className="relative flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                        style={{
-                          borderColor:
-                            isMedicalProfessional === false
-                              ? "#2F3C96"
-                              : "#D0C4E2",
-                          backgroundColor:
-                            isMedicalProfessional === false
-                              ? "rgba(47, 60, 150, 0.10)"
-                              : "rgba(47, 60, 150, 0.03)",
-                          color: "#2F3C96",
-                        }}
-                      >
-                        {isMedicalProfessional === false && (
-                          <span
-                            className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: "#2F3C96" }}
-                          >
-                            <CheckCircle className="w-3.5 h-3.5 text-white" />
-                          </span>
-                        )}
-                        <img
-                          src="/patient-caregiver.webp"
-                          alt=""
-                          className="w-16 h-16 object-contain"
-                          aria-hidden
-                        />
-                        <span className="text-base font-semibold">No</span>
-                      </button>
+                            {selected && (
+                              <span
+                                className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full"
+                                style={{ backgroundColor: "#2F3C96" }}
+                                aria-hidden
+                              >
+                                <CheckCircle className="h-2.5 w-2.5 text-white" />
+                              </span>
+                            )}
+                            <span className="text-[11px] font-semibold leading-tight sm:text-xs">
+                              {option.label}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
+                    {aboutYourself === "other" && (
+                      <div className="space-y-2 pt-0.5">
+                        <Input
+                          value={aboutYourselfDetail}
+                          onChange={(e) =>
+                            setAboutYourselfDetail(e.target.value)
+                          }
+                          placeholder="Please specify (optional)"
+                          className="!text-sm h-9 w-full rounded-lg border px-3"
+                          style={{ borderColor: "#D0C4E2", color: "#2F3C96" }}
+                          autoComplete="off"
+                        />
+                        <Button
+                          type="button"
+                          className="w-full"
+                          onClick={() => goToStep(STEP_EMAIL)}
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    )}
                     <div className="-mx-5 sm:-mx-6 -mb-5 sm:-mb-6 mt-6 overflow-hidden rounded-b-xl">
-                      <div
-                        className="border-t"
-                        style={{ borderColor: "#E8E8E8" }}
-                        aria-hidden
-                      />
-                      <div
-                        className="px-5 sm:px-6 pt-4 pb-5 sm:pb-6 flex flex-col items-center gap-1 text-center text-sm"
-                        style={{ backgroundColor: "#FDF2F8" }}
+                      <Link
+                        to="/signin"
+                        className="group flex w-full cursor-pointer flex-col items-stretch gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5 sm:py-4 no-underline border-t border-[#D0C4E2] shadow-[inset_0_-4px_0_0_#1c2459] transition-all duration-200 hover:brightness-[1.03] active:brightness-[0.98] active:scale-[0.995] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2F3C96]"
+                        style={{
+                          backgroundColor: "#2F3C96",
+                          color: "#FFFFFF",
+                        }}
+                        aria-label="Already have an account? Sign in"
                       >
-                        <span style={{ color: "#2F3C96" }}>
+                        <span className="text-center text-sm font-medium text-white/90 sm:text-left">
                           Already have an account?
                         </span>
-                        <Link
-                          to="/signin"
-                          className="font-semibold underline decoration-2 underline-offset-2 hover:opacity-80"
-                          style={{ color: "#2F3C96" }}
+                        <span
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/12 px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-all group-hover:border-white/55 group-hover:bg-white/18 group-active:bg-white/10"
+                          aria-hidden
                         >
                           Sign in
-                        </Link>
-                      </div>
+                          <ChevronRight
+                            className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+                            aria-hidden
+                          />
+                        </span>
+                      </Link>
                     </div>
                   </motion.div>
                 )}

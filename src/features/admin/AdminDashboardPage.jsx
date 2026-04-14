@@ -98,6 +98,29 @@ function downloadAsCsv(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+/** Matches server: verified = ORCID and/or uploaded proof (not admin-approved). */
+function researcherVerificationLabel(expert) {
+  if (!expert?.isVerified) {
+    return {
+      short: "Unverified",
+      detail: "Needs ORCID or uploaded proof",
+    };
+  }
+  switch (expert.verificationSource) {
+    case "orcid":
+      return { short: "Verified · ORCID", detail: "Linked ORCID" };
+    case "document":
+      return { short: "Verified · Proof", detail: "Uploaded verification document" };
+    case "orcid_and_document":
+      return {
+        short: "Verified · ORCID + proof",
+        detail: "ORCID and document on file",
+      };
+    default:
+      return { short: "Verified", detail: "Credential on file" };
+  }
+}
+
 function exportExpertsAsTxt(experts) {
   const lines = [
     "collabiora – Experts / Researchers Export",
@@ -112,7 +135,9 @@ function exportExpertsAsTxt(experts) {
       : "";
     lines.push(`${i + 1}. ${e.name || "—"}`);
     if (e.email) lines.push(`   Email: ${e.email}`);
-    lines.push(`   Verified: ${e.isVerified ? "Yes" : "No"}`);
+    lines.push(
+      `   Credential verified (ORCID or proof): ${e.isVerified ? "Yes" : "No"}`,
+    );
     if (loc) lines.push(`   Location: ${loc}`);
     if (e.specialties?.length)
       lines.push(`   Specialties: ${e.specialties.join(", ")}`);
@@ -154,7 +179,11 @@ function exportExpertsAsPdf(experts) {
       doc.text(`Email: ${e.email.substring(0, 80)}`, 14, y);
       y += 5;
     }
-    doc.text(`Verified: ${e.isVerified ? "Yes" : "No"}`, 14, y);
+    doc.text(
+      `Credential verified: ${e.isVerified ? "Yes" : "No"}`,
+      14,
+      y,
+    );
     y += 5;
     if (loc) {
       doc.text(`Location: ${loc.substring(0, 80)}`, 14, y);
@@ -186,7 +215,7 @@ function exportExpertsAsCsv(experts) {
     "#",
     "Name",
     "Email",
-    "Verified",
+    "Credential verified (ORCID or proof)",
     "Location",
     "Specialties",
     "Account created",
@@ -201,7 +230,7 @@ function exportExpertsAsCsv(experts) {
       i + 1,
       e.name || "",
       e.email || "",
-      e.isVerified ? "Yes" : "No",
+      e.isVerified ? "Yes (ORCID or proof)" : "No",
       loc,
       e.specialties && e.specialties.length ? e.specialties.join("; ") : "",
       e.accountCreated ? new Date(e.accountCreated).toLocaleDateString() : "",
@@ -520,6 +549,7 @@ function getSurveyFromReview(review) {
 
 const SECTIONS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "metrics", label: "Metrics", icon: BarChart3 },
   { id: "active-users", label: "Active users", icon: Activity },
   { id: "search", label: "Search", icon: Search },
   { id: "experts", label: "Experts", icon: User },
@@ -646,7 +676,7 @@ function AdminEmailWebhookRowPlaceholder() {
 }
 
 const SIDEBAR_GROUPS = [
-  { title: "MENU", items: ["overview", "active-users", "work"] },
+  { title: "MENU", items: ["overview", "metrics", "active-users", "work"] },
   {
     title: "MANAGEMENT",
     items: ["search", "experts", "patients", "forums", "posts", "community"],
@@ -670,7 +700,6 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState({});
   const [searchStats, setSearchStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [searchChannelAnalytics, setSearchChannelAnalytics] = useState(null);
@@ -816,6 +845,9 @@ export default function AdminDashboard() {
   // Overview stats
   const [overviewStats, setOverviewStats] = useState(null);
   const [loadingOverviewStats, setLoadingOverviewStats] = useState(false);
+  const [analyticsSummary, setAnalyticsSummary] = useState(null);
+  const [loadingAnalyticsSummary, setLoadingAnalyticsSummary] =
+    useState(false);
   // Reviews/Feedback
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -994,7 +1026,10 @@ export default function AdminDashboard() {
       fetchReviews();
       fetchReviewStats();
     }
-    if (activeSection === "overview") fetchOverviewStats();
+    if (activeSection === "overview" || activeSection === "metrics") {
+      fetchOverviewStats();
+      fetchAnalyticsSummary();
+    }
     if (activeSection === "profile-reminders") fetchProfileReminderData();
   }, [navigate, activeSection]);
 
@@ -1030,7 +1065,10 @@ export default function AdminDashboard() {
   }, [activeSection, patientSortBy, patientOrder]);
 
   useEffect(() => {
-    if (activeSection === "overview") fetchOverviewStats();
+    if (activeSection === "overview" || activeSection === "metrics") {
+      fetchOverviewStats();
+      fetchAnalyticsSummary();
+    }
     if (activeSection === "reviews") {
       fetchReviews();
       fetchReviewStats();
@@ -1992,6 +2030,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchAnalyticsSummary = async () => {
+    const { token, headers } = getAuth();
+    if (!token) return;
+    setLoadingAnalyticsSummary(true);
+    try {
+      const res = await fetch(`${base}/api/admin/analytics/summary`, {
+        headers,
+      });
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      setAnalyticsSummary(data);
+    } catch (e) {
+      toast.error("Failed to load analytics summary");
+    } finally {
+      setLoadingAnalyticsSummary(false);
+    }
+  };
+
   const handleDeletePatient = async (id) => {
     if (
       !confirm(
@@ -2299,65 +2355,6 @@ export default function AdminDashboard() {
       toast.error("Failed to load experts");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleVerifyToggle = async (userId, currentStatus) => {
-    setUpdating({ ...updating, [userId]: true });
-    try {
-      const adminToken = localStorage.getItem("adminToken");
-      const newStatus = !currentStatus;
-
-      const response = await fetch(
-        `${base}/api/admin/experts/${userId}/verify`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-          body: JSON.stringify({ isVerified: newStatus }),
-        },
-      );
-
-      if (response.status === 401) {
-        localStorage.removeItem("adminToken");
-        toast.error("Access denied. Admin access required.");
-        navigate("/");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to update verification status");
-      }
-
-      // Update local state
-      setExperts((prev) =>
-        prev.map((expert) =>
-          expert.userId === userId
-            ? {
-                ...expert,
-                isVerified: newStatus,
-                researchGateVerification:
-                  data.expert?.researchGateVerification ??
-                  expert.researchGateVerification,
-                academiaEduVerification:
-                  data.expert?.academiaEduVerification ??
-                  expert.academiaEduVerification,
-                needsAttention: false,
-              }
-            : expert,
-        ),
-      );
-
-      toast.success(
-        `Expert ${newStatus ? "verified" : "unverified"} successfully`,
-      );
-    } catch (error) {
-      console.error("Error updating verification:", error);
-      toast.error("Failed to update verification status");
-    } finally {
-      setUpdating({ ...updating, [userId]: false });
     }
   };
 
@@ -3652,18 +3649,23 @@ export default function AdminDashboard() {
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {activeSection === "overview" &&
               (() => {
-                const newJoiners =
+                const gs = overviewStats?.growthSnapshot;
+                const newJoinersMtd =
                   (overviewStats?.newPatients?.thisMonth ?? 0) +
                   (overviewStats?.newResearchers?.thisMonth ?? 0);
-                const newJoinersLastMonth =
-                  (overviewStats?.newPatients?.lastMonth ?? 0) +
-                  (overviewStats?.newResearchers?.lastMonth ?? 0);
-                const joinersDiff = newJoiners - newJoinersLastMonth;
-                const joinersPct = newJoinersLastMonth
-                  ? Math.round((joinersDiff / newJoinersLastMonth) * 100)
-                  : joinersDiff > 0
-                    ? 100
-                    : 0;
+                const signupMtdCount =
+                  typeof gs?.thisPeriodSignups === "number"
+                    ? gs.thisPeriodSignups
+                    : newJoinersMtd;
+                const priorWindowSignups =
+                  typeof gs?.priorPeriodSignups === "number"
+                    ? gs.priorPeriodSignups
+                    : null;
+                const joinersDiffVsPriorWindow =
+                  priorWindowSignups != null
+                    ? signupMtdCount - priorWindowSignups
+                    : null;
+                const momPct = gs?.pctChangeVsPriorPartialMonth;
                 const verificationRate = experts.length
                   ? Math.round((verifiedCount / experts.length) * 100)
                   : 0;
@@ -3671,12 +3673,8 @@ export default function AdminDashboard() {
                   (e) =>
                     !e.isVerified && e.pendingDays != null && e.pendingDays > 3,
                 ).length;
-                const signupsOverTime = overviewStats?.signupsOverTime || [];
-                const engagementOverTime =
-                  overviewStats?.engagementOverTime || [];
                 return (
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1 min-w-0 space-y-4">
+                  <div className="space-y-4">
                       {loadingOverviewStats ? (
                         <div className="flex justify-center py-12">
                           <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
@@ -3698,6 +3696,10 @@ export default function AdminDashboard() {
                                 {overviewStats?.totalResearchers ?? "—"} total
                                 researchers
                               </span>
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                              {overviewStats?.metricsQualityNote ||
+                                "Verified accounts only (excludes pending email and service accounts)."}
                             </p>
                           </div>
 
@@ -3723,17 +3725,22 @@ export default function AdminDashboard() {
                                 {overviewStats?.unresolvedFeedbackCount ?? 0}{" "}
                                 feedback open
                               </span>
-                              {joinersPct !== 0 && (
+                              {typeof momPct === "number" && (
                                 <span
                                   className={
-                                    joinersPct < 0
+                                    momPct < 0
                                       ? "text-amber-600"
                                       : "text-emerald-600"
                                   }
+                                  title={
+                                    gs?.periodLabel ||
+                                    "Same day-of-month window vs prior month"
+                                  }
                                 >
                                   {" "}
-                                  · Engagement {joinersPct > 0 ? "+" : ""}
-                                  {joinersPct}% vs last month
+                                  · Signup growth (day-adjusted MoM):{" "}
+                                  {momPct > 0 ? "+" : ""}
+                                  {momPct}%
                                 </span>
                               )}
                             </p>
@@ -3744,31 +3751,43 @@ export default function AdminDashboard() {
                             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
                                 <UserCircle className="w-5 h-5 text-brand-royal-blue" />
-                                {newJoinersLastMonth !== undefined && (
-                                  <span
-                                    className={`text-xs font-medium flex items-center gap-0.5 ${joinersDiff >= 0 ? "text-emerald-600" : "text-red-600"}`}
-                                  >
-                                    {joinersDiff >= 0 ? (
-                                      <TrendingUp className="w-3.5 h-3.5" />
-                                    ) : (
-                                      <TrendingDown className="w-3.5 h-3.5" />
-                                    )}
-                                    {joinersDiff >= 0 ? "+" : ""}
-                                    {joinersDiff} vs last month (
-                                    {joinersPct >= 0 ? "+" : ""}
-                                    {joinersPct}%)
-                                  </span>
-                                )}
+                                {joinersDiffVsPriorWindow != null && (
+                                    <span
+                                      className={`text-xs font-medium flex items-center gap-0.5 max-w-[min(100%,14rem)] text-right leading-tight ${joinersDiffVsPriorWindow >= 0 ? "text-emerald-600" : "text-red-600"}`}
+                                      title={
+                                        gs?.periodLabel ||
+                                        "Same calendar dates in the prior month (day-aligned)"
+                                      }
+                                    >
+                                      {joinersDiffVsPriorWindow >= 0 ? (
+                                        <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+                                      ) : (
+                                        <TrendingDown className="w-3.5 h-3.5 shrink-0" />
+                                      )}
+                                      {joinersDiffVsPriorWindow >= 0 ? "+" : ""}
+                                      {joinersDiffVsPriorWindow} vs prior window
+                                    </span>
+                                  )}
                               </div>
                               <p className="text-2xl font-bold text-brand-royal-blue tabular-nums">
-                                {newJoiners || "—"}
+                                {signupMtdCount != null ? signupMtdCount : "—"}
                               </p>
                               <p className="text-sm text-brand-gray">
-                                New joiners (
-                                {overviewStats?.currentMonthLabel ??
+                                New verified signups (
+                                {gs?.currentWindowLabel ??
+                                  overviewStats?.currentMonthLabel ??
                                   "this month"}
                                 )
                               </p>
+                              {gs?.priorWindowLabel && (
+                                <p
+                                  className="text-xs text-slate-500 mt-1"
+                                  title={gs?.periodLabel}
+                                >
+                                  Compared to {gs.priorWindowLabel} (same
+                                  day-of-month window)
+                                </p>
+                              )}
                             </div>
                             <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all">
                               <div className="flex items-center justify-between mb-2">
@@ -3844,12 +3863,21 @@ export default function AdminDashboard() {
                                       0)}
                                 </p>
                               </div>
-                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                              <div
+                                className="rounded-xl bg-slate-50 border border-slate-100 p-3"
+                                title={
+                                  analyticsSummary?.definitions?.returningRate ||
+                                  "% users who revisit (2+ active days / 30d)"
+                                }
+                              >
                                 <p className="text-xs text-slate-500">
-                                  Returning rate
+                                  Returning rate (signed-in)
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
-                                  —
+                                  {analyticsSummary?.returningRate
+                                    ?.signedInPct != null
+                                    ? `${analyticsSummary.returningRate.signedInPct}%`
+                                    : "—"}
                                 </p>
                               </div>
                               <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
@@ -3860,340 +3888,554 @@ export default function AdminDashboard() {
                                   {overviewStats?.unresolvedFeedbackCount ?? 0}
                                 </p>
                               </div>
-                              <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                              <div
+                                className="rounded-xl bg-slate-50 border border-slate-100 p-3"
+                                title={
+                                  analyticsSummary?.definitions
+                                    ?.engagementRate ||
+                                  "% of monthly active users who posted, commented, searched, followed, or used Yori"
+                                }
+                              >
                                 <p className="text-xs text-slate-500">
-                                  Avg dashboard load
+                                  Engagement rate (30d)
                                 </p>
                                 <p className="text-lg font-bold text-brand-royal-blue tabular-nums">
-                                  —
+                                  {analyticsSummary?.engagement?.ratePct !=
+                                  null
+                                    ? `${analyticsSummary.engagement.ratePct}%`
+                                    : "—"}
                                 </p>
                               </div>
                             </div>
                           </div>
 
-                          {/* Month comparison (from Feb) — calendar month = same as "New joiners" KPI above */}
-                          {(overviewStats?.monthlyComparison?.length ?? 0) >
-                            0 && (
-                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm overflow-x-auto">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                                Month comparison (from Feb)
-                              </h3>
-                              <p className="text-xs text-brand-gray mb-3">
-                                New signups per calendar month. Current month
-                                matches &quot;New joiners (
-                                {overviewStats?.currentMonthLabel ??
-                                  "this month"}
-                                )&quot; above.
-                              </p>
-                              <table className="w-full min-w-[320px] text-sm">
-                                <thead>
-                                  <tr className="border-b border-brand-gray-100">
-                                    <th className="text-left py-2 pr-4 font-semibold text-brand-gray">
-                                      Month
-                                    </th>
-                                    <th className="text-right py-2 px-2 font-semibold text-brand-gray">
-                                      Patients
-                                    </th>
-                                    <th className="text-right py-2 px-2 font-semibold text-brand-gray">
-                                      Researchers
-                                    </th>
-                                    <th className="text-right py-2 pl-2 font-semibold text-brand-royal-blue">
-                                      Total
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {overviewStats.monthlyComparison.map(
-                                    (row) => (
-                                      <tr
-                                        key={`${row.year}-${row.month}`}
-                                        className="border-b border-brand-gray-50 last:border-0"
-                                      >
-                                        <td className="py-2 pr-4 font-medium text-gray-800">
-                                          {row.monthLabel}
-                                        </td>
-                                        <td className="text-right py-2 px-2 tabular-nums text-brand-royal-blue">
-                                          {row.patients}
-                                        </td>
-                                        <td className="text-right py-2 px-2 tabular-nums text-purple-600">
-                                          {row.researchers}
-                                        </td>
-                                        <td className="text-right py-2 pl-2 tabular-nums font-semibold text-gray-800">
-                                          {row.total}
-                                        </td>
-                                      </tr>
-                                    ),
-                                  )}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                          <p className="text-xs text-slate-500">
+                            Deeper charts, funnels, and definitions are under{" "}
+                            <span className="font-semibold text-brand-royal-blue">
+                              Metrics
+                            </span>
+                            .
+                          </p>
+                        </>
+                      )}
+                  </div>
+                );
+              })()}
 
-                          {/* Row 3 — New users compact + Charts */}
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                New users (last 30 days)
-                              </h3>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                                  <p className="text-xs font-semibold text-slate-500">
-                                    Patients
-                                  </p>
-                                  <p className="text-sm font-bold text-brand-royal-blue">
-                                    24h:{" "}
-                                    {overviewStats?.newPatients?.last24 ?? "—"}{" "}
-                                    · Week:{" "}
-                                    {overviewStats?.newPatients?.thisWeek ??
-                                      "—"}{" "}
-                                    · Month:{" "}
-                                    {overviewStats?.newPatients?.thisMonth ??
-                                      "—"}
-                                  </p>
-                                </div>
-                                <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                                  <p className="text-xs font-semibold text-slate-500">
-                                    Researchers
-                                  </p>
-                                  <p className="text-sm font-bold text-brand-royal-blue">
-                                    24h:{" "}
-                                    {overviewStats?.newResearchers?.last24 ??
-                                      "—"}{" "}
-                                    · Week:{" "}
-                                    {overviewStats?.newResearchers?.thisWeek ??
-                                      "—"}{" "}
-                                    · Month:{" "}
-                                    {overviewStats?.newResearchers?.thisMonth ??
-                                      "—"}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                Experts
-                              </h3>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
-                                  <div
-                                    className="h-full rounded-full bg-emerald-500"
-                                    style={{ width: `${verificationRate}%` }}
-                                  />
-                                </div>
-                                <span className="text-sm font-bold text-brand-royal-blue tabular-nums">
-                                  {verificationRate}%
+            {activeSection === "metrics" &&
+              (() => {
+                const signupsOverTime = overviewStats?.signupsOverTime || [];
+                const engagementOverTime =
+                  overviewStats?.engagementOverTime || [];
+                const gs = overviewStats?.growthSnapshot;
+                const a = analyticsSummary;
+                return (
+                  <div className="space-y-4 max-w-6xl">
+                    {loadingOverviewStats || loadingAnalyticsSummary ? (
+                      <div className="flex justify-center py-16">
+                        <Loader2 className="w-8 h-8 animate-spin text-brand-royal-blue" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                            Growth snapshot (verified signups)
+                          </h3>
+                          {gs ? (
+                            <p className="text-sm text-gray-800">
+                              <span className="font-semibold text-brand-royal-blue">
+                                {gs.thisPeriodSignups ?? 0}
+                              </span>{" "}
+                              this period vs{" "}
+                              <span className="font-semibold">
+                                {gs.priorPeriodSignups ?? 0}
+                              </span>{" "}
+                              in the same day-range last month (
+                              {gs.periodLabel}).{" "}
+                              <span
+                                className={
+                                  (gs.pctChangeVsPriorPartialMonth ?? 0) < 0
+                                    ? "text-amber-600"
+                                    : "text-emerald-600"
+                                }
+                              >
+                                {(gs.pctChangeVsPriorPartialMonth ?? 0) > 0
+                                  ? "+"
+                                  : ""}
+                                {gs.pctChangeVsPriorPartialMonth ?? 0}%
+                              </span>{" "}
+                              vs prior window.
+                            </p>
+                          ) : (
+                            <p className="text-sm text-slate-500">—</p>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Engagement &amp; activity
+                            </h3>
+                            <p className="text-xs text-slate-500 mb-2">
+                              {a?.definitions?.engagementRate}
+                            </p>
+                            <ul className="text-sm space-y-1 text-gray-800">
+                              <li>
+                                Engagement rate:{" "}
+                                <span className="font-bold text-brand-royal-blue">
+                                  {a?.engagement?.ratePct != null
+                                    ? `${a.engagement.ratePct}%`
+                                    : "—"}
+                                </span>{" "}
+                                ({a?.engagement?.engagedUsers ?? "—"} /{" "}
+                                {a?.engagement?.mau ?? "—"} MAU)
+                              </li>
+                              <li>
+                                WAU / MAU:{" "}
+                                <span className="font-semibold">
+                                  {a?.engagement?.wau ?? "—"}
+                                </span>{" "}
+                                /{" "}
+                                <span className="font-semibold">
+                                  {a?.engagement?.mau ?? "—"}
                                 </span>
+                              </li>
+                              <li className="text-slate-600 text-xs mt-2">
+                                {a?.definitions?.engagementActions}
+                              </li>
+                            </ul>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Returning users
+                            </h3>
+                            <p className="text-xs text-slate-500 mb-2">
+                              {a?.definitions?.returningRate}
+                            </p>
+                            <ul className="text-sm space-y-1 text-gray-800">
+                              <li>
+                                Signed-in:{" "}
+                                <span className="font-bold text-brand-royal-blue">
+                                  {a?.returningRate?.signedInPct != null
+                                    ? `${a.returningRate.signedInPct}%`
+                                    : "—"}
+                                </span>
+                              </li>
+                              <li>
+                                Guest devices:{" "}
+                                <span className="font-bold text-brand-royal-blue">
+                                  {a?.returningRate?.guestDevicesPct != null
+                                    ? `${a.returningRate.guestDevicesPct}%`
+                                    : "—"}
+                                </span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Yori &amp; search channels (30d)
+                            </h3>
+                            <p className="text-sm">
+                              Yori events:{" "}
+                              <span className="font-bold">
+                                {a?.yori?.events30d ?? "—"}
+                              </span>{" "}
+                              · Uniques:{" "}
+                              <span className="font-semibold">
+                                {a?.yori?.uniqueUsers30d ?? "—"}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Clinical trials engagement
+                            </h3>
+                            <ul className="text-sm space-y-1">
+                              <li>
+                                Trials search events:{" "}
+                                {a?.clinicalTrials?.trialsChannelEvents30d ??
+                                  "—"}
+                              </li>
+                              <li>
+                                Contact modal opens:{" "}
+                                {a?.clinicalTrials?.contactModalOpens ?? "—"}
+                              </li>
+                              <li>
+                                Email / copy actions:{" "}
+                                {a?.clinicalTrials?.emailClicks ?? "—"}
+                              </li>
+                              <li>
+                                Trial detail page views:{" "}
+                                {a?.clinicalTrials?.detailViews ?? "—"}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                            Top pages (30d, first-party beacon)
+                          </h3>
+                          {(a?.featureUsage?.topPages?.length ?? 0) === 0 ? (
+                            <p className="text-sm text-slate-500">
+                              No page views recorded yet — traffic will appear
+                              as users navigate the app.
+                            </p>
+                          ) : (
+                            <ul className="text-sm space-y-1">
+                              {a.featureUsage.topPages.map((row) => (
+                                <li
+                                  key={row.path}
+                                  className="flex justify-between gap-2"
+                                >
+                                  <span className="truncate font-mono text-xs">
+                                    {row.path}
+                                  </span>
+                                  <span className="tabular-nums shrink-0">
+                                    {row.views}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                            Demographics (verified profiles)
+                          </h3>
+                          <p className="text-sm mb-2">
+                            Patients{" "}
+                            <span className="font-semibold">
+                              {a?.demographics?.patientPct ?? "—"}%
+                            </span>{" "}
+                            · Researchers{" "}
+                            <span className="font-semibold">
+                              {a?.demographics?.researcherPct ?? "—"}%
+                            </span>{" "}
+                            · n={a?.demographics?.totalVerifiedUsers ?? "—"}
+                          </p>
+                          <p className="text-xs font-semibold text-slate-600 mb-1">
+                            Countries (top)
+                          </p>
+                          <ul className="text-sm grid grid-cols-1 sm:grid-cols-2 gap-1 mb-3">
+                            {(a?.demographics?.topCountries || []).map(
+                              (c) => (
+                                <li
+                                  key={c.country}
+                                  className="flex justify-between gap-2"
+                                >
+                                  <span className="truncate">{c.country}</span>
+                                  <span className="tabular-nums">{c.count}</span>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                          <p className="text-xs font-semibold text-slate-600 mb-1">
+                            Age (profile or account)
+                          </p>
+                          <p className="text-sm text-gray-800 mb-2">
+                            {a?.demographics?.ageBuckets
+                              ? Object.entries(a.demographics.ageBuckets)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(" · ")
+                              : "—"}
+                          </p>
+                          <p className="text-xs font-semibold text-slate-600 mb-1">
+                            Gender (self-reported, profile)
+                          </p>
+                          <p className="text-sm text-gray-800">
+                            {a?.demographics?.genderCounts
+                              ? Object.entries(a.demographics.genderCounts)
+                                  .slice(0, 8)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(" · ")
+                              : "—"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-indigo-200/80 bg-indigo-50/90 p-4 shadow-sm">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-indigo-900 mb-1">
+                            Microsoft Clarity
+                          </h3>
+                          <p className="text-sm text-indigo-950 mb-2">
+                            Session recordings, heatmaps, and time-on-site live
+                            in Clarity. Set{" "}
+                            <code className="text-xs bg-white/80 px-1 rounded">
+                              VITE_CLARITY_PROJECT_ID
+                            </code>{" "}
+                            in the frontend and{" "}
+                            <code className="text-xs bg-white/80 px-1 rounded">
+                              CLARITY_PROJECT_ID
+                            </code>{" "}
+                            on the server for this panel link.
+                          </p>
+                          {a?.clarity?.dashboardUrl ? (
+                            <a
+                              href={a.clarity.dashboardUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-800 hover:underline"
+                            >
+                              Open Clarity project
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          ) : (
+                            <p className="text-xs text-indigo-800">
+                              Configure project ID to enable the dashboard link.
+                            </p>
+                          )}
+                        </div>
+
+                        {(overviewStats?.monthlyComparison?.length ?? 0) >
+                          0 && (
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm overflow-x-auto">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                              Month comparison (from Feb)
+                            </h3>
+                            <p className="text-xs text-brand-gray mb-3">
+                              Verified signups per calendar month.
+                            </p>
+                            <table className="w-full min-w-[320px] text-sm">
+                              <thead>
+                                <tr className="border-b border-brand-gray-100">
+                                  <th className="text-left py-2 pr-4 font-semibold text-brand-gray">
+                                    Month
+                                  </th>
+                                  <th className="text-right py-2 px-2 font-semibold text-brand-gray">
+                                    Patients
+                                  </th>
+                                  <th className="text-right py-2 px-2 font-semibold text-brand-gray">
+                                    Researchers
+                                  </th>
+                                  <th className="text-right py-2 pl-2 font-semibold text-brand-royal-blue">
+                                    Total
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {overviewStats.monthlyComparison.map((row) => (
+                                  <tr
+                                    key={`${row.year}-${row.month}`}
+                                    className="border-b border-brand-gray-50 last:border-0"
+                                  >
+                                    <td className="py-2 pr-4 font-medium text-gray-800">
+                                      {row.monthLabel}
+                                    </td>
+                                    <td className="text-right py-2 px-2 tabular-nums text-brand-royal-blue">
+                                      {row.patients}
+                                    </td>
+                                    <td className="text-right py-2 px-2 tabular-nums text-purple-600">
+                                      {row.researchers}
+                                    </td>
+                                    <td className="text-right py-2 pl-2 tabular-nums font-semibold text-gray-800">
+                                      {row.total}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              New verified users (last 30 days)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                                <p className="text-xs font-semibold text-slate-500">
+                                  Patients
+                                </p>
+                                <p className="text-sm font-bold text-brand-royal-blue">
+                                  24h:{" "}
+                                  {overviewStats?.newPatients?.last24 ?? "—"}{" "}
+                                  · Week:{" "}
+                                  {overviewStats?.newPatients?.thisWeek ??
+                                    "—"}{" "}
+                                  · Month:{" "}
+                                  {overviewStats?.newPatients?.thisMonth ??
+                                    "—"}
+                                </p>
                               </div>
-                              <p className="text-xs text-brand-gray mt-1">
-                                Verification rate · Pending &gt;3 days:{" "}
-                                {unverifiedCount}
-                              </p>
+                              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                                <p className="text-xs font-semibold text-slate-500">
+                                  Researchers
+                                </p>
+                                <p className="text-sm font-bold text-brand-royal-blue">
+                                  24h:{" "}
+                                  {overviewStats?.newResearchers?.last24 ??
+                                    "—"}{" "}
+                                  · Week:{" "}
+                                  {overviewStats?.newResearchers?.thisWeek ??
+                                    "—"}{" "}
+                                  · Month:{" "}
+                                  {overviewStats?.newResearchers?.thisMonth ??
+                                    "—"}
+                                </p>
+                              </div>
                             </div>
                           </div>
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Expert verification
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-emerald-500"
+                                  style={{
+                                    width: `${experts.length ? Math.round((verifiedCount / experts.length) * 100) : 0}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className="text-sm font-bold text-brand-royal-blue tabular-nums">
+                                {experts.length
+                                  ? Math.round(
+                                      (verifiedCount / experts.length) * 100,
+                                    )
+                                  : 0}
+                                %
+                              </span>
+                            </div>
+                          </div>
+                        </div>
 
-                          {/* Row 4 — Charts */}
-                          {(signupsOverTime.length > 0 ||
-                            engagementOverTime.length > 0) && (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                              {signupsOverTime.length > 0 &&
-                                (() => {
-                                  const slice = signupsOverTime.slice(-30);
-                                  const maxBoth = Math.max(
-                                    1,
-                                    ...slice.map(
-                                      (x) =>
-                                        (x.patients || 0) +
-                                        (x.researchers || 0),
-                                    ),
-                                  );
-                                  return (
-                                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                                      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                        Signups over time
-                                      </h3>
-                                      <div className="h-[80px] flex items-end gap-px">
-                                        {slice.map((d) => {
-                                          const p = d.patients || 0;
-                                          const r = d.researchers || 0;
-                                          const total = p + r;
-                                          const sum = (total / maxBoth) * 100;
-                                          return (
-                                            <div
-                                              key={d.date}
-                                              className="flex-1 flex flex-col rounded-t min-h-[2px] overflow-hidden"
-                                              style={{
-                                                height: `${Math.max(2, sum)}%`,
-                                              }}
-                                              title={`${d.date}: ${p} patients, ${r} researchers`}
-                                            >
-                                              {p > 0 && (
-                                                <div
-                                                  className="w-full bg-brand-royal-blue/80"
-                                                  style={{
-                                                    height: `${(p / total) * 100}%`,
-                                                  }}
-                                                />
-                                              )}
-                                              {r > 0 && (
-                                                <div
-                                                  className="w-full bg-purple-500/80"
-                                                  style={{
-                                                    height: `${(r / total) * 100}%`,
-                                                  }}
-                                                />
-                                              )}
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                      <div className="flex gap-3 mt-1 text-xs text-brand-gray">
-                                        <span className="flex items-center gap-1">
-                                          <span className="w-2 h-2 rounded-full bg-brand-royal-blue/80" />{" "}
-                                          Patients
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                          <span className="w-2 h-2 rounded-full bg-purple-500/80" />{" "}
-                                          Researchers
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })()}
-                              {engagementOverTime.length > 0 && (
-                                <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                    Engagement (forums + posts)
-                                  </h3>
-                                  <div className="h-[80px] flex items-end gap-px">
-                                    {engagementOverTime
-                                      .slice(-30)
-                                      .map((d, i) => {
-                                        const total =
-                                          (d.threads || 0) + (d.posts || 0);
-                                        const maxVal = Math.max(
-                                          1,
-                                          ...engagementOverTime.map(
-                                            (x) =>
-                                              (x.threads || 0) + (x.posts || 0),
-                                          ),
-                                        );
+                        {(signupsOverTime.length > 0 ||
+                          engagementOverTime.length > 0) && (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {signupsOverTime.length > 0 &&
+                              (() => {
+                                const slice = signupsOverTime.slice(-30);
+                                const maxBoth = Math.max(
+                                  1,
+                                  ...slice.map(
+                                    (x) =>
+                                      (x.patients || 0) + (x.researchers || 0),
+                                  ),
+                                );
+                                return (
+                                  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                                      Signups over time
+                                    </h3>
+                                    <div className="h-[80px] flex items-end gap-px">
+                                      {slice.map((d) => {
+                                        const p = d.patients || 0;
+                                        const r = d.researchers || 0;
+                                        const total = p + r;
+                                        const sum = (total / maxBoth) * 100;
                                         return (
                                           <div
                                             key={d.date}
-                                            className="flex-1 bg-emerald-500/70 rounded-t min-h-[2px]"
+                                            className="flex-1 flex flex-col rounded-t min-h-[2px] overflow-hidden"
                                             style={{
-                                              height: `${Math.max(2, (total / maxVal) * 100)}%`,
+                                              height: `${Math.max(2, sum)}%`,
                                             }}
-                                            title={`${d.date}: ${total}`}
-                                          />
+                                            title={`${d.date}: ${p} patients, ${r} researchers`}
+                                          >
+                                            {p > 0 && total > 0 && (
+                                              <div
+                                                className="w-full bg-brand-royal-blue/80"
+                                                style={{
+                                                  height: `${(p / total) * 100}%`,
+                                                }}
+                                              />
+                                            )}
+                                            {r > 0 && total > 0 && (
+                                              <div
+                                                className="w-full bg-purple-500/80"
+                                                style={{
+                                                  height: `${(r / total) * 100}%`,
+                                                }}
+                                              />
+                                            )}
+                                          </div>
                                         );
                                       })}
+                                    </div>
                                   </div>
+                                );
+                              })()}
+                            {engagementOverTime.length > 0 && (
+                              <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                                  Forum &amp; discovery volume (daily)
+                                </h3>
+                                <div className="h-[80px] flex items-end gap-px">
+                                  {engagementOverTime.slice(-30).map((d) => {
+                                    const total =
+                                      (d.threads || 0) + (d.posts || 0);
+                                    const maxVal = Math.max(
+                                      1,
+                                      ...engagementOverTime.map(
+                                        (x) =>
+                                          (x.threads || 0) + (x.posts || 0),
+                                      ),
+                                    );
+                                    return (
+                                      <div
+                                        key={d.date}
+                                        className="flex-1 bg-emerald-500/70 rounded-t min-h-[2px]"
+                                        style={{
+                                          height: `${Math.max(2, (total / maxVal) * 100)}%`,
+                                        }}
+                                        title={`${d.date}: ${total}`}
+                                      />
+                                    );
+                                  })}
                                 </div>
-                              )}
-                            </div>
-                          )}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                          {/* Row 5 — Conversion funnels */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                Researchers funnel
-                              </h3>
-                              <div className="space-y-1 text-sm">
-                                <p className="flex justify-between">
-                                  <span>{experts.length} total</span>
-                                </p>
-                                <p className="flex justify-between text-emerald-600">
-                                  → {verifiedCount} verified
-                                </p>
-                                <p className="flex justify-between text-amber-600">
-                                  → {unverifiedCount} unverified
-                                </p>
-                                <p className="flex justify-between text-brand-gray">
-                                  → — active this week
-                                </p>
-                              </div>
-                            </div>
-                            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
-                                Patients (
-                                {overviewStats?.currentMonthLabel ??
-                                  "this month"}
-                                )
-                              </h3>
-                              <div className="space-y-1 text-sm">
-                                <p className="flex justify-between">
-                                  <span>
-                                    {overviewStats?.newPatients?.thisMonth ?? 0}{" "}
-                                    joined
-                                  </span>
-                                </p>
-                                <p className="flex justify-between text-brand-gray">
-                                  → — completed profile
-                                </p>
-                                <p className="flex justify-between text-brand-gray">
-                                  → — searched experts
-                                </p>
-                                <p className="flex justify-between text-brand-gray">
-                                  → — contacted expert
-                                </p>
-                              </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Researchers funnel
+                            </h3>
+                            <div className="space-y-1 text-sm">
+                              <p className="flex justify-between">
+                                <span>{experts.length} total</span>
+                              </p>
+                              <p className="flex justify-between text-emerald-600">
+                                → {verifiedCount} verified
+                              </p>
+                              <p className="flex justify-between text-amber-600">
+                                → {unverifiedCount} unverified
+                              </p>
+                              <p className="flex justify-between text-brand-gray">
+                                → {a?.engagement?.wau ?? "—"} WAU (verified)
+                              </p>
                             </div>
                           </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Right sidebar — Alerts */}
-                    <div className="lg:w-72 shrink-0">
-                      <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm sticky top-20">
-                        <h3 className="text-sm font-semibold text-amber-900 flex items-center gap-2 mb-2">
-                          <AlertTriangle className="w-4 h-4" />
-                          Attention needed
-                        </h3>
-                        <ul className="space-y-2 text-sm text-amber-900">
-                          {unverifiedCount > 0 && (
-                            <li className="flex items-start gap-2">
-                              <span className="text-amber-600 font-medium">
-                                {unverifiedCount} researcher
-                                {unverifiedCount !== 1 ? "s" : ""} unverified
-                              </span>
-                            </li>
-                          )}
-                          {(overviewStats?.unresolvedFeedbackCount ?? 0) >
-                            0 && (
-                            <li className="flex items-start gap-2">
-                              <span className="text-amber-600 font-medium">
-                                {overviewStats?.unresolvedFeedbackCount ?? 0}{" "}
-                                feedback open
-                              </span>
-                            </li>
-                          )}
-                          {(overviewStats?.discoveryPostsLast7Days ?? 0) ===
-                            0 &&
-                            (overviewStats?.totalDiscoveryPosts ?? 0) > 0 && (
-                              <li className="flex items-start gap-2">
-                                <span className="text-amber-600 font-medium">
-                                  0 discovery posts in last 7 days
+                          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                              Patients (
+                              {overviewStats?.currentMonthLabel ?? "this month"}
+                              )
+                            </h3>
+                            <div className="space-y-1 text-sm">
+                              <p className="flex justify-between">
+                                <span>
+                                  {overviewStats?.newPatients?.thisMonth ?? 0}{" "}
+                                  joined (verified)
                                 </span>
-                              </li>
-                            )}
-                          {unverifiedCount === 0 &&
-                            (overviewStats?.unresolvedFeedbackCount ?? 0) ===
-                              0 &&
-                            !(
-                              (overviewStats?.discoveryPostsLast7Days ?? 0) ===
-                                0 &&
-                              (overviewStats?.totalDiscoveryPosts ?? 0) > 0
-                            ) && (
-                              <li className="text-brand-gray">
-                                No urgent items
-                              </li>
-                            )}
-                        </ul>
-                      </div>
-                    </div>
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                Funnel steps below need dedicated product
+                                events — placeholders removed from overview.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 );
               })()}
@@ -5169,7 +5411,12 @@ export default function AdminDashboard() {
               <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border border-brand-purple-200/50 overflow-hidden">
                 <div className="bg-gradient-to-r from-brand-royal-blue/8 via-brand-purple-50 to-transparent border-b border-brand-purple-200/40 px-4 md:px-6 py-3 md:py-4">
                   <p className="text-xs md:text-sm text-brand-gray">
-                    Review and verify expert profiles
+                    Researchers are{" "}
+                    <span className="font-semibold text-brand-royal-blue">
+                      verified automatically
+                    </span>{" "}
+                    when they link an ORCID or upload verification proof (not via
+                    admin toggle).
                     <span className="ml-1 md:ml-2 font-semibold text-brand-royal-blue">
                       · {overviewStats?.totalResearchers ?? experts.length}{" "}
                       researchers
@@ -5211,18 +5458,8 @@ export default function AdminDashboard() {
                     const expertsNeedingAttention = experts.filter(
                       (e) => e.needsAttention,
                     );
-                    const expertsWithDocuments = experts.filter(
-                      (e) =>
-                        e.verificationDocumentUrl && !e.orcid && !e.isVerified,
-                    );
                     const otherExperts = experts.filter(
-                      (e) =>
-                        !e.needsAttention &&
-                        !(
-                          e.verificationDocumentUrl &&
-                          !e.orcid &&
-                          !e.isVerified
-                        ),
+                      (e) => !e.needsAttention,
                     );
                     const renderExpertCard = (expert) => (
                       <div
@@ -5239,23 +5476,26 @@ export default function AdminDashboard() {
                                 <h3 className="text-base md:text-lg font-semibold text-brand-royal-blue">
                                   {expert.name}
                                 </h3>
-                                {expert.isVerified ? (
-                                  expert.orcid ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/60">
+                                {(() => {
+                                  const v = researcherVerificationLabel(expert);
+                                  return expert.isVerified ? (
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/60"
+                                      title={v.detail}
+                                    >
                                       <CheckCircle className="w-3 h-3" />{" "}
-                                      Verified with ORCID
+                                      {v.short}
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200/60">
-                                      <CheckCircle className="w-3 h-3" />{" "}
-                                      Verified
+                                    <span
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200/60"
+                                      title={v.detail}
+                                    >
+                                      <XCircle className="w-3 h-3" />{" "}
+                                      {v.short}
                                     </span>
-                                  )
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold border border-amber-200/60">
-                                    <XCircle className="w-3 h-3" /> Unverified
-                                  </span>
-                                )}
+                                  );
+                                })()}
                                 {expert.needsAttention && (
                                   <span
                                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-purple-100 text-brand-royal-blue rounded-full text-xs font-semibold border border-brand-purple-200/60"
@@ -5393,29 +5633,6 @@ export default function AdminDashboard() {
                             <button
                               type="button"
                               onClick={() =>
-                                handleVerifyToggle(
-                                  expert.userId,
-                                  expert.isVerified,
-                                )
-                              }
-                              disabled={updating[expert.userId]}
-                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${
-                                expert.isVerified
-                                  ? "bg-white text-brand-royal-blue border-2 border-brand-royal-blue hover:bg-brand-purple-50"
-                                  : "bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md"
-                              }`}
-                            >
-                              {updating[expert.userId] ? (
-                                <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                              ) : expert.isVerified ? (
-                                "Unverify"
-                              ) : (
-                                "Verify"
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
                                 handleDeleteExpert(
                                   expert.userId?._id ??
                                     expert.userId?.id ??
@@ -5446,157 +5663,6 @@ export default function AdminDashboard() {
                     );
                     return (
                       <>
-                        {expertsWithDocuments.length > 0 && (
-                          <div className="mb-6 md:mb-8">
-                            <div className="flex items-center gap-2 mb-3 p-2.5 md:p-3 rounded-lg md:rounded-xl bg-amber-50 border border-amber-200/50">
-                              <div className="p-1.5 rounded-lg bg-amber-500/10 shrink-0">
-                                <FileCheck className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
-                              </div>
-                              <div className="min-w-0">
-                                <h3 className="text-sm md:text-base font-semibold text-amber-700">
-                                  Document Review (no ORCID)
-                                </h3>
-                                <p className="text-xs md:text-sm text-amber-600">
-                                  {expertsWithDocuments.length} researcher
-                                  {expertsWithDocuments.length !== 1
-                                    ? "s"
-                                    : ""}{" "}
-                                  need document review
-                                </p>
-                              </div>
-                            </div>
-                            <div className="space-y-3 md:space-y-4">
-                              {expertsWithDocuments.map((expert) => (
-                                <div
-                                  key={expert.userId}
-                                  className="bg-white rounded-lg md:rounded-xl border-2 border-amber-200/60 p-3 md:p-5 hover:shadow-md hover:border-amber-300/80 transition-all duration-200"
-                                >
-                                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 md:gap-4">
-                                    <div className="flex gap-3 md:gap-4 flex-1 min-w-0">
-                                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-base md:text-lg shrink-0">
-                                        {(expert.name || "E")
-                                          .charAt(0)
-                                          .toUpperCase()}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                                          <h3 className="text-base md:text-lg font-semibold text-brand-royal-blue">
-                                            {expert.name}
-                                          </h3>
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 md:px-2.5 md:py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] md:text-xs font-semibold border border-amber-200/60">
-                                            <FileCheck className="w-2.5 h-2.5 md:w-3 md:h-3" />{" "}
-                                            Document Review
-                                          </span>
-                                        </div>
-                                        <div className="space-y-1 text-xs md:text-sm text-brand-gray mb-2 md:mb-3">
-                                          {expert.email && (
-                                            <div className="flex items-center gap-2">
-                                              <Mail className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
-                                              <span>{expert.email}</span>
-                                            </div>
-                                          )}
-                                          {expert.specialties &&
-                                            expert.specialties.length > 0 && (
-                                              <div className="flex items-center gap-2">
-                                                <Briefcase className="w-4 h-4 shrink-0 text-brand-royal-blue/70" />
-                                                <span>
-                                                  {expert.specialties.join(
-                                                    ", ",
-                                                  )}
-                                                </span>
-                                              </div>
-                                            )}
-                                        </div>
-                                        {expert.verificationDocumentUrl && (
-                                          <div className="mt-3 p-3 bg-amber-50/50 rounded-lg border border-amber-200/50">
-                                            <div className="flex items-center gap-2 mb-2">
-                                              <FileText className="w-4 h-4 text-amber-600" />
-                                              <span className="text-sm font-medium text-amber-700">
-                                                Verification Document
-                                              </span>
-                                            </div>
-                                            <a
-                                              href={
-                                                expert.verificationDocumentUrl
-                                              }
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-amber-200 rounded-lg text-sm text-amber-700 hover:bg-amber-50 transition-colors"
-                                            >
-                                              <Eye className="w-4 h-4" />
-                                              View Document
-                                              <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="sm:shrink-0 flex flex-row flex-wrap sm:flex-nowrap sm:flex-col gap-2 sm:border-l sm:border-amber-200/40 sm:pl-4">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          navigate(
-                                            `/admin/expert/${expert.userId?._id || expert.userId?.id || expert.userId}`,
-                                          )
-                                        }
-                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-brand-royal-blue text-white hover:bg-brand-blue-600 shadow-md transition-all border-0"
-                                      >
-                                        View profile
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleVerifyToggle(
-                                            expert.userId,
-                                            expert.isVerified,
-                                          )
-                                        }
-                                        disabled={updating[expert.userId]}
-                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        {updating[expert.userId] ? (
-                                          <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                                        ) : (
-                                          <>
-                                            <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                            Verify
-                                          </>
-                                        )}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDeleteExpert(
-                                            expert.userId?._id ??
-                                              expert.userId?.id ??
-                                              expert.userId,
-                                          )
-                                        }
-                                        disabled={
-                                          deletingExpertId ===
-                                          (expert.userId?._id ??
-                                            expert.userId?.id ??
-                                            expert.userId)
-                                        }
-                                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-semibold text-xs md:text-sm bg-red-100 text-red-700 hover:bg-red-200 border border-red-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        {deletingExpertId ===
-                                        (expert.userId?._id ??
-                                          expert.userId?.id ??
-                                          expert.userId) ? (
-                                          <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
-                                        ) : (
-                                          <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                        )}
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                         {expertsNeedingAttention.length > 0 && (
                           <div className="mb-6 md:mb-8">
                             <div className="flex items-center gap-2 mb-3 p-2.5 md:p-3 rounded-lg md:rounded-xl bg-brand-purple-50 border border-brand-purple-200/50">
@@ -5608,8 +5674,8 @@ export default function AdminDashboard() {
                                   Need your attention
                                 </h3>
                                 <p className="text-xs md:text-sm text-brand-gray">
-                                  {expertsNeedingAttention.length} pending
-                                  verification
+                                  {expertsNeedingAttention.length} with academic
+                                  links pending review (ResearchGate / Academia)
                                 </p>
                               </div>
                             </div>

@@ -17,6 +17,7 @@ import { FloatingChatbot, LandingNavbar, Navbar } from "./app/lazyPages.js";
 import LanguageShell from "./i18n/LanguageShell.jsx";
 import { syncI18nFromUser } from "./i18n/syncUserLanguage.js";
 import { migrateGuestChatToIoraStorage } from "./utils/yoriGuestChatStorage.js";
+import { recordPageView } from "./utils/productAnalytics.js";
 
 const AppContent = () => {
   const location = useLocation();
@@ -24,6 +25,10 @@ const AppContent = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    recordPageView(location.pathname + (location.search || ""));
   }, [location.pathname, location.search]);
   const isVerifyEmailPage = location.pathname === "/verify-email";
   const isAdminPage = location.pathname.startsWith("/admin");
