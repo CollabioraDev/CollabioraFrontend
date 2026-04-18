@@ -16,6 +16,26 @@ export const SUPPORTED_LOCALES = [
 
 export const DEFAULT_LOCALE = "en";
 
+/** English labels for locale picker (onboarding, settings). */
+export const LOCALE_DISPLAY_NAMES = {
+  en: "English",
+  es: "Spanish",
+  "zh-Hans": "Chinese (Simplified)",
+  hi: "Hindi",
+  ar: "Arabic",
+  fr: "French",
+  "pt-BR": "Portuguese (Brazil)",
+  ru: "Russian",
+  ja: "Japanese",
+  de: "German",
+};
+
+/** @type {{ code: string; label: string }[]} */
+export const LOCALE_SELECTOR_OPTIONS = SUPPORTED_LOCALES.map((code) => ({
+  code,
+  label: LOCALE_DISPLAY_NAMES[code] || code,
+}));
+
 const SET = new Set(SUPPORTED_LOCALES);
 
 export function isSupportedLocale(code) {

@@ -30,6 +30,13 @@ import {
 import toast from "react-hot-toast";
 import { getGuestDeviceIdHeaders } from "../utils/api.js";
 import { useTranslation } from "react-i18next";
+import {
+  LOCALE_SELECTOR_OPTIONS,
+  normalizeLocale,
+  DEFAULT_LOCALE,
+} from "../i18n/supportedLocales.js";
+import { applyDocumentLanguageAndDir } from "../i18n/documentLanguage.js";
+import { syncI18nFromUser } from "../i18n/syncUserLanguage.js";
 import icd11Dataset from "../data/icd11Dataset.json";
 import {
   buildCanonicalMapFromIcd11,
@@ -87,9 +94,34 @@ const AppleLogo = () => (
 const STEP_MEDICAL = 1;
 const STEP_EMAIL = 2;
 const STEP_NAME = 3;
+const STEP_LANGUAGE = 4;
+/** Patient path */
+const STEP_PATIENT_CONDITIONS = 5;
+const STEP_PATIENT_LOCATION = 6;
+/** Researcher path */
+const STEP_RESEARCHER_PROFESSIONAL = 5;
+const STEP_RESEARCHER_ORCID = 6;
+const STEP_RESEARCHER_SPECIALTY = 7;
+const STEP_RESEARCHER_LOCATION = 8;
+
 const ONBOARDING_DRAFT_KEY = "onboard_new_draft";
-// Patient: 4=Conditions, 5=Location, 6=Enter Platform
-// Researcher: 4=Professional Info, 5=Specialty, 6=Location, 7=Enter Platform
+/** Bump when a new step is inserted so saved drafts shift step indices. */
+const ONBOARDING_FLOW_VERSION = 2;
+
+function migrateOnboardingDraftIfNeeded(draft) {
+  if (!draft || typeof draft !== "object") return draft;
+  const v = draft.onboardingFlowVersion;
+  if (v != null && v >= ONBOARDING_FLOW_VERSION) return draft;
+  const next = { ...draft, onboardingFlowVersion: ONBOARDING_FLOW_VERSION };
+  if (typeof next.step === "number" && next.step > STEP_NAME) next.step += 1;
+  if (
+    typeof next.maxStepReached === "number" &&
+    next.maxStepReached > STEP_NAME
+  ) {
+    next.maxStepReached += 1;
+  }
+  return next;
+}
 
 /** Maps to existing researcher vs patient onboarding flows */
 const ABOUT_SELF_OPTIONS = [
@@ -214,7 +246,7 @@ const symptomKeywords = [
 ];
 
 export default function OnboardingNew() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const [searchParams] = useSearchParams();
   const isOAuth = searchParams.get("oauth") === "true";
   const navigate = useNavigate();
@@ -270,6 +302,9 @@ export default function OnboardingNew() {
   const [verificationDocument, setVerificationDocument] = useState(null);
   const [verificationDocumentUrl, setVerificationDocumentUrl] = useState("");
   const [uploadingVerification, setUploadingVerification] = useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState(
+    () => normalizeLocale(i18n.language) || DEFAULT_LOCALE,
+  );
 
   const {
     loginWithGoogle,
@@ -286,8 +321,9 @@ export default function OnboardingNew() {
         { id: 1, label: "Get started" },
         { id: 2, label: "Email" },
         { id: 3, label: "Your details" },
-        { id: 4, label: "Profile" },
-        { id: 5, label: "Location" },
+        { id: STEP_LANGUAGE, label: "Language" },
+        { id: 5, label: "Profile" },
+        { id: 6, label: "Location" },
       ];
     }
     if (isMedicalProfessional === true) {
@@ -295,18 +331,20 @@ export default function OnboardingNew() {
         { id: 1, label: "Get started" },
         { id: 2, label: "Email" },
         { id: 3, label: "Your details" },
-        { id: 4, label: "Professional Info" },
-        { id: 5, label: "ORCID" },
-        { id: 6, label: "Specialty" },
-        { id: 7, label: "Location" },
+        { id: STEP_LANGUAGE, label: "Language" },
+        { id: 5, label: "Professional Info" },
+        { id: 6, label: "ORCID" },
+        { id: 7, label: "Specialty" },
+        { id: 8, label: "Location" },
       ];
     }
     return [
       { id: 1, label: "Get started" },
       { id: 2, label: "Email" },
       { id: 3, label: "Your details" },
-      { id: 4, label: "Conditions" },
-      { id: 5, label: "Location" },
+      { id: STEP_LANGUAGE, label: "Language" },
+      { id: 5, label: "Conditions" },
+      { id: 6, label: "Location" },
     ];
   };
   const steps = getSteps();
@@ -319,6 +357,7 @@ export default function OnboardingNew() {
         : "patient";
 
   const buildOnboardingDraft = () => ({
+    onboardingFlowVersion: ONBOARDING_FLOW_VERSION,
     step,
     maxStepReached,
     isMedicalProfessional,
@@ -328,6 +367,7 @@ export default function OnboardingNew() {
     firstName,
     lastName,
     handle,
+    preferredLanguage: normalizeLocale(preferredLanguage),
     email,
     conditions,
     symptomsText,
@@ -371,6 +411,8 @@ export default function OnboardingNew() {
     if (typeof draft.firstName === "string") setFirstName(draft.firstName);
     if (typeof draft.lastName === "string") setLastName(draft.lastName);
     if (typeof draft.handle === "string") setHandle(draft.handle);
+    if (typeof draft.preferredLanguage === "string")
+      setPreferredLanguage(normalizeLocale(draft.preferredLanguage));
     if (typeof draft.email === "string") setEmail(draft.email);
     if (Array.isArray(draft.conditions)) setConditions(draft.conditions);
     if (typeof draft.symptomsText === "string")
@@ -400,6 +442,7 @@ export default function OnboardingNew() {
 
   const buildAuth0OnboardingData = () => ({
     role: onboardingRole || "patient",
+    preferredLanguage: normalizeLocale(preferredLanguage),
     conditions: getCombinedConditions(conditions, symptomsText),
     location: location.trim() ? getLocationData() : undefined,
     profession: profession || undefined,
@@ -485,6 +528,7 @@ export default function OnboardingNew() {
         role: "researcher",
         medicalInterests,
         handle: handleValue,
+        preferredLanguage: normalizeLocale(preferredLanguage),
       }),
     });
     const registerData = await registerRes.json().catch(() => ({}));
@@ -821,16 +865,23 @@ export default function OnboardingNew() {
     try {
       const orcidRaw = localStorage.getItem("orcid_data");
       const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
-      const draft = draftRaw ? JSON.parse(draftRaw) : null;
+      const draft = draftRaw
+        ? migrateOnboardingDraftIfNeeded(JSON.parse(draftRaw))
+        : null;
       if (orcidRaw) {
         const { orcid: orcidId, profile } = JSON.parse(orcidRaw);
         if (draft) {
           restoreOnboardingDraft(draft);
-          setStep(draft.step || 5);
-          setMaxStepReached(Math.max(draft.step || 5, 5));
+          setStep(draft.step || STEP_RESEARCHER_ORCID);
+          setMaxStepReached(
+            Math.max(
+              draft.maxStepReached || STEP_RESEARCHER_ORCID,
+              STEP_RESEARCHER_ORCID,
+            ),
+          );
         } else {
-          setStep(5);
-          setMaxStepReached(5);
+          setStep(STEP_RESEARCHER_ORCID);
+          setMaxStepReached(STEP_RESEARCHER_ORCID);
         }
         // Apply the ORCID returned from OAuth after draft restore so a stale
         // pre-auth draft value cannot overwrite the connected ORCID.
@@ -887,7 +938,10 @@ export default function OnboardingNew() {
   };
 
   // Auto-detect location when user lands on the location step
-  const locationStepId = isMedicalProfessional === true ? 7 : 5;
+  const locationStepId =
+    isMedicalProfessional === true
+      ? STEP_RESEARCHER_LOCATION
+      : STEP_PATIENT_LOCATION;
   useEffect(() => {
     if (step === locationStepId && !location.trim() && !locationLoading) {
       handleUseMyLocation();
@@ -1038,15 +1092,30 @@ export default function OnboardingNew() {
           const profileData = await profileRes.json().catch(() => ({}));
           throw new Error(profileData.error || "Failed to save your profile.");
         }
+        const lang = normalizeLocale(preferredLanguage);
+        const langRes = await fetch(`${base}/api/users/me/language`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ preferredLanguage: lang }),
+        });
+        let mergedUser = { ...user, role };
+        if (langRes.ok) {
+          const langBody = await langRes.json().catch(() => ({}));
+          if (langBody.user) mergedUser = { ...mergedUser, ...langBody.user };
+          else mergedUser = { ...mergedUser, preferredLanguage: lang };
+        } else {
+          mergedUser = { ...mergedUser, preferredLanguage: lang };
+        }
         await markOnboardingComplete(userId, token, isProfileComplete(role));
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...user,
-            role,
-            onboardingComplete: isProfileComplete(role),
-          }),
-        );
+        const finalUser = {
+          ...mergedUser,
+          onboardingComplete: isProfileComplete(role),
+        };
+        localStorage.setItem("user", JSON.stringify(finalUser));
+        syncI18nFromUser(finalUser);
         clearStoredOnboardingState();
         window.dispatchEvent(new Event("login"));
         navigate("/yori");
@@ -1108,6 +1177,7 @@ export default function OnboardingNew() {
           role,
           medicalInterests,
           handle: handleValue,
+          preferredLanguage: normalizeLocale(preferredLanguage),
         }),
       });
       const data = await res.json();
@@ -1134,10 +1204,14 @@ export default function OnboardingNew() {
         username,
         handle: handleValue,
         role: role,
+        preferredLanguage:
+          data.user?.preferredLanguage ||
+          normalizeLocale(preferredLanguage),
       };
       if (newUser.emailVerified !== false) newUser.emailVerified = false;
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(newUser));
+      syncI18nFromUser(newUser);
 
       let finalVerificationDocumentUrl = verificationDocumentUrl;
       if (verificationDocument && !verificationDocumentUrl && data.token) {
@@ -1261,7 +1335,9 @@ export default function OnboardingNew() {
     if (token && (user._id || user.id)) {
       try {
         const draftRaw = sessionStorage.getItem(ONBOARDING_DRAFT_KEY);
-        const draft = draftRaw ? JSON.parse(draftRaw) : null;
+        const draft = draftRaw
+          ? migrateOnboardingDraftIfNeeded(JSON.parse(draftRaw))
+          : null;
 
         if (draft) {
           restoreOnboardingDraft(draft);
@@ -1872,7 +1948,7 @@ export default function OnboardingNew() {
                           firstName?.trim() &&
                           lastName?.trim() &&
                           (isMedicalProfessional !== false || handle?.trim()) &&
-                          goToStep(4)
+                          goToStep(STEP_LANGUAGE)
                         }
                         disabled={
                           !firstName?.trim() ||
@@ -1888,8 +1964,94 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 4 Patient: Conditions */}
-                {step === 4 && isMedicalProfessional === false && (
+                {/* Step 4: Language (all paths) */}
+                {step === STEP_LANGUAGE && (
+                  <motion.div
+                    key="stepLanguage"
+                    variants={stepVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    transition={{ duration: 0.25 }}
+                    className="space-y-4"
+                  >
+                    <h1
+                      className="text-xl sm:text-2xl font-bold text-center"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      Choose your language
+                    </h1>
+                    <p
+                      className="text-sm text-center"
+                      style={{ color: "#787878" }}
+                    >
+                      This sets the language for the Collabiora site and emails.
+                      You can change it anytime in settings.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {LOCALE_SELECTOR_OPTIONS.map(({ code, label }) => {
+                        const selected = preferredLanguage === code;
+                        return (
+                          <button
+                            key={code}
+                            type="button"
+                            onClick={() => {
+                              const lng = normalizeLocale(code);
+                              setPreferredLanguage(lng);
+                              void i18n.changeLanguage(lng);
+                              applyDocumentLanguageAndDir(lng);
+                            }}
+                            className="rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-colors"
+                            style={{
+                              borderColor: selected ? "#2F3C96" : "#E8E8E8",
+                              backgroundColor: selected
+                                ? "rgba(47, 60, 150, 0.1)"
+                                : "#fff",
+                              color: "#2F3C96",
+                              boxShadow: selected
+                                ? "0 0 0 2px rgba(47, 60, 150, 0.25)"
+                                : undefined,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={() => goToStep(STEP_NAME)}
+                        className="py-3 px-5 rounded-xl font-semibold text-base border"
+                        style={{
+                          borderColor: "#2F3C96",
+                          color: "#2F3C96",
+                          backgroundColor: "transparent",
+                        }}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          goToStep(
+                            isMedicalProfessional === true
+                              ? STEP_RESEARCHER_PROFESSIONAL
+                              : STEP_PATIENT_CONDITIONS,
+                          )
+                        }
+                        className="flex-1 py-3 rounded-xl font-semibold text-base"
+                        style={{ backgroundColor: "#2F3C96", color: "#fff" }}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 5 Patient: Conditions */}
+                {step === STEP_PATIENT_CONDITIONS &&
+                  isMedicalProfessional === false && (
                   <motion.div
                     key="step4Patient"
                     variants={stepVariants}
@@ -1988,7 +2150,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(STEP_NAME)}
+                        onClick={() => goToStep(STEP_LANGUAGE)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -1999,7 +2161,7 @@ export default function OnboardingNew() {
                         Back
                       </Button>
                       <Button
-                        onClick={() => goToStep(5)}
+                        onClick={() => goToStep(STEP_PATIENT_LOCATION)}
                         className="flex-1 py-3 rounded-xl font-semibold"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
                       >
@@ -2009,8 +2171,9 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 4 Researcher: Professional Info */}
-                {step === 4 && isMedicalProfessional === true && (
+                {/* Step 5 Researcher: Professional Info */}
+                {step === STEP_RESEARCHER_PROFESSIONAL &&
+                  isMedicalProfessional === true && (
                   <motion.div
                     key="step4Researcher"
                     variants={stepVariants}
@@ -2161,7 +2324,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(STEP_NAME)}
+                        onClick={() => goToStep(STEP_LANGUAGE)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -2174,7 +2337,7 @@ export default function OnboardingNew() {
                       <Button
                         onClick={() => {
                           setError("");
-                          goToStep(5);
+                          goToStep(STEP_RESEARCHER_ORCID);
                         }}
                         className="flex-1 py-3 rounded-xl font-semibold"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
@@ -2185,8 +2348,9 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 5 Researcher: Academic Researcher & ORCID */}
-                {step === 5 && isMedicalProfessional === true && (
+                {/* Step 6 Researcher: Academic Researcher & ORCID */}
+                {step === STEP_RESEARCHER_ORCID &&
+                  isMedicalProfessional === true && (
                   <motion.div
                     key="step5Orcid"
                     variants={stepVariants}
@@ -2522,7 +2686,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(4)}
+                        onClick={() => goToStep(STEP_RESEARCHER_PROFESSIONAL)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -2546,7 +2710,7 @@ export default function OnboardingNew() {
                             );
                             return;
                           }
-                          goToStep(6);
+                          goToStep(STEP_RESEARCHER_SPECIALTY);
                         }}
                         className="flex-1 py-3 rounded-xl font-semibold"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
@@ -2557,8 +2721,9 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 5 Patient: Location */}
-                {step === 5 && isMedicalProfessional === false && (
+                {/* Step 6 Patient: Location */}
+                {step === STEP_PATIENT_LOCATION &&
+                  isMedicalProfessional === false && (
                   <motion.div
                     key="step5Patient"
                     variants={stepVariants}
@@ -2604,7 +2769,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(4)}
+                        onClick={() => goToStep(STEP_PATIENT_CONDITIONS)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -2627,8 +2792,9 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 6 Researcher: Specialty */}
-                {step === 6 && isMedicalProfessional === true && (
+                {/* Step 7 Researcher: Specialty */}
+                {step === STEP_RESEARCHER_SPECIALTY &&
+                  isMedicalProfessional === true && (
                   <motion.div
                     key="step6Researcher"
                     variants={stepVariants}
@@ -2859,7 +3025,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(5)}
+                        onClick={() => goToStep(STEP_RESEARCHER_ORCID)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -2876,7 +3042,7 @@ export default function OnboardingNew() {
                             return;
                           }
                           setError("");
-                          goToStep(7);
+                          goToStep(STEP_RESEARCHER_LOCATION);
                         }}
                         disabled={!primarySpecialty?.trim()}
                         className="flex-1 py-3 rounded-xl font-semibold disabled:opacity-50"
@@ -2888,8 +3054,9 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 7 Researcher: Location */}
-                {step === 7 && isMedicalProfessional === true && (
+                {/* Step 8 Researcher: Location */}
+                {step === STEP_RESEARCHER_LOCATION &&
+                  isMedicalProfessional === true && (
                   <motion.div
                     key="step7Researcher"
                     variants={stepVariants}
@@ -2935,7 +3102,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(6)}
+                        onClick={() => goToStep(STEP_RESEARCHER_SPECIALTY)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
@@ -2968,7 +3135,9 @@ export default function OnboardingNew() {
                   disabled={loading}
                   onClick={() => {
                     const isPatient = isMedicalProfessional === false;
-                    const lastStep = isPatient ? 5 : 7;
+                    const lastStep = isPatient
+                      ? STEP_PATIENT_LOCATION
+                      : STEP_RESEARCHER_LOCATION;
                     if (step >= lastStep) {
                       handleEnterPlatform();
                     } else {

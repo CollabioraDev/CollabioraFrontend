@@ -84,6 +84,7 @@ export default function Auth0Callback() {
             // Include onboarding data if present
             ...(onboardingData && {
               role: onboardingData.role,
+              preferredLanguage: onboardingData.preferredLanguage,
               conditions: onboardingData.conditions,
               location: onboardingData.location,
               gender: onboardingData.gender,
