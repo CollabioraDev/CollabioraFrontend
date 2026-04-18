@@ -31,7 +31,10 @@ import {
   looksLikeHostnameChip,
   GROUNDING_SOURCE_CHIP_CLASSNAME,
 } from "../../utils/groundingCitations.js";
-import { normalizeSearchResultsTrialLocations } from "../../utils/trialCardLocations.js";
+import {
+  normalizeSearchResultsTrialLocations,
+  formatTrialLocationDisplayForCard,
+} from "../../utils/trialCardLocations.js";
 import toast from "react-hot-toast";
 import { getDisplayName } from "../../utils/researcherDisplayName.js";
 import {
@@ -235,6 +238,8 @@ const PublicationCard = React.memo(
 // Trial Card - compact; simplified title/summary for patients, full for researchers
 const TrialCard = React.memo(
   ({ trial, onAskAbout, onSaveToFavourites, userId, useSimplified }) => {
+    const { t } = useTranslation("common");
+    const locationLine = formatTrialLocationDisplayForCard(trial, t);
     const displayTitle =
       useSimplified && trial.simplifiedTitle
         ? trial.simplifiedTitle
@@ -319,15 +324,15 @@ const TrialCard = React.memo(
               )}
             </div>
           )}
-          {trial.locations && trial.locations !== "Not specified" && (
-            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
+          {locationLine && (
+            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1 break-words">
               <MapPin
                 className="w-3.5 h-3.5 shrink-0 mt-0.5"
                 style={{ color: "#2F3C96" }}
               />
               <span>
                 <span className="font-medium text-slate-700">Location:</span>{" "}
-                {trial.locations}
+                {locationLine}
               </span>
             </p>
           )}

@@ -36,7 +36,10 @@ import {
   appendLocaleToSearchParams,
 } from "../../i18n/getApiLocale.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
-import { normalizeSearchResultsTrialLocations } from "../../utils/trialCardLocations.js";
+import {
+  normalizeSearchResultsTrialLocations,
+  formatTrialLocationDisplayForCard,
+} from "../../utils/trialCardLocations.js";
 import {
   preprocessMarkdownWithGroundingCitations,
   flattenMarkdownChildrenToString,
@@ -562,6 +565,7 @@ const PublicationCard = React.memo(
 const TrialCard = React.memo(
   ({ trial, onAskAbout, onSave, userId, useSimplified }) => {
     const { t } = useTranslation("common");
+    const locationLine = formatTrialLocationDisplayForCard(trial, t);
     const displayTitle =
       useSimplified && trial.simplifiedTitle
         ? trial.simplifiedTitle
@@ -646,15 +650,15 @@ const TrialCard = React.memo(
               )}
             </div>
           )}
-          {trial.locations && trial.locations !== "Not specified" && (
-            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1">
+          {locationLine && (
+            <p className="text-xs text-slate-600 line-clamp-2 mb-2 flex items-start gap-1 break-words">
               <MapPin
                 className="w-3.5 h-3.5 shrink-0 mt-0.5"
                 style={{ color: "#2F3C96" }}
               />
               <span>
                 <span className="font-medium text-slate-700">Location:</span>{" "}
-                {trial.locations}
+                {locationLine}
               </span>
             </p>
           )}
@@ -1329,8 +1333,6 @@ const SearchResultsCards = ({
   );
 };
 
-export { SearchResultsCards };
-
 function buildDirectSearchIntro(kind, count, query, t) {
   const safeQuery = query ? `"${query}"` : "your query";
   if (kind === "trials") {
@@ -1382,52 +1384,48 @@ const ConditionDiscoveryPanel = ({
   if (!conditionLabel || !onExploreTrials || !onExplorePublications)
     return null;
 
+  const exploreBusy = Boolean(busyKind);
+
   return (
     <div className="w-full max-w-4xl">
       <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          disabled={disabled}
+          disabled={disabled || exploreBusy}
           onClick={() => onExploreTrials(searchQuery)}
-          className="flex items-start gap-3 rounded-xl border border-[#D1D3E5] bg-white/95 p-4 text-left shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
+          className="rounded-xl border border-[#D1D3E5] bg-white/95 px-4 py-3 text-center text-sm font-semibold text-[#2F3C96] shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D3E5] bg-[#E8E9F2]">
+          <span className="inline-flex items-center justify-center gap-2">
             {busyKind === "trials" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#2F3C96]" />
-            ) : (
-              <Microscope className="h-5 w-5 text-[#2F3C96]" />
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#2F3C96] leading-snug">
-              {t("yori.conditionExploreTrialsTitle", {
-                defaultValue: "New treatments related to {{condition}}",
-                condition: conditionLabel,
-              })}
-            </p>
-          </div>
+              <Loader2
+                className="h-4 w-4 shrink-0 animate-spin text-[#2F3C96]"
+                aria-hidden
+              />
+            ) : null}
+            {t("yori.conditionExploreTrialsTitle", {
+              defaultValue: "New treatments related to {{condition}}",
+              condition: conditionLabel,
+            })}
+          </span>
         </button>
 
         <button
           type="button"
-          disabled={disabled}
+          disabled={disabled || exploreBusy}
           onClick={() => onExplorePublications(searchQuery)}
-          className="flex items-start gap-3 rounded-xl border border-[#D1D3E5] bg-white/95 p-4 text-left shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
+          className="rounded-xl border border-[#D1D3E5] bg-white/95 px-4 py-3 text-center text-sm font-semibold text-[#2F3C96] shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D3E5] bg-[#E8E9F2]">
+          <span className="inline-flex items-center justify-center gap-2">
             {busyKind === "publications" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#2F3C96]" />
-            ) : (
-              <BookOpen className="h-5 w-5 text-[#2F3C96]" />
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#2F3C96] leading-snug">
-              {t("yori.conditionExplorePubsTitle", {
-                defaultValue: "Research papers",
-              })}
-            </p>
-          </div>
+              <Loader2
+                className="h-4 w-4 shrink-0 animate-spin text-[#2F3C96]"
+                aria-hidden
+              />
+            ) : null}
+            {t("yori.conditionExplorePubsTitle", {
+              defaultValue: "Research papers",
+            })}
+          </span>
         </button>
       </div>
     </div>
@@ -1445,7 +1443,6 @@ const RelatedTrialsChip = ({ relatedExplore, onSend, disabled }) => {
         onClick={() => onSend(relatedExplore.trialsPrompt)}
         className="inline-flex items-center gap-1.5 rounded-full border border-[#A3A7CB] bg-white px-3 py-1 text-[11px] font-semibold text-[#2F3C96] shadow-sm hover:bg-[#E8E9F2]/80 disabled:opacity-50"
       >
-        <Microscope className="h-3.5 w-3.5 shrink-0" />
         {relatedExplore.trialsChipLabel ||
           t("yori.relatedTrialsChip", {
             defaultValue: "New treatments (trials)",
@@ -1631,6 +1628,89 @@ const ChatHistoryItem = ({
   );
 };
 
+/** Named exports for YoriGuestLandingPage (/home) and other consumers that reuse chat UI. */
+export {
+  SearchResultsCards,
+  ConditionDiscoveryPanel,
+  RelatedTrialsChip,
+  buildDirectSearchIntro,
+  buildDirectSearchEmpty,
+  getAskContext,
+  buildAskAboutOptions,
+  TrialDetailsCard,
+  PublicationDetailsCard,
+  AskMoreBar,
+  CommunityCards,
+};
+
+/**
+ * Local draft state so typing does not re-render the full chat (messages + markdown).
+ */
+export const YoriChatComposer = React.memo(function YoriChatComposer({
+  onSubmit,
+  disabled,
+  placeholder,
+  isSending,
+}) {
+  const [draft, setDraft] = useState("");
+  const taRef = useRef(null);
+  const resize = useCallback(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
+  }, []);
+  const submit = useCallback(() => {
+    const text = draft.trim();
+    if (!text || disabled) return;
+    onSubmit(text);
+    setDraft("");
+    requestAnimationFrame(() => {
+      if (taRef.current) taRef.current.style.height = "auto";
+    });
+  }, [draft, disabled, onSubmit]);
+  const onKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submit();
+      }
+    },
+    [submit],
+  );
+  return (
+    <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={taRef}
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            resize();
+          }}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
+          className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
+          rows={1}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!draft.trim() || disabled}
+          className="mb-1 flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[#2F3C96] transition-colors hover:bg-[#D0C4E2]/30 disabled:opacity-30"
+        >
+          {isSending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+});
+
 export default function YoriAI() {
   const [user, setUser] = useState(loadStoredUser);
   const [authExpired, setAuthExpired] = useState(false);
@@ -1641,7 +1721,8 @@ export default function YoriAI() {
       : loadSavedChatSessions(getChatStorageKey(initialUser));
   });
   const [activeChatId, setActiveChatId] = useState(null);
-  const [input, setInput] = useState("");
+  /** Bumps when synced sessions hydrate so the composer remounts with an empty draft. */
+  const [composerRemountKey, setComposerRemountKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isHydratingChats, setIsHydratingChats] = useState(() =>
     Boolean(loadStoredUser() && getAuthToken()),
@@ -1663,8 +1744,12 @@ export default function YoriAI() {
   const [sampleQuestionsOpen, setSampleQuestionsOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  /** Top of the latest assistant bubble — align here once when the user sends (read from start of reply). */
+  const latestAssistantStartRef = useRef(null);
+  /** After submit, one layout pass scrolls so the new assistant row starts at the top of the thread view. */
+  const userJustSentRef = useRef(false);
   const abortControllerRef = useRef(null);
-  const textareaRef = useRef(null);
+  const scrollShowBtnRafRef = useRef(null);
   const refreshPromiseRef = useRef(null);
 
   const userId = user?._id || user?.id;
@@ -1876,9 +1961,8 @@ export default function YoriAI() {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    setInput("");
+    setComposerRemountKey((k) => k + 1);
     setSessionLimitNotice("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     let cancelled = false;
 
@@ -2026,7 +2110,10 @@ export default function YoriAI() {
   }, [userConditions, t, i18n.language]);
   const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
   const activeChatLoaded = activeChat?.loaded !== false;
-  const hasUserMessages = messages.some((message) => message.role === "user");
+  const hasUserMessages = useMemo(
+    () => messages.some((message) => message.role === "user"),
+    [messages],
+  );
   const canCreateNewChat = chatSessions.length < MAX_CHAT_SESSIONS;
   const activeChatMessageCount = Number.isFinite(
     Number(activeChat?.messageCount),
@@ -2158,32 +2245,48 @@ export default function YoriAI() {
     [activeChat?.id, updateSessionMessages],
   );
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = useCallback((behavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  useLayoutEffect(() => {
+    if (!activeChatId) return;
+    userJustSentRef.current = false;
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [activeChatId]);
+
+  useLayoutEffect(() => {
+    if (!userJustSentRef.current) return;
+    userJustSentRef.current = false;
+    latestAssistantStartRef.current?.scrollIntoView({
+      behavior: "auto",
+      block: "start",
+    });
+  }, [messages]);
 
   useEffect(() => {
     const el = messagesContainerRef.current;
     if (!el) return;
-    const onScroll = () => {
+    const flush = () => {
+      scrollShowBtnRafRef.current = null;
       const distanceFromBottom =
         el.scrollHeight - el.scrollTop - el.clientHeight;
       setShowScrollBtn(distanceFromBottom > 200);
     };
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
+    const onScroll = () => {
+      if (scrollShowBtnRafRef.current != null) return;
+      scrollShowBtnRafRef.current = requestAnimationFrame(flush);
+    };
+    flush();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (scrollShowBtnRafRef.current != null) {
+        cancelAnimationFrame(scrollShowBtnRafRef.current);
+        scrollShowBtnRafRef.current = null;
+      }
+    };
   }, [activeChatId, hasUserMessages]);
-
-  const resizeTextarea = useCallback(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
-  }, []);
 
   const createNewChat = useCallback(async () => {
     if (!canCreateNewChat) {
@@ -2208,7 +2311,6 @@ export default function YoriAI() {
           [tempChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
         );
         setActiveChatId(tempChat.id);
-        setInput("");
         setSidebarOpen(false);
 
         const response = await fetchWithAuthRetry(
@@ -2244,7 +2346,6 @@ export default function YoriAI() {
           [newChat, ...prev].sort((a, b) => b.updatedAt - a.updatedAt),
         );
         setActiveChatId(newChat.id);
-        setInput("");
         setSidebarOpen(false);
       }
     } catch (error) {
@@ -2350,17 +2451,13 @@ export default function YoriAI() {
   const handleSelectChat = useCallback((sessionId) => {
     setActiveChatId(sessionId);
     setSidebarOpen(false);
-    setInput("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
   }, []);
 
   const handleSendMessage = useCallback(
-    async (messageText = input, context = null) => {
+    async (messageText, context = null) => {
       const sessionId = activeChat?.id;
       if (!sessionId) return;
-      const text = (
-        typeof messageText === "string" ? messageText : input
-      ).trim();
+      const text = typeof messageText === "string" ? messageText.trim() : "";
       if (!text || chatInteractionDisabled) return;
       if (
         activeChatIsFull ||
@@ -2381,6 +2478,7 @@ export default function YoriAI() {
       const newMessages = [...currentMessages, userMessage];
       const assistantMessageIndex = newMessages.length;
 
+      userJustSentRef.current = true;
       updateSessionMessages(sessionId, [
         ...newMessages,
         {
@@ -2394,8 +2492,6 @@ export default function YoriAI() {
           relatedExplore: null,
         },
       ]);
-      setInput("");
-      if (textareaRef.current) textareaRef.current.style.height = "auto";
       setIsLoading(true);
 
       try {
@@ -2565,7 +2661,6 @@ export default function YoriAI() {
       apiBase,
       chatInteractionDisabled,
       fetchWithAuthRetry,
-      input,
       isRemoteChatUser,
       handleAuthExpired,
       updateSessionMessages,
@@ -2774,13 +2869,6 @@ export default function YoriAI() {
     },
     [apiBase, appendAssistantNotice, userId],
   );
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   return (
     <div className="relative min-h-screen pt-18 pb-19 sm:pt-16 sm:pb-0 yori-page-enter">
@@ -3073,7 +3161,15 @@ export default function YoriAI() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-0 yori-message-enter">
+                      <div
+                        ref={
+                          message.role === "assistant" &&
+                          index === messages.length - 1
+                            ? latestAssistantStartRef
+                            : undefined
+                        }
+                        className="flex items-start gap-0 yori-message-enter"
+                      >
                         <div className="relative z-10 mt-2 -mr-2  flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center">
                           <img
                             src={
@@ -3260,7 +3356,7 @@ export default function YoriAI() {
             <div className="pointer-events-none absolute bottom-28 left-1/2 z-10 -translate-x-1/2">
               <button
                 type="button"
-                onClick={scrollToBottom}
+                onClick={() => scrollToBottom("smooth")}
                 className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border border-[#D1D3E5] bg-white shadow-md hover:bg-[#E8E9F2]"
               >
                 <ArrowDown className="h-4 w-4 text-[#2F3C96]" />
@@ -3275,44 +3371,20 @@ export default function YoriAI() {
                 {t("yori.chatReachedLimitNotice")}
               </p>
             )}
-            <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    resizeTextarea();
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    activeChatIsFull
-                      ? t("yori.placeholderChatFull")
-                      : isHydratingChats ||
-                          (isRemoteChatUser &&
-                            activeChatId &&
-                            !activeChatLoaded)
-                        ? t("yori.placeholderLoadingChat")
-                        : t("yori.placeholderAskAnything")
-                  }
-                  className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
-                  rows={1}
-                  disabled={chatInteractionDisabled}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleSendMessage()}
-                  disabled={!input.trim() || chatInteractionDisabled}
-                  className="mb-1 flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[#2F3C96] transition-colors hover:bg-[#D0C4E2]/30 disabled:opacity-30"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <YoriChatComposer
+              key={`${activeChatId ?? "none"}-${composerRemountKey}`}
+              onSubmit={handleSendMessage}
+              disabled={chatInteractionDisabled}
+              isSending={isLoading}
+              placeholder={
+                activeChatIsFull
+                  ? t("yori.placeholderChatFull")
+                  : isHydratingChats ||
+                      (isRemoteChatUser && activeChatId && !activeChatLoaded)
+                    ? t("yori.placeholderLoadingChat")
+                    : t("yori.placeholderAskAnything")
+              }
+            />
             <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
               {t("yori.disclaimer")}
             </p>

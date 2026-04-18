@@ -1,13 +1,21 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+} from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Send, Loader2, ExternalLink, X, Trash2 } from "lucide-react";
+import { Loader2, ExternalLink, X, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import {
-  getGuestTrialCount,
-  incrementGuestTrialAfterMessage,
-  isGuestTrialExhausted,
-  MAX_GUEST_TRIALS,
+  getGuestHomeTrialCount,
+  incrementGuestHomeTrialAfterMessage,
+  isGuestHomeTrialExhausted,
+  MAX_GUEST_HOME_MESSAGES,
+  resetGuestHomeTrialCount,
 } from "../utils/yoriGuestTrials.js";
 import {
   loadGuestChatMessages,
@@ -22,8 +30,24 @@ import {
   GROUNDING_SOURCE_CHIP_CLASSNAME,
 } from "../utils/groundingCitations.js";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
-import { getApiLocale } from "../i18n/getApiLocale.js";
-import { SearchResultsCards } from "../features/chat/ChatbotPage.jsx";
+import {
+  getApiLocale,
+  appendLocaleToSearchParams,
+} from "../i18n/getApiLocale.js";
+import {
+  SearchResultsCards,
+  ConditionDiscoveryPanel,
+  RelatedTrialsChip,
+  buildDirectSearchIntro,
+  buildDirectSearchEmpty,
+  getAskContext,
+  buildAskAboutOptions,
+  TrialDetailsCard,
+  PublicationDetailsCard,
+  AskMoreBar,
+  CommunityCards,
+  YoriChatComposer,
+} from "../features/chat/ChatbotPage.jsx";
 import YoriGuestTutorialOverlay, {
   isYoriGuestTutorialDone,
 } from "../components/YoriGuestTutorialOverlay.jsx";
@@ -146,7 +170,11 @@ const markdownComponents = {
 };
 
 export default function YoriGuestLandingPage() {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const askAboutOptions = useMemo(
+    () => buildAskAboutOptions(t),
+    [t, i18n.language],
+  );
   const navigate = useNavigate();
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
@@ -154,17 +182,20 @@ export default function YoriGuestLandingPage() {
     const loaded = loadGuestChatMessages();
     return loaded !== null ? loaded : [];
   });
-  const [input, setInput] = useState("");
+  const [composerRemountKey, setComposerRemountKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [trialCount, setTrialCount] = useState(() => getGuestTrialCount());
+  const [trialCount, setTrialCount] = useState(() => getGuestHomeTrialCount());
   const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+  const [conditionExploreBusy, setConditionExploreBusy] = useState(false);
+  const [conditionExploreKind, setConditionExploreKind] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const latestAssistantStartRef = useRef(null);
+  const userJustSentRef = useRef(false);
   const abortControllerRef = useRef(null);
-  const textareaRef = useRef(null);
 
   const syncTrial = useCallback(() => {
-    setTrialCount(getGuestTrialCount());
+    setTrialCount(getGuestHomeTrialCount());
   }, []);
 
   useEffect(() => {
@@ -197,9 +228,14 @@ export default function YoriGuestLandingPage() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  useLayoutEffect(() => {
+    if (!userJustSentRef.current) return;
+    userJustSentRef.current = false;
+    latestAssistantStartRef.current?.scrollIntoView({
+      behavior: "auto",
+      block: "start",
+    });
+  }, [messages]);
 
   useEffect(() => {
     saveGuestChatMessages(messages);
@@ -229,32 +265,30 @@ export default function YoriGuestLandingPage() {
     };
   }, []);
 
-  const resizeTextarea = useCallback(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
-  }, []);
+  const hasUserMessages = useMemo(
+    () => messages.some((m) => m.role === "user"),
+    [messages],
+  );
+  const showSignupGate = isGuestHomeTrialExhausted();
+  const remaining = Math.max(0, MAX_GUEST_HOME_MESSAGES - trialCount);
+  const chatInteractionDisabled =
+    isLoading || showSignupGate || conditionExploreBusy;
 
-  const hasUserMessages = messages.some((m) => m.role === "user");
-  const showSignupGate = isGuestTrialExhausted();
-  const remaining = Math.max(0, MAX_GUEST_TRIALS - trialCount);
-  const chatInteractionDisabled = isLoading || showSignupGate;
+  const handleSendMessage = async (messageText, context = null) => {
+    const text = typeof messageText === "string" ? messageText.trim() : "";
+    if (!text || chatInteractionDisabled) return;
 
-  const handleSendMessage = async (text) => {
-    const messageText = (text ?? input).trim();
-    if (!messageText || chatInteractionDisabled) return;
-
-    const userMessage = { role: "user", content: messageText };
+    const userMessage = {
+      role: "user",
+      content: text,
+      ...(context ? { context } : {}),
+    };
     const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setInput("");
-    setIsLoading(true);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-
     const assistantMessageIndex = newMessages.length;
+
+    userJustSentRef.current = true;
+    setIsLoading(true);
+
     setMessages([
       ...newMessages,
       {
@@ -265,13 +299,29 @@ export default function YoriGuestLandingPage() {
         publicationDetails: null,
         communityResults: null,
         groundingSources: null,
+        conditionDiscovery: null,
+        relatedExplore: null,
       },
     ]);
 
-    const messagesToSend = newMessages.map((m) => ({
-      ...m,
-      content: m.content != null && m.content !== "" ? m.content : " ",
-    }));
+    const messagesToSend = newMessages.map((message) => {
+      let content =
+        message.content != null && message.content !== ""
+          ? message.content
+          : " ";
+      if (
+        message.role === "assistant" &&
+        message.searchResults?.items?.length > 0
+      ) {
+        const topicHint = message.searchResults.query
+          ? `[Previous search topic: "${message.searchResults.query}"]`
+          : "";
+        if (topicHint) {
+          content = `${content}\n${topicHint}`;
+        }
+      }
+      return { ...message, content };
+    });
 
     try {
       abortControllerRef.current = new AbortController();
@@ -283,6 +333,7 @@ export default function YoriGuestLandingPage() {
         body: JSON.stringify({
           messages: messagesToSend,
           locale: getApiLocale(),
+          ...(context ? { context } : {}),
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -306,6 +357,8 @@ export default function YoriGuestLandingPage() {
       let publicationDetails = null;
       let communityResults = null;
       let groundingSources = null;
+      let conditionDiscovery = null;
+      let relatedExplore = null;
       let buffer = "";
 
       const applyUpdate = () => {
@@ -319,6 +372,8 @@ export default function YoriGuestLandingPage() {
             publicationDetails,
             communityResults,
             groundingSources,
+            conditionDiscovery,
+            relatedExplore,
           };
           return updated;
         });
@@ -343,8 +398,10 @@ export default function YoriGuestLandingPage() {
             if (data.groundingSources) groundingSources = data.groundingSources;
             if (data.searchResults) searchResults = data.searchResults;
             if (data.communityResults) communityResults = data.communityResults;
+            if (data.conditionDiscovery)
+              conditionDiscovery = data.conditionDiscovery;
+            if (data.relatedExplore) relatedExplore = data.relatedExplore;
             applyUpdate();
-            if (data.done) break;
           } catch (e) {
             if (e.message && !e.message.includes("JSON")) throw e;
           }
@@ -353,7 +410,7 @@ export default function YoriGuestLandingPage() {
       }
       applyUpdate();
 
-      incrementGuestTrialAfterMessage();
+      incrementGuestHomeTrialAfterMessage();
       syncTrial();
     } catch (error) {
       if (error.name === "AbortError") return;
@@ -371,6 +428,8 @@ export default function YoriGuestLandingPage() {
           publicationDetails: null,
           communityResults: null,
           groundingSources: null,
+          conditionDiscovery: null,
+          relatedExplore: null,
         };
         return updated;
       });
@@ -380,6 +439,86 @@ export default function YoriGuestLandingPage() {
     }
   };
 
+  const handleGuestConditionDirectSearch = useCallback(
+    async (kind, rawQuery) => {
+      const q = String(rawQuery || "").trim();
+      if (!q || conditionExploreBusy || isLoading || showSignupGate) return;
+
+      setConditionExploreBusy(true);
+      setConditionExploreKind(kind);
+      const emptyAssistantShell = {
+        trialDetails: null,
+        publicationDetails: null,
+        groundingSources: null,
+        communityResults: null,
+        conditionDiscovery: null,
+        relatedExplore: null,
+      };
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const params = new URLSearchParams();
+        params.set("q", q);
+        params.set("page", "1");
+        params.set("pageSize", "12");
+        params.set("sortByDate", "true");
+        appendLocaleToSearchParams(params);
+        const url =
+          kind === "trials"
+            ? `${apiBase}/api/search/trials?${params.toString()}`
+            : `${apiBase}/api/search/publications?${params.toString()}`;
+        const res = await fetch(url, { credentials: "include" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.error || "Search failed");
+        }
+        const items = Array.isArray(data.results) ? data.results : [];
+        const content =
+          items.length > 0
+            ? buildDirectSearchIntro(kind, items.length, q, t)
+            : buildDirectSearchEmpty(kind, q, t);
+        const searchResults =
+          items.length > 0
+            ? {
+                type: kind === "trials" ? "trials" : "publications",
+                query: q,
+                items,
+              }
+            : undefined;
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content,
+            ...emptyAssistantShell,
+            ...(searchResults ? { searchResults } : {}),
+          },
+        ]);
+        incrementGuestHomeTrialAfterMessage();
+        syncTrial();
+      } catch (err) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              err?.message || "Something went wrong loading results.",
+            ...emptyAssistantShell,
+          },
+        ]);
+      } finally {
+        setConditionExploreBusy(false);
+        setConditionExploreKind(null);
+      }
+    },
+    [
+      conditionExploreBusy,
+      isLoading,
+      showSignupGate,
+      t,
+      syncTrial,
+    ],
+  );
+
   const handleAskAbout = (item, type) => {
     const question =
       type === "publication"
@@ -387,22 +526,24 @@ export default function YoriGuestLandingPage() {
         : type === "trial"
           ? `Tell me more about this trial: "${item.title}"`
           : `Tell me more about this researcher: "${item.name}"`;
-    handleSendMessage(question);
+    handleSendMessage(question, getAskContext(type, item));
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+  const handleTrialAskMore = (question, details) => {
+    handleSendMessage(question, getAskContext("trial", details));
+  };
+
+  const handlePublicationAskMore = (question, details) => {
+    handleSendMessage(question, getAskContext("publication", details));
   };
 
   const handleClearChat = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setIsLoading(false);
-    setInput("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    resetGuestHomeTrialCount();
+    setTrialCount(0);
+    setComposerRemountKey((k) => k + 1);
     setMessages([]);
   }, []);
 
@@ -455,8 +596,8 @@ export default function YoriGuestLandingPage() {
                 type="button"
                 onClick={handleClearChat}
                 className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#2F3C96] hover:bg-[#E8E9F2]/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3C96] focus-visible:ring-offset-2"
-                aria-label="Clear chat"
-                title="Clear chat"
+                aria-label="Clear chat and reset free messages"
+                title="Clear chat and reset your free messages for this page"
               >
                 <Trash2 className="h-5 w-5" strokeWidth={2} />
               </button>
@@ -523,7 +664,15 @@ export default function YoriGuestLandingPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-start gap-0">
+                        <div
+                          ref={
+                            message.role === "assistant" &&
+                            index === messages.length - 1
+                              ? latestAssistantStartRef
+                              : undefined
+                          }
+                          className="flex items-start gap-0 yori-message-enter"
+                        >
                           <div className="relative z-10 mt-2 -mr-2 flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center">
                             <img
                               src={
@@ -533,11 +682,12 @@ export default function YoriGuestLandingPage() {
                                 !message.searchResults &&
                                 !message.trialDetails &&
                                 !message.publicationDetails &&
-                                !message.communityResults
+                                !message.communityResults &&
+                                !message.conditionDiscovery
                                   ? "/yori-thinking.webp"
                                   : "/Yorisidepeak.webp"
                               }
-                              alt="Yori"
+                              alt={t("yori.name")}
                               className="h-full w-full object-contain"
                             />
                           </div>
@@ -554,17 +704,14 @@ export default function YoriGuestLandingPage() {
                                     )}
                                   </ReactMarkdown>
                                 </div>
+                                <RelatedTrialsChip
+                                  relatedExplore={message.relatedExplore}
+                                  onSend={(prompt) =>
+                                    handleSendMessage(prompt)
+                                  }
+                                  disabled={chatInteractionDisabled}
+                                />
                               </div>
-                            )}
-
-                            {message.searchResults && (
-                              <SearchResultsCards
-                                searchResults={message.searchResults}
-                                onAskAbout={handleAskAbout}
-                                onSave={undefined}
-                                userId={null}
-                                userRole={null}
-                              />
                             )}
 
                             {!message.content &&
@@ -572,6 +719,7 @@ export default function YoriGuestLandingPage() {
                               !message.trialDetails &&
                               !message.publicationDetails &&
                               !message.communityResults &&
+                              !message.conditionDiscovery &&
                               isLoading &&
                               index === messages.length - 1 && (
                                 <div className="ml-2 sm:ml-3 inline-flex items-center gap-1.5 rounded-2xl border border-[#D0C4E2]/40 bg-[#F5F2F8]/30 px-3 py-2.5 sm:px-4">
@@ -589,6 +737,120 @@ export default function YoriGuestLandingPage() {
                                   />
                                 </div>
                               )}
+
+                            {message.searchResults && (
+                              <SearchResultsCards
+                                searchResults={message.searchResults}
+                                onAskAbout={handleAskAbout}
+                                onSave={undefined}
+                                userId={null}
+                                userRole={null}
+                              />
+                            )}
+
+                            {message.conditionDiscovery && (
+                              <ConditionDiscoveryPanel
+                                conditionDiscovery={message.conditionDiscovery}
+                                busyKind={conditionExploreKind}
+                                onExploreTrials={(query) =>
+                                  handleGuestConditionDirectSearch(
+                                    "trials",
+                                    query,
+                                  )
+                                }
+                                onExplorePublications={(query) =>
+                                  handleGuestConditionDirectSearch(
+                                    "publications",
+                                    query,
+                                  )
+                                }
+                                disabled={chatInteractionDisabled}
+                              />
+                            )}
+
+                            {message.trialDetails &&
+                              message.trialDetails.showCard !== false && (
+                                <TrialDetailsCard
+                                  trialDetails={message.trialDetails}
+                                  onAskMore={(question) =>
+                                    handleTrialAskMore(
+                                      question,
+                                      message.trialDetails,
+                                    )
+                                  }
+                                  onSave={undefined}
+                                  userId={null}
+                                  askOptions={askAboutOptions.trial}
+                                />
+                              )}
+
+                            {message.trialDetails &&
+                              message.trialDetails.showCard === false &&
+                              (!isLoading ||
+                                index < messages.length - 1) && (
+                                <AskMoreBar
+                                  type="trial"
+                                  details={message.trialDetails}
+                                  onAskMore={(question) =>
+                                    handleTrialAskMore(
+                                      question,
+                                      message.trialDetails,
+                                    )
+                                  }
+                                  onSave={undefined}
+                                  userId={null}
+                                  askAboutOptions={askAboutOptions}
+                                />
+                              )}
+
+                            {message.publicationDetails &&
+                              message.publicationDetails.showFullCard !==
+                                false && (
+                                <PublicationDetailsCard
+                                  publicationDetails={
+                                    message.publicationDetails
+                                  }
+                                  onAskMore={(question) =>
+                                    handlePublicationAskMore(
+                                      question,
+                                      message.publicationDetails,
+                                    )
+                                  }
+                                  onSave={undefined}
+                                  userId={null}
+                                  askOptions={askAboutOptions.publication}
+                                />
+                              )}
+
+                            {message.publicationDetails &&
+                              message.publicationDetails.showFullCard ===
+                                false &&
+                              (!isLoading ||
+                                index < messages.length - 1) && (
+                                <AskMoreBar
+                                  type="publication"
+                                  details={message.publicationDetails}
+                                  onAskMore={(question) =>
+                                    handlePublicationAskMore(
+                                      question,
+                                      message.publicationDetails,
+                                    )
+                                  }
+                                  onSave={undefined}
+                                  userId={null}
+                                  askAboutOptions={askAboutOptions}
+                                />
+                              )}
+
+                            {message.communityResults &&
+                              message.communityResults.communities?.length >
+                                0 && (
+                                <CommunityCards
+                                  communities={
+                                    message.communityResults.communities
+                                  }
+                                />
+                              )}
                           </div>
                         </div>
                       )}
@@ -605,9 +867,11 @@ export default function YoriGuestLandingPage() {
               className="border-t border-[#D1D3E5] px-4 py-5 sm:px-8 shrink-0"
               style={{ backgroundColor: "rgba(232, 224, 239, 0.35)" }}
             >
-              <p className="text-center text-sm font-semibold text-[#2F3C96] mb-4">
-                You&apos;ve used your free messages. Sign up to keep chatting
-                with Yori and unlock the full platform.
+              <p className="text-center text-sm font-semibold text-[#2F3C96] mb-2">
+                You&apos;ve used all {MAX_GUEST_HOME_MESSAGES} free messages in
+                this session. Sign up or sign in for full access, or clear the
+                chat to start another {MAX_GUEST_HOME_MESSAGES}-message try on
+                this device.
               </p>
               <div className="mx-auto flex max-w-md flex-col gap-2 sm:flex-row">
                 <button
@@ -626,6 +890,13 @@ export default function YoriGuestLandingPage() {
                   Sign in
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleClearChat}
+                className="mt-3 mx-auto block w-full max-w-md rounded-xl border-2 border-[#D1D3E5] bg-white py-3 text-sm font-semibold text-[#2F3C96] hover:bg-[#F5F2F8]"
+              >
+                Clear chat and start over
+              </button>
               <p className="mt-4 text-center text-xs text-slate-600">
                 Want to browse first?{" "}
                 <Link
@@ -638,35 +909,13 @@ export default function YoriGuestLandingPage() {
             </div>
           ) : (
             <div className="px-2 pb-2 pt-1 sm:px-6 sm:pb-3 shrink-0">
-              <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => {
-                      setInput(e.target.value);
-                      resizeTextarea();
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask Yori anything..."
-                    className="min-h-[38px] max-h-32 sm:max-h-40 flex-1 resize-none bg-transparent py-2 text-[14px] sm:text-[15px] text-[#2F3C96] placeholder:text-slate-400 focus:outline-none"
-                    rows={1}
-                    disabled={chatInteractionDisabled}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleSendMessage()}
-                    disabled={!input.trim() || chatInteractionDisabled}
-                    className="mb-1 flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[#2F3C96] transition-colors hover:bg-[#D0C4E2]/30 disabled:opacity-30"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
+              <YoriChatComposer
+                key={composerRemountKey}
+                onSubmit={handleSendMessage}
+                disabled={chatInteractionDisabled}
+                isSending={isLoading}
+                placeholder={t("yori.placeholderAskAnything")}
+              />
               <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
                 {YORI_DISCLAIMER}
               </p>

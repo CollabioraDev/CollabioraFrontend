@@ -74,6 +74,8 @@ function stripForStorage(msg) {
   if (msg.publicationDetails != null) o.publicationDetails = msg.publicationDetails;
   if (msg.groundingSources != null) o.groundingSources = msg.groundingSources;
   if (msg.communityResults != null) o.communityResults = msg.communityResults;
+  if (msg.conditionDiscovery != null) o.conditionDiscovery = msg.conditionDiscovery;
+  if (msg.relatedExplore != null) o.relatedExplore = msg.relatedExplore;
   return o;
 }
 

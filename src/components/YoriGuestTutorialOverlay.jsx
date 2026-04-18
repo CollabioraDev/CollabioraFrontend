@@ -8,12 +8,12 @@ const STORAGE_KEY = "collabiora_yori_guest_tutorial_done";
 export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "navbar",
-    title: "Let's start with Navbar",
-    subtitle: "Explore, Forums, Discovery, and Create account",
+    title: "Let's start with the Navigation Bar",
     paragraphs: [
-      "Open **Explore** to use the dropdown — jump to the Health Library, Health Experts, New Treatments, and other entry points without hunting through the site.",
-      "**Forums** is right there when you want community discussions; **Discovery** is where you can browse the latest articles, research, and updates in one place.",
-      "Ready to stay signed in and unlock everything? Use **Create account** to set up your profile and tailor collabiora to you.",
+      "**Explore** — Menu for Health Library, Experts, New Treatments, and more.",
+      "**Forums** — Community discussions.",
+      "**Discovery** — Articles, research, and updates in one place.",
+      "**Create account** — Sign up to save your profile and use the full site.",
     ],
     imageSrc: "/NavbarSS.webp",
     imageAlt:
@@ -22,10 +22,9 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "dashboard",
     title: "Your dashboard after sign-in",
-    subtitle: "Built around how you work",
     paragraphs: [
-      "Once you create an account, your **dashboard** becomes home base: quick links to Health Library, treatments, experts, forums, favourites, and meetings.",
-      "You can **generate summary reports**, **refresh** tailored content, and keep the topics you care about in one place.",
+      "Shortcuts to **Health Library**, treatments, **experts**, **forums**, favourites, and meetings.",
+      "**Summary reports**, **refresh**, and your topics — all in one place.",
     ],
     imageSrc: "/DashboardSS.webp",
     imageAlt:
@@ -34,10 +33,9 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "health-library",
     title: "Health Library search",
-    subtitle: "Research, matched to you",
     paragraphs: [
-      "Search with keywords and filters to surface papers and evidence. Each result shows a **match score** so you see what fits best first.",
-      "Use **Simplify** to turn dense studies into plain language, save favourites, and open the full publication when you need depth.",
+      "Search with filters; results show a **match score** so the best fits come first.",
+      "**Simplify** long papers, save **favourites**, open the full article when you need it.",
     ],
     imageSrc: "/HealthLibrary.webp",
     imageAlt: "Health Library search results with match percentages",
@@ -45,10 +43,9 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "discovery",
     title: "Discovery",
-    subtitle: "News, articles, and community in one place",
     paragraphs: [
-      "Under **News & Articles**, browse curated health stories and updates tailored to your interests — search what matters to you, then read or simplify content so it’s easier to digest.",
-      "Switch to **Community** when you want to join the conversation: share experiences, ask questions, and see what others are posting in a space built for open, supportive discussion.",
+      "**News & Articles** — Curated stories; search, read, or **simplify**.",
+      "**Community** — Share, ask questions, and see what others post.",
     ],
     imageSrc: "/DiscoverySS.webp",
     imageAlt:
@@ -57,10 +54,9 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "forums",
     title: "Health Forums",
-    subtitle: "Communities, posts, and answers that meet you where you are",
     paragraphs: [
-      "The **Communities** tab is where you explore and join groups — search for topics that matter to you, discover research-focused spaces, and become part of conversations with people on similar paths.",
-      "Switch to **Posts** to read threads or start your own: ask questions, share what you’ve learned, and get replies from community members and **researchers** who participate in those groups — so you’re not just browsing, you’re connecting.",
+      "**Communities** — Find and join groups on topics you care about.",
+      "**Posts** — Read or start threads; **researchers** and members can reply.",
     ],
     imageSrc: "/ForumsSS.webp",
     imageAlt:
@@ -69,10 +65,9 @@ export const YORI_GUEST_TUTORIAL_STEPS = [
   {
     id: "yori",
     title: "You’re already with Yori",
-    subtitle: "This very screen",
     paragraphs: [
-      "This is where you **chat with Yori** — ask health questions, try suggested prompts, and follow up naturally.",
-      "Sign in anytime to sync your journey across the full collabiora experience.",
+      "**Chat with Yori** — Health questions, sample prompts, natural follow-ups.",
+      "**Sign in** to sync with the rest of collabiora.",
     ],
     imageSrc: "/YoriLandingSS.webp",
     imageAlt: "Yori assistant welcome panel with sample questions",
@@ -217,14 +212,13 @@ export default function YoriGuestTutorialOverlay({ open, onClose }) {
                     >
                       {current.title}
                     </h2>
-                    <p className="mt-1 text-sm font-medium text-[#5c6488]">
-                      {current.subtitle}
-                    </p>
-                    <div className="mt-4 space-y-3 text-sm leading-relaxed text-slate-700 sm:mt-5 sm:text-[15px]">
+                    <ul className="mt-4 list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-slate-700 marker:text-[#8B7EC8] sm:mt-5 sm:text-[15px]">
                       {current.paragraphs.map((p, i) => (
-                        <p key={i}>{renderRichParagraph(p)}</p>
+                        <li key={i} className="pl-0.5">
+                          {renderRichParagraph(p)}
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 pt-1">
