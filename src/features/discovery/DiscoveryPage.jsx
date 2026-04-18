@@ -32,6 +32,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
+import PatientForumProfileModal from "../../components/PatientForumProfileModal.jsx";
 import AnimatedBackground from "../../components/ui/AnimatedBackground.jsx";
 import { getDisplayName } from "../../utils/researcherDisplayName.js";
 import CustomSelect from "../../components/ui/CustomSelect.jsx";
@@ -240,6 +241,7 @@ export default function Discovery() {
   const [submittingComment, setSubmittingComment] = useState({}); // Track submitting state per post
   const [followingUserIds, setFollowingUserIds] = useState(new Set()); // User IDs the current user follows (for feed order and +Follow)
   const [followUserLoading, setFollowUserLoading] = useState(new Set()); // User IDs currently being followed/unfollowed
+  const [profileModalUserId, setProfileModalUserId] = useState(null);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -1311,62 +1313,89 @@ export default function Discovery() {
                       >
                         {/* Post Header */}
                         <div className="flex items-start gap-4 mb-4">
-                          <div className="relative w-12 h-12 flex-shrink-0">
-                            {/* Fallback avatar with first letter - always rendered */}
-                            <div className="w-12 h-12 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-lg absolute inset-0">
-                              <span>
-                                {post.authorUserId?.username
-                                  ?.charAt(0)
-                                  ?.toUpperCase() ||
-                                  post.authorUserId?.name
+                          <div
+                            role={
+                              authorId && !isAuthorSelf ? "button" : undefined
+                            }
+                            tabIndex={authorId && !isAuthorSelf ? 0 : undefined}
+                            onClick={() => {
+                              if (authorId && !isAuthorSelf)
+                                setProfileModalUserId(authorId);
+                            }}
+                            onKeyDown={(e) => {
+                              if (
+                                authorId &&
+                                !isAuthorSelf &&
+                                (e.key === "Enter" || e.key === " ")
+                              ) {
+                                e.preventDefault();
+                                setProfileModalUserId(authorId);
+                              }
+                            }}
+                            className={`flex flex-1 min-w-0 gap-4 text-left rounded-lg -m-1 p-1 ${
+                              authorId && !isAuthorSelf
+                                ? "cursor-pointer hover:bg-gray-50/80"
+                                : ""
+                            }`}
+                          >
+                            <div className="relative w-12 h-12 flex-shrink-0 pointer-events-none">
+                              {/* Fallback avatar with first letter - always rendered */}
+                              <div className="w-12 h-12 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-lg absolute inset-0">
+                                <span>
+                                  {post.authorUserId?.username
                                     ?.charAt(0)
                                     ?.toUpperCase() ||
-                                  "U"}
-                              </span>
-                            </div>
-                            {/* Profile picture - overlays the fallback if available */}
-                            {post.authorUserId?.picture && (
-                              <img
-                                src={post.authorUserId.picture}
-                                alt={post.authorUserId.username}
-                                className="w-12 h-12 rounded-full object-cover absolute inset-0"
-                                onError={(e) => {
-                                  // Hide image on error to show fallback
-                                  e.target.style.display = "none";
-                                }}
-                              />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <div className="flex flex-col flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h3 className="font-semibold text-[#2F3C96]">
-                                    {getDiscoveryAuthorName(
-                                      post.authorUserId,
-                                      t("discovery.anonymous"),
-                                      post.authorRole,
-                                    )}
-                                  </h3>
-                                  {post.isOfficial && (
-                                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
-                                  )}
-                                  <span className="text-sm text-gray-500">
-                                    · {formatTimeAgo(post.createdAt)}
-                                  </span>
-                                </div>
-                                {isResearcherAuthor(
-                                  post.authorUserId,
-                                  post.authorRole,
-                                ) &&
-                                  post.authorUserId?.username && (
-                                  <span className="text-xs text-gray-500">
-                                    @{post.authorUserId.username}
-                                  </span>
-                                )}
+                                    post.authorUserId?.name
+                                      ?.charAt(0)
+                                      ?.toUpperCase() ||
+                                    "U"}
+                                </span>
                               </div>
-                              {/* Delete button for post owner; +Follow for others (LinkedIn-style) */}
-                              <div className="flex items-center gap-2 shrink-0">
+                              {/* Profile picture - overlays the fallback if available */}
+                              {post.authorUserId?.picture && (
+                                <img
+                                  src={post.authorUserId.picture}
+                                  alt=""
+                                  className="w-12 h-12 rounded-full object-cover absolute inset-0"
+                                  onError={(e) => {
+                                    e.target.style.display = "none";
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0 pointer-events-none">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h3 className="font-semibold text-[#2F3C96]">
+                                      {getDiscoveryAuthorName(
+                                        post.authorUserId,
+                                        t("discovery.anonymous"),
+                                        post.authorRole,
+                                      )}
+                                    </h3>
+                                    {post.isOfficial && (
+                                      <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                                    )}
+                                    <span className="text-sm text-gray-500">
+                                      · {formatTimeAgo(post.createdAt)}
+                                    </span>
+                                  </div>
+                                  {isResearcherAuthor(
+                                    post.authorUserId,
+                                    post.authorRole,
+                                  ) &&
+                                    post.authorUserId?.username && (
+                                    <span className="text-xs text-gray-500">
+                                      @{post.authorUserId.username}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Delete button for post owner; +Follow for others (LinkedIn-style) */}
+                          <div className="flex items-center gap-2 shrink-0 self-start pt-0.5">
                                 {!isAuthorSelf && user && authorId && (
                                   <button
                                     onClick={() =>
@@ -1406,29 +1435,27 @@ export default function Discovery() {
                                     <X className="w-4 h-4" />
                                   </button>
                                 )}
-                              </div>
-                            </div>
-                            {(post.communityId || post.subcategoryId) && (
-                              <div className="flex items-center gap-2 text-sm text-brand-gray">
-                                {post.communityId && (
-                                  <div className="flex items-center gap-1">
-                                    <CommunityIcon
-                                      community={post.communityId}
-                                      size="0.875rem"
-                                    />
-                                    <span>{post.communityId.name}</span>
-                                  </div>
-                                )}
-                                {post.subcategoryId && (
-                                  <>
-                                    <span>·</span>
-                                    <span>{post.subcategoryId.name}</span>
-                                  </>
-                                )}
-                              </div>
-                            )}
                           </div>
                         </div>
+                        {(post.communityId || post.subcategoryId) && (
+                          <div className="flex items-center gap-2 text-sm text-brand-gray mb-4">
+                            {post.communityId && (
+                              <div className="flex items-center gap-1">
+                                <CommunityIcon
+                                  community={post.communityId}
+                                  size="0.875rem"
+                                />
+                                <span>{post.communityId.name}</span>
+                              </div>
+                            )}
+                            {post.subcategoryId && (
+                              <>
+                                <span>·</span>
+                                <span>{post.subcategoryId.name}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
 
                         {/* Post Content */}
                         <div className="mb-4">
@@ -1635,7 +1662,17 @@ export default function Discovery() {
                             ) : comments[post._id] &&
                               comments[post._id].length > 0 ? (
                               <div className="space-y-4">
-                                {comments[post._id].map((comment) => (
+                                {comments[post._id].map((comment) => {
+                                  const commentAuthorId = getUserId(
+                                    comment.authorUserId,
+                                  );
+                                  const isCommentAuthorSelf =
+                                    user &&
+                                    (user._id === comment.authorUserId?._id ||
+                                      user.id === comment.authorUserId?._id ||
+                                      (user._id || user.id)?.toString?.() ===
+                                        commentAuthorId);
+                                  return (
                                   <div
                                     key={comment._id}
                                     className="flex items-start gap-3"
@@ -1647,13 +1684,32 @@ export default function Discovery() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-sm font-semibold text-[#2F3C96]">
+                                        <button
+                                          type="button"
+                                          disabled={
+                                            !commentAuthorId ||
+                                            isCommentAuthorSelf
+                                          }
+                                          onClick={() =>
+                                            commentAuthorId &&
+                                            !isCommentAuthorSelf &&
+                                            setProfileModalUserId(
+                                              commentAuthorId,
+                                            )
+                                          }
+                                          className={`text-sm font-semibold text-[#2F3C96] text-left ${
+                                            commentAuthorId &&
+                                            !isCommentAuthorSelf
+                                              ? "hover:underline cursor-pointer"
+                                              : ""
+                                          } disabled:cursor-default disabled:opacity-100`}
+                                        >
                                           {getDiscoveryAuthorName(
                                             comment.authorUserId,
                                             t("discovery.anonymous"),
                                             comment.authorRole,
                                           )}
-                                        </span>
+                                        </button>
                                         <span className="text-xs text-gray-500">
                                           {formatTimeAgo(comment.createdAt)}
                                         </span>
@@ -1689,7 +1745,22 @@ export default function Discovery() {
                                         comment.children.length > 0 && (
                                           <div className="mt-3 ml-4 pl-4 border-l-2 border-gray-200 space-y-3">
                                             {comment.children.map(
-                                              (childComment) => (
+                                              (childComment) => {
+                                                const childAuthorId =
+                                                  getUserId(
+                                                    childComment.authorUserId,
+                                                  );
+                                                const isChildSelf =
+                                                  user &&
+                                                  (user._id ===
+                                                    childComment.authorUserId
+                                                      ?._id ||
+                                                    user.id ===
+                                                      childComment.authorUserId
+                                                        ?._id ||
+                                                    (user._id || user.id)?.toString?.() ===
+                                                      childAuthorId);
+                                                return (
                                                 <div
                                                   key={childComment._id}
                                                   className="flex items-start gap-2"
@@ -1701,13 +1772,32 @@ export default function Discovery() {
                                                   </div>
                                                   <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                      <span className="text-xs font-semibold text-[#2F3C96]">
+                                                      <button
+                                                        type="button"
+                                                        disabled={
+                                                          !childAuthorId ||
+                                                          isChildSelf
+                                                        }
+                                                        onClick={() =>
+                                                          childAuthorId &&
+                                                          !isChildSelf &&
+                                                          setProfileModalUserId(
+                                                            childAuthorId,
+                                                          )
+                                                        }
+                                                        className={`text-xs font-semibold text-[#2F3C96] text-left ${
+                                                          childAuthorId &&
+                                                          !isChildSelf
+                                                            ? "hover:underline cursor-pointer"
+                                                            : ""
+                                                        } disabled:cursor-default disabled:opacity-100`}
+                                                      >
                                                         {getDiscoveryAuthorName(
                                                           childComment.authorUserId,
                                                           t("discovery.anonymous"),
                                                           childComment.authorRole,
                                                         )}
-                                                      </span>
+                                                      </button>
                                                       <span className="text-[10px] text-gray-500">
                                                         {formatTimeAgo(
                                                           childComment.createdAt,
@@ -1747,13 +1837,15 @@ export default function Discovery() {
                                                     </button>
                                                   </div>
                                                 </div>
-                                              ),
+                                                );
+                                              },
                                             )}
                                           </div>
                                         )}
                                     </div>
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             ) : (
                               <p className="text-sm text-gray-500 text-center py-4">
@@ -1975,6 +2067,24 @@ export default function Discovery() {
               </div>
             </div>
           </div>
+        )}
+
+        {profileModalUserId && (
+          <PatientForumProfileModal
+            userId={profileModalUserId}
+            onClose={() => setProfileModalUserId(null)}
+            currentUser={user}
+            followSource="Discovery"
+            followingUserIds={followingUserIds}
+            onFollowingChange={(id, isFollowing) => {
+              setFollowingUserIds((prev) => {
+                const next = new Set(prev);
+                if (isFollowing) next.add(id);
+                else next.delete(id);
+                return next;
+              });
+            }}
+          />
         )}
       </div>
     </Layout>

@@ -8,6 +8,9 @@ import { getDisplayName } from "../utils/researcherDisplayName.js";
 import { IconBell } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
+import PatientForumProfileModal from "./PatientForumProfileModal.jsx";
+import { requireEmailVerification } from "../utils/requireEmailVerification.js";
+import toast from "react-hot-toast";
 
 export default function Navbar() {
   const { t } = useTranslation("common");
@@ -22,6 +25,8 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [navFollowingIds, setNavFollowingIds] = useState(new Set());
+  const [profileModalUserId, setProfileModalUserId] = useState(null);
   const menuRef = useRef(null);
   const notificationRef = useRef(null);
   const exploreDropdownRef = useRef(null);
@@ -232,12 +237,32 @@ export default function Navbar() {
 
       // Fetch profile data if user exists
       if (userData?._id || userData?.id) {
-        fetchProfile(userData._id || userData.id);
-        fetchNotifications(userData._id || userData.id);
+        const uid = userData._id || userData.id;
+        fetchProfile(uid);
+        fetchNotifications(uid);
+        fetchFollowingIds(uid);
       } else {
         setProfile(null);
         setNotifications([]);
         setUnreadCount(0);
+        setNavFollowingIds(new Set());
+        setProfileModalUserId(null);
+      }
+    };
+
+    const fetchFollowingIds = async (userId) => {
+      if (!userId) return;
+      try {
+        const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await fetch(
+          `${base}/api/follow/following-ids?userId=${encodeURIComponent(userId)}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setNavFollowingIds(new Set(data.followingIds || []));
+        }
+      } catch (error) {
+        console.error("Error fetching following ids:", error);
       }
     };
 
@@ -278,6 +303,8 @@ export default function Navbar() {
       setUser(null);
       setIsMenuOpen(false);
       setIsMobileMenuOpen(false);
+      setNavFollowingIds(new Set());
+      setProfileModalUserId(null);
     };
 
     const handleLogin = () => {
@@ -291,7 +318,9 @@ export default function Navbar() {
       notificationInterval = setInterval(() => {
         const userId = JSON.parse(localStorage.getItem("user") || "null");
         if (userId?._id || userId?.id) {
-          fetchNotifications(userId._id || userId.id);
+          const id = userId._id || userId.id;
+          fetchNotifications(id);
+          fetchFollowingIds(id);
         }
       }, 30000); // Refresh every 30 seconds
     }
@@ -394,6 +423,73 @@ export default function Navbar() {
     if (!user) return "/dashboard/patient";
     return `/dashboard/${user.role || "patient"}`;
   }
+
+  const notificationFollowerId = (notification) => {
+    const r = notification.relatedUserId;
+    if (!r) return null;
+    const id = r._id ?? r.id ?? r;
+    return id?.toString?.() ? id.toString() : String(id);
+  };
+
+  const markNotificationRead = async (notification) => {
+    if (notification.read) return;
+    try {
+      const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      await fetch(`${base}/api/insights/${notification._id}/read`, {
+        method: "PATCH",
+      });
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n._id === notification._id ? { ...n, read: true } : n,
+        ),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleNotificationRowActivate = async (notification) => {
+    await markNotificationRead(notification);
+    if (notification.type === "new_follower") {
+      const fid = notificationFollowerId(notification);
+      if (fid) setProfileModalUserId(fid);
+      setIsNotificationOpen(false);
+      return;
+    }
+    setIsNotificationOpen(false);
+    navigate("/notifications");
+  };
+
+  const handleFollowBackFromNav = async (e, notification) => {
+    e.stopPropagation();
+    const fid = notificationFollowerId(notification);
+    if (!fid || (!user?._id && !user?.id)) return;
+    if (!requireEmailVerification()) return;
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const followingRole = notification.metadata?.followerRole || "patient";
+    try {
+      const res = await fetch(`${base}/api/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          followerId: user._id || user.id,
+          followingId: fid,
+          followerRole: user.role || "patient",
+          followingRole,
+          source: "Notifications dropdown",
+        }),
+      });
+      if (res.ok) {
+        setNavFollowingIds((prev) => new Set(prev).add(fid));
+        toast.success(t("discovery.following"));
+        await markNotificationRead(notification);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t("discovery.followFailed"));
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none ui-fade-in">
@@ -830,97 +926,105 @@ export default function Navbar() {
                         </div>
                       ) : (
                         <div className="max-h-[400px] overflow-y-auto">
-                          {notifications.slice(0, 10).map((notification) => (
-                            <div
-                              key={notification._id}
-                              className={`px-4 py-3 border-b transition-colors cursor-pointer ${
-                                !notification.read ? "bg-[#E8E0EF]/30" : ""
-                              }`}
-                              style={{ borderColor: "#D0C4E2" }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "#E8E0EF";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  !notification.read
-                                    ? "#E8E0EF/30"
-                                    : "transparent";
-                              }}
-                              onClick={async () => {
-                                if (!notification.read) {
-                                  try {
-                                    const base =
-                                      import.meta.env.VITE_API_URL ||
-                                      "http://localhost:5000";
-                                    await fetch(
-                                      `${base}/api/insights/${notification._id}/read`,
-                                      {
-                                        method: "PATCH",
-                                      },
-                                    );
-                                    setNotifications((prev) =>
-                                      prev.map((n) =>
-                                        n._id === notification._id
-                                          ? { ...n, read: true }
-                                          : n,
-                                      ),
-                                    );
-                                    setUnreadCount((prev) =>
-                                      Math.max(0, prev - 1),
-                                    );
-                                  } catch (error) {
-                                    console.error(
-                                      "Error marking notification as read:",
-                                      error,
-                                    );
-                                  }
-                                }
-                                setIsNotificationOpen(false);
-                                navigate("/notifications");
-                              }}
-                            >
-                              <p
-                                className="text-sm font-medium mb-1"
-                                style={{ color: "#2F3C96" }}
+                          {notifications.slice(0, 10).map((notification) => {
+                            const followerId = notificationFollowerId(notification);
+                            const selfId =
+                              user?._id?.toString?.() ||
+                              user?.id?.toString?.() ||
+                              "";
+                            const showFollowBack =
+                              notification.type === "new_follower" &&
+                              followerId &&
+                              selfId &&
+                              followerId !== selfId &&
+                              !navFollowingIds.has(followerId);
+                            return (
+                              <div
+                                key={notification._id}
+                                className={`flex items-start gap-2 px-4 py-3 border-b transition-colors ${
+                                  !notification.read ? "bg-[#E8E0EF]/30" : ""
+                                }`}
+                                style={{ borderColor: "#D0C4E2" }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#E8E0EF";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    !notification.read
+                                      ? "rgba(232, 224, 239, 0.3)"
+                                      : "transparent";
+                                }}
                               >
-                                {(() => {
-                                  // Format notification message
-                                  if (
-                                    notification.type === "new_follower" &&
-                                    notification.relatedUserId
-                                  ) {
-                                    const followerUsername =
-                                      notification.relatedUserId?.username ||
-                                      notification.metadata?.followerUsername ||
-                                      "Someone";
-                                    const source =
-                                      notification.metadata?.source;
+                                <button
+                                  type="button"
+                                  className={`flex-1 min-w-0 text-left cursor-pointer ${
+                                    notification.type === "new_follower"
+                                      ? "cursor-pointer"
+                                      : ""
+                                  }`}
+                                  onClick={() =>
+                                    handleNotificationRowActivate(notification)
+                                  }
+                                >
+                                  <p
+                                    className="text-sm font-medium mb-1"
+                                    style={{ color: "#2F3C96" }}
+                                  >
+                                    {(() => {
+                                      if (
+                                        notification.type === "new_follower" &&
+                                        notification.relatedUserId
+                                      ) {
+                                        const followerUsername =
+                                          notification.relatedUserId
+                                            ?.username ||
+                                          notification.metadata
+                                            ?.followerUsername ||
+                                          "Someone";
+                                        const source =
+                                          notification.metadata?.source;
 
-                                    if (source) {
-                                      // Format: "Ansh followed you through Forums"
-                                      return `${followerUsername} followed you through ${source}`;
+                                        if (source) {
+                                          return `${followerUsername} followed you through ${source}`;
+                                        }
+                                        return `${followerUsername} followed you`;
+                                      }
+                                      return notification.message;
+                                    })()}
+                                  </p>
+                                  <p
+                                    className="text-xs"
+                                    style={{ color: "#787878" }}
+                                  >
+                                    {new Date(
+                                      notification.createdAt,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })}
+                                  </p>
+                                </button>
+                                {showFollowBack && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) =>
+                                      handleFollowBackFromNav(e, notification)
                                     }
-                                    return `${followerUsername} followed you`;
-                                  }
-                                  return notification.message;
-                                })()}
-                              </p>
-                              <p
-                                className="text-xs"
-                                style={{ color: "#787878" }}
-                              >
-                                {new Date(
-                                  notification.createdAt,
-                                ).toLocaleDateString("en-US", {
-                                  month: "short",
-                                  day: "numeric",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                            </div>
-                          ))}
+                                    className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                    style={{
+                                      backgroundColor: "#2F3C96",
+                                      color: "#fff",
+                                    }}
+                                  >
+                                    {t("notifications.followBack")}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1680,89 +1784,108 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="max-h-[400px] overflow-y-auto">
-              {notifications.slice(0, 10).map((notification) => (
-                <div
-                  key={notification._id}
-                  className={`px-2 py-3 border-b transition-colors cursor-pointer ${
-                    !notification.read ? "bg-indigo-50" : ""
-                  }`}
-                  style={{ borderColor: "#D0C4E2" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#E8E0EF";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = !notification.read
-                      ? "#E8E0EF/30"
-                      : "transparent";
-                  }}
-                  onClick={async () => {
-                    if (!notification.read) {
-                      try {
-                        const base =
-                          import.meta.env.VITE_API_URL ||
-                          "http://localhost:5000";
-                        await fetch(
-                          `${base}/api/insights/${notification._id}/read`,
-                          {
-                            method: "PATCH",
-                          },
-                        );
-                        setNotifications((prev) =>
-                          prev.map((n) =>
-                            n._id === notification._id
-                              ? { ...n, read: true }
-                              : n,
-                          ),
-                        );
-                        setUnreadCount((prev) => Math.max(0, prev - 1));
-                      } catch (error) {
-                        console.error(
-                          "Error marking notification as read:",
-                          error,
-                        );
+              {notifications.slice(0, 10).map((notification) => {
+                const followerId = notificationFollowerId(notification);
+                const selfId =
+                  user?._id?.toString?.() || user?.id?.toString?.() || "";
+                const showFollowBack =
+                  notification.type === "new_follower" &&
+                  followerId &&
+                  selfId &&
+                  followerId !== selfId &&
+                  !navFollowingIds.has(followerId);
+                return (
+                  <div
+                    key={notification._id}
+                    className={`flex items-start gap-2 px-2 py-3 border-b transition-colors ${
+                      !notification.read ? "bg-indigo-50" : ""
+                    }`}
+                    style={{ borderColor: "#D0C4E2" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#E8E0EF";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = !notification.read
+                        ? "rgba(232, 224, 239, 0.3)"
+                        : "transparent";
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="flex-1 min-w-0 text-left"
+                      onClick={() =>
+                        handleNotificationRowActivate(notification)
                       }
-                    }
-                    setIsNotificationOpen(false);
-                    navigate("/notifications");
-                  }}
-                >
-                  <p className="text-sm font-medium mb-1 text-gray-800">
-                    {(() => {
-                      // Format notification message
-                      if (
-                        notification.type === "new_follower" &&
-                        notification.relatedUserId
-                      ) {
-                        const followerUsername =
-                          notification.relatedUserId?.username ||
-                          notification.metadata?.followerUsername ||
-                          "Someone";
-                        const source = notification.metadata?.source;
+                    >
+                      <p className="text-sm font-medium mb-1 text-gray-800">
+                        {(() => {
+                          if (
+                            notification.type === "new_follower" &&
+                            notification.relatedUserId
+                          ) {
+                            const followerUsername =
+                              notification.relatedUserId?.username ||
+                              notification.metadata?.followerUsername ||
+                              "Someone";
+                            const source = notification.metadata?.source;
 
-                        if (source) {
-                          // Format: "Ansh followed you through Forums"
-                          return `${followerUsername} followed you through ${source}`;
+                            if (source) {
+                              return `${followerUsername} followed you through ${source}`;
+                            }
+                            return `${followerUsername} followed you`;
+                          }
+                          return notification.message;
+                        })()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(notification.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </p>
+                    </button>
+                    {showFollowBack && (
+                      <button
+                        type="button"
+                        onClick={(e) =>
+                          handleFollowBackFromNav(e, notification)
                         }
-                        return `${followerUsername} followed you`;
-                      }
-                      return notification.message;
-                    })()}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(notification.createdAt).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      },
+                        className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-white"
+                        style={{ backgroundColor: "#2F3C96" }}
+                      >
+                        {t("notifications.followBack")}
+                      </button>
                     )}
-                  </p>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {profileModalUserId && (
+        <div className="pointer-events-auto">
+          <PatientForumProfileModal
+            userId={profileModalUserId}
+            onClose={() => setProfileModalUserId(null)}
+            currentUser={user}
+            followSource="Notifications"
+            followingUserIds={navFollowingIds}
+            onFollowingChange={(id, isFollowing) => {
+              setNavFollowingIds((prev) => {
+                const next = new Set(prev);
+                if (isFollowing) next.add(id);
+                else next.delete(id);
+                return next;
+              });
+            }}
+          />
         </div>
       )}
     </header>

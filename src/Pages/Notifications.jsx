@@ -23,6 +23,8 @@ import {
   X,
 } from "lucide-react";
 import Layout from "../components/Layout.jsx";
+import PatientForumProfileModal from "../components/PatientForumProfileModal.jsx";
+import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { AuroraText } from "@/components/ui/aurora-text";
@@ -59,6 +61,10 @@ export default function Notifications() {
     meetingDate: "",
     meetingNotes: "",
   });
+  const [profileModalUserId, setProfileModalUserId] = useState(null);
+  const [notificationFollowingIds, setNotificationFollowingIds] = useState(
+    new Set(),
+  );
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -206,6 +212,19 @@ export default function Notifications() {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!user?._id && !user?.id) return;
+    const uid = user._id || user.id;
+    fetch(
+      `${base}/api/follow/following-ids?userId=${encodeURIComponent(uid)}`,
+    )
+      .then((r) => (r.ok ? r.json() : { followingIds: [] }))
+      .then((data) =>
+        setNotificationFollowingIds(new Set(data.followingIds || [])),
+      )
+      .catch(() => setNotificationFollowingIds(new Set()));
+  }, [user?._id, user?.id, base]);
 
   async function loadInsights(userId) {
     try {
@@ -751,7 +770,16 @@ export default function Notifications() {
 
   function handleNotificationClick(notification) {
     markAsRead(notification._id);
-    
+
+    if (notification.type === "new_follower") {
+      const fid =
+        notification.relatedUserId?._id ||
+        notification.relatedUserId?.id ||
+        notification.relatedUserId;
+      if (fid) setProfileModalUserId(String(fid));
+      return;
+    }
+
     if (notification.type === "new_message" && notification.relatedUserId && user?.role === "researcher") {
       const otherUserId = notification.relatedUserId._id || notification.relatedUserId.id || notification.relatedUserId;
       selectConversation(otherUserId.toString());
@@ -782,6 +810,41 @@ export default function Notifications() {
       } else {
         setActiveTab("upcoming-meetings");
       }
+    }
+  }
+
+  function notificationFollowerId(notif) {
+    const r = notif.relatedUserId;
+    if (!r) return null;
+    const id = r._id ?? r.id ?? r;
+    return id?.toString?.() ? id.toString() : String(id);
+  }
+
+  async function handleFollowBackNotification(e, notif) {
+    e.stopPropagation();
+    const fid = notificationFollowerId(notif);
+    if (!fid || (!user?._id && !user?.id)) return;
+    if (!requireEmailVerification()) return;
+    try {
+      const res = await fetch(`${base}/api/follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          followerId: user._id || user.id,
+          followingId: fid,
+          followerRole: user.role || "patient",
+          followingRole: notif.metadata?.followerRole || "patient",
+          source: "Notifications",
+        }),
+      });
+      if (res.ok) {
+        setNotificationFollowingIds((prev) => new Set(prev).add(fid));
+        toast.success(t("discovery.following"));
+        markAsRead(notif._id);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(t("discovery.followFailed"));
     }
   }
 
@@ -1105,7 +1168,17 @@ export default function Notifications() {
                     <div className="px-6 py-3 bg-indigo-50/50 border-b border-slate-100">
                       <h3 className="font-semibold text-indigo-800">{group}</h3>
                     </div>
-                    {notifs.map((notif) => (
+                    {notifs.map((notif) => {
+                      const followerId = notificationFollowerId(notif);
+                      const selfId =
+                        user?._id?.toString?.() || user?.id?.toString?.() || "";
+                      const showFollowBack =
+                        notif.type === "new_follower" &&
+                        followerId &&
+                        selfId &&
+                        followerId !== selfId &&
+                        !notificationFollowingIds.has(followerId);
+                      return (
                       <div
                         key={notif._id}
                         className={`px-6 py-4 hover:bg-indigo-50/30 transition-all cursor-pointer ${
@@ -1137,22 +1210,36 @@ export default function Notifications() {
                                   )}
                                 </div>
                               </div>
-                              {!notif.read && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    markAsRead(notif._id);
-                                  }}
-                                  className="px-3 py-1 text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-all border border-indigo-200"
-                                >
-                                  Mark read
-                                </button>
-                              )}
+                              <div className="flex flex-col items-end gap-2 shrink-0">
+                                {showFollowBack && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) =>
+                                      handleFollowBackNotification(e, notif)
+                                    }
+                                    className="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all"
+                                  >
+                                    {t("notifications.followBack")}
+                                  </button>
+                                )}
+                                {!notif.read && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markAsRead(notif._id);
+                                    }}
+                                    className="px-3 py-1 text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-all border border-indigo-200"
+                                  >
+                                    Mark read
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))
               )}
@@ -2010,6 +2097,24 @@ export default function Notifications() {
           </div>
         )}
       </div>
+
+      {profileModalUserId && (
+        <PatientForumProfileModal
+          userId={profileModalUserId}
+          onClose={() => setProfileModalUserId(null)}
+          currentUser={user}
+          followSource="Notifications"
+          followingUserIds={notificationFollowingIds}
+          onFollowingChange={(id, isFollowing) => {
+            setNotificationFollowingIds((prev) => {
+              const next = new Set(prev);
+              if (isFollowing) next.add(id);
+              else next.delete(id);
+              return next;
+            });
+          }}
+        />
+      )}
 
       <style>{`
         @keyframes fade-in {

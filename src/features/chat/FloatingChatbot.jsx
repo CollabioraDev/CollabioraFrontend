@@ -31,6 +31,7 @@ import {
   looksLikeHostnameChip,
   GROUNDING_SOURCE_CHIP_CLASSNAME,
 } from "../../utils/groundingCitations.js";
+import { normalizeSearchResultsTrialLocations } from "../../utils/trialCardLocations.js";
 import toast from "react-hot-toast";
 import { getDisplayName } from "../../utils/researcherDisplayName.js";
 import {
@@ -1162,16 +1163,21 @@ const SearchResultsCards = ({
   userId,
   userRole,
 }) => {
+  const { t } = useTranslation("common");
   const useSimplified = userRole === "patient";
+  const resolvedResults = normalizeSearchResultsTrialLocations(
+    searchResults,
+    t,
+  );
   if (
-    !searchResults ||
-    !searchResults.items ||
-    searchResults.items.length === 0
+    !resolvedResults ||
+    !resolvedResults.items ||
+    resolvedResults.items.length === 0
   ) {
     return null;
   }
 
-  const { type, items } = searchResults;
+  const { type, items } = resolvedResults;
   const meta = {
     publications: {
       title: "Publications",

@@ -67,6 +67,7 @@ import {
   getDummyThreadDetails,
 } from "../../data/dummyForumThreads.js";
 import { appendLocaleToSearchParams } from "../../i18n/getApiLocale.js";
+import PatientForumProfileModal from "../../components/PatientForumProfileModal.jsx";
 
 // Icon mapping for communities
 const getCommunityIcon = (slug, name) => {
@@ -311,10 +312,7 @@ export default function ResearcherForums() {
   const [deletingReplyIds, setDeletingReplyIds] = useState(new Set());
   const [updatingReplyIds, setUpdatingReplyIds] = useState(new Set());
   const [followingUserIds, setFollowingUserIds] = useState(new Set());
-  const [followUserLoading, setFollowUserLoading] = useState(new Set());
   const [userProfileModalUserId, setUserProfileModalUserId] = useState(null);
-  const [userProfileModalData, setUserProfileModalData] = useState(null);
-  const [userProfileModalLoading, setUserProfileModalLoading] = useState(false);
   const [showFollowAfterFavorite, setShowFollowAfterFavorite] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [favoritingItems, setFavoritingItems] = useState(new Set());
@@ -510,92 +508,10 @@ export default function ResearcherForums() {
     }
   }
 
-  function openUserProfileModal(userId, authorUser) {
-    const uid = userId?.toString?.() || userId;
+  function openUserProfileModal(userId) {
+    const uid = userId?._id?.toString?.() || userId?.toString?.() || userId;
     if (!uid) return;
     setUserProfileModalUserId(uid);
-    setUserProfileModalData(null);
-    setUserProfileModalLoading(true);
-    if (uid === DUMMY_FORUM_HELPER_ID) {
-      setUserProfileModalData({
-        isForumHelper: true,
-        user: { username: "collabiora_forum", role: "researcher" },
-      });
-      setUserProfileModalLoading(false);
-      return;
-    }
-    if (isDummyUserId(uid)) {
-      const isDummyResearcher = typeof uid === "string" && uid.startsWith("dummy-researcher-");
-      const displayName = authorUser?.displayName || (isDummyResearcher ? "Researcher" : "Sample participant");
-      setUserProfileModalData({
-        isSampleParticipant: true,
-        user: isDummyResearcher
-          ? { displayName, role: "researcher" }
-          : { displayName, username: (uid || "").toString() },
-      });
-      setUserProfileModalLoading(false);
-      return;
-    }
-    fetch(`${base}/api/profile/${uid}/forum-profile`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        setUserProfileModalData(data);
-      })
-      .catch(() => setUserProfileModalData(null))
-      .finally(() => setUserProfileModalLoading(false));
-  }
-
-  async function handleFollowUserInModal(profileUserId, profileRole) {
-    if (!user?._id && !user?.id) {
-      toast.error(t("discovery.signInToFollow"));
-      return;
-    }
-    if (!requireEmailVerification()) return;
-    const uid = profileUserId?.toString?.() || profileUserId;
-    if (!uid || followUserLoading.has(uid)) return;
-    const isFollowing = followingUserIds.has(uid);
-    setFollowUserLoading((prev) => new Set(prev).add(uid));
-    try {
-      if (isFollowing) {
-        await fetch(`${base}/api/follow`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            followerId: user._id || user.id,
-            followingId: uid,
-          }),
-        });
-        setFollowingUserIds((prev) => {
-          const next = new Set(prev);
-          next.delete(uid);
-          return next;
-        });
-        toast.success(t("discovery.unfollowed"));
-      } else {
-        await fetch(`${base}/api/follow`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            followerId: user._id || user.id,
-            followingId: uid,
-            followerRole: user.role,
-            followingRole: profileRole || "patient",
-            source: "Forums",
-          }),
-        });
-        setFollowingUserIds((prev) => new Set(prev).add(uid));
-        toast.success(t("discovery.following"));
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error(isFollowing ? t("discovery.unfollowFailed") : t("discovery.followFailed"));
-    } finally {
-      setFollowUserLoading((prev) => {
-        const next = new Set(prev);
-        next.delete(uid);
-        return next;
-      });
-    }
   }
 
   async function loadCommunities() {
@@ -1979,7 +1895,7 @@ export default function ResearcherForums() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => { const uid = reply.authorUserId?._id || reply.authorUserId; if (uid) openUserProfileModal(uid, reply.authorUserId); }}
+                    onClick={() => { const uid = reply.authorUserId?._id || reply.authorUserId; if (uid) openUserProfileModal(uid); }}
                     className="text-sm font-medium text-[#2F3C96] hover:underline"
                   >
                     {getDisplayName(reply.authorUserId, "Anonymous")}
@@ -2651,7 +2567,7 @@ export default function ResearcherForums() {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         const uid = thread.authorUserId?._id || thread.authorUserId;
-                                        if (uid) openUserProfileModal(uid, thread.authorUserId);
+                                        if (uid) openUserProfileModal(uid);
                                       }}
                                       className="flex items-center gap-2 text-left text-[#484848] hover:text-[#2F3C96] transition-colors group/author cursor-pointer"
                                     >
@@ -2706,7 +2622,7 @@ export default function ResearcherForums() {
                                               onClick={(e) => {
                                                 e.stopPropagation();
                                                 const uid = thread.authorUserId?._id || thread.authorUserId;
-                                                if (uid) openUserProfileModal(uid, thread.authorUserId);
+                                                if (uid) openUserProfileModal(uid);
                                               }}
                                               className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-[#787878] border border-[#E8E8E8] hover:border-[#2F3C96]/40 hover:text-[#2F3C96] hover:bg-[#2F3C96]/5 transition-colors"
                                               title="Follow to get updates"
@@ -3345,7 +3261,7 @@ export default function ResearcherForums() {
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       const uid = thread.authorUserId?._id || thread.authorUserId;
-                                      if (uid) openUserProfileModal(uid, thread.authorUserId);
+                                      if (uid) openUserProfileModal(uid);
                                     }}
                                     className="flex items-center gap-2 text-left text-[#484848] hover:text-[#2F3C96] transition-colors group/author cursor-pointer"
                                   >
@@ -3400,7 +3316,7 @@ export default function ResearcherForums() {
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               const uid = thread.authorUserId?._id || thread.authorUserId;
-                                              if (uid) openUserProfileModal(uid, thread.authorUserId);
+                                              if (uid) openUserProfileModal(uid);
                                             }}
                                             className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-[#787878] border border-[#E8E8E8] hover:border-[#2F3C96]/40 hover:text-[#2F3C96] hover:bg-[#2F3C96]/5 transition-colors"
                                             title="Follow to get updates"
@@ -4432,170 +4348,22 @@ export default function ResearcherForums() {
               </div>
             )}
 
-            {/* User Profile Modal */}
             {userProfileModalUserId && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-[#E8E8E8]">
-                  <div className="p-6 border-b border-[#E8E8E8]">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-[#2F3C96]">Profile</h2>
-                      <button
-                        onClick={() => {
-                          setUserProfileModalUserId(null);
-                          setUserProfileModalData(null);
-                        }}
-                        className="p-2 text-[#787878] hover:text-[#2F3C96] hover:bg-[#F5F5F5] rounded-lg transition-all"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    {userProfileModalLoading ? (
-                      <div className="flex justify-center py-12">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#2F3C96]" />
-                      </div>
-                    ) : userProfileModalData?.user ? (
-                      <>
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-full bg-[#2F3C96] flex items-center justify-center text-white font-semibold text-xl shrink-0 overflow-hidden">
-                            {userProfileModalData.user.picture ? (
-                              <img
-                                src={userProfileModalData.user.picture}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              (userProfileModalData.user.displayName || userProfileModalData.user.username || "U").charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#484848]">
-                              {userProfileModalData.user.displayName || userProfileModalData.user.username || "User"}
-                            </p>
-                            {userProfileModalData.user.username && (
-                              <p className="text-sm text-[#787878]">
-                                @{userProfileModalData.user.username}
-                              </p>
-                            )}
-                            {userProfileModalData.user.role && !userProfileModalData.isForumHelper && !userProfileModalData.isSampleParticipant && (
-                              <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs font-medium ${
-                                userProfileModalData.user.role === "researcher"
-                                  ? "bg-[#2F3C96]/10 text-[#2F3C96]"
-                                  : "bg-[#F5F5F5] text-[#787878] border border-[#E8E8E8]"
-                              }`}>
-                                {userProfileModalData.user.role === "researcher" ? "Researcher" : "Patient"}
-                              </span>
-                            )}
-                          </div>
-                          {user && (user._id?.toString() !== userProfileModalUserId && user.id?.toString() !== userProfileModalUserId) && (
-                            (userProfileModalData.isForumHelper || userProfileModalData.isSampleParticipant) ? (
-                              <button
-                                type="button"
-                                disabled
-                                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shrink-0 bg-gray-100 text-gray-400 cursor-not-allowed"
-                              >
-                                <UserPlus className="w-4 h-4" />
-                                Follow
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleFollowUserInModal(userProfileModalUserId, userProfileModalData.user.role)}
-                                disabled={followUserLoading.has(userProfileModalUserId)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors shrink-0 ${
-                                  followingUserIds.has(userProfileModalUserId)
-                                    ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    : "bg-[#2F3C96] text-white hover:bg-[#253075]"
-                                } disabled:opacity-60`}
-                              >
-                                {followUserLoading.has(userProfileModalUserId) ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : followingUserIds.has(userProfileModalUserId) ? (
-                                  <>
-                                    <UserCheck className="w-4 h-4" />
-                                    Following
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserPlus className="w-4 h-4" />
-                                    Follow
-                                  </>
-                                )}
-                              </button>
-                            )
-                          )}
-                        </div>
-
-                        {userProfileModalData.isForumHelper && (
-                          <p className="text-sm text-[#787878] bg-[#F5F5F5] border border-[#E8E8E8] rounded-lg p-4">
-                            This is the collabiora forum helper/tool account. It posts helpful answers in the community. You cannot follow this account.
-                          </p>
-                        )}
-                        {userProfileModalData.isSampleParticipant && (
-                          <p className="text-sm text-[#787878] bg-[#F5F5F5] border border-[#E8E8E8] rounded-lg p-4">
-                            This is a sample participant from our forum examples. You cannot follow this account.
-                          </p>
-                        )}
-
-                        {((userProfileModalData.forumsPosted?.length > 0) || (userProfileModalData.communitiesJoined?.length > 0)) && !userProfileModalData.isForumHelper && !userProfileModalData.isSampleParticipant && (
-                          <div className="space-y-4 pt-2 border-t border-[#E8E8E8]">
-                            {userProfileModalData.forumsPosted?.length > 0 && (
-                              <div>
-                                <h3 className="text-sm font-semibold text-[#484848] mb-2 flex items-center gap-2">
-                                  <MessageCircle className="w-4 h-4 text-[#2F3C96]" />
-                                  Forums posted in
-                                </h3>
-                                <ul className="space-y-1.5 text-sm text-[#787878]">
-                                  {userProfileModalData.forumsPosted.slice(0, 10).map((item) => (
-                                    <li key={item._id} className="flex items-center gap-2">
-                                      <ChevronRight className="w-3 h-3 text-[#2F3C96] shrink-0" />
-                                      <span className="truncate">{item.title}</span>
-                                      {item.community?.name && (
-                                        <span className="text-xs text-[#787878] shrink-0">· {item.community.name}</span>
-                                      )}
-                                    </li>
-                                  ))}
-                                  {userProfileModalData.forumsPosted.length > 10 && (
-                                    <li className="text-xs text-[#787878]">+{userProfileModalData.forumsPosted.length - 10} more</li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
-                            {userProfileModalData.communitiesJoined?.length > 0 && (
-                              <div>
-                                <h3 className="text-sm font-semibold text-[#484848] mb-2 flex items-center gap-2">
-                                  <Users className="w-4 h-4 text-[#2F3C96]" />
-                                  Communities joined
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                  {userProfileModalData.communitiesJoined.slice(0, 12).map((c) => (
-                                    <span
-                                      key={c._id}
-                                      className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#2F3C96]/10 text-[#2F3C96]"
-                                    >
-                                      {c.name}
-                                    </span>
-                                  ))}
-                                  {userProfileModalData.communitiesJoined.length > 12 && (
-                                    <span className="px-2.5 py-1 text-xs text-[#787878]">
-                                      +{userProfileModalData.communitiesJoined.length - 12}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {(!userProfileModalData.forumsPosted?.length && !userProfileModalData.communitiesJoined?.length) && (
-                          <p className="text-sm text-[#787878]">No forums or communities yet.</p>
-                        )}
-                      </>
-                    ) : (
-                      <p className="text-sm text-[#787878] text-center py-8">Could not load profile.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <PatientForumProfileModal
+                userId={userProfileModalUserId}
+                onClose={() => setUserProfileModalUserId(null)}
+                currentUser={user}
+                followSource="Researcher forums"
+                followingUserIds={followingUserIds}
+                onFollowingChange={(id, isFollowing) => {
+                  setFollowingUserIds((prev) => {
+                    const next = new Set(prev);
+                    if (isFollowing) next.add(id);
+                    else next.delete(id);
+                    return next;
+                  });
+                }}
+              />
             )}
           </div>
         </div>

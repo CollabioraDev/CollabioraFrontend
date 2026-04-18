@@ -52,7 +52,8 @@
     "clearAll": "Clear All",
     "viewAll": "View All",
     "noNew": "No new notifications",
-    "allCaughtUp": "You're all caught up!"
+    "allCaughtUp": "You're all caught up!",
+    "followBack": "Follow back"
   },
   "userMenu": {
     "myProfile": "My Profile",

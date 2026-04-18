@@ -31,8 +31,12 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { buildChatExportHtml } from "../../components/ChatExportPdf.js";
-import { getApiLocale } from "../../i18n/getApiLocale.js";
+import {
+  getApiLocale,
+  appendLocaleToSearchParams,
+} from "../../i18n/getApiLocale.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
+import { normalizeSearchResultsTrialLocations } from "../../utils/trialCardLocations.js";
 import {
   preprocessMarkdownWithGroundingCitations,
   flattenMarkdownChildrenToString,
@@ -1245,9 +1249,14 @@ const SearchResultsCards = ({
   userId,
   userRole,
 }) => {
+  const { t } = useTranslation("common");
   const useSimplified = userRole === "patient";
-  if (!searchResults?.items?.length) return null;
-  const { type, items } = searchResults;
+  const resolvedResults = normalizeSearchResultsTrialLocations(
+    searchResults,
+    t,
+  );
+  if (!resolvedResults?.items?.length) return null;
+  const { type, items } = resolvedResults;
   const meta = {
     publications: {
       title: "Publications",
@@ -1321,6 +1330,130 @@ const SearchResultsCards = ({
 };
 
 export { SearchResultsCards };
+
+function buildDirectSearchIntro(kind, count, query, t) {
+  const safeQuery = query ? `"${query}"` : "your query";
+  if (kind === "trials") {
+    return t("yori.directSearchTrialsIntro", {
+      count,
+      query: safeQuery,
+      defaultValue: `I found ${count} verified clinical trial${count === 1 ? "" : "s"} from collabiora's trial pipeline for ${safeQuery}. The real results and links are below.`,
+    });
+  }
+  return t("yori.directSearchPubsIntro", {
+    count,
+    query: safeQuery,
+    defaultValue: `I found ${count} verified publication${count === 1 ? "" : "s"} from collabiora's research pipeline for ${safeQuery}. The real results and links are below.`,
+  });
+}
+
+function buildDirectSearchEmpty(kind, query, t) {
+  const safeQuery = query ? `"${query}"` : "that query";
+  if (kind === "trials") {
+    return t("yori.directSearchNoTrials", {
+      query: safeQuery,
+      defaultValue: `I couldn't find verified clinical trials from collabiora's trial pipeline for ${safeQuery}. Try a simpler keyword or the Trials page.`,
+    });
+  }
+  return t("yori.directSearchNoPubs", {
+    query: safeQuery,
+    defaultValue: `I couldn't find verified publications from collabiora's research pipeline for ${safeQuery}. Try a more specific topic or the Publications page.`,
+  });
+}
+
+const ConditionDiscoveryPanel = ({
+  conditionDiscovery,
+  disabled,
+  busyKind,
+  onExploreTrials,
+  onExplorePublications,
+}) => {
+  const { t } = useTranslation("common");
+  const conditionLabel = conditionDiscovery?.conditionLabel || "";
+  const searchQuery = (
+    conditionDiscovery?.query ||
+    conditionDiscovery?.trials?.query ||
+    conditionDiscovery?.publications?.query ||
+    conditionLabel
+  )
+    .toString()
+    .trim();
+
+  if (!conditionLabel || !onExploreTrials || !onExplorePublications)
+    return null;
+
+  return (
+    <div className="w-full max-w-4xl">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onExploreTrials(searchQuery)}
+          className="flex items-start gap-3 rounded-xl border border-[#D1D3E5] bg-white/95 p-4 text-left shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D3E5] bg-[#E8E9F2]">
+            {busyKind === "trials" ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[#2F3C96]" />
+            ) : (
+              <Microscope className="h-5 w-5 text-[#2F3C96]" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#2F3C96] leading-snug">
+              {t("yori.conditionExploreTrialsTitle", {
+                defaultValue: "New treatments related to {{condition}}",
+                condition: conditionLabel,
+              })}
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onExplorePublications(searchQuery)}
+          className="flex items-start gap-3 rounded-xl border border-[#D1D3E5] bg-white/95 p-4 text-left shadow-sm transition-colors hover:bg-[#F5F2F8]/60 hover:border-[#A3A7CB] disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D1D3E5] bg-[#E8E9F2]">
+            {busyKind === "publications" ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[#2F3C96]" />
+            ) : (
+              <BookOpen className="h-5 w-5 text-[#2F3C96]" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#2F3C96] leading-snug">
+              {t("yori.conditionExplorePubsTitle", {
+                defaultValue: "Research papers",
+              })}
+            </p>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const RelatedTrialsChip = ({ relatedExplore, onSend, disabled }) => {
+  const { t } = useTranslation("common");
+  if (!relatedExplore?.trialsPrompt) return null;
+  return (
+    <div className="flex flex-wrap gap-2 pt-1">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onSend(relatedExplore.trialsPrompt)}
+        className="inline-flex items-center gap-1.5 rounded-full border border-[#A3A7CB] bg-white px-3 py-1 text-[11px] font-semibold text-[#2F3C96] shadow-sm hover:bg-[#E8E9F2]/80 disabled:opacity-50"
+      >
+        <Microscope className="h-3.5 w-3.5 shrink-0" />
+        {relatedExplore.trialsChipLabel ||
+          t("yori.relatedTrialsChip", {
+            defaultValue: "New treatments (trials)",
+          })}
+      </button>
+    </div>
+  );
+};
 
 const CommunityCards = ({ communities }) => {
   const { t } = useTranslation("common");
@@ -1523,6 +1656,8 @@ export default function YoriAI() {
     () => typeof window !== "undefined" && window.innerWidth < 768,
   );
   const [sessionLimitNotice, setSessionLimitNotice] = useState("");
+  const [conditionExploreBusy, setConditionExploreBusy] = useState(false);
+  const [conditionExploreKind, setConditionExploreKind] = useState(null);
   const [isCreatingNewChat, setIsCreatingNewChat] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [sampleQuestionsOpen, setSampleQuestionsOpen] = useState(false);
@@ -1902,6 +2037,7 @@ export default function YoriAI() {
     activeChat?.isFull || activeChatMessageCount >= MAX_MESSAGES_PER_SESSION;
   const chatInteractionDisabled =
     isLoading ||
+    conditionExploreBusy ||
     isHydratingChats ||
     (isRemoteChatUser && activeChatId && !activeChatLoaded) ||
     activeChatIsFull;
@@ -2254,6 +2390,8 @@ export default function YoriAI() {
           trialDetails: null,
           publicationDetails: null,
           groundingSources: null,
+          conditionDiscovery: null,
+          relatedExplore: null,
         },
       ]);
       setInput("");
@@ -2337,6 +2475,8 @@ export default function YoriAI() {
         let publicationDetails = null;
         let groundingSources = null;
         let communityResults = null;
+        let conditionDiscovery = null;
+        let relatedExplore = null;
         let buffer = "";
 
         const applyUpdate = () => {
@@ -2350,6 +2490,8 @@ export default function YoriAI() {
               publicationDetails,
               groundingSources,
               communityResults,
+              conditionDiscovery,
+              relatedExplore,
             };
             return updated;
           });
@@ -2377,10 +2519,13 @@ export default function YoriAI() {
               if (data.searchResults) searchResults = data.searchResults;
               if (data.communityResults)
                 communityResults = data.communityResults;
+              if (data.conditionDiscovery)
+                conditionDiscovery = data.conditionDiscovery;
+              if (data.relatedExplore) relatedExplore = data.relatedExplore;
 
               applyUpdate();
-
-              if (data.done) break;
+              // Do not break early on `done`: other `data:` lines in this chunk
+              // (e.g. conditionDiscovery) must still be applied.
             } catch (error) {
               if (error.message && !error.message.includes("JSON")) throw error;
             }
@@ -2403,6 +2548,8 @@ export default function YoriAI() {
             publicationDetails: null,
             groundingSources: null,
             communityResults: null,
+            conditionDiscovery: null,
+            relatedExplore: null,
           };
           return updated;
         });
@@ -2421,6 +2568,146 @@ export default function YoriAI() {
       input,
       isRemoteChatUser,
       handleAuthExpired,
+      updateSessionMessages,
+      userId,
+    ],
+  );
+
+  const handleConditionDirectSearch = useCallback(
+    async (kind, rawQuery) => {
+      const sessionId = activeChat?.id;
+      const q = String(rawQuery || "").trim();
+      if (!sessionId || !q || conditionExploreBusy) return;
+      if (
+        activeChatIsFull ||
+        activeChatMessageCount + 1 > MAX_MESSAGES_PER_SESSION
+      ) {
+        setSessionLimitNotice(
+          "This chat reached its limit. Download it if needed, then start a new chat.",
+        );
+        return;
+      }
+
+      setConditionExploreBusy(true);
+      setConditionExploreKind(kind);
+
+      const emptyAssistantShell = {
+        trialDetails: null,
+        publicationDetails: null,
+        groundingSources: null,
+        communityResults: null,
+        conditionDiscovery: null,
+        relatedExplore: null,
+      };
+
+      try {
+        const params = new URLSearchParams();
+        params.set("q", q);
+        params.set("page", "1");
+        params.set("pageSize", "12");
+        params.set("sortByDate", "true");
+        if (userId) params.set("userId", userId);
+        appendLocaleToSearchParams(params);
+
+        const url =
+          kind === "trials"
+            ? `${apiBase}/api/search/trials?${params.toString()}`
+            : `${apiBase}/api/search/publications?${params.toString()}`;
+
+        const res = await fetch(url, { credentials: "include" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data?.error || "Search failed");
+        }
+        const items = Array.isArray(data.results) ? data.results : [];
+        const content =
+          items.length > 0
+            ? buildDirectSearchIntro(kind, items.length, q, t)
+            : buildDirectSearchEmpty(kind, q, t);
+        const searchResults =
+          items.length > 0
+            ? {
+                type: kind === "trials" ? "trials" : "publications",
+                query: q,
+                items,
+              }
+            : undefined;
+
+        if (isRemoteChatUser) {
+          const appendRes = await fetchWithAuthRetry(
+            `${apiBase}/api/chatbot/sessions/${sessionId}/append-assistant-search`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                content,
+                ...(searchResults ? { searchResults } : {}),
+              }),
+            },
+          );
+          const appendData = await readJsonSafely(appendRes);
+          if (!appendRes.ok) {
+            if (appendRes.status === 401) {
+              handleAuthExpired(appendData?.error);
+              throw new Error("Your session expired. Please sign in again.");
+            }
+            if (appendRes.status === 409) {
+              setSessionLimitNotice(
+                appendData?.error ||
+                  "This chat reached its limit. Start a new chat.",
+              );
+            }
+            throw new Error(appendData?.error || "Failed to save results");
+          }
+          const saved = appendData?.message;
+          if (saved?.role === "assistant") {
+            updateSessionMessages(sessionId, (prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: saved.content || "",
+                searchResults: saved.searchResults ?? null,
+                trialDetails: saved.trialDetails ?? null,
+                publicationDetails: saved.publicationDetails ?? null,
+                groundingSources: saved.groundingSources ?? null,
+                communityResults: saved.communityResults ?? null,
+                conditionDiscovery: saved.conditionDiscovery ?? null,
+                relatedExplore: saved.relatedExplore ?? null,
+              },
+            ]);
+          }
+        } else {
+          updateSessionMessages(sessionId, (prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content,
+              ...emptyAssistantShell,
+              ...(searchResults ? { searchResults } : {}),
+            },
+          ]);
+        }
+      } catch (err) {
+        appendAssistantNotice(
+          err?.message || "Something went wrong loading results.",
+        );
+      } finally {
+        setConditionExploreBusy(false);
+        setConditionExploreKind(null);
+      }
+    },
+    [
+      activeChat?.id,
+      activeChatIsFull,
+      activeChatMessageCount,
+      apiBase,
+      appendAssistantNotice,
+      conditionExploreBusy,
+      fetchWithAuthRetry,
+      handleAuthExpired,
+      isRemoteChatUser,
+      t,
       updateSessionMessages,
       userId,
     ],
@@ -2796,7 +3083,8 @@ export default function YoriAI() {
                               !message.searchResults &&
                               !message.trialDetails &&
                               !message.publicationDetails &&
-                              !message.communityResults
+                              !message.communityResults &&
+                              !message.conditionDiscovery
                                 ? "/yori-thinking.webp"
                                 : "/Yorisidepeak.webp"
                             }
@@ -2818,6 +3106,11 @@ export default function YoriAI() {
                                   )}
                                 </ReactMarkdown>
                               </div>
+                              <RelatedTrialsChip
+                                relatedExplore={message.relatedExplore}
+                                onSend={(prompt) => handleSendMessage(prompt)}
+                                disabled={chatInteractionDisabled}
+                              />
                             </div>
                           )}
 
@@ -2852,6 +3145,23 @@ export default function YoriAI() {
                               onSave={handleSaveToFavourites}
                               userId={userId}
                               userRole={userRole}
+                            />
+                          )}
+
+                          {message.conditionDiscovery && (
+                            <ConditionDiscoveryPanel
+                              conditionDiscovery={message.conditionDiscovery}
+                              busyKind={conditionExploreKind}
+                              onExploreTrials={(query) =>
+                                handleConditionDirectSearch("trials", query)
+                              }
+                              onExplorePublications={(query) =>
+                                handleConditionDirectSearch(
+                                  "publications",
+                                  query,
+                                )
+                              }
+                              disabled={chatInteractionDisabled}
                             />
                           )}
 
