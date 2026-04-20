@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "第 {{current}} 步，共 {{total}} 步",
-    "searchingTrials": "正在搜索临床试验...",
+    "searchingTrials": "正在发现突破性治疗...",
     "preparingDashboard": "正在准备您的仪表盘...",
     "patient": {
-      "gatheringPublications": "正在汇总研究文献...",
+      "gatheringPublications": "正在汇总研究论文...",
       "findingExperts": "正在查找相关专家..."
     },
     "researcher": {
-      "collectingPublications": "正在收集研究文献...",
+      "collectingPublications": "正在收集研究论文...",
       "discoveringExperts": "正在发现全球专家...",
       "findingCollaborators": "正在查找潜在合作者..."
     }

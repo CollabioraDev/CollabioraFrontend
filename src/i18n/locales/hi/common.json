@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "चरण {{current}} / {{total}}",
-    "searchingTrials": "क्लिनिकल ट्रायल खोजे जा रहे हैं...",
+    "searchingTrials": "नए इलाज़ के विकल्प खोजे जा रहे हैं...",
     "preparingDashboard": "आपका डैशबोर्ड तैयार किया जा रहा है...",
     "patient": {
-      "gatheringPublications": "शोध प्रकाशन एकत्र किए जा रहे हैं...",
+      "gatheringPublications": "शोध पत्र एकत्र किए जा रहे हैं...",
       "findingExperts": "प्रासंगिक विशेषज्ञ खोजे जा रहे हैं..."
     },
     "researcher": {
-      "collectingPublications": "शोध प्रकाशन संकलित किए जा रहे हैं...",
+      "collectingPublications": "शोध पत्र संकलित किए जा रहे हैं...",
       "discoveringExperts": "विश्व स्तर के विशेषज्ञ खोजे जा रहे हैं...",
       "findingCollaborators": "संभावित सहयोगी खोजे जा रहे हैं..."
     }

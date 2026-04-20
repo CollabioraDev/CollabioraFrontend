@@ -4536,7 +4536,7 @@ export default function DashboardResearcher() {
                     // Show trials from API (already filtered by status in fetchFilteredTrials)
                     const trialsToShow = data.trials;
                     return trialsToShow.length > 0 ? (
-                      sortByMatchPercentage(trialsToShow).map((t, idx) => (
+                      sortByMatchPercentage(trialsToShow).map((trial, idx) => (
                         <div
                           key={idx}
                           className="bg-white rounded-2xl shadow-md border-2 transition-all duration-200 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(47,60,150,0.12)] overflow-hidden flex flex-col h-full"
@@ -4558,7 +4558,7 @@ export default function DashboardResearcher() {
                         >
                           <div className="p-4 sm:p-5 flex flex-col flex-grow">
                             {/* Match Progress Bar */}
-                            {t.matchPercentage !== undefined && (
+                            {trial.matchPercentage !== undefined && (
                               <div className="mb-3 sm:mb-4">
                                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                                   <div className="flex items-center gap-2">
@@ -4570,17 +4570,17 @@ export default function DashboardResearcher() {
                                       className="text-xs sm:text-sm font-bold"
                                       style={{ color: "#2F3C96" }}
                                     >
-                                      {t.matchPercentage}% Match
+                                      {trial.matchPercentage}% Match
                                     </span>
                                   </div>
                                   {/* Status Badge */}
-                                  {t.status && (
+                                  {trial.status && (
                                     <span
                                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                                        t.status,
+                                        trial.status,
                                       )}`}
                                     >
-                                      {t.status.replace(/_/g, " ")}
+                                      {trial.status.replace(/_/g, " ")}
                                     </span>
                                   )}
                                 </div>
@@ -4595,7 +4595,7 @@ export default function DashboardResearcher() {
                                   <div
                                     className="h-full rounded-full transition-all duration-500"
                                     style={{
-                                      width: `${t.matchPercentage}%`,
+                                      width: `${trial.matchPercentage}%`,
                                       background:
                                         "linear-gradient(90deg, #2F3C96, #4a5bb8, #253075)",
                                     }}
@@ -4610,16 +4610,16 @@ export default function DashboardResearcher() {
                                 className="text-lg font-bold mb-0 line-clamp-3 leading-snug"
                                 style={{ color: "#2F3C96" }}
                               >
-                                {simplifiedTrialSummaries.get(t.title) ||
-                                  t.title}
+                                {simplifiedTrialSummaries.get(trial.title) ||
+                                  trial.title}
                               </h3>
                             </div>
 
                             {/* Description/Details Preview */}
-                            {(t.description || t.conditionDescription) && (
+                            {(trial.description || trial.conditionDescription) && (
                               <div className="mb-4 flex-grow">
                                 <button
-                                  onClick={() => openTrialDetailsModal(t)}
+                                  onClick={() => openTrialDetailsModal(trial)}
                                   className="w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 border group"
                                   style={{
                                     backgroundColor: "rgba(208, 196, 226, 0.2)",
@@ -4645,8 +4645,8 @@ export default function DashboardResearcher() {
                                         style={{ color: "#787878" }}
                                       >
                                         <span className="line-clamp-2">
-                                          {t.description ||
-                                            t.conditionDescription ||
+                                          {trial.description ||
+                                            trial.conditionDescription ||
                                             "View details for more information"}
                                         </span>
                                       </div>
@@ -4666,7 +4666,7 @@ export default function DashboardResearcher() {
                             )}
 
                             {/* Spacer for trials without description */}
-                            {!t.description && !t.conditionDescription && (
+                            {!trial.description && !trial.conditionDescription && (
                               <div className="flex-grow"></div>
                             )}
 
@@ -4674,7 +4674,7 @@ export default function DashboardResearcher() {
                             <div className="flex gap-2 mt-auto">
                               <button
                                 onClick={() =>
-                                  generateSummary(t, "trial", false)
+                                  generateSummary(trial, "trial", false)
                                 }
                                 className="flex-1 flex items-center justify-center gap-2 py-2 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
                                 style={{
@@ -4698,17 +4698,17 @@ export default function DashboardResearcher() {
                               </button>
                               <button
                                 onClick={() =>
-                                  toggleFavorite("trial", t._id || t.id, t)
+                                  toggleFavorite("trial", trial._id || trial.id, trial)
                                 }
                                 disabled={favoritingItems.has(
-                                  getFavoriteKey("trial", t._id || t.id, t),
+                                  getFavoriteKey("trial", trial._id || trial.id, trial),
                                 )}
                                 className={`p-2 rounded-lg border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                   favorites.some(
                                     (fav) =>
                                       fav.type === "trial" &&
-                                      (fav.item?.id === (t._id || t.id) ||
-                                        fav.item?._id === (t._id || t.id)),
+                                      (fav.item?.id === (trial._id || trial.id) ||
+                                        fav.item?._id === (trial._id || trial.id)),
                                   )
                                     ? "bg-red-50 border-red-200 text-red-500"
                                     : ""
@@ -4717,8 +4717,8 @@ export default function DashboardResearcher() {
                                   !favorites.some(
                                     (fav) =>
                                       fav.type === "trial" &&
-                                      (fav.item?.id === (t._id || t.id) ||
-                                        fav.item?._id === (t._id || t.id)),
+                                      (fav.item?.id === (trial._id || trial.id) ||
+                                        fav.item?._id === (trial._id || trial.id)),
                                   )
                                     ? {
                                         backgroundColor:
@@ -4733,8 +4733,8 @@ export default function DashboardResearcher() {
                                     !favorites.some(
                                       (fav) =>
                                         fav.type === "trial" &&
-                                        (fav.item?.id === (t._id || t.id) ||
-                                          fav.item?._id === (t._id || t.id)),
+                                        (fav.item?.id === (trial._id || trial.id) ||
+                                          fav.item?._id === (trial._id || trial.id)),
                                     ) &&
                                     !e.currentTarget.disabled
                                   ) {
@@ -4748,8 +4748,8 @@ export default function DashboardResearcher() {
                                     !favorites.some(
                                       (fav) =>
                                         fav.type === "trial" &&
-                                        (fav.item?.id === (t._id || t.id) ||
-                                          fav.item?._id === (t._id || t.id)),
+                                        (fav.item?.id === (trial._id || trial.id) ||
+                                          fav.item?._id === (trial._id || trial.id)),
                                     )
                                   ) {
                                     e.currentTarget.style.backgroundColor =
@@ -4759,7 +4759,7 @@ export default function DashboardResearcher() {
                                 }}
                               >
                                 {favoritingItems.has(
-                                  getFavoriteKey("trial", t._id || t.id, t),
+                                  getFavoriteKey("trial", trial._id || trial.id, trial),
                                 ) ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
@@ -4768,8 +4768,8 @@ export default function DashboardResearcher() {
                                       favorites.some(
                                         (fav) =>
                                           fav.type === "trial" &&
-                                          (fav.item?.id === (t._id || t.id) ||
-                                            fav.item?._id === (t._id || t.id)),
+                                          (fav.item?.id === (trial._id || trial.id) ||
+                                            fav.item?._id === (trial._id || trial.id)),
                                       )
                                         ? "fill-current"
                                         : ""
@@ -4781,7 +4781,7 @@ export default function DashboardResearcher() {
 
                             {/* View Contact Information Button */}
                             <button
-                              onClick={() => openContactInfoModal(t)}
+                              onClick={() => openContactInfoModal(trial)}
                               className="flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg transition-colors mt-3 w-full"
                               style={{
                                 color: "#2F3C96",
@@ -7716,7 +7716,7 @@ export default function DashboardResearcher() {
                           {groupedFavorites.trial.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
                               {groupedFavorites.trial.map((fav) => {
-                                const t = fav.item;
+                                const trial = fav.item;
                                 const isAddedByUrl = fav.addedByUrl === true;
                                 return (
                                   <div
@@ -7780,25 +7780,25 @@ export default function DashboardResearcher() {
                                         <h3
                                           className="text-lg font-bold mb-0 line-clamp-3 leading-snug"
                                           style={{
-                                            color: t.isRead
+                                            color: trial.isRead
                                               ? "#D0C4E2"
                                               : "#2F3C96",
                                           }}
                                         >
                                           {simplifiedTrialSummaries.get(
-                                            t.title,
+                                            trial.title,
                                           ) ||
-                                            t.simplifiedTitle ||
-                                            t.title ||
+                                            trial.simplifiedTitle ||
+                                            trial.title ||
                                             "Untitled Trial"}
                                         </h3>
                                       </div>
-                                      {(t.description ||
-                                        t.conditionDescription) && (
+                                      {(trial.description ||
+                                        trial.conditionDescription) && (
                                         <div className="mb-4 flex-grow">
                                           <button
                                             onClick={() =>
-                                              openTrialDetailsModal(t)
+                                              openTrialDetailsModal(trial)
                                             }
                                             className="w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 border group"
                                             style={{
@@ -7818,15 +7818,17 @@ export default function DashboardResearcher() {
                                                   className="line-clamp-2"
                                                   style={{ color: "#787878" }}
                                                 >
-                                                  {t.description ||
-                                                    t.conditionDescription ||
+                                                  {trial.description ||
+                                                    trial.conditionDescription ||
                                                     "View details for more information"}
                                                 </span>
                                                 <div
                                                   className="mt-1.5 flex items-center gap-1 font-medium"
                                                   style={{ color: "#2F3C96" }}
                                                 >
-                                                  <span>Read more details</span>
+                                                  <span>
+                                                    {t("trials.readMoreDetails")}
+                                                  </span>
                                                   <span className="inline-block group-hover:translate-x-0.5 transition-transform">
                                                     →
                                                   </span>
@@ -7836,14 +7838,14 @@ export default function DashboardResearcher() {
                                           </button>
                                         </div>
                                       )}
-                                      {!t.description &&
-                                        !t.conditionDescription && (
+                                      {!trial.description &&
+                                        !trial.conditionDescription && (
                                           <div className="flex-grow" />
                                         )}
                                       <div className="mt-auto">
                                         <button
                                           onClick={() =>
-                                            generateSummary(t, "trial", false)
+                                            generateSummary(trial, "trial", false)
                                           }
                                           className="w-full flex items-center justify-center gap-2 py-2 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
                                           style={{
@@ -7855,7 +7857,9 @@ export default function DashboardResearcher() {
                                         </button>
                                       </div>
                                       <button
-                                        onClick={() => openContactInfoModal(t)}
+                                        onClick={() =>
+                                          openContactInfoModal(trial)
+                                        }
                                         className="flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg transition-colors mt-3 w-full"
                                         style={{
                                           color: "#2F3C96",
@@ -8108,7 +8112,7 @@ export default function DashboardResearcher() {
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 xl:gap-8">
                                 {groupedFavorites.forum.map((fav) => {
-                                  const t = fav.item;
+                                  const thread = fav.item;
                                   return (
                                     <div
                                       key={fav._id}
@@ -8132,7 +8136,7 @@ export default function DashboardResearcher() {
                                               >
                                                 Forum Thread
                                               </span>
-                                              {t.categoryName && (
+                                              {thread.categoryName && (
                                                 <span
                                                   className="px-2 py-0.5 rounded-full text-xs font-medium"
                                                   style={{
@@ -8142,7 +8146,7 @@ export default function DashboardResearcher() {
                                                   }}
                                                 >
                                                   <Tag className="w-3 h-3 inline mr-1" />{" "}
-                                                  {t.categoryName}
+                                                  {thread.categoryName}
                                                 </span>
                                               )}
                                             </div>
@@ -8150,8 +8154,8 @@ export default function DashboardResearcher() {
                                               className="font-bold text-base line-clamp-2 mb-2"
                                               style={{ color: "#2F3C96" }}
                                             >
-                                              {t.title ||
-                                                t.name ||
+                                              {thread.title ||
+                                                thread.name ||
                                                 "Untitled Thread"}
                                             </h3>
                                           </div>
@@ -8168,51 +8172,51 @@ export default function DashboardResearcher() {
                                           </button>
                                         </div>
                                         <div className="space-y-1 mb-3">
-                                          {t.authorName && (
+                                          {thread.authorName && (
                                             <div
                                               className="flex items-center text-xs"
                                               style={{ color: "#787878" }}
                                             >
                                               <User className="w-3 h-3 mr-1.5 shrink-0" />
-                                              <span>By {t.authorName}</span>
+                                              <span>By {thread.authorName}</span>
                                             </div>
                                           )}
                                           <div
                                             className="flex items-center gap-3 text-xs"
                                             style={{ color: "#787878" }}
                                           >
-                                            {t.viewCount !== undefined && (
+                                            {thread.viewCount !== undefined && (
                                               <div className="flex items-center gap-1">
                                                 <Eye className="w-3 h-3" />
                                                 <span>
-                                                  {t.viewCount || 0} views
+                                                  {thread.viewCount || 0} views
                                                 </span>
                                               </div>
                                             )}
-                                            {t.replyCount !== undefined && (
+                                            {thread.replyCount !== undefined && (
                                               <div className="flex items-center gap-1">
                                                 <MessageCircle className="w-3 h-3" />
                                                 <span>
-                                                  {t.replyCount || 0} replies
+                                                  {thread.replyCount || 0} replies
                                                 </span>
                                               </div>
                                             )}
                                           </div>
                                         </div>
-                                        {(t.body || t.description) && (
+                                        {(thread.body || thread.description) && (
                                           <div className="mb-3">
                                             <p
                                               className="text-xs line-clamp-3"
                                               style={{ color: "#787878" }}
                                             >
-                                              {t.body || t.description}
+                                              {thread.body || thread.description}
                                             </p>
                                           </div>
                                         )}
                                         <button
                                           onClick={() =>
                                             navigate(
-                                              `/forums?thread=${t._id || t.id || t.threadId}`,
+                                              `/forums?thread=${thread._id || thread.id || thread.threadId}`,
                                             )
                                           }
                                           className="w-full py-2 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md mt-auto"

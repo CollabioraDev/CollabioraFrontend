@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "Schritt {{current}} von {{total}}",
-    "searchingTrials": "Klinische Studien werden gesucht...",
+    "searchingTrials": "Durchbruch-Behandlungen werden gesucht...",
     "preparingDashboard": "Ihr Dashboard wird vorbereitet...",
     "patient": {
-      "gatheringPublications": "Forschungspublikationen werden gesammelt...",
+      "gatheringPublications": "Forschungsartikel werden gesammelt...",
       "findingExperts": "Relevante Expertinnen und Experten werden gesucht..."
     },
     "researcher": {
-      "collectingPublications": "Forschungspublikationen werden erfasst...",
+      "collectingPublications": "Forschungsartikel werden erfasst...",
       "discoveringExperts": "Globale Expertinnen und Experten werden gefunden...",
       "findingCollaborators": "Mögliche Kooperationspartner werden gesucht..."
     }

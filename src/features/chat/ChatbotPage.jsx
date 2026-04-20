@@ -5,8 +5,11 @@ import React, {
   useCallback,
   useLayoutEffect,
   useMemo,
+  startTransition,
 } from "react";
 import { Link } from "react-router-dom";
+import PublicationKeyInsightsModal from "../../components/publication/PublicationKeyInsightsModal.jsx";
+import { fetchPublicationInsightsDetails } from "../../utils/fetchPublicationInsightsDetails.js";
 import {
   Send,
   Loader2,
@@ -27,6 +30,7 @@ import {
   MoreHorizontal,
   Download,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -436,7 +440,14 @@ const getMarkdownComponents = (t) => ({
 // --- Compact chatbot cards (simplified title, short summary, CTAs) ---
 
 const PublicationCard = React.memo(
-  ({ publication, onAskAbout, onSave, userId, useSimplified }) => {
+  ({
+    publication,
+    onAskAbout,
+    onSave,
+    userId,
+    useSimplified,
+    onReadDetails,
+  }) => {
     const { t } = useTranslation("common");
     const publicationRoute = getPublicationPath(publication);
     const displayTitle =
@@ -516,7 +527,23 @@ const PublicationCard = React.memo(
             </p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
-            {publicationRoute ? (
+            {onReadDetails ? (
+              <button
+                type="button"
+                onClick={() => onReadDetails(publication)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
+                style={{
+                  color: "#2F3C96",
+                  backgroundColor: "rgba(208, 196, 226, 0.25)",
+                  borderColor: "rgba(47, 60, 150, 0.25)",
+                }}
+              >
+                {t("chat.readMoreDetails", {
+                  defaultValue: "Read More Details",
+                })}{" "}
+                <ChevronRight className="w-3 h-3" aria-hidden />
+              </button>
+            ) : publicationRoute ? (
               <Link
                 to={publicationRoute}
                 className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors hover:opacity-90"
@@ -1252,6 +1279,7 @@ const SearchResultsCards = ({
   onSave,
   userId,
   userRole,
+  onReadPublicationDetails,
 }) => {
   const { t } = useTranslation("common");
   const useSimplified = userRole === "patient";
@@ -1310,6 +1338,7 @@ const SearchResultsCards = ({
                 onSave={onSave}
                 userId={userId}
                 useSimplified={useSimplified}
+                onReadDetails={onReadPublicationDetails}
               />
             ))}
           {type === "trials" &&
@@ -1742,6 +1771,11 @@ export default function YoriAI() {
   const [isCreatingNewChat, setIsCreatingNewChat] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState(null);
   const [sampleQuestionsOpen, setSampleQuestionsOpen] = useState(false);
+  const [publicationInsightsModal, setPublicationInsightsModal] = useState({
+    open: false,
+    publication: null,
+    loading: false,
+  });
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   /** Top of the latest assistant bubble — align here once when the user sends (read from start of reply). */
@@ -2870,6 +2904,40 @@ export default function YoriAI() {
     [apiBase, appendAssistantNotice, userId],
   );
 
+  const openPublicationInsightsModal = useCallback(
+    async (pub) => {
+      setPublicationInsightsModal({
+        open: true,
+        publication: pub,
+        loading: true,
+      });
+      const { publication: merged } = await fetchPublicationInsightsDetails(
+        pub,
+        {
+          apiBase,
+          locale: getApiLocale(),
+          audience: userRole === "researcher" ? "researcher" : "patient",
+        },
+      );
+      startTransition(() => {
+        setPublicationInsightsModal({
+          open: true,
+          publication: merged,
+          loading: false,
+        });
+      });
+    },
+    [apiBase, userRole],
+  );
+
+  const closePublicationInsightsModal = useCallback(() => {
+    setPublicationInsightsModal({
+      open: false,
+      publication: null,
+      loading: false,
+    });
+  }, []);
+
   return (
     <div className="relative min-h-screen pt-18 pb-19 sm:pt-16 sm:pb-0 yori-page-enter">
       {/* Animated background blobs */}
@@ -3241,6 +3309,9 @@ export default function YoriAI() {
                               onSave={handleSaveToFavourites}
                               userId={userId}
                               userRole={userRole}
+                              onReadPublicationDetails={
+                                openPublicationInsightsModal
+                              }
                             />
                           )}
 
@@ -3507,6 +3578,16 @@ export default function YoriAI() {
           </div>
         </div>
       )}
+
+      <PublicationKeyInsightsModal
+        isOpen={publicationInsightsModal.open}
+        onClose={closePublicationInsightsModal}
+        publication={publicationInsightsModal.publication}
+        loading={publicationInsightsModal.loading}
+        userId={userId}
+        userRole={userRole}
+        onAddToFavorites={handleSaveToFavourites}
+      />
 
       {disclaimerOpen && (
         <div

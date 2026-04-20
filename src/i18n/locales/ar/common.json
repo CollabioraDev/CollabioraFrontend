@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "الخطوة {{current}} من {{total}}",
-    "searchingTrials": "جاري البحث عن التجارب السريرية...",
+    "searchingTrials": "جاري البحث عن علاجات مبتكرة...",
     "preparingDashboard": "جاري تجهيز لوحة التحكم...",
     "patient": {
-      "gatheringPublications": "جمع المنشورات البحثية...",
+      "gatheringPublications": "جمع أوراق البحث...",
       "findingExperts": "البحث عن الخبراء ذوي الصلة..."
     },
     "researcher": {
-      "collectingPublications": "جمع المنشورات البحثية...",
+      "collectingPublications": "جمع أوراق البحث...",
       "discoveringExperts": "اكتشاف الخبراء حول العالم...",
       "findingCollaborators": "البحث عن المتعاونين المحتملين..."
     }

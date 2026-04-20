@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "Étape {{current}} sur {{total}}",
-    "searchingTrials": "Recherche d'essais cliniques...",
+    "searchingTrials": "Recherche de traitements révolutionnaires...",
     "preparingDashboard": "Préparation de votre tableau de bord...",
     "patient": {
-      "gatheringPublications": "Rassemblement des publications de recherche...",
+      "gatheringPublications": "Rassemblement d'articles de recherche...",
       "findingExperts": "Recherche d'experts pertinents..."
     },
     "researcher": {
-      "collectingPublications": "Collecte des publications de recherche...",
+      "collectingPublications": "Collecte d'articles de recherche...",
       "discoveringExperts": "Découverte d'experts dans le monde entier...",
       "findingCollaborators": "Recherche de collaborateurs potentiels..."
     }

@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "Шаг {{current}} из {{total}}",
-    "searchingTrials": "Поиск клинических исследований...",
+    "searchingTrials": "Поиск прорывных методов лечения...",
     "preparingDashboard": "Подготовка панели управления...",
     "patient": {
-      "gatheringPublications": "Сбор научных публикаций...",
+      "gatheringPublications": "Сбор исследовательских работ...",
       "findingExperts": "Поиск релевантных экспертов..."
     },
     "researcher": {
-      "collectingPublications": "Сбор исследовательских публикаций...",
+      "collectingPublications": "Сбор исследовательских работ...",
       "discoveringExperts": "Поиск экспертов по всему миру...",
       "findingCollaborators": "Поиск потенциальных соавторов..."
     }

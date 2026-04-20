@@ -1528,7 +1528,7 @@
   },
   "dashboardLoader": {
     "stepProgress": "{{total}} 段階中 {{current}} 段階",
-    "searchingTrials": "臨床試験を検索しています...",
+    "searchingTrials": "画期的な治療法を探しています...",
     "preparingDashboard": "ダッシュボードを準備しています...",
     "patient": {
       "gatheringPublications": "研究論文を集めています...",

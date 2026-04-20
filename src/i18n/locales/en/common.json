@@ -864,6 +864,7 @@
     "daysAgo": "{{count}}d ago",
     "savePublication": "Save publication",
     "saveTrial": "Save trial",
+    "readMoreDetails": "Read More Details",
     "viewFullPublication": "View full publication",
     "viewFullTrial": "View full trial",
     "askAboutThis": "Ask about this",
@@ -1471,14 +1472,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "Step {{current}} of {{total}}",
-    "searchingTrials": "Searching clinical trials...",
+    "searchingTrials": "Finding breakthrough treatments...",
     "preparingDashboard": "Preparing your dashboard...",
     "patient": {
-      "gatheringPublications": "Gathering research publications...",
+      "gatheringPublications": "Gathering research papers...",
       "findingExperts": "Finding relevant experts..."
     },
     "researcher": {
-      "collectingPublications": "Collecting research publications...",
+      "collectingPublications": "Collecting research papers...",
       "discoveringExperts": "Discovering global experts...",
       "findingCollaborators": "Finding potential collaborators..."
     }

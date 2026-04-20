@@ -1528,14 +1528,14 @@
   },
   "dashboardLoader": {
     "stepProgress": "Etapa {{current}} de {{total}}",
-    "searchingTrials": "Buscando ensaios clínicos...",
+    "searchingTrials": "Buscando tratamentos inovadores...",
     "preparingDashboard": "Preparando seu painel...",
     "patient": {
-      "gatheringPublications": "Reunindo publicações de pesquisa...",
+      "gatheringPublications": "Reunindo artigos de pesquisa...",
       "findingExperts": "Encontrando especialistas relevantes..."
     },
     "researcher": {
-      "collectingPublications": "Coletando publicações de pesquisa...",
+      "collectingPublications": "Coletando artigos de pesquisa...",
       "discoveringExperts": "Descobrindo especialistas globais...",
       "findingCollaborators": "Encontrando possíveis colaboradores..."
     }

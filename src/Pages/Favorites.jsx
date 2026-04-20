@@ -783,30 +783,29 @@ export default function Favorites() {
   }
 
   function renderTrialCard(favorite) {
-    const t = favorite.item;
+    const trial = favorite.item;
     // Check if this favorite was added by URL
     const isAddedByUrl = favorite.addedByUrl === true;
-    const itemId = t.id || t._id;
 
     return (
       <div
         key={favorite._id}
         className="bg-white rounded-xl shadow-sm border transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden flex flex-col h-full"
         style={{
-          borderColor: t.isRead
+          borderColor: trial.isRead
             ? "rgba(147, 51, 234, 0.4)" // Purple for read
             : "rgba(59, 130, 246, 0.4)", // Blue for unread
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.boxShadow =
             "0 10px 15px -3px rgba(47, 60, 150, 0.1), 0 4px 6px -2px rgba(47, 60, 150, 0.05)";
-          e.currentTarget.style.borderColor = t.isRead
+          e.currentTarget.style.borderColor = trial.isRead
             ? "rgba(147, 51, 234, 0.6)" // Darker purple on hover
             : "rgba(59, 130, 246, 0.6)"; // Darker blue on hover
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.boxShadow = "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
-          e.currentTarget.style.borderColor = t.isRead
+          e.currentTarget.style.borderColor = trial.isRead
             ? "rgba(147, 51, 234, 0.4)" // Purple for read
             : "rgba(59, 130, 246, 0.4)"; // Blue for unread
         }}
@@ -845,7 +844,7 @@ export default function Favorites() {
           </div>
 
           {/* Match Progress Bar */}
-          {t.matchPercentage !== undefined && (
+          {trial.matchPercentage !== undefined && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -857,16 +856,16 @@ export default function Favorites() {
                     className="text-sm font-bold"
                     style={{ color: "#2F3C96" }}
                   >
-                    {t.matchPercentage}% Match
+                    {trial.matchPercentage}% Match
                   </span>
                 </div>
-                {t.status && (
+                {trial.status && (
                   <span
                     className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      t.status,
+                      trial.status,
                     )}`}
                   >
-                    {t.status.replace(/_/g, " ")}
+                    {trial.status.replace(/_/g, " ")}
                   </span>
                 )}
               </div>
@@ -880,7 +879,7 @@ export default function Favorites() {
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{
-                    width: `${t.matchPercentage}%`,
+                    width: `${trial.matchPercentage}%`,
                     background: "linear-gradient(90deg, #2F3C96, #253075)",
                   }}
                 ></div>
@@ -893,12 +892,12 @@ export default function Favorites() {
             <h3
               className="text-lg font-bold mb-0 line-clamp-3 leading-snug flex items-start gap-2"
               style={{
-                color: t.isRead
+                color: trial.isRead
                   ? "#D0C4E2" // Light purple for read
                   : "#2F3C96", // Default blue for unread
               }}
             >
-              {t.isRead && (
+              {trial.isRead && (
                 <CheckCircle
                   className="w-4 h-4 mt-1 shrink-0"
                   style={{ color: "#D0C4E2" }}
@@ -906,43 +905,43 @@ export default function Favorites() {
               )}
               <span className="flex-1">
                 {isResearcher
-                  ? t.title || "Untitled Trial"
-                  : t.simplifiedTitle || t.title || "Untitled Trial"}
+                  ? trial.title || "Untitled Trial"
+                  : trial.simplifiedTitle || trial.title || "Untitled Trial"}
               </span>
             </h3>
           </div>
 
           {/* Basic Info */}
           <div className="space-y-1.5 mb-4">
-            {t.conditions?.length > 0 && (
+            {trial.conditions?.length > 0 && (
               <div
                 className="flex items-center text-sm"
                 style={{ color: "#787878" }}
               >
                 <Info className="w-3.5 h-3.5 mr-2 shrink-0" />
                 <span className="line-clamp-1">
-                  {Array.isArray(t.conditions)
-                    ? t.conditions.join(", ")
-                    : t.conditions}
+                  {Array.isArray(trial.conditions)
+                    ? trial.conditions.join(", ")
+                    : trial.conditions}
                 </span>
               </div>
             )}
-            {t.phase && (
+            {trial.phase && (
               <div
                 className="flex items-center text-sm"
                 style={{ color: "#787878" }}
               >
                 <Calendar className="w-3.5 h-3.5 mr-2 shrink-0" />
-                <span>Phase {t.phase}</span>
+                <span>Phase {trial.phase}</span>
               </div>
             )}
           </div>
 
           {/* Description/Details Preview */}
-          {(t.description || t.conditionDescription) && (
+          {(trial.description || trial.conditionDescription) && (
             <div className="mb-4 flex-grow">
               <button
-                onClick={() => openDetailsModal(t, "trial", favorite)}
+                onClick={() => openDetailsModal(trial, "trial", favorite)}
                 className="w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-200 border group"
                 style={{
                   backgroundColor: "rgba(208, 196, 226, 0.2)",
@@ -970,8 +969,8 @@ export default function Favorites() {
                       style={{ color: "#787878" }}
                     >
                       <span className="line-clamp-2">
-                        {t.description ||
-                          t.conditionDescription ||
+                        {trial.description ||
+                          trial.conditionDescription ||
                           "View details for more information"}
                       </span>
                     </div>
@@ -991,14 +990,14 @@ export default function Favorites() {
           )}
 
           {/* Spacer for trials without description */}
-          {!t.description && !t.conditionDescription && (
+          {!trial.description && !trial.conditionDescription && (
             <div className="flex-grow"></div>
           )}
 
           {/* Action Buttons */}
           <div className="flex gap-2 mt-auto">
             <button
-              onClick={() => generateSummary(t, "trial")}
+              onClick={() => generateSummary(trial, "trial")}
               className="flex-1 flex items-center justify-center gap-2 py-2 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
               style={{
                 background: "linear-gradient(135deg, #2F3C96, #253075)",
@@ -1044,7 +1043,7 @@ export default function Favorites() {
 
           {/* View Contact Information Button */}
           <button
-            onClick={() => openContactInfoModal(t)}
+            onClick={() => openContactInfoModal(trial)}
             className="flex items-center justify-center gap-2 py-2 text-xs font-medium rounded-lg transition-colors mt-3 w-full"
             style={{
               color: "#2F3C96",
@@ -1071,7 +1070,6 @@ export default function Favorites() {
     const p = favorite.item;
     // Check if this favorite was added by URL
     const isAddedByUrl = favorite.addedByUrl === true;
-    const itemId = p.id || p.pmid || p._id;
 
     return (
       <div
@@ -1560,7 +1558,7 @@ export default function Favorites() {
   }
 
   function renderThreadCard(favorite) {
-    const t = favorite.item;
+    const thread = favorite.item;
     return (
       <div
         key={favorite._id}
@@ -1574,15 +1572,15 @@ export default function Favorites() {
                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
                   Forum Thread
                 </span>
-                {t.categoryName && (
+                {thread.categoryName && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                     <Tag className="w-3 h-3 inline mr-1" />
-                    {t.categoryName}
+                    {thread.categoryName}
                   </span>
                 )}
               </div>
               <h3 className="font-bold text-slate-900 text-base line-clamp-2 mb-2">
-                {t.title || "Untitled Thread"}
+                {thread.title || "Untitled Thread"}
               </h3>
             </div>
             <button
@@ -1594,31 +1592,33 @@ export default function Favorites() {
           </div>
 
           <div className="space-y-1 mb-3">
-            {t.authorName && (
+            {thread.authorName && (
               <div className="flex items-center text-xs text-slate-700">
                 <User className="w-3 h-3 mr-1.5 shrink-0" />
-                <span>By {t.authorName}</span>
+                <span>By {thread.authorName}</span>
               </div>
             )}
             <div className="flex items-center gap-3 text-xs text-slate-600">
-              {t.viewCount !== undefined && (
+              {thread.viewCount !== undefined && (
                 <div className="flex items-center gap-1">
                   <Eye className="w-3 h-3" />
-                  <span>{t.viewCount || 0} views</span>
+                  <span>{thread.viewCount || 0} views</span>
                 </div>
               )}
-              {t.replyCount !== undefined && (
+              {thread.replyCount !== undefined && (
                 <div className="flex items-center gap-1">
                   <MessageCircle className="w-3 h-3" />
-                  <span>{t.replyCount || 0} replies</span>
+                  <span>{thread.replyCount || 0} replies</span>
                 </div>
               )}
             </div>
           </div>
 
-          {t.body && (
+          {thread.body && (
             <div className="mb-3">
-              <p className="text-xs text-slate-700 line-clamp-3">{t.body}</p>
+              <p className="text-xs text-slate-700 line-clamp-3">
+                {thread.body}
+              </p>
             </div>
           )}
 
