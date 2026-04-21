@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Loader2 } from "lucide-react";
 import clsx from "clsx";
 import {
   DEFAULT_SUGGESTION_LIMIT,
+  filterTermsMatchingQuery,
   getSmartSuggestions,
+  mergePriorityWithSmartSuggestions,
 } from "@/utils/smartSuggestions";
 
 export default function SmartSearchInput({
@@ -13,6 +16,14 @@ export default function SmartSearchInput({
   onSubmit,
   placeholder,
   extraTerms = [],
+  priorityExtraTerms = [],
+  /**
+   * When true, the dropdown lists only priorityExtraTerms (e.g. NLM) matched to the query —
+   * no merge with SMART_SUGGESTION_KEYWORDS / extraTerms.
+   */
+  remoteSuggestionsOnly = false,
+  /** When true, dropdown shows a small spinner (e.g. while NLM priority terms load). */
+  prioritySuggestionsLoading = false,
   canonicalMap = null,
   maxSuggestions = DEFAULT_SUGGESTION_LIMIT,
   className = "",
@@ -38,16 +49,48 @@ export default function SmartSearchInput({
 
   const suggestions = useMemo(() => {
     if (!deferredValue || !deferredValue.trim()) return [];
+
+    if (remoteSuggestionsOnly) {
+      const nlm = Array.isArray(priorityExtraTerms) ? priorityExtraTerms : [];
+      return filterTermsMatchingQuery(
+        deferredValue,
+        nlm,
+        maxSuggestions,
+      );
+    }
+
+    if (Array.isArray(priorityExtraTerms) && priorityExtraTerms.length > 0) {
+      return mergePriorityWithSmartSuggestions(
+        deferredValue,
+        priorityExtraTerms,
+        extraTerms,
+        maxSuggestions,
+        canonicalMap,
+      );
+    }
     return getSmartSuggestions(
       deferredValue,
       extraTerms,
       maxSuggestions,
-      canonicalMap
+      canonicalMap,
     );
-  }, [deferredValue, extraTerms, maxSuggestions, canonicalMap]);
+  }, [
+    deferredValue,
+    extraTerms,
+    priorityExtraTerms,
+    maxSuggestions,
+    canonicalMap,
+    remoteSuggestionsOnly,
+  ]);
+
+  const queryTrim = typeof value === "string" ? value.trim() : "";
+  const showPriorityLoadingRow =
+    Boolean(prioritySuggestionsLoading) && queryTrim.length >= 2;
 
   const showDropdown =
-    isDropdownOpen && suggestions.length > 0 && value?.trim()?.length > 0;
+    isDropdownOpen &&
+    queryTrim.length > 0 &&
+    (suggestions.length > 0 || showPriorityLoadingRow);
 
   // Update dropdown position based on input position (viewport-relative for better scroll handling)
   const updateDropdownPosition = () => {
@@ -297,6 +340,26 @@ export default function SmartSearchInput({
             )}
           </li>
         ))}
+        {showPriorityLoadingRow ? (
+          <li
+            className={clsx(
+              "flex items-center gap-2 px-3 py-2 text-xs text-slate-500 pointer-events-none select-none border-t border-slate-100 bg-slate-50/80",
+              suggestions.length === 0 && "border-t-0",
+            )}
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <Loader2
+              className="h-3.5 w-3.5 shrink-0 animate-spin text-indigo-500"
+              aria-hidden
+            />
+            <span>
+              {t("smartSearch.loadingMoreSuggestions", {
+                defaultValue: "Loading more suggestions…",
+              })}
+            </span>
+          </li>
+        ) : null}
       </ul>
     </div>
   );

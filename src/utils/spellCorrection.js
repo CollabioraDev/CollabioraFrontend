@@ -75,6 +75,17 @@ function isLikelyCorrection(word, candidate, threshold = 0.7) {
 const MAX_POOL_FOR_SPELL_CHECK = 350;
 
 /**
+ * Clinical head nouns in eponymous / formal disease names ("Huntington disease", "Crohn disease").
+ * The suggestion pool often contains plural phrases ("Infectious Diseases"), so naive similarity
+ * would wrongly rewrite "disease" → "diseases". Never spell-correct these tokens.
+ */
+const CLINICAL_NAME_TOKENS_NO_SPELL_REPLACE = new Set([
+  "disease",
+  "syndrome",
+  "disorder",
+]);
+
+/**
  * Get spell correction suggestions for a query
  * @param {string} query - Search query to correct
  * @param {string[]} extraTerms - Additional terms to consider (e.g., medical interests)
@@ -184,6 +195,8 @@ export function autoCorrectQuery(query, extraTerms = []) {
   
   // Check each word in the query
   const correctedWords = queryWords.map(word => {
+    if (CLINICAL_NAME_TOKENS_NO_SPELL_REPLACE.has(word)) return word;
+
     // If word is already in valid words, keep it
     if (validWords.has(word)) return word;
     

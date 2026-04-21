@@ -64,8 +64,12 @@ import {
   MAX_FREE_SEARCHES,
 } from "../../utils/searchLimit.js";
 import { loadTutorialSampleTrials } from "../../utils/tutorialSampleData.js";
-import { GUEST_BROWSE_MODE_ENABLED } from "../../utils/guestBrowseMode.js";
+import {
+  GUEST_BROWSE_MODE_ENABLED,
+  PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+} from "../../utils/guestBrowseMode.js";
 import { recordTrialEngagement } from "../../utils/productAnalytics.js";
+import { useNlmClinicalSuggestions } from "../../hooks/useNlmClinicalSuggestions.js";
 
 /** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
 function buildGmailComposeUrl(toEmails, subject, body) {
@@ -139,6 +143,10 @@ export default function Trials() {
   const [favoritingItems, setFavoritingItems] = useState(new Set()); // Track items being favorited/unfavorited
   const { checkAndUseSearch, getRemainingSearches } = useFreeSearches();
   const [userProfile, setUserProfile] = useState(null); // Track user profile
+  /** Signed-in researchers see technical titles; everyone else uses patient-style (incl. guests when browse mode is on). */
+  const researcherTitleMode = Boolean(
+    isSignedIn && userProfile?.researcher !== undefined,
+  );
   const [summaryModal, setSummaryModal] = useState({
     open: false,
     title: "",
@@ -322,6 +330,10 @@ export default function Trials() {
       ].filter(Boolean),
     [quickFilters, userMedicalInterest],
   );
+
+  const trialsNlm = useNlmClinicalSuggestions(q, {
+    includeProcedures: true,
+  });
 
   const statusOptionsList = [
     "RECRUITING",
@@ -647,7 +659,7 @@ export default function Trials() {
 
     // Reset pagination for new searches
     params.set("page", "1");
-    params.set("pageSize", "6");
+    params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
     setCurrentPage(1);
     setLastSearchQuery(finalQuery);
 
@@ -683,8 +695,8 @@ export default function Trials() {
     }
     // "global" mode doesn't send location parameter
 
-    // Add user profile data for matching
-    if (user?._id || user?.id) {
+    // Add user profile data for matching (only with a valid session)
+    if (isUserSignedIn && (user?._id || user?.id)) {
       params.set("userId", user._id || user.id);
     } else {
       // Send conditions/keywords ONLY from enabled medical interests (not all interests)
@@ -739,7 +751,9 @@ export default function Trials() {
 
       // Set pagination data
       setTotalCount(data.totalCount || 0);
-      const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+      const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
       setTotalPages(calculatedTotalPages);
 
       // Sort by matchPercentage in descending order (highest first)
@@ -932,10 +946,14 @@ export default function Trials() {
     }
 
     params.set("page", String(page));
-    params.set("pageSize", "6");
+    params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
     if (savedRecentMonths)
       params.set("recentMonths", String(savedRecentMonths));
     if (savedSortByDate) params.set("sortByDate", "true");
+
+    const tokenNow = localStorage.getItem("token");
+    const sessionUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const isSessionSignedIn = Boolean(sessionUser && tokenNow);
 
     // Add location parameter
     const currentLocationMode = savedLocationMode || locationMode;
@@ -949,9 +967,12 @@ export default function Trials() {
       params.set("location", currentLocation.trim());
     }
 
-    // Add user profile data for matching
+    // Add user profile data for matching (only with a valid session)
     const currentUser = savedUser || user;
-    if (currentUser?._id || currentUser?.id) {
+    if (
+      isSessionSignedIn &&
+      (currentUser?._id || currentUser?.id)
+    ) {
       params.set("userId", currentUser._id || currentUser.id);
     } else {
       // Use enabled medical interests (from current state or saved state)
@@ -1005,7 +1026,9 @@ export default function Trials() {
 
       // Set pagination data
       setTotalCount(data.totalCount || 0);
-      const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+      const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
       setTotalPages(calculatedTotalPages);
 
       // Sort by matchPercentage in descending order (highest first)
@@ -1103,7 +1126,7 @@ export default function Trials() {
 
       // Reset pagination for new searches
       params.set("page", "1");
-      params.set("pageSize", "6");
+      params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
       setCurrentPage(1);
       setLastSearchQuery(searchQuery);
 
@@ -1138,8 +1161,8 @@ export default function Trials() {
         params.set("institution", institution);
       }
 
-      // Add user profile data for matching
-      if (user?._id || user?.id) {
+      // Add user profile data for matching (only with a valid session)
+      if (isUserSignedIn && (user?._id || user?.id)) {
         params.set("userId", user._id || user.id);
       } else {
         // Send conditions/keywords from enabled medical interests
@@ -1191,7 +1214,9 @@ export default function Trials() {
 
           // Set pagination data
           setTotalCount(data.totalCount || 0);
-          const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+          const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
           setTotalPages(calculatedTotalPages);
 
           // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
@@ -1392,8 +1417,7 @@ export default function Trials() {
 
   async function generateSummary(item) {
     // For "Simplify": simplified for patients, technical for researchers (same first-level key insights style as Publications for patients)
-    const isResearcher = userProfile?.researcher !== undefined;
-    const shouldSimplify = !isResearcher;
+    const shouldSimplify = !researcherTitleMode;
 
     const title = item.title || t("trials.fallbackTitle");
     const text = [
@@ -1669,12 +1693,11 @@ export default function Trials() {
 
     // Fetch detailed trial information with simplified details from backend
     // Researchers: audience=researcher (technical terms, structured); Patients: plain language
-    const isResearcher = userProfile?.researcher !== undefined;
     if (trial.id || trial._id) {
       try {
         const nctId = trial.id || trial._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const audience = isResearcher ? "researcher" : "patient";
+        const audience = researcherTitleMode ? "researcher" : "patient";
         const sourceParam = encodeURIComponent(
           trial.sourceRegistry || "clinicaltrials.gov",
         );
@@ -2268,6 +2291,7 @@ export default function Trials() {
       setResults([]);
       setIsInitialLoad(true);
       setIsSignedIn(false);
+      setUserProfile(null);
       setUserLocation(null);
       sessionStorage.removeItem("trials_search_state");
     };
@@ -2278,8 +2302,7 @@ export default function Trials() {
 
   // Batch simplify trial titles when researcher enables "Simplify titles"
   useEffect(() => {
-    const isResearcher = userProfile?.researcher !== undefined;
-    if (!simplifyTitles || !isResearcher || !results?.length) return;
+    if (!simplifyTitles || !researcherTitleMode || !results?.length) return;
 
     const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const trialsToSimplify = results.filter(
@@ -2307,7 +2330,7 @@ export default function Trials() {
       .catch(() => {});
 
     return () => {};
-  }, [simplifyTitles, results, userProfile?.researcher]);
+  }, [simplifyTitles, results, researcherTitleMode]);
 
   // Check for guest info or URL parameters, then fetch user profile
   useEffect(() => {
@@ -2659,6 +2682,9 @@ export default function Trials() {
                   onSubmit={handleKeywordSubmit}
                   placeholder={t("publications.searchPlaceholder")}
                   extraTerms={trialSuggestionTerms}
+                  priorityExtraTerms={trialsNlm.terms}
+                  remoteSuggestionsOnly
+                  prioritySuggestionsLoading={trialsNlm.loading}
                   className="flex-1"
                 />
                 <CustomSelect
@@ -2847,7 +2873,7 @@ export default function Trials() {
               </div>
 
               {/* Simplify titles checkbox - researchers only */}
-              {userProfile?.researcher !== undefined && (
+              {researcherTitleMode && (
                 <div className="flex items-center gap-2">
                   <label className="inline-flex items-center gap-2 cursor-pointer">
                     <input
@@ -3131,16 +3157,7 @@ export default function Trials() {
                   {(tutorialSampleResults.length > 0
                     ? tutorialSampleResults
                     : results
-                  )
-                    .slice(
-                      0,
-                      isSignedIn
-                        ? tutorialSampleResults.length > 0
-                          ? tutorialSampleResults.length
-                          : results.length
-                        : 6,
-                    )
-                    .map((trial, cardIdx) => {
+                  ).map((trial, cardIdx) => {
                       const itemId = trial.id || trial._id;
                       const isFirstCard = cardIdx === 0;
                       return (
@@ -3259,7 +3276,7 @@ export default function Trials() {
                                   />
                                 )}
                                 <span className="flex-1">
-                                  {userProfile?.researcher !== undefined
+                                  {researcherTitleMode
                                     ? trial.title || t("trials.untitledTrial")
                                     : (simplifyTitles &&
                                         simplifiedTrialSummaries.get(
@@ -3497,8 +3514,8 @@ export default function Trials() {
               )}
           </div>
 
-          {/* Results Count and Pagination */}
-          {!loading && results.length > 0 && isSignedIn && (
+          {/* Results Count and Pagination (guests and signed-in users) */}
+          {!loading && results.length > 0 && (
             <div className="mt-6 flex flex-col items-center gap-4">
               {/* Results Count */}
               <div className="text-sm text-slate-600">
@@ -3580,7 +3597,8 @@ export default function Trials() {
           {!loading &&
             results.length > 0 &&
             !isSignedIn &&
-            results.length > 6 && (
+            !GUEST_BROWSE_MODE_ENABLED &&
+            totalCount > PUBLICATIONS_AND_TRIALS_PAGE_SIZE && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -3595,7 +3613,9 @@ export default function Trials() {
                     </h3>
                   </div>
                   <p className="text-sm text-indigo-700 max-w-md">
-                    {t("trials.wantMoreTrialsBody", { count: results.length })}
+                    {t("trials.wantMoreTrialsBody", {
+                      count: totalCount || results.length,
+                    })}
                   </p>
                   <div className="flex gap-3 mt-2">
                     <button
@@ -3665,7 +3685,8 @@ export default function Trials() {
                 >
                   {t("trials.clinicalTrialBadge")}
                 </span>
-                {summaryModal.type === "trial" &&
+                {!researcherTitleMode &&
+                  summaryModal.type === "trial" &&
                   !summaryModal.loading &&
                   summaryTrial &&
                   !hasSimplifiedFurther && (
@@ -3893,7 +3914,7 @@ export default function Trials() {
                       className="font-bold text-lg"
                       style={{ color: "#2F3C96" }}
                     >
-                      {userProfile?.researcher !== undefined
+                      {researcherTitleMode
                         ? detailsModal.trial.title
                         : detailsModal.trial.simplifiedTitle ||
                           detailsModal.trial.simplifiedDetails?.title ||
@@ -4026,8 +4047,7 @@ export default function Trials() {
                             </div>
                           </div>
                         )}
-                      {userProfile?.researcher !== undefined &&
-                        isSignedIn &&
+                      {researcherTitleMode &&
                         detailsModal.trial.viewerPiClaim?.canClaim && (
                           <button
                             type="button"
@@ -4043,8 +4063,7 @@ export default function Trials() {
                               : t("trials.claimPiButton")}
                           </button>
                         )}
-                      {userProfile?.researcher !== undefined &&
-                        isSignedIn &&
+                      {researcherTitleMode &&
                         detailsModal.trial.viewerPiClaim?.linked &&
                         detailsModal.trial.viewerPiClaim?.claimed && (
                           <p

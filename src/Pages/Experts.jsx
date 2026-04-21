@@ -50,12 +50,8 @@ import {
   MAX_FREE_SEARCHES,
 } from "../utils/searchLimit.js";
 import { SMART_SUGGESTION_KEYWORDS } from "../utils/smartSuggestions.js";
-import {
-  buildMeshIndex,
-  getMeshSliceForQuery,
-} from "../utils/meshSearchIndex.js";
 import icd11Dataset from "../data/icd11Dataset.json";
-import meshSearchTerms from "../data/meshSearchTerms.json";
+import { useNlmClinicalSuggestions } from "../hooks/useNlmClinicalSuggestions.js";
 import {
   buildCanonicalMapFromIcd11,
   buildCanonicalMapFromLabels,
@@ -241,107 +237,16 @@ export default function Experts() {
     });
   };
 
-  // Common medical conditions (same as onboarding)
-  const commonConditions = [
-    "Diabetes",
-    "Hypertension",
-    "Heart Disease",
-    "Prostate Cancer",
-    "Breast Cancer",
-    "Lung Cancer",
-    "Asthma",
-    "Arthritis",
-    "Depression",
-    "Anxiety",
-    "Chronic Pain",
-    "Migraine",
-    "Obesity",
-    "High Cholesterol",
-    "Thyroid Disorder",
-    "Sleep Apnea",
-    "COPD",
-    "Epilepsy",
-    "Parkinson's Disease",
-    "Alzheimer's Disease",
-    "Multiple Sclerosis",
-    "Crohn's Disease",
-    "IBD",
-    "Osteoporosis",
-    "Fibromyalgia",
-    "Lupus",
-    "Rheumatoid Arthritis",
-  ];
-
-  // Extract terms from ICD11 dataset for suggestions (same as onboarding)
-  const icd11Suggestions = useMemo(() => {
-    const termsSet = new Set();
-
-    if (Array.isArray(icd11Dataset)) {
-      icd11Dataset.forEach((item) => {
-        // Add display_name
-        if (item.display_name && typeof item.display_name === "string") {
-          const displayName = item.display_name.trim();
-          if (displayName) {
-            termsSet.add(displayName);
-          }
-        }
-
-        // Add patient_terms, but filter out ICD code patterns
-        if (Array.isArray(item.patient_terms)) {
-          item.patient_terms.forEach((term) => {
-            if (typeof term === "string") {
-              const trimmedTerm = term.trim();
-              if (!trimmedTerm) return;
-
-              // Filter out terms containing ICD code patterns
-              const lowerTerm = trimmedTerm.toLowerCase();
-              // Check for patterns like "icd11 code aa00", "icd code aa00", "icd aa00", "icd11 aa00"
-              const hasIcdPattern =
-                lowerTerm.includes("icd11 code") ||
-                lowerTerm.includes("icd code") ||
-                /icd11\s+[a-z]{2}[0-9]{2}/i.test(trimmedTerm) || // "icd11 aa00"
-                /icd\s+[a-z]{2}[0-9]{2}/i.test(trimmedTerm); // "icd aa00", "icd ba20"
-
-              if (!hasIcdPattern) {
-                termsSet.add(trimmedTerm);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    return Array.from(termsSet);
-  }, []);
-
-  // MeSH index: search by first (and first-two) letter so we only pass a small slice per keystroke
-  const meshIndex = useMemo(
-    () => buildMeshIndex(Array.isArray(meshSearchTerms) ? meshSearchTerms : []),
-    [],
-  );
-
-  // Condition field: MeSH slice for current input + fixed terms (keeps pool small, typing fast)
-  const diseaseSuggestionTerms = useMemo(() => {
-    const meshSlice = getMeshSliceForQuery(meshIndex, diseaseOfInterest);
-    return [
-      ...meshSlice,
-      userMedicalInterest,
-      ...commonConditions,
-      ...SMART_SUGGESTION_KEYWORDS,
-      ...icd11Suggestions,
-    ].filter(Boolean);
-  }, [meshIndex, diseaseOfInterest, userMedicalInterest, icd11Suggestions]);
-
-  // Expertise field: MeSH slice for current input + smart keywords
-  const expertSuggestionTerms = useMemo(() => {
-    const meshSlice = getMeshSliceForQuery(meshIndex, researchArea);
-    return [...meshSlice, ...SMART_SUGGESTION_KEYWORDS].filter(Boolean);
-  }, [meshIndex, researchArea]);
+  const expertsDiseaseNlm = useNlmClinicalSuggestions(diseaseOfInterest, {
+    includeProcedures: false,
+  });
+  const expertsExpertiseNlm = useNlmClinicalSuggestions(researchArea, {
+    includeProcedures: true,
+  });
 
   const expertsDiseaseCanonicalMap = useMemo(() => {
     const map = buildCanonicalMapFromIcd11(icd11Dataset);
     const curated = buildCanonicalMapFromLabels([
-      ...commonConditions,
       ...SMART_SUGGESTION_KEYWORDS,
       ...(userMedicalInterest ? [userMedicalInterest] : []),
     ]);
@@ -480,8 +385,8 @@ export default function Experts() {
           sourceParams.set("location", locationStr);
         }
 
-        // Add user profile data for matching
-        if (userData?._id || userData?.id) {
+        // Add user profile data for matching (only with a valid session)
+        if (isUserSignedIn && (userData?._id || userData?.id)) {
           sourceParams.set("userId", userData._id || userData.id);
         } else if (currentDiseaseOfInterest || locationStr) {
           if (currentDiseaseOfInterest) {
@@ -530,8 +435,8 @@ export default function Experts() {
         sourceParams.set("page", "1");
         sourceParams.set("pageSize", "5");
 
-        // Add user profile data for matching
-        if (userData?._id || userData?.id) {
+        // Add user profile data for matching (only with a valid session)
+        if (isUserSignedIn && (userData?._id || userData?.id)) {
           sourceParams.set("userId", userData._id || userData.id);
         } else if (currentDiseaseOfInterest || locationStr) {
           if (currentDiseaseOfInterest) {
@@ -888,7 +793,7 @@ export default function Experts() {
             sourceParams.set("location", locationStr);
           }
 
-          if (userData?._id || userData?.id) {
+          if (isUserSignedIn && (userData?._id || userData?.id)) {
             sourceParams.set("userId", userData._id || userData.id);
           } else if (parsedUserLocation) {
             sourceParams.set(
@@ -914,7 +819,7 @@ export default function Experts() {
           sourceParams.set("page", "1");
           sourceParams.set("pageSize", "5");
 
-          if (userData?._id || userData?.id) {
+          if (isUserSignedIn && (userData?._id || userData?.id)) {
             sourceParams.set("userId", userData._id || userData.id);
           } else if (parsedUserLocation) {
             sourceParams.set(
@@ -1849,7 +1754,9 @@ export default function Experts() {
                       })
                     }
                     placeholder="Condition of Interest"
-                    extraTerms={diseaseSuggestionTerms}
+                    priorityExtraTerms={expertsDiseaseNlm.terms}
+                    remoteSuggestionsOnly
+                    prioritySuggestionsLoading={expertsDiseaseNlm.loading}
                     canonicalMap={expertsDiseaseCanonicalMap}
                     className="flex-1"
                     autoSubmitOnSelect={false}
@@ -1866,7 +1773,9 @@ export default function Experts() {
                       })
                     }
                     placeholder="What expertise are you looking for?"
-                    extraTerms={expertSuggestionTerms}
+                    priorityExtraTerms={expertsExpertiseNlm.terms}
+                    remoteSuggestionsOnly
+                    prioritySuggestionsLoading={expertsExpertiseNlm.loading}
                     canonicalMap={expertsExpertiseCanonicalMap}
                     className="flex-1"
                     autoSubmitOnSelect={false}
@@ -2173,9 +2082,7 @@ export default function Experts() {
                 {(tutorialSampleResults.length > 0
                   ? tutorialSampleResults
                   : results
-                )
-                  .slice(0, isSignedIn ? undefined : 3)
-                  .map((expert, cardIdx) => {
+                ).map((expert, cardIdx) => {
                     const isFirstCard = cardIdx === 0;
                     // Use name as the primary identifier
                     const itemId = expert.name || expert.id || expert._id;
@@ -2831,7 +2738,9 @@ export default function Experts() {
                   })}
 
                 {/* Load More Button - for signed-in users with more global results */}
-                {isSignedIn && globalHasMore && !loadingMore && (
+                {(isSignedIn || GUEST_BROWSE_MODE_ENABLED) &&
+                  globalHasMore &&
+                  !loadingMore && (
                   <div className="flex flex-col items-center gap-2 mt-6">
                     <button
                       onClick={loadMoreExperts}
@@ -2864,7 +2773,8 @@ export default function Experts() {
           {!loading &&
             results.length > 0 &&
             !isSignedIn &&
-            results.length > 3 && (
+            !GUEST_BROWSE_MODE_ENABLED &&
+            (globalHasMore || globalTotalFound > results.length) && (
               <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-6 text-center shadow-lg">
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex items-center gap-2">

@@ -59,7 +59,11 @@ import {
   MAX_FREE_SEARCHES,
 } from "../../utils/searchLimit.js";
 import { loadTutorialSamplePublications } from "../../utils/tutorialSampleData.js";
-import { GUEST_BROWSE_MODE_ENABLED } from "../../utils/guestBrowseMode.js";
+import {
+  GUEST_BROWSE_MODE_ENABLED,
+  PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+} from "../../utils/guestBrowseMode.js";
+import { useNlmClinicalSuggestions } from "../../hooks/useNlmClinicalSuggestions.js";
 import ReactMarkdown from "react-markdown";
 
 /** Stopwords to strip when turning a query into display keywords (matches backend). */
@@ -161,6 +165,10 @@ export default function Publications() {
   const [isSignedIn, setIsSignedIn] = useState(false); // Track if user is signed in
   const [user, setUser] = useState(null); // Track user state
   const [userProfile, setUserProfile] = useState(null); // Track user profile
+  /** Signed-in researchers see technical titles; everyone else uses patient-style (incl. guests when browse mode is on). */
+  const researcherTitleMode = Boolean(
+    isSignedIn && userProfile?.researcher !== undefined,
+  );
   const [location, setLocation] = useState("");
   const [locationMode, setLocationMode] = useState("global"); // "current", "global", "custom"
   const [userLocation, setUserLocation] = useState(null);
@@ -314,45 +322,14 @@ export default function Publications() {
       "Find terms within N words of each other. Format: 'term1 term2' with distance (e.g., 'cancer treatment ~5' finds terms within 5 words). Example: 'breast cancer ~3'",
   };
 
-  // Extract terms from ICD11 dataset for suggestions (patient-friendly only)
-  const icd11Suggestions = useMemo(() => {
-    const termsSet = new Set();
-
-    if (Array.isArray(icd11Dataset)) {
-      icd11Dataset.forEach((item) => {
-        // Add patient_terms, but filter out ICD code patterns
-        if (Array.isArray(item.patient_terms)) {
-          item.patient_terms.forEach((term) => {
-            if (typeof term === "string") {
-              const trimmedTerm = term.trim();
-              if (!trimmedTerm) return;
-
-              const lowerTerm = trimmedTerm.toLowerCase();
-              const hasIcdPattern =
-                lowerTerm.includes("icd11 code") ||
-                lowerTerm.includes("icd code") ||
-                /icd11\s+[a-z]{2}[0-9]{2}/i.test(trimmedTerm) ||
-                /icd\s+[a-z]{2}[0-9]{2}/i.test(trimmedTerm);
-
-              if (!hasIcdPattern) {
-                termsSet.add(trimmedTerm);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    return Array.from(termsSet);
-  }, []);
+  /** NLM Clinical Tables — standardized labels, server-proxied. */
+  const publicationNlm = useNlmClinicalSuggestions(q, {
+    includeProcedures: true,
+  });
 
   const publicationSuggestionTerms = useMemo(
-    () => [
-      ...SMART_SUGGESTION_KEYWORDS,
-      ...icd11Suggestions,
-      ...[userMedicalInterest].filter(Boolean),
-    ],
-    [icd11Suggestions, userMedicalInterest],
+    () => [...[userMedicalInterest].filter(Boolean)],
+    [userMedicalInterest],
   );
 
   const publicationCanonicalMap = useMemo(() => {
@@ -989,7 +966,7 @@ export default function Publications() {
 
     // Reset pagination for new searches
     params.set("page", "1");
-    params.set("pageSize", "6");
+    params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
     setCurrentPage(1);
     setLastSearchQuery(searchQuery);
 
@@ -1008,8 +985,11 @@ export default function Publications() {
       sortByDate: useRecent || undefined,
     });
 
-    // Add user profile data for matching
-    if (userData?._id || userData?.id) {
+    // Add user profile data for matching (only with a real session — otherwise API may load researcher profile and skip patient title simplification)
+    if (
+      isUserSignedIn &&
+      (userData?._id || userData?.id)
+    ) {
       params.set("userId", userData._id || userData.id);
     } else {
       // Send conditions/keywords from enabled medical interests
@@ -1053,7 +1033,9 @@ export default function Publications() {
 
       // Set pagination data
       setTotalCount(data.totalCount || 0);
-      const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+      const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
       setTotalPages(calculatedTotalPages);
 
       // Store search parameters for pagination
@@ -1075,7 +1057,9 @@ export default function Publications() {
       setResults(sortedResults);
 
       // Calculate total pages for server-side pagination
-      const totalPages = Math.ceil((data.totalCount || 0) / 6);
+      const totalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
 
       // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
       if (
@@ -1207,10 +1191,17 @@ export default function Publications() {
     if (savedSortByDate) params.set("sortByDate", "true");
 
     params.set("page", String(page));
-    params.set("pageSize", "6");
+    params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
 
-    // Add user profile data for matching
-    if (savedUserData?._id || savedUserData?.id) {
+    const tokenNow = localStorage.getItem("token");
+    const sessionUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const isSessionSignedIn = Boolean(sessionUser && tokenNow);
+
+    // Add user profile data for matching (only with a valid session)
+    if (
+      isSessionSignedIn &&
+      (savedUserData?._id || savedUserData?.id)
+    ) {
       params.set("userId", savedUserData._id || savedUserData.id);
     } else if (savedUseMedicalInterest && savedUserMedicalInterest) {
       params.set("conditions", savedUserMedicalInterest);
@@ -1244,7 +1235,9 @@ export default function Publications() {
 
       // Set pagination data
       setTotalCount(data.totalCount || 0);
-      const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+      const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
       setTotalPages(calculatedTotalPages);
 
       // Sort by matchPercentage in descending order (highest first)
@@ -1338,7 +1331,7 @@ export default function Publications() {
 
     // Reset pagination for new searches
     params.set("page", "1");
-    params.set("pageSize", "6");
+    params.set("pageSize", String(PUBLICATIONS_AND_TRIALS_PAGE_SIZE));
     setCurrentPage(1);
     setLastSearchQuery(filterValue);
 
@@ -1355,8 +1348,11 @@ export default function Publications() {
       userData,
     });
 
-    // Add user profile data for matching
-    if (userData?._id || userData?.id) {
+    // Add user profile data for matching (only with a valid session)
+    if (
+      isUserSignedIn &&
+      (userData?._id || userData?.id)
+    ) {
       params.set("userId", userData._id || userData.id);
     } else {
       // Send conditions/keywords from enabled medical interests
@@ -1403,7 +1399,9 @@ export default function Publications() {
         // Set pagination data
         setTotalCount(data.totalCount || 0);
         setPublicationSources(data.publicationSources || null);
-        const calculatedTotalPages = Math.ceil((data.totalCount || 0) / 6);
+        const calculatedTotalPages = Math.ceil(
+        (data.totalCount || 0) / PUBLICATIONS_AND_TRIALS_PAGE_SIZE,
+      );
         setTotalPages(calculatedTotalPages);
 
         // Guest: sync with backend response (skip UI when guest browse experiment = unlimited)
@@ -1654,12 +1652,11 @@ export default function Publications() {
 
     // Fetch detailed publication information with simplified details from backend
     // Researchers: audience=researcher (technical terms, structured); Patients: plain language
-    const isResearcher = userProfile?.researcher !== undefined;
     if (pub.pmid || pub.id || pub._id) {
       try {
         const pmid = pub.pmid || pub.id || pub._id;
         const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const audience = isResearcher ? "researcher" : "patient";
+        const audience = researcherTitleMode ? "researcher" : "patient";
 
         const response = await fetch(
           `${base}/api/search/publication/${pmid}/simplified?audience=${encodeURIComponent(audience)}&locale=${encodeURIComponent(getApiLocale())}`,
@@ -1714,8 +1711,7 @@ export default function Publications() {
 
   async function generateSummary(item) {
     // For "Simplify": simplified for patients, technical for researchers
-    const isResearcher = userProfile?.researcher !== undefined;
-    const shouldSimplify = !isResearcher;
+    const shouldSimplify = !researcherTitleMode;
 
     setSummaryPublication(item);
     setHasSimplifiedFurther(false);
@@ -1780,8 +1776,7 @@ export default function Publications() {
   }
 
   async function simplifySummaryFurther() {
-    const isResearcher = userProfile?.researcher !== undefined;
-    if (isResearcher || !summaryPublication) return;
+    if (researcherTitleMode || !summaryPublication) return;
 
     const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -1922,6 +1917,7 @@ export default function Publications() {
       setExtractedSearchTerms([]);
       setIsInitialLoad(true);
       setIsSignedIn(false);
+      setUserProfile(null);
       setUserLocation(null);
       sessionStorage.removeItem("publications_search_state");
     };
@@ -1932,8 +1928,7 @@ export default function Publications() {
 
   // Batch simplify publication titles when researcher enables "Simplify titles"
   useEffect(() => {
-    const isResearcher = userProfile?.researcher !== undefined;
-    if (!simplifyTitles || !isResearcher || !results?.length) return;
+    if (!simplifyTitles || !researcherTitleMode || !results?.length) return;
 
     const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const titlesToSimplify = results
@@ -1961,7 +1956,7 @@ export default function Publications() {
       .catch(() => {});
 
     return () => {};
-  }, [simplifyTitles, results, userProfile?.researcher]);
+  }, [simplifyTitles, results, researcherTitleMode]);
 
   // Check for guest info or URL parameters, then fetch user profile
   useEffect(() => {
@@ -2253,6 +2248,9 @@ export default function Publications() {
                     onSubmit={handleKeywordSubmit}
                     placeholder={t("publications.searchPlaceholder")}
                     extraTerms={publicationSuggestionTerms}
+                    priorityExtraTerms={publicationNlm.terms}
+                    remoteSuggestionsOnly
+                    prioritySuggestionsLoading={publicationNlm.loading}
                     canonicalMap={publicationCanonicalMap}
                     className="w-full"
                     inputClassName="w-full min-w-0 py-2 px-3 text-sm rounded-lg border-slate-200 bg-slate-50/80 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-[#2F3C96]/20 focus:border-[#2F3C96] transition shadow-sm"
@@ -2423,7 +2421,7 @@ export default function Publications() {
               )}
 
               {/* Simplify titles checkbox - researchers only */}
-              {userProfile?.researcher !== undefined && (
+              {researcherTitleMode && (
                 <div className="flex items-center gap-2">
                   <label className="inline-flex items-center gap-2 cursor-pointer">
                     <input
@@ -3045,16 +3043,7 @@ export default function Publications() {
                     {(tutorialSampleResults.length > 0
                       ? tutorialSampleResults
                       : results
-                    )
-                      .slice(
-                        0,
-                        tutorialSampleResults.length > 0
-                          ? 6
-                          : isSignedIn
-                            ? results.length
-                            : 6,
-                      )
-                      .map((pub, cardIdx) => {
+                    ).map((pub, cardIdx) => {
                         const itemId = pub.id || pub.pmid;
                         return (
                           <div
@@ -3160,7 +3149,7 @@ export default function Publications() {
                                     />
                                   )}
                                   <span className="flex-1">
-                                    {userProfile?.researcher !== undefined
+                                    {researcherTitleMode
                                       ? pub.title || t("publications.untitledPublication")
                                       : (simplifyTitles &&
                                           simplifiedTitles.get(pub.title)) ||
@@ -3413,8 +3402,8 @@ export default function Publications() {
                 </>
               )}
 
-            {/* Results Count and Pagination */}
-            {!loading && results.length > 0 && isSignedIn && (
+            {/* Results Count and Pagination (guests and signed-in users) */}
+            {!loading && results.length > 0 && (
               <div className="mt-6 flex flex-col items-center gap-4">
                 {/* Results Count */}
                 <div className="text-sm text-slate-600 flex flex-col items-center gap-1">
@@ -3557,7 +3546,8 @@ export default function Publications() {
             {!loading &&
               results.length > 0 &&
               !isSignedIn &&
-              results.length > 6 && (
+              !GUEST_BROWSE_MODE_ENABLED &&
+              totalCount > PUBLICATIONS_AND_TRIALS_PAGE_SIZE && (
                 <div className="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-2 border-indigo-200 p-6 text-center shadow-lg">
                   <div className="flex flex-col items-center gap-3">
                     <div className="flex items-center gap-2">
@@ -3568,7 +3558,7 @@ export default function Publications() {
                     </div>
                     <p className="text-sm text-indigo-700 max-w-md">
                       {t("publications.wantMoreBody", {
-                        count: results.length,
+                        count: totalCount || results.length,
                       })}
                     </p>
                     <div className="flex gap-3 mt-2">
@@ -3634,7 +3624,7 @@ export default function Publications() {
                       className="text-xl font-bold mb-3 leading-tight"
                       style={{ color: "#2F3C96" }}
                     >
-                      {userProfile?.researcher !== undefined
+                      {researcherTitleMode
                         ? detailsModal.publication.title
                         : detailsModal.publication.simplifiedDetails?.title ||
                           detailsModal.publication.simplifiedTitle ||
@@ -4202,7 +4192,7 @@ export default function Publications() {
                 >
                   {t("publications.researchPublication")}
                 </span>
-                {userProfile?.researcher === undefined &&
+                {!researcherTitleMode &&
                   summaryModal.type === "publication" &&
                   !summaryModal.loading &&
                   summaryPublication &&

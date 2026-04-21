@@ -1456,7 +1456,8 @@
     "signIn": "Sign In"
   },
   "smartSearch": {
-    "defaultPlaceholder": "Search..."
+    "defaultPlaceholder": "Search...",
+    "loadingMoreSuggestions": "Loading more suggestions…"
   },
   "pageTutorial": {
     "skip": "Skip",

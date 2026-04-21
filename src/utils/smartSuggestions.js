@@ -170,5 +170,65 @@ export function getSmartSuggestions(
   return [...startsWithMatches, ...containsMatches].slice(0, limit);
 }
 
+/**
+ * Match a fixed list of terms against the query (same ordering as getSmartSuggestions).
+ * @param {string} query
+ * @param {string[]} terms
+ * @param {number} [limit=8]
+ * @returns {string[]}
+ */
+export function filterTermsMatchingQuery(query, terms, limit = 8) {
+  if (!query?.trim() || !Array.isArray(terms)) return [];
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const cleaned = terms
+    .map((t) => (typeof t === "string" ? t.trim() : ""))
+    .filter(Boolean);
+
+  const startsWithMatches = cleaned.filter((term) =>
+    term.toLowerCase().startsWith(normalizedQuery),
+  );
+  const containsMatches = cleaned.filter(
+    (term) =>
+      !startsWithMatches.includes(term) &&
+      term.toLowerCase().includes(normalizedQuery),
+  );
+
+  return [...startsWithMatches, ...containsMatches].slice(0, limit);
+}
+
+/**
+ * Show NLM / priority terms first, then local smart suggestions (deduped).
+ * @param {string} query
+ * @param {string[]} priorityTerms
+ * @param {string[]} extraTerms
+ * @param {number} limit
+ * @param {Map<string, string>|null} canonicalMap
+ * @returns {string[]}
+ */
+export function mergePriorityWithSmartSuggestions(
+  query,
+  priorityTerms,
+  extraTerms,
+  limit,
+  canonicalMap = null,
+) {
+  if (!query?.trim()) return [];
+
+  const priorityFiltered = filterTermsMatchingQuery(
+    query,
+    priorityTerms,
+    limit,
+  );
+  const local = getSmartSuggestions(query, extraTerms, limit, canonicalMap);
+  const seen = new Set(
+    priorityFiltered.map((t) => buildNormalizedKey(t)),
+  );
+  const rest = local.filter(
+    (t) => !seen.has(buildNormalizedKey(t)),
+  );
+  return [...priorityFiltered, ...rest].slice(0, limit);
+}
+
 export const DEFAULT_SUGGESTION_LIMIT = 8;
 

@@ -274,6 +274,53 @@ export default function YoriGuestLandingPage() {
   const chatInteractionDisabled =
     isLoading || showSignupGate || conditionExploreBusy;
 
+  const composerHistoryPayload = useMemo(
+    () =>
+      messages
+        .slice(-8)
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role,
+          content:
+            typeof m.content === "string"
+              ? m.content.replace(/\s+/g, " ").trim().slice(0, 700)
+              : "",
+        }))
+        .filter((m) => m.content.length > 0),
+    [messages],
+  );
+
+  const getRemoteGhostSuffix = useCallback(
+    async (prefix, signal) => {
+      const trimmed = prefix.replace(/\r\n/g, "\n");
+      if (trimmed.trim().length < 10) return "";
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await fetch(
+          `${apiBase}/api/chatbot/composer-completion`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              prefix: trimmed.slice(0, 2400),
+              messages: composerHistoryPayload,
+              locale: getApiLocale(),
+            }),
+            signal,
+          },
+        );
+        if (!response.ok) return "";
+        const data = await response.json().catch(() => ({}));
+        return typeof data?.suffix === "string" ? data.suffix : "";
+      } catch (e) {
+        if (e?.name === "AbortError") throw e;
+        return "";
+      }
+    },
+    [composerHistoryPayload, i18n.language],
+  );
+
   const handleSendMessage = async (messageText, context = null) => {
     const text = typeof messageText === "string" ? messageText.trim() : "";
     if (!text || chatInteractionDisabled) return;
@@ -914,6 +961,8 @@ export default function YoriGuestLandingPage() {
                 onSubmit={handleSendMessage}
                 disabled={chatInteractionDisabled}
                 isSending={isLoading}
+                getRemoteGhostSuffix={getRemoteGhostSuffix}
+                completionCandidates={SAMPLE_PROMPTS}
                 placeholder={t("yori.placeholderAskAnything")}
               />
               <p className="mt-2 max-w-4xl mx-auto px-1 text-center text-[10px] sm:text-[11px] text-slate-500 leading-relaxed hidden sm:block">
