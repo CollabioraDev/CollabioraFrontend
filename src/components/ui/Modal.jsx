@@ -17,6 +17,8 @@ export default function Modal({
   performance = false,
 }) {
   const hasPinnedFooter = footer != null && footer !== false;
+  /** String/number titles use gradient text; React nodes (e.g. title + icon) render in solid brand color. */
+  const useGradientTitle = typeof title === "string" || typeof title === "number";
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -85,12 +87,20 @@ export default function Modal({
               }
             >
               <motion.h2
-                className="text-xl font-bold bg-clip-text text-transparent"
-                style={{
-                  background: "linear-gradient(135deg, #2F3C96, #253075)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
+                className={
+                  useGradientTitle
+                    ? "text-xl font-bold bg-clip-text text-transparent"
+                    : "flex min-w-0 flex-wrap items-center gap-2 pr-2 text-xl font-bold text-[#2F3C96]"
+                }
+                style={
+                  useGradientTitle
+                    ? {
+                        background: "linear-gradient(135deg, #2F3C96, #253075)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }
+                    : undefined
+                }
                 initial={performance ? false : { opacity: 0, x: -10 }}
                 animate={performance ? false : { opacity: 1, x: 0 }}
                 transition={performance ? undefined : { delay: 0.1, duration: 0.3 }}

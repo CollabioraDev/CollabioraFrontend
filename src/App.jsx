@@ -6,6 +6,7 @@ import { ProfileProvider } from "./contexts/ProfileContext.jsx";
 import Auth0ProviderWithNavigate from "./contexts/Auth0ProviderWithNavigate.jsx";
 import MobileBottomNav from "./components/MobileBottomNav.jsx";
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
+import CollabioraSurveyFeedback from "./components/CollabioraSurveyFeedback.jsx";
 import {
   installAuthFetchInterceptor,
   recordDailyPlatformActivity,
@@ -47,6 +48,10 @@ const AppContent = () => {
     location.pathname === "/auth/callback" ||
     location.pathname === "/auth/orcid/callback";
   const showLayout = !isVerifyEmailPage && !isAdminPage && !isErrorPage;
+  const showCollabioraSurveyFeedback =
+    showLayout &&
+    !isAuthCallbackPage &&
+    !isMeetingPage;
 
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
@@ -148,6 +153,7 @@ const AppContent = () => {
           </Suspense>
         )}
       <PWAInstallPrompt />
+      {showCollabioraSurveyFeedback && <CollabioraSurveyFeedback />}
       <Toaster
         position="top-right"
         reverseOrder={false}
