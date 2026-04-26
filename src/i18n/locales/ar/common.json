@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "أضف أو احذف الحالات. اختر حتى اثنتين للبحث المخصص — اضغط على علامة الاختيار.",
     "conditionsEmptyHint": "لا توجد حالات بعد. أضف واحدة أدناه.",
     "conditionsPrimaryFooterHint": "الحالات المحددة (بعلامة) تُستخدم للتجارب والمنشورات والخبراء. احفظ ثم حدّث لوحة التحكم.",
+    "conditionSearchPlaceholder": "ابحث أو اختر حالة…",
     "conditionSearchPlaceholderIcd": "ابحث أو اختر حالة (ICD-11)...",
     "tapToCollapse": "اضغط للطي",
     "conditionsCountLine": "{{count}} حالة · اضغط لعرض التفاصيل",

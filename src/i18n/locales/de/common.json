@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "Bedingungen hinzufügen oder entfernen. Wählen Sie bis zu zwei für die personalisierte Suche – tippen Sie auf das Häkchen.",
     "conditionsEmptyHint": "Noch keine Bedingungen. Fügen Sie unten eine hinzu.",
     "conditionsPrimaryFooterHint": "Ausgewählte Bedingungen (mit Häkchen) gelten für Studien, Publikationen und Expert:innen. Speichern und dann im Dashboard aktualisieren.",
+    "conditionSearchPlaceholder": "Bedingung suchen oder auswählen…",
     "conditionSearchPlaceholderIcd": "Bedingung suchen oder auswählen (ICD-11)...",
     "tapToCollapse": "Tippen zum Einklappen",
     "conditionsCountLine": "{{count}} Bedingung · Tippen für Details",

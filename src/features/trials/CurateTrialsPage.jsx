@@ -11,13 +11,17 @@ import {
   LayoutList,
   FileEdit,
   Info,
+  Copy,
+  Building2,
 } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Modal from "../../components/ui/Modal.jsx";
+import CustomSelect from "../../components/ui/CustomSelect.jsx";
 import {
   base,
   PLACEHOLDER,
+  PASTE_FORMAT_EXAMPLE,
   CURATE_INSTITUTION_OPTIONS,
 } from "./curateTrialsConstants.js";
 import {
@@ -53,6 +57,16 @@ export default function CurateTrials() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [templateConfirmOpen, setTemplateConfirmOpen] = useState(false);
   const [curateInstitutionKey, setCurateInstitutionKey] = useState("ucla");
+
+  const copyTrialFormatSample = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(PASTE_FORMAT_EXAMPLE);
+      toast.success(t("curateTrials.formatCopied"));
+    } catch (e) {
+      console.error(e);
+      toast.error(t("curateTrials.formatCopyFailed"));
+    }
+  }, [t]);
 
   const patchTemplateDraft = useCallback((patch) => {
     setTemplateDraft((prev) => {
@@ -244,28 +258,29 @@ export default function CurateTrials() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="w-full min-h-full bg-gradient-to-b from-slate-100/40 via-indigo-50/25 to-slate-100/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-16 sm:pb-20">
         {/* Page header */}
-        <div className="rounded-2xl border border-indigo-100/80 bg-gradient-to-r from-indigo-50 to-purple-50 p-5 shadow-sm mb-6 ">
+        <div className="rounded-2xl border border-indigo-200/50 bg-gradient-to-br from-indigo-50/95 via-white to-violet-50/80 p-6 sm:p-7 shadow-md shadow-indigo-100/30 ring-1 ring-indigo-100/40 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-            <h1 className="text-2xl font-bold text-[#2F3C96]">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#2F3C96]">
               {t("curateTrials.pageTitle")}
             </h1>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm sm:text-base text-slate-600 mt-1.5 leading-relaxed max-w-xl">
               {t("curateTrials.pageSubtitle")}
             </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Link
                 to="/curate-trials/manage"
-                className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                className="inline-flex items-center rounded-lg border border-indigo-200 bg-white/90 px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors shadow-sm"
               >
                 {t("curateTrials.viewSaved")}
               </Link>
               <Link
                 to="/trials"
-                className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
               >
                 {t("curateTrials.backToTrials")}
               </Link>
@@ -273,7 +288,7 @@ export default function CurateTrials() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6 p-1 rounded-xl bg-slate-100/80 border border-slate-200">
+        <div className="flex flex-wrap gap-2 mb-6 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/80 shadow-sm ring-1 ring-slate-200/30">
           <button
             type="button"
             onClick={() => setCurateTab("paste")}
@@ -300,26 +315,37 @@ export default function CurateTrials() {
           </button>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <label
-            htmlFor="curate-institution"
-            className="text-sm font-semibold text-slate-700 shrink-0"
-          >
-            {t("curateTrials.institutionLabel")}
-          </label>
-          <select
-            id="curate-institution"
-            value={curateInstitutionKey}
-            onChange={(e) => setCurateInstitutionKey(e.target.value)}
-            disabled={saving}
-            className="w-full sm:max-w-xs rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            {CURATE_INSTITUTION_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+        <div
+          className="mb-6 rounded-2xl border border-indigo-200/55 bg-gradient-to-br from-white via-indigo-50/25 to-slate-50/80 px-4 py-4 sm:px-5 sm:py-4 shadow-sm shadow-indigo-100/20 ring-1 ring-indigo-100/40"
+          role="group"
+          aria-labelledby="curate-institution-label"
+        >
+          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:gap-5">
+            <div className="flex items-center gap-3 sm:min-w-0 sm:max-w-[11rem]">
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100/90 text-[#2F3C96] shadow-inner ring-1 ring-indigo-200/60"
+                aria-hidden
+              >
+                <Building2 className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <label
+                id="curate-institution-label"
+                className="text-sm font-semibold text-slate-800 leading-snug"
+              >
+                {t("curateTrials.institutionLabel")}
+              </label>
+            </div>
+            <div className="w-full min-w-0 sm:flex-1 sm:max-w-2xl">
+              <CustomSelect
+                value={curateInstitutionKey}
+                onChange={setCurateInstitutionKey}
+                options={CURATE_INSTITUTION_OPTIONS}
+                disabled={saving}
+                className="w-full [&>div]:min-h-11 [&>div]:rounded-xl [&>div]:px-3.5 [&>div]:py-2.5 [&>div]:text-sm [&>div]:font-medium [&>div]:text-[#2F3C96] [&>div]:shadow-sm"
+                placeholder={t("curateTrials.institutionPlaceholder")}
+              />
+            </div>
+          </div>
         </div>
 
         {curateTab === "paste" && (
@@ -329,10 +355,10 @@ export default function CurateTrials() {
           {slots.map((slot, slotIdx) => (
             <div
               key={slot.id}
-              className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
+              className="rounded-2xl border border-slate-200/90 bg-white shadow-sm shadow-slate-200/40 ring-1 ring-slate-100/80 overflow-hidden"
             >
               {/* Slot header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40">
+              <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-gradient-to-r from-slate-50/90 to-indigo-50/50">
                 <span className="text-xs font-semibold text-slate-600">
                   {t("curateTrials.trialSlot", { index: slotIdx + 1 })}
                   {slot.parsed?.length > 0 && (
@@ -341,7 +367,7 @@ export default function CurateTrials() {
                     </span>
                   )}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Button
                     onClick={() => previewSlot(slot.id)}
                     disabled={slot.loading || !slot.text.trim()}
@@ -350,6 +376,17 @@ export default function CurateTrials() {
                     {slot.loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                     {t("curateTrials.preview")}
                   </Button>
+                  <button
+                    type="button"
+                    onClick={copyTrialFormatSample}
+                    className="h-8 px-2.5 sm:px-3 text-xs inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white font-medium text-slate-600 hover:text-[#2F3C96] hover:border-indigo-200 hover:bg-indigo-50/80 transition-colors"
+                    title={t("curateTrials.copyTrialFormatShort")}
+                  >
+                    <Copy className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">
+                      {t("curateTrials.copyFormatShortLabel")}
+                    </span>
+                  </button>
                   {slots.length > 1 && (
                     <button
                       onClick={() => removeSlot(slot.id)}
@@ -363,13 +400,16 @@ export default function CurateTrials() {
               </div>
 
               {/* Textarea */}
-              <div className="p-3">
+              <div className="p-4 sm:p-5 pt-2 sm:pt-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 block">
+                  {t("curateTrials.pasteFieldLabel")}
+                </label>
                 <textarea
                   value={slot.text}
                   onChange={(e) => updateSlotText(slot.id, e.target.value)}
-                  rows={10}
+                  rows={11}
                   placeholder={PLACEHOLDER}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y"
+                  className="w-full min-h-[220px] rounded-xl border border-slate-200/90 bg-slate-50/90 px-3.5 py-3 text-sm font-mono text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-400/80 focus:border-indigo-300/80 resize-y shadow-inner"
                 />
               </div>
 
@@ -469,7 +509,7 @@ export default function CurateTrials() {
         )}
 
         {curateTab === "template" && (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-2">
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
@@ -606,6 +646,7 @@ export default function CurateTrials() {
             </Button>
           </div>
         </Modal>
+        </div>
       </div>
     </Layout>
   );

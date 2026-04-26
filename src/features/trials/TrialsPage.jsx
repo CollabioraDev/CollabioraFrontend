@@ -521,28 +521,20 @@ export default function Trials() {
     setIntervention("");
   };
 
-  // Handle Enter key press - adds keyword instead of searching
-  const handleKeywordSubmit = (value) => {
-    if (value && value.trim()) {
-      addKeyword(value);
-    }
-  };
+  // Trigger search (keywords are optional). Pass `typedLine` from Enter in SmartSearchInput.
+  const handleSearch = (typedLine) => {
+    const line =
+      typeof typedLine === "string" ? typedLine : (q ?? "");
 
-  // Trigger search (keywords are optional)
-  const handleSearch = () => {
-    // Include current input value if not empty
     let currentKeywords = [...searchKeywords];
-    if (q.trim() && !searchKeywords.includes(q.trim())) {
-      currentKeywords = [...searchKeywords, q.trim()];
+    if (line.trim() && !currentKeywords.includes(line.trim())) {
+      currentKeywords = [...currentKeywords, line.trim()];
       setSearchKeywords(currentKeywords);
       setQ(""); // Clear search bar after adding to keywords
     }
 
-    // Combine keywords for search query, but keep keywords array separate
-    // If no keywords, use empty string (search will handle it)
     const combinedQuery =
-      currentKeywords.length > 0 ? currentKeywords.join(" ") : q.trim();
-    // Ensure searchKeywords state is updated before calling search
+      currentKeywords.length > 0 ? currentKeywords.join(" ") : line.trim();
     setSearchKeywords(currentKeywords);
     search(combinedQuery);
   };
@@ -554,28 +546,7 @@ export default function Trials() {
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
 
-    // Check free searches for non-signed-in users (pre-check)
-    if (!isUserSignedIn) {
-      const canSearch = await checkAndUseSearch();
-      if (!canSearch) {
-        toast.error(
-          t("toasts.searchLimitSignIn"),
-          { duration: 4000 },
-        );
-        return;
-      }
-    }
-
-    setLoading(true);
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const params = new URLSearchParams();
-    const user = userData;
     const appliedQuery = typeof overrideQuery === "string" ? overrideQuery : q;
-
-    // Mark that initial load is complete when user performs search
-    if (isInitialLoad) {
-      setIsInitialLoad(false);
-    }
 
     // For manual searches, combine enabled medical interests with search query.
     // Exception: if this is an institution-only search (no typed terms), do not
@@ -621,6 +592,34 @@ export default function Trials() {
 
     const { useRecent, cleanedQuery } = detectLatestOrRecentSearch(finalQuery);
     const queryForApi = useRecent && cleanedQuery ? cleanedQuery : finalQuery;
+
+    if (!String(queryForApi || "").trim() && !institutionStr) {
+      toast.error(t("trials.enterSearchTerms"), { duration: 4000 });
+      return;
+    }
+
+    // Check free searches for non-signed-in users (pre-check)
+    if (!isUserSignedIn) {
+      const canSearch = await checkAndUseSearch();
+      if (!canSearch) {
+        toast.error(
+          t("toasts.searchLimitSignIn"),
+          { duration: 4000 },
+        );
+        return;
+      }
+    }
+
+    setLoading(true);
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const params = new URLSearchParams();
+    const user = userData;
+
+    // Mark that initial load is complete when user performs search
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+
     if (queryForApi) params.set("q", queryForApi);
     if (status) params.set("status", status);
     if (useRecent) {
@@ -1095,6 +1094,19 @@ export default function Trials() {
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
 
+    // Combine enabled medical interests with quick search
+    let searchQuery = filterValue;
+    const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
+    if (enabledInterests) {
+      searchQuery = `${enabledInterests} ${filterValue}`;
+    }
+
+    const institutionStr = (institution || "").trim();
+    if (!String(searchQuery || "").trim() && !institutionStr) {
+      toast.error(t("trials.enterSearchTerms"), { duration: 4000 });
+      return;
+    }
+
     // Check free searches for non-signed-in users (pre-check)
     if (!isUserSignedIn) {
       const canSearch = await checkAndUseSearch();
@@ -1114,13 +1126,6 @@ export default function Trials() {
       const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const params = new URLSearchParams();
       const user = userData;
-
-      // Combine enabled medical interests with quick search
-      let searchQuery = filterValue;
-      const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
-      if (enabledInterests) {
-        searchQuery = `${enabledInterests} ${filterValue}`;
-      }
 
       params.set("q", searchQuery);
 
@@ -2679,7 +2684,7 @@ export default function Trials() {
                 <SmartSearchInput
                   value={q}
                   onChange={setQ}
-                  onSubmit={handleKeywordSubmit}
+                  onSubmit={handleSearch}
                   placeholder={t("publications.searchPlaceholder")}
                   extraTerms={trialSuggestionTerms}
                   priorityExtraTerms={trialsNlm.terms}

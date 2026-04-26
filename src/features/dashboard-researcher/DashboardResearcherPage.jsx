@@ -2836,11 +2836,11 @@ export default function DashboardResearcher() {
     }
   }, [selectedCategory, user?._id]);
 
-  // Loading states for multi-step loader (only shown on first load)
+  // Loading states for multi-step loader (only shown on first load) — same wording as patient dashboard
   const loadingStates = useMemo(
     () => [
       { text: t("dashboardLoader.searchingTrials") },
-      { text: t("dashboardLoader.researcher.collectingPublications") },
+      { text: t("dashboardLoader.patient.gatheringPublications") },
       { text: t("dashboardLoader.researcher.discoveringExperts") },
       { text: t("dashboardLoader.researcher.findingCollaborators") },
       { text: t("dashboardLoader.preparingDashboard") },

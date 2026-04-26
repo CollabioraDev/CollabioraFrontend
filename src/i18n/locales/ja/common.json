@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "病状を追加・削除します。パーソナライズ検索には最大2つまで選べます。チェックマークをタップして選択。",
     "conditionsEmptyHint": "まだ病状がありません。下から追加してください。",
     "conditionsPrimaryFooterHint": "チェックされた病状は治験・論文・専門家の検索に使われます。保存後にダッシュボードで更新してください。",
+    "conditionSearchPlaceholder": "病状を検索または選択…",
     "conditionSearchPlaceholderIcd": "病状を検索または選択（ICD-11）...",
     "tapToCollapse": "タップして折りたたむ",
     "conditionsCountLine": "病状{{count}}件 · タップで詳細",

@@ -255,17 +255,15 @@ export default function SmartSearchInput({
         // User has selected a suggestion with arrow keys
         handleSelectSuggestion(suggestions[activeIndex]);
       } else if (typeof onSubmit === "function") {
-        // User pressed Enter without selecting - submit current input value
-        // Get the current value directly from the input to ensure it's up-to-date
-        const currentValue = event.target.value || value;
-        if (currentValue && currentValue.trim()) {
-          setIsDropdownOpen(false);
-          setActiveIndex(-1);
-          // Small delay to ensure state is updated
-          setTimeout(() => {
-            onSubmit(currentValue.trim());
-          }, 0);
-        }
+        // Enter without selecting a row: submit current value (trimmed, may be empty)
+        // so parents can run the same action as the Search button.
+        const currentValue = event.target.value ?? value ?? "";
+        const trimmed = String(currentValue).trim();
+        setIsDropdownOpen(false);
+        setActiveIndex(-1);
+        setTimeout(() => {
+          onSubmit(trimmed);
+        }, 0);
       }
       return;
     }

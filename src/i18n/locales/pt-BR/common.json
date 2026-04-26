@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "Adicione ou remova condições. Escolha até duas para busca personalizada—toque na marca de seleção.",
     "conditionsEmptyHint": "Nenhuma condição ainda. Adicione abaixo.",
     "conditionsPrimaryFooterHint": "As condições selecionadas (com marca) são usadas para ensaios, publicações e especialistas. Salve e atualize o painel para ver resultados novos.",
+    "conditionSearchPlaceholder": "Pesquisar ou selecionar condição…",
     "conditionSearchPlaceholderIcd": "Pesquisar ou selecionar condição (CID-11)...",
     "tapToCollapse": "Toque para recolher",
     "conditionsCountLine": "{{count}} condição · Toque para ver detalhes",

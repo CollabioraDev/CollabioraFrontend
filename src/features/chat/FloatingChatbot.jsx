@@ -1316,11 +1316,13 @@ const loadSavedChat = () => {
   return null;
 };
 
-const saveChat = (messages, isOpen) => {
+const saveChat = (messages) => {
   try {
+    // Never persist open=true — avoids the panel reopening on its own after reload or route changes
+    // (e.g. dashboard). Conversation history is still restored; user opens Yori explicitly.
     localStorage.setItem(
       IORA_CHAT_STORAGE_KEY,
-      JSON.stringify({ messages, isOpen, updatedAt: Date.now() }),
+      JSON.stringify({ messages, isOpen: false, updatedAt: Date.now() }),
     );
   } catch (e) {
     console.warn("iora: could not save chat", e);
@@ -1613,7 +1615,7 @@ const FloatingChatbot = () => {
     user,
   ]);
 
-  // Restore last conversation and open state when user is available
+  // Restore last conversation when user is available (panel stays closed until user opens it)
   // BUT: Never restore when on detail pages - always start fresh
   useEffect(() => {
     if (!user) return;
@@ -1630,12 +1632,12 @@ const FloatingChatbot = () => {
     const saved = loadSavedChat();
     if (saved) {
       setMessages(saved.messages);
-      setIsOpen(saved.isOpen);
+      setIsOpen(false);
     }
     setHydrated(true); // allow persisting from now on (whether we restored or not)
   }, [user, isTrialPage, isPublicationPage]);
 
-  // Persist messages and open state (after hydration to avoid overwriting with defaults)
+  // Persist messages (after hydration to avoid overwriting with defaults)
   // BUT: Don't persist when on detail pages - chat should be fresh for each detail page
   useEffect(() => {
     if (!hydrated || !user) return;
@@ -1643,8 +1645,8 @@ const FloatingChatbot = () => {
     if (isTrialPage || isPublicationPage) {
       return;
     }
-    saveChat(messages, isOpen);
-  }, [messages, isOpen, hydrated, user, isTrialPage, isPublicationPage]);
+    saveChat(messages);
+  }, [messages, hydrated, user, isTrialPage, isPublicationPage]);
 
   // Guest-only persistence (separate localStorage key from signed-in IORA chat)
   useEffect(() => {

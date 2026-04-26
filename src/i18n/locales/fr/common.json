@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "Ajoutez ou supprimez des conditions. Choisissez-en jusqu’à deux pour la recherche personnalisée — appuyez sur la coche pour sélectionner.",
     "conditionsEmptyHint": "Aucune condition pour l’instant. Ajoutez-en une ci-dessous.",
     "conditionsPrimaryFooterHint": "Les conditions cochées sont utilisées pour les essais, publications et experts. Enregistrez puis Actualisez le tableau de bord.",
+    "conditionSearchPlaceholder": "Rechercher ou choisir une condition…",
     "conditionSearchPlaceholderIcd": "Rechercher ou choisir une condition (CIM-11)...",
     "tapToCollapse": "Appuyer pour réduire",
     "conditionsCountLine": "{{count}} condition · Appuyer pour les détails",

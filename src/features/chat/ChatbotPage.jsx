@@ -1708,7 +1708,7 @@ export const YoriChatComposer = React.memo(function YoriChatComposer({
     [submit],
   );
   return (
-    <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8]/40 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-sm transition-all focus-within:border-[#D0C4E2] focus-within:bg-[#F5F2F8]/60">
+    <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#D0C4E2]/60 bg-[#F5F2F8] px-3 py-1.5 sm:px-4 sm:py-2 transition-colors focus-within:border-[#D0C4E2] focus-within:bg-[#EDE8F3]">
       <div className="flex items-end gap-2">
         <textarea
           ref={taRef}
@@ -2165,27 +2165,31 @@ export default function YoriAI() {
 
   const updateSessionMessages = useCallback(
     (sessionId, nextMessagesOrUpdater) => {
-      setChatSessions((prev) =>
-        prev
-          .map((session) => {
-            if (session.id !== sessionId) return session;
-            const nextMessages =
-              typeof nextMessagesOrUpdater === "function"
-                ? nextMessagesOrUpdater(session.messages)
-                : nextMessagesOrUpdater;
-            return {
-              ...session,
-              messages: nextMessages,
-              title: deriveChatTitle(nextMessages),
-              preview: getChatPreview(nextMessages),
-              messageCount: nextMessages.length,
-              isFull: nextMessages.length >= MAX_MESSAGES_PER_SESSION,
-              loaded: true,
-              updatedAt: Date.now(),
-            };
-          })
-          .sort((a, b) => b.updatedAt - a.updatedAt),
-      );
+      setChatSessions((prev) => {
+        let touchedIdx = -1;
+        const mapped = prev.map((session, idx) => {
+          if (session.id !== sessionId) return session;
+          touchedIdx = idx;
+          const nextMessages =
+            typeof nextMessagesOrUpdater === "function"
+              ? nextMessagesOrUpdater(session.messages)
+              : nextMessagesOrUpdater;
+          return {
+            ...session,
+            messages: nextMessages,
+            title: deriveChatTitle(nextMessages),
+            preview: getChatPreview(nextMessages),
+            messageCount: nextMessages.length,
+            isFull: nextMessages.length >= MAX_MESSAGES_PER_SESSION,
+            loaded: true,
+            updatedAt: Date.now(),
+          };
+        });
+        if (touchedIdx <= 0) return mapped;
+        const next = [...mapped];
+        const [moved] = next.splice(touchedIdx, 1);
+        return [moved, ...next];
+      });
     },
     [],
   );
@@ -2608,8 +2612,10 @@ export default function YoriAI() {
         let conditionDiscovery = null;
         let relatedExplore = null;
         let buffer = "";
+        let streamFlushRaf = null;
 
-        const applyUpdate = () => {
+        const flushStreamUi = () => {
+          streamFlushRaf = null;
           updateSessionMessages(sessionId, (prevMessages) => {
             const updated = [...prevMessages];
             updated[assistantMessageIndex] = {
@@ -2625,6 +2631,11 @@ export default function YoriAI() {
             };
             return updated;
           });
+        };
+
+        const scheduleStreamUi = () => {
+          if (streamFlushRaf != null) return;
+          streamFlushRaf = requestAnimationFrame(flushStreamUi);
         };
 
         while (true) {
@@ -2653,7 +2664,7 @@ export default function YoriAI() {
                 conditionDiscovery = data.conditionDiscovery;
               if (data.relatedExplore) relatedExplore = data.relatedExplore;
 
-              applyUpdate();
+              scheduleStreamUi();
               // Do not break early on `done`: other `data:` lines in this chunk
               // (e.g. conditionDiscovery) must still be applied.
             } catch (error) {
@@ -2663,8 +2674,12 @@ export default function YoriAI() {
           if (done) break;
         }
 
+        if (streamFlushRaf != null) {
+          cancelAnimationFrame(streamFlushRaf);
+          streamFlushRaf = null;
+        }
         // Final update so we never miss searchResults/trialDetails/etc. from last chunk
-        applyUpdate();
+        flushStreamUi();
       } catch (error) {
         if (error.name === "AbortError") return;
         updateSessionMessages(sessionId, (prevMessages) => {
@@ -3122,7 +3137,7 @@ export default function YoriAI() {
         </aside>
 
         {/* Main chat area */}
-        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white/65 shadow-sm backdrop-blur yori-main-enter">
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white shadow-sm yori-main-enter">
           {/* Header - aligned with global layout */}
           <div className="relative flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
             <div className="relative flex items-center gap-3 min-w-0 flex-1">
@@ -3153,7 +3168,7 @@ export default function YoriAI() {
           {/* Messages area */}
           <div
             ref={messagesContainerRef}
-            className="flex-1 overflow-y-auto px-2 pt-3 pb-3 sm:px-6 sm:pt-6 sm:pb-6"
+            className="flex-1 overflow-y-auto overscroll-y-contain px-2 pt-3 pb-3 sm:px-6 sm:pt-6 sm:pb-6"
           >
             {isHydratingChats ||
             (isRemoteChatUser && activeChatId && !activeChatLoaded) ? (

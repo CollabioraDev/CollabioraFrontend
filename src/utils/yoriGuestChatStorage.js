@@ -49,7 +49,7 @@ export function migrateGuestChatToIoraStorage() {
       IORA_CHAT_STORAGE_KEY,
       JSON.stringify({
         messages: finalMessages,
-        isOpen: true,
+        isOpen: false,
         updatedAt: Date.now(),
       }),
     );

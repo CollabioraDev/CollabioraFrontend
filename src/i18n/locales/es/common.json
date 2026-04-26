@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "Añade o quita condiciones. Elige hasta dos para la búsqueda personalizada: toca la marca para seleccionar.",
     "conditionsEmptyHint": "Aún no hay condiciones. Añade una abajo.",
     "conditionsPrimaryFooterHint": "Las condiciones seleccionadas (con marca) se usan para ensayos, publicaciones y expertos. Guarda y luego Actualizar en el panel para actualizar los resultados.",
+    "conditionSearchPlaceholder": "Busca o selecciona una condición…",
     "conditionSearchPlaceholderIcd": "Busca o selecciona una condición (CIE-11)...",
     "tapToCollapse": "Toca para contraer",
     "conditionsCountLine": "{{count}} condición · Toca para ver detalles",

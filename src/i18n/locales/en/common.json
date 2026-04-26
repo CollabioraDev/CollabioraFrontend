@@ -415,6 +415,7 @@
     "advanced": "Advanced",
     "filters": "Filters",
     "search": "Search",
+    "enterSearchTerms": "Enter keywords or a search topic before searching.",
     "keywordsCount": "Keywords ({{count}}):",
     "clearAll": "Clear all",
     "addKeywordsHint": "Add keywords to refine your search (optional).",
@@ -629,6 +630,7 @@
     "freeBadge": "FREE"
   },
   "trials": {
+    "enterSearchTerms": "Enter keywords, a topic, or an institution before searching.",
     "guestSearchSuccess": "Search successful! {{count}} search remaining",
     "guestSearchSuccess_plural": "Search successful! {{count}} searches remaining",
     "correctedTo": "Corrected \"{{from}}\" to \"{{to}}\"",
@@ -1197,6 +1199,7 @@
     "tabPaste": "Paste raw text",
     "tabTemplate": "Structured template",
     "institutionLabel": "Institution",
+    "institutionPlaceholder": "Select institution",
     "trialSlot": "Trial {{index}}",
     "parsedBadge": "✓ parsed",
     "removeSlotTitle": "Remove slot",
@@ -1228,7 +1231,12 @@
     "nothingToSave": "Nothing to save — run preview first",
     "savedCount": "Saved {{count}} trial(s)",
     "saveFailed": "Save failed",
-    "titleRequired": "Trial title is required"
+    "titleRequired": "Trial title is required",
+    "copyFormatShortLabel": "Copy format",
+    "copyTrialFormatShort": "Copy the example trial text format to the clipboard",
+    "pasteFieldLabel": "Raw trial text",
+    "formatCopied": "Example format copied to clipboard",
+    "formatCopyFailed": "Could not copy. Allow clipboard access in your browser and try again."
   },
   "curatedTrialsManage": {
     "pageTitle": "Manage site-listed trials",
@@ -1515,6 +1523,7 @@
     "conditionsModalIntro": "Add or remove conditions. Choose up to two to use for personalized search—tap the checkmark to select.",
     "conditionsEmptyHint": "No conditions yet. Add one below.",
     "conditionsPrimaryFooterHint": "Selected conditions (with checkmark) are used for trials, publications, and experts. Save then Refresh on the dashboard to update results.",
+    "conditionSearchPlaceholder": "Search or select a condition…",
     "conditionSearchPlaceholderIcd": "Search or select a condition (ICD-11)...",
     "tapToCollapse": "Tap to collapse",
     "conditionsCountLine": "{{count}} condition · Tap to view details",

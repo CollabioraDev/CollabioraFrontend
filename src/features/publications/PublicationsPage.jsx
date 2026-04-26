@@ -844,32 +844,29 @@ export default function Publications() {
     setConstructedQuery("");
   };
 
-  // Handle Enter key press - adds keyword instead of searching
-  const handleKeywordSubmit = (value) => {
-    if (value && value.trim()) {
-      addKeyword(value);
-    }
-  };
-
-  // Trigger search (keywords are optional)
-  const handleSearch = () => {
+  // Trigger search (keywords are optional). Pass `typedLine` from Enter in SmartSearchInput
+  // so the latest input is used even before React state flushes.
+  const handleSearch = (typedLine) => {
     // Tutorial: on step 3 do not load results; they load only after advancing to step 4
     if (showTutorial && tutorialStep === SEARCH_BUTTON_STEP) {
       return;
     }
 
+    const line =
+      typeof typedLine === "string" ? typedLine : (q ?? "");
+
     // Include current input: add cleaned keywords (e.g. "what are the risks..." → risks, colorectal, cancer) not the raw sentence
     let currentKeywords = [...searchKeywords];
-    if (q.trim()) {
+    if (line.trim()) {
       const { keywords: cleanedKeywords } = processKeywordInput(
-        q,
+        line,
         publicationSuggestionTerms,
         true,
       );
       const toAdd =
         cleanedKeywords && cleanedKeywords.length > 0
           ? cleanedKeywords
-          : [q.trim()];
+          : [line.trim()];
       const newTerms = toAdd.filter(
         (kw) =>
           !currentKeywords.some((k) => k.toLowerCase() === kw.toLowerCase()),
@@ -883,7 +880,7 @@ export default function Publications() {
 
     // Combine keywords for search
     const combinedQuery =
-      currentKeywords.length > 0 ? currentKeywords.join(" ") : q.trim();
+      currentKeywords.length > 0 ? currentKeywords.join(" ") : line.trim();
     search(combinedQuery);
   };
 
@@ -894,29 +891,7 @@ export default function Publications() {
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
 
-    // Check free searches for non-signed-in users (pre-check)
-    if (!isUserSignedIn) {
-      const canSearch = await checkAndUseSearch();
-      if (!canSearch) {
-        toast.error(
-          "You've used all your searches. Sign in to continue searching.",
-          { duration: 4000 },
-        );
-        return;
-      }
-    }
-
-    setLoading(true);
-    setTutorialSampleResults([]); // Clear tutorial sample when running real search
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const params = new URLSearchParams();
-    const user = userData;
     const appliedQuery = typeof overrideQuery === "string" ? overrideQuery : q;
-
-    // Mark that initial load is complete when user performs search
-    if (isInitialLoad) {
-      setIsInitialLoad(false);
-    }
 
     // For manual searches, combine enabled medical interests with search query
     let searchQuery = appliedQuery.trim();
@@ -943,6 +918,35 @@ export default function Publications() {
         ? `(${queryForApi}) AND ${ptFilter}`
         : ptFilter;
     }
+
+    if (!String(queryForApiFinal || "").trim()) {
+      toast.error(t("publications.enterSearchTerms"), { duration: 4000 });
+      return;
+    }
+
+    // Check free searches for non-signed-in users (pre-check)
+    if (!isUserSignedIn) {
+      const canSearch = await checkAndUseSearch();
+      if (!canSearch) {
+        toast.error(
+          "You've used all your searches. Sign in to continue searching.",
+          { duration: 4000 },
+        );
+        return;
+      }
+    }
+
+    setLoading(true);
+    setTutorialSampleResults([]); // Clear tutorial sample when running real search
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const params = new URLSearchParams();
+    const user = userData;
+
+    // Mark that initial load is complete when user performs search
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+
     if (queryForApiFinal) params.set("q", queryForApiFinal);
 
     // Add date range parameters if set (format: YYYY/MM)
@@ -1285,6 +1289,26 @@ export default function Publications() {
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
 
+    // Combine enabled medical interests with quick search
+    let searchQuery = filterValue;
+    const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
+    if (enabledInterests) {
+      searchQuery = `${enabledInterests} ${filterValue}`;
+    }
+    // Append PubMed [pt] filter for article type if set
+    if (articleType) {
+      const ptFilter =
+        articleType === "Book/Book Chapter"
+          ? '("Books"[pt] OR "Book Chapter"[pt])'
+          : `"${articleType}"[pt]`;
+      searchQuery = searchQuery ? `(${searchQuery}) AND ${ptFilter}` : ptFilter;
+    }
+
+    if (!String(searchQuery || "").trim()) {
+      toast.error(t("publications.enterSearchTerms"), { duration: 4000 });
+      return;
+    }
+
     // Check free searches for non-signed-in users (pre-check)
     if (!isUserSignedIn) {
       const canSearch = await checkAndUseSearch();
@@ -1305,20 +1329,6 @@ export default function Publications() {
     const params = new URLSearchParams();
     const user = userData;
 
-    // Combine enabled medical interests with quick search
-    let searchQuery = filterValue;
-    const enabledInterests = Array.from(enabledMedicalInterests).join(" ");
-    if (enabledInterests) {
-      searchQuery = `${enabledInterests} ${filterValue}`;
-    }
-    // Append PubMed [pt] filter for article type if set
-    if (articleType) {
-      const ptFilter =
-        articleType === "Book/Book Chapter"
-          ? '("Books"[pt] OR "Book Chapter"[pt])'
-          : `"${articleType}"[pt]`;
-      searchQuery = searchQuery ? `(${searchQuery}) AND ${ptFilter}` : ptFilter;
-    }
     params.set("q", searchQuery);
 
     // Add date range parameters if set (format: YYYY/MM)
@@ -2245,7 +2255,7 @@ export default function Publications() {
                   <SmartSearchInput
                     value={q}
                     onChange={setQ}
-                    onSubmit={handleKeywordSubmit}
+                    onSubmit={handleSearch}
                     placeholder={t("publications.searchPlaceholder")}
                     extraTerms={publicationSuggestionTerms}
                     priorityExtraTerms={publicationNlm.terms}

@@ -79,8 +79,11 @@ import SmartSearchInput from "../../components/SmartSearchInput.jsx";
 import icd11Dataset from "../../data/icd11Dataset.json";
 import {
   buildCanonicalMapFromIcd11,
+  buildCanonicalMapFromLabels,
   resolveToCanonical,
 } from "../../utils/canonicalLabels.js";
+import { SMART_SUGGESTION_KEYWORDS } from "../../utils/smartSuggestions.js";
+import { useNlmClinicalSuggestions } from "../../hooks/useNlmClinicalSuggestions.js";
 import {
   formatPublicationMonthYear,
   formatPublicationDateLine,
@@ -235,6 +238,27 @@ export default function DashboardPatient() {
   const [newConditionInput, setNewConditionInput] = useState("");
   const [savingConditions, setSavingConditions] = useState(false);
   const [editConditionsModalOpen, setEditConditionsModalOpen] = useState(false);
+
+  /** NLM Clinical Tables — same combined approach as Publications / Trials search. */
+  const conditionsNlm = useNlmClinicalSuggestions(newConditionInput, {
+    includeProcedures: true,
+  });
+
+  // Canonical labels: ICD-11 synonyms + SMART keywords + current draft conditions (like Publications)
+  const conditionsCanonicalMap = useMemo(() => {
+    const map = buildCanonicalMapFromIcd11(icd11Dataset);
+    const curated = buildCanonicalMapFromLabels([
+      ...SMART_SUGGESTION_KEYWORDS,
+      ...(Array.isArray(conditionsDraft)
+        ? conditionsDraft.filter((c) => typeof c === "string" && c.trim())
+        : []),
+    ]);
+    for (const [key, label] of curated) {
+      if (!map.has(key)) map.set(key, label);
+    }
+    return map;
+  }, [conditionsDraft]);
+
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [pastAppointments, setPastAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
@@ -314,38 +338,6 @@ export default function DashboardPatient() {
       setRequestingRefundAppointmentId(null);
     }
   }
-
-  // ICD-11 suggestion terms for conditions (same dataset as Publications.jsx)
-  const icd11SuggestionTerms = useMemo(() => {
-    const termsSet = new Set();
-    if (Array.isArray(icd11Dataset)) {
-      icd11Dataset.forEach((item) => {
-        if (item.display_name && typeof item.display_name === "string") {
-          termsSet.add(item.display_name.trim());
-        }
-        if (Array.isArray(item.patient_terms)) {
-          item.patient_terms.forEach((term) => {
-            if (typeof term !== "string") return;
-            const t = term.trim();
-            if (!t) return;
-            const lower = t.toLowerCase();
-            const hasIcd =
-              lower.includes("icd11 code") ||
-              lower.includes("icd code") ||
-              /icd11\s+[a-z]{2}[0-9]{2}/i.test(t) ||
-              /icd\s+[a-z]{2}[0-9]{2}/i.test(t);
-            if (!hasIcd) termsSet.add(t);
-          });
-        }
-      });
-    }
-    return Array.from(termsSet);
-  }, []);
-
-  const conditionsCanonicalMap = useMemo(
-    () => buildCanonicalMapFromIcd11(icd11Dataset),
-    [],
-  );
 
   // Filter publications: hide those about death, pregnancy, pediatric/kids unless user's condition explicitly mentions that topic
   const SENSITIVE_TOPIC_TERMS = [
@@ -3531,11 +3523,14 @@ export default function DashboardPatient() {
                           setNewConditionInput("");
                         }
                       }}
-                      extraTerms={icd11SuggestionTerms}
+                      extraTerms={[]}
+                      priorityExtraTerms={conditionsNlm.terms}
+                      remoteSuggestionsOnly
+                      prioritySuggestionsLoading={conditionsNlm.loading}
                       canonicalMap={conditionsCanonicalMap}
                       maxSuggestions={10}
                       placeholder={t(
-                        "dashboardPatient.conditionSearchPlaceholderIcd",
+                        "dashboardPatient.conditionSearchPlaceholder",
                       )}
                       autoSubmitOnSelect={true}
                       inputClassName="rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(47,60,150,0.35)] w-full px-3 py-2.5"

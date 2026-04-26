@@ -1,15 +1,25 @@
 export const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-/** Saved on each curated trial. `ucla` appears in UCLA site listings; `general` is stored without UCLA scope (not shown on Trials UCLA filter yet). */
+/**
+ * Saved on each curated trial as `institutionKey`.
+ * UCLA filter on Trials currently only loads `ucla`; other keys are stored and can be wired to search/filters later.
+ */
 export const CURATE_INSTITUTION_OPTIONS = [
   {
     value: "ucla",
     label: "University of California, Los Angeles",
   },
+  { value: "usc", label: "University of Southern California" },
+  { value: "uci", label: "University of California, Irvine" },
+  {
+    value: "cedars-sinai",
+    label: "Cedars-Sinai Medical Center, Los Angeles",
+  },
   { value: "general", label: "Any" },
 ];
 
-export const PLACEHOLDER = `NEULARK — NEU-411 (LRRK2 Inhibitor, Phase 2)
+/** Shown in paste slots and in “Copy example format” for curators. */
+export const PASTE_FORMAT_EXAMPLE = `NEULARK — NEU-411 (LRRK2 Inhibitor, Phase 2)
 
 NEU-411-PD201 Recruiting Phase 2
 
@@ -36,6 +46,8 @@ GENDER All genders AGE RANGE 40 – 80 ENROLLMENT Enrolling
 
 Principal Investigator: Dr. Jeff Bronstein, MD, PhD
 Email: example@mednet.ucla.edu`;
+
+export const PLACEHOLDER = PASTE_FORMAT_EXAMPLE;
 
 export const editFieldClass =
   "w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400";

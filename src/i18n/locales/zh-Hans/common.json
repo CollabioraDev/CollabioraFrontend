@@ -1570,6 +1570,7 @@
     "conditionsModalIntro": "添加或删除状况。最多选择两个用于个性化搜索—点击对勾选择。",
     "conditionsEmptyHint": "尚无状况。请在下方添加。",
     "conditionsPrimaryFooterHint": "带对勾的已选状况用于试验、出版物和专家。保存后在仪表盘上刷新以更新结果。",
+    "conditionSearchPlaceholder": "搜索或选择状况…",
     "conditionSearchPlaceholderIcd": "搜索或选择状况（ICD-11）...",
     "tapToCollapse": "点击收起",
     "conditionsCountLine": "{{count}} 项状况 · 点击查看详情",

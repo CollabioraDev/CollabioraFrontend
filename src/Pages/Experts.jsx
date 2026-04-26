@@ -274,6 +274,40 @@ export default function Experts() {
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
 
+    const nextResearchArea =
+      overrides.researchArea !== undefined
+        ? overrides.researchArea
+        : researchArea;
+    const nextDiseaseOfInterest =
+      overrides.diseaseOfInterest !== undefined
+        ? overrides.diseaseOfInterest
+        : diseaseOfInterest;
+
+    let currentResearchArea = nextResearchArea.trim();
+    let currentDiseaseOfInterest = nextDiseaseOfInterest.trim();
+
+    if (
+      useMedicalInterest &&
+      userMedicalInterest &&
+      !currentDiseaseOfInterest
+    ) {
+      currentDiseaseOfInterest = userMedicalInterest;
+    }
+
+    const hasTopicInput =
+      Boolean(currentResearchArea) || Boolean(currentDiseaseOfInterest);
+    const hasInstitutionFilter = Boolean(institution && institution.trim());
+
+    if (!hasTopicInput && !hasInstitutionFilter) {
+      toast.error(t("experts.enterTopicOrInstitution"));
+      return;
+    }
+
+    if (isOnPlatform && !hasTopicInput && hasInstitutionFilter) {
+      toast.error(t("experts.onPlatformConflict"));
+      return;
+    }
+
     // Check free searches for non-signed-in users (pre-check)
     if (!isUserSignedIn) {
       const canSearch = await checkAndUseSearch();
@@ -292,52 +326,15 @@ export default function Experts() {
     const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const params = new URLSearchParams();
     const user = userData;
-    const nextResearchArea =
-      overrides.researchArea !== undefined
-        ? overrides.researchArea
-        : researchArea;
-    const nextDiseaseOfInterest =
-      overrides.diseaseOfInterest !== undefined
-        ? overrides.diseaseOfInterest
-        : diseaseOfInterest;
 
     // Mark that initial load is complete when user performs search
     if (isInitialLoad) {
       setIsInitialLoad(false);
     }
 
-    // For manual searches, use medical interest if enabled
-    let currentResearchArea = nextResearchArea.trim();
-    let currentDiseaseOfInterest = nextDiseaseOfInterest.trim();
-
-    // If medical interest is enabled and no disease of interest is set, use medical interest
-    if (
-      useMedicalInterest &&
-      userMedicalInterest &&
-      !currentDiseaseOfInterest
-    ) {
-      currentDiseaseOfInterest = userMedicalInterest;
-    }
-
     // Determine which sources to search
     // If on platform is checked, search platform; otherwise search global
     const sourcesToSearch = isOnPlatform ? ["platform"] : ["global"];
-
-    const hasTopicInput =
-      Boolean(currentResearchArea) || Boolean(currentDiseaseOfInterest);
-    const hasInstitutionFilter = Boolean(institution && institution.trim());
-
-    if (!hasTopicInput && !hasInstitutionFilter) {
-      toast.error(t("experts.enterTopicOrInstitution"));
-      setLoading(false);
-      return;
-    }
-
-    if (isOnPlatform && !hasTopicInput && hasInstitutionFilter) {
-      toast.error(t("experts.onPlatformConflict"));
-      setLoading(false);
-      return;
-    }
 
     // Parse "City, State/Province, Country" into structured object
     const parseLocationToObject = (locStr) => {
@@ -727,6 +724,17 @@ export default function Experts() {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
     const token = localStorage.getItem("token");
     const isUserSignedIn = userData && token;
+
+    const topic = (filterValue || "").trim();
+    const hasInst = Boolean(institution && institution.trim());
+    if (isOnPlatform && !topic && hasInst) {
+      toast.error(t("experts.onPlatformConflict"));
+      return;
+    }
+    if (!topic && !hasInst) {
+      toast.error(t("experts.enterTopicOrInstitution"));
+      return;
+    }
 
     // Check free searches for non-signed-in users (pre-check)
     if (!isUserSignedIn) {
@@ -1745,14 +1753,7 @@ export default function Experts() {
                   <SmartSearchInput
                     value={diseaseOfInterest}
                     onChange={setDiseaseOfInterest}
-                    onSubmit={(value) =>
-                      search({
-                        diseaseOfInterest: resolveToCanonical(
-                          value,
-                          expertsDiseaseCanonicalMap,
-                        ),
-                      })
-                    }
+                    onSubmit={() => search()}
                     placeholder="Condition of Interest"
                     priorityExtraTerms={expertsDiseaseNlm.terms}
                     remoteSuggestionsOnly
@@ -1764,14 +1765,7 @@ export default function Experts() {
                   <SmartSearchInput
                     value={researchArea}
                     onChange={setResearchArea}
-                    onSubmit={(value) =>
-                      search({
-                        researchArea: resolveToCanonical(
-                          value,
-                          expertsExpertiseCanonicalMap,
-                        ),
-                      })
-                    }
+                    onSubmit={() => search()}
                     placeholder="What expertise are you looking for?"
                     priorityExtraTerms={expertsExpertiseNlm.terms}
                     remoteSuggestionsOnly
