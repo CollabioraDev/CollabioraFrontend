@@ -6,6 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { requireEmailVerification } from "../../utils/requireEmailVerification.js";
 import { appendLocaleToSearchParams } from "../../i18n/getApiLocale.js";
+import { clearCollabioraProLegacyStorage } from "../../utils/collabioraPro.js";
 import {
   Heart,
   MessageCircle,
@@ -864,6 +865,7 @@ export default function Discovery() {
       if (response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        clearCollabioraProLegacyStorage();
         toast.error(t("discovery.sessionExpired"));
         navigate("/signin");
         throw new Error("Token expired");

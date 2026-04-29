@@ -28,7 +28,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { getGuestDeviceIdHeaders } from "../utils/api.js";
+import apiFetch, { getGuestDeviceIdHeaders } from "../utils/api.js";
+import {
+  getIsCollabioraPro,
+  mergeCollabioraProIntoStoredUser,
+} from "../utils/collabioraPro.js";
 import { useTranslation } from "react-i18next";
 import {
   LOCALE_SELECTOR_OPTIONS,
@@ -105,6 +109,8 @@ const STEP_RESEARCHER_SPECIALTY = 7;
 const STEP_RESEARCHER_LOCATION = 8;
 
 const ONBOARDING_DRAFT_KEY = "onboard_new_draft";
+/** Set when user starts checkout from Plans (Get Pro) and should redeem Pro before continuing. */
+const SESSION_FROM_PRO_KEY = "collabiora_onboarding_from_pro";
 /** Bump when a new step is inserted so saved drafts shift step indices. */
 const ONBOARDING_FLOW_VERSION = 2;
 
@@ -247,7 +253,7 @@ const symptomKeywords = [
 
 export default function OnboardingNew() {
   const { t, i18n } = useTranslation("common");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isOAuth = searchParams.get("oauth") === "true";
   const navigate = useNavigate();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -278,6 +284,10 @@ export default function OnboardingNew() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const [registeringForPro, setRegisteringForPro] = useState(false);
+  const [proRedeemOpen, setProRedeemOpen] = useState(false);
+  const [proRedeemCode, setProRedeemCode] = useState("");
+  const [redeemSubmitting, setRedeemSubmitting] = useState(false);
   const [socialLoading, setSocialLoading] = useState(null);
   // Researcher
   const [profession, setProfession] = useState("");
@@ -394,6 +404,11 @@ export default function OnboardingNew() {
 
   const clearStoredOnboardingState = () => {
     sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    try {
+      sessionStorage.removeItem(SESSION_FROM_PRO_KEY);
+    } catch {
+      /* ignore */
+    }
     localStorage.removeItem("auth0_pending_onboarding");
     localStorage.removeItem("orcid_data");
   };
@@ -591,6 +606,21 @@ export default function OnboardingNew() {
 
   const goToStep = (nextStep) => {
     startTransition(() => setStep(nextStep));
+  };
+
+  /** Close Pro redeem modal, clear "from Pro" session flag, and continue onboarding (not Pro). */
+  const dismissProRedeemModal = () => {
+    setProRedeemOpen(false);
+    setProRedeemCode("");
+    try {
+      sessionStorage.removeItem(SESSION_FROM_PRO_KEY);
+    } catch {
+      /* ignore */
+    }
+    if (step <= STEP_EMAIL) {
+      goToStep(STEP_NAME);
+      persistOnboardingDraft();
+    }
   };
 
   const handleAboutSelfSelect = (option) => {
@@ -1109,6 +1139,36 @@ export default function OnboardingNew() {
         } else {
           mergedUser = { ...mergedUser, preferredLanguage: lang };
         }
+
+        const composedName = `${firstName} ${lastName}`.trim();
+        if (composedName) {
+          try {
+            const updatePayload =
+              role === "patient" && handle.trim()
+                ? { username: composedName, handle: handle.trim() }
+                : { username: composedName };
+            const updRes = await fetch(
+              `${base}/api/auth/update-user/${userId}`,
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(updatePayload),
+              },
+            );
+            if (updRes.ok) {
+              const updBody = await updRes.json().catch(() => ({}));
+              if (updBody.user)
+                mergedUser = { ...mergedUser, ...updBody.user };
+              else mergedUser = { ...mergedUser, username: composedName };
+            }
+          } catch (updErr) {
+            console.error(updErr);
+          }
+        }
+
         await markOnboardingComplete(userId, token, isProfileComplete(role));
         const finalUser = {
           ...mergedUser,
@@ -1327,6 +1387,60 @@ export default function OnboardingNew() {
   const passwordStrength = getPasswordStrength(password);
   const canGoNextFromEmail = isValidEmail(email.trim()) && password.length >= 6;
 
+  /** Minimal account creation after email/password so the user can redeem Collabiora Pro before finishing profile steps. */
+  const registerEarlyForPro = async () => {
+    const role = onboardingRole;
+    if (!role || !isValidEmail(email.trim()) || password.length < 6) {
+      throw new Error("Please complete the steps above first.");
+    }
+    const emailPrefix =
+      email
+        .split("@")[0]
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 24) || "user";
+    const username = `${emailPrefix}_${Math.random().toString(36).slice(2, 10)}`;
+    const generatedHandle =
+      (username.replace(/\s+/g, "").toLowerCase() || "user") +
+      "_" +
+      Math.random().toString(36).slice(2, 8);
+
+    const registerRes = await fetch(`${base}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getGuestDeviceIdHeaders(),
+      },
+      body: JSON.stringify({
+        username,
+        email: email.trim(),
+        password,
+        role,
+        medicalInterests: [],
+        handle: generatedHandle,
+        preferredLanguage: normalizeLocale(preferredLanguage),
+      }),
+    });
+    const registerData = await registerRes.json().catch(() => ({}));
+    if (!registerRes.ok) {
+      throw new Error(
+        registerData.error ||
+          "Could not create your account. Please try again.",
+      );
+    }
+    const newUser = {
+      ...registerData.user,
+      username,
+      handle: generatedHandle,
+      role,
+      preferredLanguage:
+        registerData.user?.preferredLanguage ||
+        normalizeLocale(preferredLanguage),
+    };
+    if (newUser.emailVerified !== false) newUser.emailVerified = false;
+    localStorage.setItem("token", registerData.token);
+    localStorage.setItem("user", JSON.stringify(newUser));
+  };
+
   // When returning from OAuth: restore medical choice and land on Name step so user fills in their details first
   useEffect(() => {
     if (!isOAuth) return;
@@ -1360,8 +1474,50 @@ export default function OnboardingNew() {
         setStep(STEP_NAME);
         setMaxStepReached(STEP_NAME);
       }
+      try {
+        if (
+          sessionStorage.getItem(SESSION_FROM_PRO_KEY) === "1" &&
+          !getIsCollabioraPro()
+        ) {
+          setProRedeemOpen(true);
+        }
+      } catch {
+        /* ignore */
+      }
     }
   }, [isOAuth]);
+
+  useEffect(() => {
+    if (searchParams.get("fromPro") !== "1") return;
+    try {
+      sessionStorage.setItem(SESSION_FROM_PRO_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("fromPro");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(SESSION_FROM_PRO_KEY) !== "1") return;
+    } catch {
+      return;
+    }
+    const token = localStorage.getItem("token");
+    const raw = localStorage.getItem("user");
+    if (!token || !raw) return;
+    let u;
+    try {
+      u = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (!(u._id || u.id)) return;
+    if (getIsCollabioraPro()) return;
+    setProRedeemOpen(true);
+  }, []);
 
   // Close username suggestions / skills dropdown when clicking outside
   useEffect(() => {
@@ -1762,9 +1918,40 @@ export default function OnboardingNew() {
                           setCheckingEmail(true);
                           setError("");
                           checkEmailAvailability()
-                            .then((availability) => {
+                            .then(async (availability) => {
                               if (availability.exists) {
                                 setError(getExistingEmailMessage(availability));
+                                return;
+                              }
+                              let fromPro = false;
+                              try {
+                                fromPro =
+                                  sessionStorage.getItem(SESSION_FROM_PRO_KEY) ===
+                                  "1";
+                              } catch {
+                                fromPro = false;
+                              }
+                              const existingToken =
+                                localStorage.getItem("token");
+                              if (fromPro && !existingToken) {
+                                setRegisteringForPro(true);
+                                try {
+                                  await registerEarlyForPro();
+                                  const stored = JSON.parse(
+                                    localStorage.getItem("user") || "{}",
+                                  );
+                                  syncI18nFromUser(stored);
+                                  window.dispatchEvent(new Event("login"));
+                                  persistOnboardingDraft();
+                                  setProRedeemOpen(true);
+                                } catch (regErr) {
+                                  setError(
+                                    regErr.message ||
+                                      "Could not create your account.",
+                                  );
+                                } finally {
+                                  setRegisteringForPro(false);
+                                }
                                 return;
                               }
                               goToStep(STEP_NAME);
@@ -1782,12 +1969,17 @@ export default function OnboardingNew() {
                         disabled={
                           !isValidEmail(email.trim()) ||
                           password.length < 6 ||
-                          checkingEmail
+                          checkingEmail ||
+                          registeringForPro
                         }
                         className="flex-1 py-3 rounded-xl font-semibold text-base disabled:opacity-50"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
                       >
-                        {checkingEmail ? "Checking..." : "Continue"}
+                        {registeringForPro
+                          ? "Creating account..."
+                          : checkingEmail
+                            ? "Checking..."
+                            : "Continue"}
                       </Button>
                     </div>
                   </motion.div>
@@ -3158,6 +3350,113 @@ export default function OnboardingNew() {
           </div>
         </div>
       </div>
+
+      {proRedeemOpen ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboarding-pro-redeem-title"
+          onClick={dismissProRedeemModal}
+        >
+          <div
+            className="relative w-full max-w-md rounded-2xl border bg-white p-6 pt-12 shadow-xl sm:pt-6"
+            style={{ borderColor: "#D0C4E2" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label={t("plans.proModalCloseLabel")}
+              disabled={redeemSubmitting}
+              onClick={dismissProRedeemModal}
+              className="absolute right-3 top-3 rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </button>
+            <h2
+              id="onboarding-pro-redeem-title"
+              className="pr-8 text-lg font-bold"
+              style={{ color: "#2F3C96" }}
+            >
+              {t("plans.proModalTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {t("plans.proModalBody")}
+            </p>
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t("plans.proCodeLabel")}
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={proRedeemCode}
+              onChange={(e) => setProRedeemCode(e.target.value)}
+              placeholder={t("plans.proCodePlaceholder")}
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:border-[#2F3C96] focus:outline-none focus:ring-1 focus:ring-[#2F3C96]/30"
+            />
+            <p className="mt-3 text-xs text-slate-500">{t("plans.proSkipHint")}</p>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-between sm:gap-3">
+              <button
+                type="button"
+                disabled={redeemSubmitting}
+                onClick={dismissProRedeemModal}
+                className="rounded-xl border-2 px-5 py-2 text-sm font-semibold transition-colors disabled:opacity-60"
+                style={{
+                  borderColor: "#D0C4E2",
+                  color: "#2F3C96",
+                  backgroundColor: "transparent",
+                }}
+              >
+                {t("plans.proContinueWithout")}
+              </button>
+              <button
+                type="button"
+                disabled={redeemSubmitting}
+                onClick={async () => {
+                  setRedeemSubmitting(true);
+                  try {
+                    const res = await apiFetch(
+                      "/api/collabiora-pro/redeem-code",
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ code: proRedeemCode.trim() }),
+                      },
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.ok || !data.user) {
+                      toast.error(data?.error || t("plans.proUnlockInvalid"));
+                      return;
+                    }
+                    mergeCollabioraProIntoStoredUser(data.user);
+                    toast.success(t("plans.proUnlockSuccess"));
+                    try {
+                      sessionStorage.removeItem(SESSION_FROM_PRO_KEY);
+                    } catch {
+                      /* ignore */
+                    }
+                    setProRedeemOpen(false);
+                    setProRedeemCode("");
+                    if (step <= STEP_EMAIL) {
+                      goToStep(STEP_NAME);
+                      persistOnboardingDraft();
+                    }
+                  } catch {
+                    toast.error(t("plans.proUnlockInvalid"));
+                  } finally {
+                    setRedeemSubmitting(false);
+                  }
+                }}
+                className="rounded-xl px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                style={{ backgroundColor: "#2F3C96" }}
+              >
+                {t("plans.proSubmit")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Layout>
   );
 }

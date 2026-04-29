@@ -120,13 +120,21 @@ export default function LandingNavbar() {
         </Link>
 
         {/* ── Right side: CTA that appears after hero ── */}
-        <div className="flex items-center min-h-[2.75rem]">
+        <div className="flex items-center gap-3 sm:gap-4 min-h-[2.75rem]">
           {isPastHero && (
-            <div className="ui-fade-in-fast">
+            <div className="ui-fade-in-fast flex items-center gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/plans")}
+                className="text-[13px] sm:text-[14px] font-semibold underline-offset-4 hover:underline px-1"
+                style={{ color: "#2F3C96" }}
+              >
+                {t("landingNav.plans")}
+              </button>
               {!user ? (
                 <button
                   type="button"
-                  onClick={() => navigate("/onboarding")}
+                  onClick={() => navigate("/plans")}
                   className="px-6 py-2.5 rounded-xl font-bold text-[14px] uppercase tracking-wider transition-all active:scale-[0.97] shadow-[0_4px_0_0_#1c2459] hover:-translate-y-[2px] active:translate-y-[2px] active:shadow-[0_0px_0_0_#1c2459]"
                   style={{ backgroundColor: "#2F3C96", color: "#FFFFFF" }}
                 >

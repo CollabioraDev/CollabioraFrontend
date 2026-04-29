@@ -12,6 +12,15 @@ const GENERIC_TRAILING_WORDS = new Set([
   "therapies",
 ]);
 
+const MEDICAL_CANONICAL_PHRASES = [
+  "Parkinson Disease",
+  "Stem Cell Therapy",
+  "Stem Cells",
+  "Regenerative Medicine",
+];
+
+const KEEP_AS_SINGLE_PHRASE = new Set(["stem cell therapy"]);
+
 /** Stop words: filler, articles, conjunctions, prepositions, question words, and other non-search terms. */
 const STOP_WORDS = new Set([
   "a", "an", "the", "and", "or", "but", "nor", "so", "yet", "both", "either", "neither",
@@ -62,6 +71,17 @@ function looksLikeTitle(query) {
   return false;
 }
 
+function normalizeMedicalPhraseKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\bparkinsons\b/g, "parkinson")
+    .replace(/\btherapies\b/g, "therapy")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
  * Intelligently split a search query into meaningful keywords/phrases
  * Identifies known medical terms and separates them from standalone words
@@ -85,13 +105,14 @@ export function splitIntoKeywords(query, extraTerms = []) {
   const normalizedQueryLower = normalizedQuery.toLowerCase();
   const queryWords = normalizedQueryLower.split(/\s+/);
   const originalWords = normalizedQuery.split(/\s+/); // preserve casing for proper nouns
-  const pool = buildSuggestionPool(extraTerms);
+  const pool = buildSuggestionPool([...MEDICAL_CANONICAL_PHRASES, ...extraTerms]);
 
   // Build a list of known medical terms sorted by length (longest first)
   const knownTerms = pool
     .map(term => ({
       original: term,
       lower: term.toLowerCase(),
+      key: normalizeMedicalPhraseKey(term),
       length: term.split(/\s+/).length
     }))
     .sort((a, b) => b.length - a.length);
@@ -108,9 +129,10 @@ export function splitIntoKeywords(query, extraTerms = []) {
       const phrase = queryWords.slice(i, i + len).join(" ");
       
       // Check if this phrase matches any known term (exact match preferred)
+      const phraseKey = normalizeMedicalPhraseKey(phrase);
       const matchedTerm = knownTerms.find(term => {
         // Exact match (case insensitive)
-        if (term.lower === phrase) return true;
+        if (term.lower === phrase || term.key === phraseKey) return true;
         
         // For multi-word phrases, check if the phrase exactly matches a known term
         if (len > 1) {
@@ -221,7 +243,7 @@ export function splitIntoKeywords(query, extraTerms = []) {
     const lower = original.toLowerCase();
     const parts = original.split(/\s+/);
 
-    if (parts.length > 1) {
+    if (parts.length > 1 && !KEEP_AS_SINGLE_PHRASE.has(lower)) {
       const last = parts[parts.length - 1].toLowerCase();
       if (GENERIC_TRAILING_WORDS.has(last)) {
         const head = parts.slice(0, -1).join(" ").trim();

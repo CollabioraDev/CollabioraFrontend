@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { consumePostAuthRedirect } from "../utils/postAuthRedirect.js";
 import { useTranslation, Trans } from "react-i18next";
 import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
@@ -103,6 +104,16 @@ export default function SignIn() {
 
       // Dispatch login event to update navbar
       window.dispatchEvent(new Event("login"));
+
+      const next = consumePostAuthRedirect();
+      if (next?.path && next.path.startsWith("/")) {
+        const url = next.proIntent
+          ? `${next.path}${next.path.includes("?") ? "&" : "?"}proIntent=1`
+          : next.path;
+        navigate(url);
+        setLoading(false);
+        return;
+      }
 
       navigate("/yori");
     } catch (e) {

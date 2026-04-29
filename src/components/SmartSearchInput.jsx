@@ -222,7 +222,7 @@ export default function SmartSearchInput({
     setActiveIndex(-1);
     setIsDropdownOpen(false);
     if (autoSubmitOnSelect && typeof onSubmit === "function") {
-      onSubmit(suggestion);
+      onSubmit(suggestion, { source: "suggestion" });
     }
   };
 

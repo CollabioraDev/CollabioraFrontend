@@ -291,19 +291,7 @@ export default function Landing() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (GUEST_BROWSE_MODE_ENABLED) {
-                        try {
-                          sessionStorage.setItem(
-                            "collabiora_show_yori_tutorial",
-                            "1",
-                          );
-                        } catch {
-                          /* ignore */
-                        }
-                        navigate("/home");
-                      } else {
-                        navigate("/onboarding");
-                      }
+                      navigate("/plans");
                     }}
                     className="w-full min-h-[3rem] sm:min-h-[3.25rem] rounded-full border-2 bg-white/95 px-6 sm:px-8 py-3 sm:py-3.5 text-[0.95rem] sm:text-base md:text-lg font-bold shadow-sm transition-[transform,box-shadow,opacity] hover:bg-white active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2F3C96] sm:w-auto sm:shrink-0"
                     style={{

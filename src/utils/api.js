@@ -1,5 +1,6 @@
 // API utility with JWT token support and privacy-friendly signals
 import { getSignalHash, getOrCreateDeviceId } from "./fingerprint.js";
+import { clearCollabioraProLegacyStorage } from "./collabioraPro.js";
 
 const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const REFRESH_ENDPOINT = `${base}/api/auth/refresh`;
@@ -40,6 +41,7 @@ function isTokenExpiringSoon(token, thresholdMs = 10 * 60 * 1000) {
 function clearAuthState() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+  clearCollabioraProLegacyStorage();
   window.dispatchEvent(new Event("logout"));
 }
 

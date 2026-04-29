@@ -56,6 +56,7 @@ import {
   appendLocaleToSearchParams,
   getApiLocale,
 } from "../../i18n/getApiLocale.js";
+import { processKeywordInput } from "../../utils/keywordSplitter.js";
 import { useTranslation } from "react-i18next";
 import { parseEligibilityCriteria } from "../../utils/parseEligibilityCriteria.js";
 import {
@@ -70,6 +71,7 @@ import {
 } from "../../utils/guestBrowseMode.js";
 import { recordTrialEngagement } from "../../utils/productAnalytics.js";
 import { useNlmClinicalSuggestions } from "../../hooks/useNlmClinicalSuggestions.js";
+import { CURATE_INSTITUTION_OPTIONS } from "./curateTrialsConstants.js";
 
 /** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
 function buildGmailComposeUrl(toEmails, subject, body) {
@@ -359,11 +361,16 @@ export default function Trials() {
     [t, i18n.language],
   );
 
-  const INSTITUTION_UCLA = "University of California, Los Angeles";
+  /** Same curated keys/labels as Curate Trials (`CURATE_INSTITUTION_OPTIONS`). */
+  const INSTITUTION_UCLA =
+    CURATE_INSTITUTION_OPTIONS.find((o) => o.value === "ucla")?.label ??
+    "University of California, Los Angeles";
   const institutionOptions = useMemo(
     () => [
       { value: "", label: t("trials.allInstitutions") },
-      { value: INSTITUTION_UCLA, label: INSTITUTION_UCLA },
+      ...CURATE_INSTITUTION_OPTIONS.filter((o) => o.value !== "general").map(
+        (o) => ({ value: o.label, label: o.label }),
+      ),
     ],
     [t, i18n.language],
   );
@@ -375,25 +382,38 @@ export default function Trials() {
 
   // Keyword chips management functions
   const addKeyword = (keyword) => {
-    // Auto-correct the keyword before adding
-    const correctedKeyword = autoCorrectQuery(
-      keyword.trim(),
+    if (!keyword || !keyword.trim()) return;
+
+    const { keywords, corrections } = processKeywordInput(
+      keyword,
       trialSuggestionTerms,
+      true,
     );
-    const trimmedKeyword = correctedKeyword.trim();
-    if (trimmedKeyword && !searchKeywords.includes(trimmedKeyword)) {
-      setSearchKeywords([...searchKeywords, trimmedKeyword]);
-      setQ(""); // Clear the input after adding
-      // Show a toast if correction was made
-      if (correctedKeyword.toLowerCase() !== keyword.trim().toLowerCase()) {
+
+    const termsToAdd =
+      keywords.length > 0
+        ? keywords
+        : [autoCorrectQuery(keyword.trim(), trialSuggestionTerms).trim()];
+    const newKeywords = termsToAdd.filter(
+      (term) =>
+        term &&
+        !searchKeywords.some(
+          (existing) => existing.toLowerCase() === term.toLowerCase(),
+        ),
+    );
+
+    if (newKeywords.length > 0) {
+      setSearchKeywords([...searchKeywords, ...newKeywords]);
+      setQ("");
+      corrections.forEach((correction) => {
         toast.success(
           t("trials.correctedTo", {
-            from: keyword.trim(),
-            to: correctedKeyword,
+            from: correction.original,
+            to: correction.corrected,
           }),
           { duration: 2000 },
         );
-      }
+      });
     }
   };
 
@@ -522,15 +542,35 @@ export default function Trials() {
   };
 
   // Trigger search (keywords are optional). Pass `typedLine` from Enter in SmartSearchInput.
-  const handleSearch = (typedLine) => {
+  const handleSearch = (typedLine, submitMeta = {}) => {
     const line =
       typeof typedLine === "string" ? typedLine : (q ?? "");
+    const selectedFromDropdown = submitMeta?.source === "suggestion";
 
     let currentKeywords = [...searchKeywords];
-    if (line.trim() && !currentKeywords.includes(line.trim())) {
-      currentKeywords = [...currentKeywords, line.trim()];
-      setSearchKeywords(currentKeywords);
-      setQ(""); // Clear search bar after adding to keywords
+    if (line.trim()) {
+      const termsToAdd = selectedFromDropdown
+        ? [line.trim()]
+        : (() => {
+            const { keywords: cleanedKeywords } = processKeywordInput(
+              line,
+              trialSuggestionTerms,
+              true,
+            );
+            return cleanedKeywords.length > 0 ? cleanedKeywords : [line.trim()];
+          })();
+      const newTerms = termsToAdd.filter(
+        (term) =>
+          term &&
+          !currentKeywords.some(
+            (existing) => existing.toLowerCase() === term.toLowerCase(),
+          ),
+      );
+      currentKeywords = [...currentKeywords, ...newTerms];
+      if (newTerms.length > 0) {
+        setSearchKeywords(currentKeywords);
+        setQ(""); // Clear search bar after adding to keywords
+      }
     }
 
     const combinedQuery =

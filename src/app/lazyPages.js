@@ -80,6 +80,7 @@ export const CookiePolicy = React.lazy(() =>
   import("../Pages/CookiePolicy.jsx"),
 );
 export const HowItWorks = React.lazy(() => import("../Pages/HowItWorks.jsx"));
+export const Plans = React.lazy(() => import("../Pages/Plans.jsx"));
 export const TrialDetails = React.lazy(() =>
   import("../Pages/TrialDetails.jsx"),
 );
@@ -118,4 +119,7 @@ export const MeetingRoom = React.lazy(() =>
 );
 export const EmailPreferences = React.lazy(() =>
   import("../Pages/EmailPreferences.jsx"),
+);
+export const WellnessProPage = React.lazy(() =>
+  import("../Pages/WellnessProPage.jsx"),
 );

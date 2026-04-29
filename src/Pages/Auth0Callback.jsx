@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
 import { getGuestDeviceIdHeaders } from "../utils/api.js";
+import { consumePostAuthRedirect } from "../utils/postAuthRedirect.js";
 
 /**
  * Auth0 Callback Page
@@ -229,6 +230,14 @@ export default function Auth0Callback() {
           console.log("[Auth0Callback] Fully onboarded + verified → dashboard");
         }
         window.dispatchEvent(new Event("login"));
+        const redirect = consumePostAuthRedirect();
+        if (redirect?.path && redirect.path.startsWith("/")) {
+          const url = redirect.proIntent
+            ? `${redirect.path}${redirect.path.includes("?") ? "&" : "?"}proIntent=1`
+            : redirect.path;
+          navigate(url);
+          return;
+        }
         navigate("/yori");
       } catch (e) {
         console.error("OAuth sync error:", e);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import ProfilePictureUpload from "../components/ProfilePictureUpload.jsx";
 import Layout from "../components/Layout.jsx";
@@ -59,6 +59,8 @@ import {
   IconShield,
   IconStethoscope,
 } from "@tabler/icons-react";
+import WellnessOnlySettingsModal from "../components/wellness/WellnessOnlySettingsModal.jsx";
+import { useCollabioraPro } from "../utils/collabioraPro.js";
 
 /** Public-folder filenames for patient preset profile pictures (served from /). */
 const PRESET_PATIENT_AVATAR_FILENAMES = [
@@ -138,7 +140,9 @@ function AcademicLinkStatusBadge({ status }) {
 
 export default function EditProfile() {
   const { t } = useTranslation("common");
+  const isCollabioraPro = useCollabioraPro();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
   const [user, setUser] = useState(null);
   const [persistedUser, setPersistedUser] = useState(null);
@@ -214,6 +218,7 @@ export default function EditProfile() {
   const [sendingVerification, setSendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [wellnessModalOpen, setWellnessModalOpen] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otpError, setOtpError] = useState("");
@@ -297,6 +302,20 @@ export default function EditProfile() {
       refreshStripeConnectStatus();
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (searchParams.get("wellness") === "1" && isCollabioraPro) {
+      setWellnessModalOpen(true);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("wellness");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams, isCollabioraPro]);
 
   // Listen for email verification (cross-tab or same-tab localStorage update)
   useEffect(() => {
@@ -1968,6 +1987,24 @@ export default function EditProfile() {
                 </h2>
               </div>
 
+              {isCollabioraPro ? (
+                <div className="mb-8 rounded-2xl border border-violet-200/80 bg-violet-50/40 p-5">
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {t("editProfile.wellnessOnlySectionTitle")}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {t("editProfile.wellnessOnlySectionBody")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setWellnessModalOpen(true)}
+                    className="mt-4 inline-flex items-center justify-center rounded-xl bg-[#5B4B8A] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#4a3d72]"
+                  >
+                    {t("editProfile.wellnessOnlyOpenButton")}
+                  </button>
+                </div>
+              ) : null}
+
               {/* Role-specific fields */}
               {user?.role === "patient" ? (
                 <div className="space-y-2">
@@ -3056,6 +3093,12 @@ export default function EditProfile() {
             token={localStorage.getItem("token")}
           />
         )}
+        {isCollabioraPro ? (
+          <WellnessOnlySettingsModal
+            open={wellnessModalOpen}
+            onClose={() => setWellnessModalOpen(false)}
+          />
+        ) : null}
       </div>
     </Layout>
   );

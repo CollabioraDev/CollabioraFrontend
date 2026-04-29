@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { getIsCollabioraPro } from "../utils/collabioraPro.js";
+
+/** Wellness Pro routes require Collabiora Pro (until billing is wired). */
+export function ProWellnessGate({ children }) {
+  if (!getIsCollabioraPro()) {
+    return <Navigate to="/plans" replace />;
+  }
+  return children;
+}
 
 export function AuthenticatedRedirect({ children, allowIncomplete = false }) {
   const location = useLocation();

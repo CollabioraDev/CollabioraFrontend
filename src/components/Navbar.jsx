@@ -11,9 +11,14 @@ import { GUEST_BROWSE_MODE_ENABLED } from "../utils/guestBrowseMode.js";
 import PatientForumProfileModal from "./PatientForumProfileModal.jsx";
 import { requireEmailVerification } from "../utils/requireEmailVerification.js";
 import toast from "react-hot-toast";
+import {
+  clearCollabioraProLegacyStorage,
+  useCollabioraPro,
+} from "../utils/collabioraPro.js";
 
 export default function Navbar() {
   const { t } = useTranslation("common");
+  const isCollabioraPro = useCollabioraPro();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [isMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,7 +66,12 @@ export default function Navbar() {
     location.pathname === "/curate-trials" ||
     location.pathname.startsWith("/curate-trials/");
 
-  const isLogoOnlyNav = isAdminRoute || isCurateTrialsRoute;
+  // Plans (pricing): guests see logo + Sign In only — no Trials / Publications / Experts / Forums / Discovery
+  const isPlansPage = location.pathname === "/plans";
+  const isLogoOnlyNav =
+    isAdminRoute ||
+    isCurateTrialsRoute ||
+    (isPlansPage && !isLoggedInUser);
 
   // About Us, Contact, Sign In, Onboarding: for non-signed-in show basic nav (About Us, FAQ, Contact); for signed-in show Explore, Forums, Discovery
   const isSimpleNavPage =
@@ -178,7 +188,10 @@ export default function Navbar() {
       return ["explore", "forums", "discovery"];
     }
     if (user) {
-      return ["dashboard", "explore", "forums", "discovery"];
+      const signedInNav = ["dashboard"];
+      if (isCollabioraPro) signedInNav.push("wellnessOnly");
+      signedInNav.push("explore", "forums", "discovery");
+      return signedInNav;
     }
     const allNavItems = [
       "trials",
@@ -411,6 +424,7 @@ export default function Navbar() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearCollabioraProLegacyStorage();
     // Clear search state for all search pages
     sessionStorage.removeItem("experts_search_state");
     sessionStorage.removeItem("trials_search_state");
@@ -533,6 +547,27 @@ export default function Navbar() {
           />
         </PrefetchLink>
 
+        {isLogoOnlyNav && isPlansPage && !isLoggedInUser && (
+          <PrefetchLink
+            to="/signin"
+            className="px-5 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 font-semibold border-2 text-sm text-white"
+            style={{
+              background: "linear-gradient(135deg, #2F3C96, #474F97)",
+              borderColor: "#D0C4E2",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #474F97, #2F3C96)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(135deg, #2F3C96, #474F97)";
+            }}
+          >
+            {t("auth.signIn")}
+          </PrefetchLink>
+        )}
+
         {/* Desktop Nav - hidden on admin routes only (onboarding shows Explore, Forums, Discovery) */}
         {!isLogoOnlyNav && (
           <nav className="hidden sm:flex items-center gap-6 text-[15px] font-semibold">
@@ -543,6 +578,7 @@ export default function Navbar() {
                 faq: "/faq",
                 contact: "/contact",
                 dashboard: getDashboardPath(),
+                wellnessOnly: "/wellness",
                 forums:
                   effectiveNavRole === "researcher"
                     ? "/researcher-forums"
@@ -1086,6 +1122,13 @@ export default function Navbar() {
                             "User"
                           : getDisplayName(user, "User")}
                       </span>
+                      {isCollabioraPro ? (
+                        <span
+                          className="text-[10px] font-semibold leading-tight text-amber-800"
+                        >
+                          {t("nav.proUser")}
+                        </span>
+                      ) : null}
                       {user?.role !== "patient" &&
                         (user?.handle || profile?.handle) && (
                           <span

@@ -52,6 +52,7 @@ import {
 } from "../../utils/yoriGuestChatStorage.js";
 import { getApiLocale } from "../../i18n/getApiLocale.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
+import { OPEN_FLOATING_CHAT_WELLNESS_EVENT } from "../../utils/wellnessYoriChat.js";
 import i18n from "i18next";
 
 // Quick-ask options when user clicks "Ask about this" (context is sent with the chosen question)
@@ -589,7 +590,9 @@ const MessageBubble = React.memo(({ message, isUser }) => {
         }
       >
         {isUser ? (
-          <p className="leading-relaxed">{message.content}</p>
+          <p className="leading-relaxed">
+            {message.displayContent ?? message.content}
+          </p>
         ) : (
           <div className="prose prose-sm max-w-none [&>*:last-child]:mb-0">
             <ReactMarkdown components={markdownComponents}>
@@ -1847,6 +1850,7 @@ const FloatingChatbot = () => {
   const handleSendMessage = async (
     messageText = input,
     messageContext = null,
+    sendOptions = null,
   ) => {
     if (!messageText.trim() || isLoading) return;
 
@@ -1881,9 +1885,17 @@ const FloatingChatbot = () => {
       activeContext = { type: isTrialPage ? "trial" : "publication", item: {} };
     }
 
+    const displayContent =
+      sendOptions &&
+      typeof sendOptions.displayContent === "string" &&
+      sendOptions.displayContent.trim()
+        ? sendOptions.displayContent.trim()
+        : undefined;
+
     const userMessage = {
       role: "user",
       content: messageText.trim(),
+      ...(displayContent && { displayContent }),
       ...(activeContext && { context: activeContext }),
     };
     const newMessages = [...messages, userMessage];
@@ -1959,10 +1971,16 @@ const FloatingChatbot = () => {
     try {
       abortControllerRef.current = new AbortController();
 
+      const messagesForApi = messagesToSend.map((m) => {
+        if (m.role !== "user" || m.displayContent == null) return m;
+        const { displayContent: _omit, ...rest } = m;
+        return rest;
+      });
+
       const apiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const requestBody = {
         locale: getApiLocale(),
-        messages: messagesToSend,
+        messages: messagesForApi,
         ...(activeContext && { context: activeContext }),
       };
       const response = await fetch(`${apiBase}/api/chatbot/chat`, {
@@ -2124,6 +2142,46 @@ const FloatingChatbot = () => {
       abortControllerRef.current = null;
     }
   };
+
+  const handleSendMessageRef = useRef(handleSendMessage);
+  handleSendMessageRef.current = handleSendMessage;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onWellness = (event) => {
+      const detail = event.detail || {};
+      const prompt = typeof detail.prompt === "string" ? detail.prompt : "";
+      const trimmed = prompt.trim();
+      if (!trimmed) return;
+      const autoSend = detail.autoSend !== false;
+      const displayRaw = detail.displayContent;
+      const displayContent =
+        typeof displayRaw === "string" && displayRaw.trim()
+          ? displayRaw.trim()
+          : undefined;
+      setContext(null);
+      setSuggestions([]);
+      setSampleQuestionsOpen(false);
+      setIsMinimized(false);
+      setIsSideCollapsed(false);
+      setIsOpen(true);
+      if (autoSend) {
+        window.setTimeout(() => {
+          handleSendMessageRef.current(trimmed, null, {
+            displayContent,
+          });
+        }, 200);
+      } else {
+        setInput(displayContent ?? trimmed);
+      }
+    };
+    window.addEventListener(OPEN_FLOATING_CHAT_WELLNESS_EVENT, onWellness);
+    return () =>
+      window.removeEventListener(
+        OPEN_FLOATING_CHAT_WELLNESS_EVENT,
+        onWellness,
+      );
+  }, []);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {

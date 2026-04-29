@@ -39,6 +39,7 @@ import {
   getApiLocale,
   appendLocaleToSearchParams,
 } from "../../i18n/getApiLocale.js";
+import { clearCollabioraProLegacyStorage } from "../../utils/collabioraPro.js";
 import { getPublicationPath } from "../../utils/publicationRouting.js";
 import {
   normalizeSearchResultsTrialLocations,
@@ -1808,6 +1809,7 @@ export default function YoriAI() {
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        clearCollabioraProLegacyStorage();
       } catch {
         // Ignore storage errors and still recover chat locally.
       }

@@ -21,7 +21,6 @@ if (clarityId && typeof window !== 'undefined') {
 }
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import LogRocket from 'logrocket';
-
 LogRocket.init('fuvonk/collabiora');
 // Register Service Worker (PWA)
 if ("serviceWorker" in navigator) {

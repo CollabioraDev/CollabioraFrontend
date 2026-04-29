@@ -90,6 +90,7 @@ import {
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
 import { getApiLocale, withApiLocale } from "../../i18n/getApiLocale.js";
+import { useCollabioraPro } from "../../utils/collabioraPro.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -105,6 +106,7 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardPatient() {
+  const isCollabioraPro = useCollabioraPro();
   const { t, i18n } = useTranslation("common");
   const pdfReportLabels = useMemo(
     () => ({
@@ -2607,11 +2609,11 @@ export default function DashboardPatient() {
       const valid = indices.filter(
         (i) => Number.isInteger(i) && i >= 0 && i < conds.length,
       );
-      setPrimaryIndicesDraft(valid.slice(0, 2));
+      setPrimaryIndicesDraft(valid.slice(0, isCollabioraPro ? 2 : 1));
     } else if (conds.length === 1) {
       setPrimaryIndicesDraft([0]);
     } else if (conds.length >= 2) {
-      setPrimaryIndicesDraft([0, 1]);
+      setPrimaryIndicesDraft(isCollabioraPro ? [0, 1] : [0]);
     } else {
       setPrimaryIndicesDraft([]);
     }
@@ -2635,16 +2637,17 @@ export default function DashboardPatient() {
       const valid = indices.filter(
         (i) => Number.isInteger(i) && i >= 0 && i < conds.length,
       );
-      setPrimaryIndicesDraft(valid.slice(0, 2));
+      setPrimaryIndicesDraft(valid.slice(0, isCollabioraPro ? 2 : 1));
     } else if (conds.length === 1) {
       setPrimaryIndicesDraft([0]);
     } else if (conds.length >= 2) {
-      setPrimaryIndicesDraft([0, 1]);
+      setPrimaryIndicesDraft(isCollabioraPro ? [0, 1] : [0]);
     } else {
       setPrimaryIndicesDraft([]);
     }
   }, [
     editConditionsModalOpen,
+    isCollabioraPro,
     userProfile?.patient?.conditions,
     userProfile?.patient?.primaryConditionIndices,
     user?.medicalInterests,
@@ -2654,6 +2657,7 @@ export default function DashboardPatient() {
     setPrimaryIndicesDraft((prev) => {
       const has = prev.includes(index);
       if (has) return prev.filter((i) => i !== index);
+      if (!isCollabioraPro) return [index];
       if (prev.length >= 2) return [prev[1], index];
       return [...prev, index].sort((a, b) => a - b);
     });
@@ -2665,7 +2669,7 @@ export default function DashboardPatient() {
       prev
         .map((i) => (i > index ? i - 1 : i === index ? -1 : i))
         .filter((i) => i >= 0)
-        .slice(0, 2),
+        .slice(0, isCollabioraPro ? 2 : 1),
     );
   }
 
@@ -2678,6 +2682,7 @@ export default function DashboardPatient() {
     setConditionsDraft((prev) => [...prev, canonical]);
     setNewConditionInput("");
     setPrimaryIndicesDraft((prev) => {
+      if (!isCollabioraPro) return [conditionsDraft.length];
       if (prev.length >= 2) return prev;
       return [...prev, conditionsDraft.length].sort((a, b) => a - b);
     });
@@ -2700,7 +2705,7 @@ export default function DashboardPatient() {
                 ? []
                 : conditionsDraft.length === 1
                   ? [0]
-                  : primaryIndicesDraft.slice(0, 2),
+                  : primaryIndicesDraft.slice(0, isCollabioraPro ? 2 : 1),
           }),
         },
       );
@@ -3201,6 +3206,7 @@ export default function DashboardPatient() {
     userProfile?.patient?.conditions || user?.medicalInterests || [];
   const primaryConditionIndicesDisplay = (() => {
     const indices = userProfile?.patient?.primaryConditionIndices;
+    const maxIx = isCollabioraPro ? 2 : 1;
     if (
       Array.isArray(indices) &&
       indices.length >= 1 &&
@@ -3208,10 +3214,10 @@ export default function DashboardPatient() {
         (i) => Number.isInteger(i) && i >= 0 && i < userConditions.length,
       )
     ) {
-      return indices.slice(0, 2);
+      return indices.slice(0, maxIx);
     }
     if (userConditions.length === 1) return [0];
-    if (userConditions.length >= 2) return [0, 1];
+    if (userConditions.length >= 2) return isCollabioraPro ? [0, 1] : [0];
     return [];
   })();
   const userLocation =

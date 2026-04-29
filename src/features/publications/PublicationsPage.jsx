@@ -846,7 +846,7 @@ export default function Publications() {
 
   // Trigger search (keywords are optional). Pass `typedLine` from Enter in SmartSearchInput
   // so the latest input is used even before React state flushes.
-  const handleSearch = (typedLine) => {
+  const handleSearch = (typedLine, submitMeta = {}) => {
     // Tutorial: on step 3 do not load results; they load only after advancing to step 4
     if (showTutorial && tutorialStep === SEARCH_BUTTON_STEP) {
       return;
@@ -854,19 +854,23 @@ export default function Publications() {
 
     const line =
       typeof typedLine === "string" ? typedLine : (q ?? "");
+    const selectedFromDropdown = submitMeta?.source === "suggestion";
 
     // Include current input: add cleaned keywords (e.g. "what are the risks..." → risks, colorectal, cancer) not the raw sentence
     let currentKeywords = [...searchKeywords];
     if (line.trim()) {
-      const { keywords: cleanedKeywords } = processKeywordInput(
-        line,
-        publicationSuggestionTerms,
-        true,
-      );
-      const toAdd =
-        cleanedKeywords && cleanedKeywords.length > 0
-          ? cleanedKeywords
-          : [line.trim()];
+      const toAdd = selectedFromDropdown
+        ? [line.trim()]
+        : (() => {
+            const { keywords: cleanedKeywords } = processKeywordInput(
+              line,
+              publicationSuggestionTerms,
+              true,
+            );
+            return cleanedKeywords && cleanedKeywords.length > 0
+              ? cleanedKeywords
+              : [line.trim()];
+          })();
       const newTerms = toAdd.filter(
         (kw) =>
           !currentKeywords.some((k) => k.toLowerCase() === kw.toLowerCase()),

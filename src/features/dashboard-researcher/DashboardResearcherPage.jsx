@@ -86,6 +86,10 @@ import {
 } from "../../utils/formatPublicationDate.js";
 import { useTranslation } from "react-i18next";
 import { getApiLocale, withApiLocale } from "../../i18n/getApiLocale.js";
+import {
+  clearCollabioraProLegacyStorage,
+  useCollabioraPro,
+} from "../../utils/collabioraPro.js";
 
 function sortTrialsByMatchThenRecency(a, b) {
   const matchA = a.matchPercentage ?? 0;
@@ -101,6 +105,7 @@ function sortTrialsByMatchThenRecency(a, b) {
 }
 
 export default function DashboardResearcher() {
+  const isCollabioraPro = useCollabioraPro();
   const { t, i18n } = useTranslation("common");
   const pdfReportLabels = useMemo(
     () => ({
@@ -1080,6 +1085,7 @@ export default function DashboardResearcher() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearCollabioraProLegacyStorage();
     window.dispatchEvent(new Event("logout"));
     navigate("/");
   }
@@ -2484,11 +2490,11 @@ export default function DashboardResearcher() {
       const valid = indices.filter(
         (i) => Number.isInteger(i) && i >= 0 && i < list.length,
       );
-      setPrimaryIndicesDraft(valid.slice(0, 2));
+      setPrimaryIndicesDraft(valid.slice(0, isCollabioraPro ? 2 : 1));
     } else if (list.length === 1) {
       setPrimaryIndicesDraft([0]);
     } else if (list.length >= 2) {
-      setPrimaryIndicesDraft([0, 1]);
+      setPrimaryIndicesDraft(isCollabioraPro ? [0, 1] : [0]);
     } else {
       setPrimaryIndicesDraft([]);
     }
@@ -2513,16 +2519,17 @@ export default function DashboardResearcher() {
       const valid = indices.filter(
         (i) => Number.isInteger(i) && i >= 0 && i < list.length,
       );
-      setPrimaryIndicesDraft(valid.slice(0, 2));
+      setPrimaryIndicesDraft(valid.slice(0, isCollabioraPro ? 2 : 1));
     } else if (list.length === 1) {
       setPrimaryIndicesDraft([0]);
     } else if (list.length >= 2) {
-      setPrimaryIndicesDraft([0, 1]);
+      setPrimaryIndicesDraft(isCollabioraPro ? [0, 1] : [0]);
     } else {
       setPrimaryIndicesDraft([]);
     }
   }, [
     editInterestsModalOpen,
+    isCollabioraPro,
     userProfile?.researcher?.interests,
     userProfile?.researcher?.primaryInterestIndices,
     userProfile?.researcher?.specialties,
@@ -2532,6 +2539,7 @@ export default function DashboardResearcher() {
     setPrimaryIndicesDraft((prev) => {
       const has = prev.includes(index);
       if (has) return prev.filter((i) => i !== index);
+      if (!isCollabioraPro) return [index];
       if (prev.length >= 2) return [prev[1], index];
       return [...prev, index].sort((a, b) => a - b);
     });
@@ -2543,7 +2551,7 @@ export default function DashboardResearcher() {
       prev
         .map((i) => (i > index ? i - 1 : i === index ? -1 : i))
         .filter((i) => i >= 0)
-        .slice(0, 2),
+        .slice(0, isCollabioraPro ? 2 : 1),
     );
   }
 
@@ -2556,6 +2564,7 @@ export default function DashboardResearcher() {
     setInterestsDraft((prev) => [...prev, canonical]);
     setNewInterestInput("");
     setPrimaryIndicesDraft((prev) => {
+      if (!isCollabioraPro) return [interestsDraft.length];
       if (prev.length >= 2) return prev;
       return [...prev, interestsDraft.length].sort((a, b) => a - b);
     });
@@ -2578,7 +2587,7 @@ export default function DashboardResearcher() {
                 ? []
                 : interestsDraft.length === 1
                   ? [0]
-                  : primaryIndicesDraft.slice(0, 2),
+                  : primaryIndicesDraft.slice(0, isCollabioraPro ? 2 : 1),
           }),
         },
       );
@@ -3083,6 +3092,7 @@ export default function DashboardResearcher() {
       : userProfile?.researcher?.specialties || [];
   const primaryInterestIndicesDisplay = (() => {
     const indices = userProfile?.researcher?.primaryInterestIndices;
+    const maxIx = isCollabioraPro ? 2 : 1;
     if (
       Array.isArray(indices) &&
       indices.length >= 1 &&
@@ -3090,10 +3100,11 @@ export default function DashboardResearcher() {
         (i) => Number.isInteger(i) && i >= 0 && i < userInterestsList.length,
       )
     ) {
-      return indices.slice(0, 2);
+      return indices.slice(0, maxIx);
     }
     if (userInterestsList.length === 1) return [0];
-    if (userInterestsList.length >= 2) return [0, 1];
+    if (userInterestsList.length >= 2)
+      return isCollabioraPro ? [0, 1] : [0];
     return [];
   })();
   const userLocation = userProfile?.researcher?.location || null;

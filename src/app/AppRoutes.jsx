@@ -3,6 +3,7 @@ import {
   AuthenticatedRedirect,
   DashboardRedirect,
   ProfileGuard,
+  ProWellnessGate,
 } from "./guards.jsx";
 import {
   AboutUs,
@@ -40,6 +41,7 @@ import {
   Notifications,
   OnboardingNew,
   OrcidCallback,
+  Plans,
   PressReleasePCLADetails,
   PressReleaseYoriDetails,
   PrivacyPolicyAndTerms,
@@ -53,6 +55,7 @@ import {
   Trials,
   Trending,
   VerifyEmail,
+  WellnessProPage,
   YoriAI,
 } from "./lazyPages.js";
 
@@ -70,6 +73,7 @@ export function AppRoutes() {
       />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/plans" element={<Plans />} />
       <Route path="/contact" element={<ContactUs />} />
       <Route path="/faq" element={<FAQ />} />
       <Route path="/privacy" element={<PrivacyPolicyAndTerms />} />
@@ -103,6 +107,22 @@ export function AppRoutes() {
         element={<Navigate to="/onboarding" replace />}
       />
       <Route path="/yori" element={<YoriAI />} />
+      <Route
+        path="/wellness-pro"
+        element={<Navigate to="/wellness" replace />}
+      />
+      <Route
+        path="/wellness-only"
+        element={<Navigate to="/wellness" replace />}
+      />
+      <Route
+        path="/wellness"
+        element={
+          <ProWellnessGate>
+            <WellnessProPage />
+          </ProWellnessGate>
+        }
+      />
       <Route path="/dashboard" element={<DashboardRedirect />} />
       <Route
         path="/dashboard/patient"

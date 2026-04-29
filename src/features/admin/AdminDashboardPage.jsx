@@ -53,6 +53,7 @@ import {
   X,
   Send,
   History,
+  Sparkles,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import {
@@ -572,6 +573,11 @@ const SECTIONS = [
     icon: Mail,
   },
   {
+    id: "collabiora-pro",
+    label: "Collabiora Pro",
+    icon: Sparkles,
+  },
+  {
     id: "beta-users",
     label: "Beta program",
     icon: FlaskConical,
@@ -686,6 +692,7 @@ const SIDEBAR_GROUPS = [
     title: "OTHERS",
     items: [
       "weekly-mailer",
+      "collabiora-pro",
       "beta-users",
       "researcher-invites",
       "onboarding-cleanup",
@@ -825,6 +832,14 @@ export default function AdminDashboard() {
   const [betaSurveySearchQuery, setBetaSurveySearchQuery] = useState("");
   const [betaSurveyPipeline, setBetaSurveyPipeline] = useState([]);
   const [betaSurveyLastBatch, setBetaSurveyLastBatch] = useState(null);
+  // Collabiora Pro (grant / revoke)
+  const [collabioraProUsers, setCollabioraProUsers] = useState([]);
+  const [loadingCollabioraProUsers, setLoadingCollabioraProUsers] =
+    useState(false);
+  const [proLookupEmail, setProLookupEmail] = useState("");
+  const [proLookupResults, setProLookupResults] = useState([]);
+  const [proLookupLoading, setProLookupLoading] = useState(false);
+  const [proToggleId, setProToggleId] = useState(null);
   // Researcher invite mailer (external researchers; tags + parsed or manual name each)
   const [researcherInviteDraftEmail, setResearcherInviteDraftEmail] =
     useState("");
@@ -1011,6 +1026,54 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCollabioraProUsers = async () => {
+    try {
+      setLoadingCollabioraProUsers(true);
+      const { token, headers } = getAuth();
+      if (!token) return;
+      const res = await fetch(`${base}/api/admin/collabiora-pro/users`, {
+        headers,
+      });
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      setCollabioraProUsers(Array.isArray(data.users) ? data.users : []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load Collabiora Pro users");
+    } finally {
+      setLoadingCollabioraProUsers(false);
+    }
+  };
+
+  const patchCollabioraProAccess = async (userId, collabioraPro) => {
+    setProToggleId(userId);
+    try {
+      const { headers } = getAuth();
+      const res = await fetch(
+        `${base}/api/admin/users/${userId}/collabiora-pro`,
+        {
+          method: "PATCH",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ collabioraPro }),
+        },
+      );
+      if (handleAdminAuthFailure(res)) return;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Update failed");
+      toast.success(collabioraPro ? "Pro granted" : "Pro revoked");
+      await fetchCollabioraProUsers();
+      setProLookupResults((prev) =>
+        prev.map((u) =>
+          String(u._id) === String(userId) ? { ...u, collabioraPro } : u,
+        ),
+      );
+    } catch (e) {
+      toast.error(e.message || "Update failed");
+    } finally {
+      setProToggleId(null);
+    }
+  };
+
   useEffect(() => {
     const adminToken = localStorage.getItem("adminToken");
     if (!adminToken) {
@@ -1095,6 +1158,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "beta-users") {
       fetchBetaProgramUsers();
+    }
+    if (activeSection === "collabiora-pro") {
+      fetchCollabioraProUsers();
     }
     if (activeSection === "active-users") {
       fetchActiveUserStats();
@@ -8804,6 +8870,164 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeSection === "collabiora-pro" && (
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6 space-y-6">
+                <div>
+                  <h2 className="text-lg font-bold text-brand-royal-blue mb-1">
+                    Collabiora Pro access
+                  </h2>
+                  <p className="text-sm text-brand-gray">
+                    Grant or revoke Pro status (Wellness Pro and related
+                    features). Users see “Pro user” below their name in the main
+                    navbar when active. They must refresh or sign in again to
+                    sync if already logged in elsewhere.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-brand-purple-200/60 bg-brand-purple-50/40 p-4">
+                  <p className="text-xs font-semibold text-brand-gray uppercase tracking-wide mb-2">
+                    Look up by email
+                  </p>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <input
+                      type="email"
+                      value={proLookupEmail}
+                      onChange={(e) => setProLookupEmail(e.target.value)}
+                      placeholder="user@example.com"
+                      className="flex-1 min-w-[200px] px-2.5 py-1.5 border border-[rgba(208,196,226,0.5)] rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      disabled={proLookupLoading || !proLookupEmail.trim()}
+                      onClick={async () => {
+                        setProLookupLoading(true);
+                        try {
+                          const { headers } = getAuth();
+                          const q = encodeURIComponent(
+                            proLookupEmail.trim().toLowerCase(),
+                          );
+                          const res = await fetch(
+                            `${base}/api/admin/collabiora-pro/lookup?email=${q}`,
+                            { headers },
+                          );
+                          if (handleAdminAuthFailure(res)) return;
+                          const data = await res.json();
+                          const list = Array.isArray(data.users)
+                            ? data.users
+                            : [];
+                          setProLookupResults(list);
+                          if (!list.length)
+                            toast.error("No account with that email");
+                        } catch (_e) {
+                          toast.error("Lookup failed");
+                        } finally {
+                          setProLookupLoading(false);
+                        }
+                      }}
+                      className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-[#2F3C96] disabled:opacity-50"
+                    >
+                      {proLookupLoading ? "…" : "Look up"}
+                    </button>
+                  </div>
+                  {proLookupResults.length > 0 ? (
+                    <ul className="mt-3 space-y-2">
+                      {proLookupResults.map((u) => (
+                        <li
+                          key={u._id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/80 bg-white/90 px-3 py-2 text-sm"
+                        >
+                          <span className="min-w-0">
+                            <span className="font-semibold text-brand-royal-blue">
+                              {u.email}
+                            </span>
+                            <span className="text-brand-gray"> · {u.role}</span>
+                            {u.collabioraPro ? (
+                              <span className="ml-2 text-xs font-semibold text-amber-800">
+                                Pro
+                              </span>
+                            ) : (
+                              <span className="ml-2 text-xs text-brand-gray">
+                                Standard
+                              </span>
+                            )}
+                          </span>
+                          <div className="flex gap-2">
+                            {!u.collabioraPro ? (
+                              <button
+                                type="button"
+                                disabled={proToggleId === u._id}
+                                onClick={() =>
+                                  patchCollabioraProAccess(u._id, true)
+                                }
+                                className="text-xs font-semibold px-3 py-1 rounded-md bg-emerald-600 text-white disabled:opacity-50"
+                              >
+                                Grant Pro
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={proToggleId === u._id}
+                                onClick={() =>
+                                  patchCollabioraProAccess(u._id, false)
+                                }
+                                className="text-xs font-semibold px-3 py-1 rounded-md bg-slate-600 text-white disabled:opacity-50"
+                              >
+                                Revoke Pro
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-brand-royal-blue mb-2">
+                    Current Pro members ({collabioraProUsers.length})
+                  </h3>
+                  {loadingCollabioraProUsers ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-brand-royal-blue" />
+                  ) : collabioraProUsers.length === 0 ? (
+                    <p className="text-sm text-brand-gray">No Pro members yet.</p>
+                  ) : (
+                    <ul className="space-y-2 max-h-[420px] overflow-y-auto">
+                      {collabioraProUsers.map((u) => (
+                        <li
+                          key={u._id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-gray-100 px-3 py-2 text-sm"
+                        >
+                          <span className="min-w-0">
+                            <span className="font-medium">
+                              {u.username || "—"}
+                            </span>
+                            <span className="text-brand-gray">
+                              {" "}
+                              · {u.email}
+                            </span>
+                            <span className="text-brand-gray">
+                              {" "}
+                              · {u.role}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            disabled={proToggleId === u._id}
+                            onClick={() =>
+                              patchCollabioraProAccess(u._id, false)
+                            }
+                            className="text-xs font-semibold px-3 py-1 rounded-md bg-slate-600 text-white disabled:opacity-50 shrink-0"
+                          >
+                            Revoke
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             )}
 

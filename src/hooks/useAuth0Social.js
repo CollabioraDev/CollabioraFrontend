@@ -1,5 +1,6 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import { useCallback } from "react";
+import { clearCollabioraProLegacyStorage } from "../utils/collabioraPro.js";
 
 /**
  * Custom hook for Auth0 social login
@@ -200,6 +201,7 @@ export function useAuth0Social() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("auth0_pending_onboarding");
+    clearCollabioraProLegacyStorage();
 
     // Logout from Auth0
     auth0.logout({
