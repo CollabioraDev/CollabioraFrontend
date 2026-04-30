@@ -270,7 +270,7 @@ export default function Plans() {
               features={browseFeatures}
               action={
                 <Link
-                  to="/explore"
+                  to="/home"
                   className="block rounded-xl px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:opacity-95"
                   style={{ backgroundColor: ROYAL }}
                 >
@@ -608,7 +608,7 @@ export default function Plans() {
             >
               Patients always access collabiora for free. Premium is optional and
               never required to connect with your community. Questions?{" "}
-              <Link to="/yori" className="font-semibold underline-offset-2 hover:underline" style={{ color: ROYAL }}>
+              <Link to="/home" className="font-semibold underline-offset-2 hover:underline" style={{ color: ROYAL }}>
                 Chat with Yori
               </Link>
               .

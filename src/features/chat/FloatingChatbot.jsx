@@ -2275,7 +2275,7 @@ const FloatingChatbot = () => {
 
   const handleOpen = () => {
     if (!user) {
-      navigate("/");
+      navigate("/home");
       return;
     }
     setIsMinimized(false);
