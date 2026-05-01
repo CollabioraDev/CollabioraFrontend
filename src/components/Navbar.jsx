@@ -61,16 +61,16 @@ export default function Navbar() {
   // On admin routes, show only the logo (no nav links, no Sign In)
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  // Curate site-listed trials: logo only (same as admin bar)
-  const isCurateTrialsRoute =
-    location.pathname === "/curate-trials" ||
-    location.pathname.startsWith("/curate-trials/");
+  // Add site-listed trials: logo only (same as admin bar)
+  const isAddTrialsRoute =
+    location.pathname === "/add-trials" ||
+    location.pathname.startsWith("/add-trials/");
 
   // Plans (pricing): guests see logo + Sign In only — no Trials / Publications / Experts / Forums / Discovery
   const isPlansPage = location.pathname === "/plans";
   const isLogoOnlyNav =
     isAdminRoute ||
-    isCurateTrialsRoute ||
+    isAddTrialsRoute ||
     (isPlansPage && !isLoggedInUser);
 
   // About Us, Contact, Sign In, Onboarding: for non-signed-in show basic nav (About Us, FAQ, Contact); for signed-in show Explore, Forums, Discovery

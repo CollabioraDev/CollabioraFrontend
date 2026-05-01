@@ -41,9 +41,9 @@ const AppContent = () => {
   const isEditProfilePage = location.pathname === "/profile";
   const isYoriPage = location.pathname === "/yori";
   const isMeetingPage = location.pathname.startsWith("/meeting/");
-  const isCurateTrialsPage =
-    location.pathname === "/curate-trials" ||
-    location.pathname.startsWith("/curate-trials/");
+  const isAddTrialsPage =
+    location.pathname === "/add-trials" ||
+    location.pathname.startsWith("/add-trials/");
   const isAuthCallbackPage =
     location.pathname === "/auth/callback" ||
     location.pathname === "/auth/orcid/callback";
@@ -146,7 +146,7 @@ const AppContent = () => {
         !isMeetingPage &&
         !isOnboardingPage &&
         !isAuthCallbackPage &&
-        !isCurateTrialsPage &&
+        !isAddTrialsPage &&
         !(isMobile && isEditProfilePage) && (
           <Suspense fallback={null}>
             <FloatingChatbot />
@@ -228,7 +228,7 @@ const AppContent = () => {
       {showLayout &&
         isMobile &&
         isSignedIn &&
-        !isCurateTrialsPage && (
+        !isAddTrialsPage && (
           <MobileBottomNav isPatient={isPatient} />
         )}
     </div>

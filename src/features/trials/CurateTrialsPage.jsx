@@ -273,7 +273,7 @@ export default function CurateTrials() {
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Link
-                to="/curate-trials/manage"
+                to="/add-trials/manage"
                 className="inline-flex items-center rounded-lg border border-indigo-200 bg-white/90 px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors shadow-sm"
               >
                 {t("curateTrials.viewSaved")}

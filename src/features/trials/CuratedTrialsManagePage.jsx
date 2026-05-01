@@ -147,7 +147,7 @@ export default function CuratedTrialsManage() {
                 components={{
                   addLink: (
                     <Link
-                      to="/curate-trials"
+                      to="/add-trials"
                       className="text-indigo-600 font-medium underline"
                     />
                   ),
@@ -170,13 +170,13 @@ export default function CuratedTrialsManage() {
                 {t("curatedTrialsManage.refresh")}
               </Button>
               <Link
-                to="/curate-trials?tab=template"
+                to="/add-trials?tab=template"
                 className="inline-flex items-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
               >
                 {t("curatedTrialsManage.structuredTemplate")}
               </Link>
               <Link
-                to="/curate-trials"
+                to="/add-trials"
                 className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-[#2F3C96] hover:bg-slate-50 hover:border-indigo-200 transition-colors"
               >
                 {t("curatedTrialsManage.addTrials")}
@@ -201,7 +201,7 @@ export default function CuratedTrialsManage() {
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-14 text-center">
             <p className="text-slate-600 mb-2">{t("curatedTrialsManage.empty")}</p>
             <Link
-              to="/curate-trials"
+              to="/add-trials"
               className="text-indigo-600 font-medium underline"
             >
               {t("curatedTrialsManage.pasteLink")}

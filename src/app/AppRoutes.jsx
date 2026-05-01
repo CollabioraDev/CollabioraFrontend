@@ -141,8 +141,8 @@ export function AppRoutes() {
         }
       />
       <Route path="/trials" element={<Trials />} />
-      <Route path="/curate-trials" element={<CurateTrials />} />
-      <Route path="/curate-trials/manage" element={<CuratedTrialsManage />} />
+      <Route path="/add-trials" element={<CurateTrials />} />
+      <Route path="/add-trials/manage" element={<CuratedTrialsManage />} />
       <Route path="/trial/:nctId" element={<TrialDetails />} />
       <Route path="/publications" element={<Publications />} />
       <Route path="/library" element={<Publications />} />

@@ -95,7 +95,7 @@ export default function WellnessOnlySettingsModal({ open, onClose }) {
   const fuseMeds = useMemo(
     () =>
       new Fuse(MEDICATION_GENERICS, {
-        keys: ["label"],
+        keys: ["label", "name", "synonyms", "search_terms", "category"],
         threshold: 0.35,
         ignoreLocation: true,
       }),
@@ -429,9 +429,11 @@ export default function WellnessOnlySettingsModal({ open, onClose }) {
                         onClick={() => addMedication(m.label)}
                       >
                         <span className="capitalize">{m.label}</span>
-                        <span className="ml-2 text-xs text-slate-400">
-                          {m.category.replace(/_/g, " ")}
-                        </span>
+                        {m.synonyms?.length > 0 && (
+                          <span className="ml-2 text-xs text-slate-400">
+                            {m.synonyms.slice(0, 2).join(", ")}
+                          </span>
+                        )}
                       </button>
                     </li>
                   ))}
