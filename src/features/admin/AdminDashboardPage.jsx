@@ -6660,8 +6660,8 @@ export default function AdminDashboard() {
                                     key={p._id}
                                     className="bg-white/50 rounded-xl p-4 border border-[rgba(208,196,226,0.4)]"
                                   >
-                                    <div className="flex flex-col sm:flex-row gap-4">
-                                      <div className="shrink-0 flex items-start gap-3">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                      <div className="min-w-0 flex flex-1 items-start gap-3">
                                         <label className="shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-lg border-2 border-dashed border-brand-purple-200 bg-brand-purple-50/50 cursor-pointer hover:border-brand-royal-blue/40 hover:bg-brand-royal-blue/5 transition-all">
                                           {approvalThumbnailUploading[p._id] ? (
                                             <Loader2 className="w-6 h-6 text-brand-royal-blue animate-spin" />
@@ -6717,7 +6717,7 @@ export default function AdminDashboard() {
                                           </p>
                                         </div>
                                       </div>
-                                      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+                                      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
                                         <Button
                                           onClick={() =>
                                             handleApproveProposal(
@@ -6728,7 +6728,7 @@ export default function AdminDashboard() {
                                           disabled={
                                             approvingProposalId === p._id
                                           }
-                                          className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5"
+                                          className="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg flex items-center gap-1.5 whitespace-nowrap"
                                         >
                                           {approvingProposalId === p._id ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -6742,7 +6742,7 @@ export default function AdminDashboard() {
                                           disabled={
                                             rejectingProposalId === p._id
                                           }
-                                          className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5"
+                                          className="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-lg flex items-center gap-1.5 whitespace-nowrap"
                                         >
                                           {rejectingProposalId === p._id ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />
