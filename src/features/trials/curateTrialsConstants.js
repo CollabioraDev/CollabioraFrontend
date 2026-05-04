@@ -1,23 +1,5 @@
 export const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-/**
- * Saved on each curated trial as `institutionKey`.
- * UCLA filter on Trials currently only loads `ucla`; other keys are stored and can be wired to search/filters later.
- */
-export const CURATE_INSTITUTION_OPTIONS = [
-  {
-    value: "ucla",
-    label: "University of California, Los Angeles",
-  },
-  { value: "usc", label: "University of Southern California" },
-  { value: "uci", label: "University of California, Irvine" },
-  {
-    value: "cedars-sinai",
-    label: "Cedars-Sinai Medical Center, Los Angeles",
-  },
-  { value: "general", label: "Any" },
-];
-
 /** Shown in paste slots and in “Copy example format” for curators. */
 export const PASTE_FORMAT_EXAMPLE = `NEULARK — NEU-411 (LRRK2 Inhibitor, Phase 2)
 

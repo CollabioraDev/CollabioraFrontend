@@ -73,7 +73,7 @@ import {
 } from "../../utils/guestBrowseMode.js";
 import { recordTrialEngagement } from "../../utils/productAnalytics.js";
 import { useNlmClinicalSuggestions } from "../../hooks/useNlmClinicalSuggestions.js";
-import { CURATE_INSTITUTION_OPTIONS } from "./curateTrialsConstants.js";
+import { base } from "./curateTrialsConstants.js";
 
 /** Same pattern as ContactUs.jsx — opens Gmail compose in a new tab with prefilled fields. */
 function buildGmailComposeUrl(toEmails, subject, body) {
@@ -255,6 +255,21 @@ export default function Trials() {
   const [ageRange, setAgeRange] = useState({ min: "", max: "" }); // For manual age range
   const [phase, setPhase] = useState(""); // Phase filter: "PHASE1", "PHASE2", "PHASE3", "PHASE4", or ""
   const [institution, setInstitution] = useState("");
+  const [dynamicInstitutions, setDynamicInstitutions] = useState([]);
+
+  useEffect(() => {
+    async function fetchList() {
+      try {
+        const res = await fetch(`${base}/api/curated-trials/institutions`);
+        if (!res.ok) throw new Error("Failed to fetch institutions");
+        const data = await res.json();
+        setDynamicInstitutions(data.institutions || []);
+      } catch (e) {
+        console.error("fetch institutions", e);
+      }
+    }
+    fetchList();
+  }, []);
   const [otherTerms, setOtherTerms] = useState(""); // Other search terms
   const [intervention, setIntervention] = useState(""); // Intervention/treatment
 
@@ -363,18 +378,19 @@ export default function Trials() {
     [t, i18n.language],
   );
 
-  /** Same curated keys/labels as Curate Trials (`CURATE_INSTITUTION_OPTIONS`). */
+  /** Same curated keys/labels as Curate Trials (dynamic from database). */
   const INSTITUTION_UCLA =
-    CURATE_INSTITUTION_OPTIONS.find((o) => o.value === "ucla")?.label ??
+    dynamicInstitutions.find((o) => o.key === "ucla")?.displayName ??
     "University of California, Los Angeles";
   const institutionOptions = useMemo(
     () => [
       { value: "", label: t("trials.allInstitutions") },
-      ...CURATE_INSTITUTION_OPTIONS.filter((o) => o.value !== "general").map(
-        (o) => ({ value: o.label, label: o.label }),
-      ),
+      ...dynamicInstitutions.map((o) => ({
+        value: o.displayName,
+        label: o.displayName,
+      })),
     ],
-    [t, i18n.language],
+    [t, i18n.language, dynamicInstitutions],
   );
 
   /** Tracks prior institution for proactive UCLA search; synced in effect below. */

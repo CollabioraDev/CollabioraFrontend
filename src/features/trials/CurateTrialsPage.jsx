@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -24,7 +24,6 @@ import {
   base,
   PLACEHOLDER,
   PASTE_FORMAT_EXAMPLE,
-  CURATE_INSTITUTION_OPTIONS,
 } from "./curateTrialsConstants.js";
 import {
   applyTrialPatch,
@@ -64,6 +63,28 @@ export default function CurateTrials() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [templateConfirmOpen, setTemplateConfirmOpen] = useState(false);
   const [curateInstitutionKey, setCurateInstitutionKey] = useState("ucla");
+  const [dynamicInstitutions, setDynamicInstitutions] = useState([]);
+
+  useEffect(() => {
+    async function fetchList() {
+      try {
+        const res = await fetch(`${base}/api/curated-trials/institutions`);
+        if (!res.ok) throw new Error("Failed to fetch institutions");
+        const data = await res.json();
+        setDynamicInstitutions(data.institutions || []);
+      } catch (e) {
+        console.error("fetch institutions", e);
+      }
+    }
+    fetchList();
+  }, []);
+
+  const institutionOptions = useMemo(() => {
+    return dynamicInstitutions.map((inst) => ({
+      value: inst.key,
+      label: inst.displayName,
+    }));
+  }, [dynamicInstitutions]);
 
   const copyTrialFormatSample = useCallback(async () => {
     try {
@@ -422,7 +443,7 @@ export default function CurateTrials() {
               <CustomSelect
                 value={curateInstitutionKey}
                 onChange={setCurateInstitutionKey}
-                options={CURATE_INSTITUTION_OPTIONS}
+                options={institutionOptions}
                 disabled={saving}
                 className="w-full [&>div]:min-h-11 [&>div]:rounded-xl [&>div]:px-3.5 [&>div]:py-2.5 [&>div]:text-sm [&>div]:font-medium [&>div]:text-[#2F3C96] [&>div]:shadow-sm"
                 placeholder={t("curateTrials.institutionPlaceholder", "Select Institution")}
