@@ -31,6 +31,8 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  Building2,
+  Hospital,
   X,
 } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
@@ -4822,43 +4824,66 @@ export default function Trials() {
                   {/* Location */}
                   {detailsModal.trial.locations &&
                   detailsModal.trial.locations.length > 0 ? (
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="bg-indigo-50/50 rounded-xl p-5 border border-indigo-100">
                       <h4
-                        className="font-bold mb-3 flex items-center gap-2 text-sm"
+                        className="font-bold mb-4 flex items-center gap-2 text-base"
                         style={{ color: "#2F3C96" }}
                       >
-                        <MapPin className="w-4 h-4 text-green-600" />
+                        <MapPin className="w-5 h-5 text-indigo-600" />
                         Trial Locations ({detailsModal.trial.locations.length})
                       </h4>
-                      <div className="space-y-2">
-                        {detailsModal.trial.locations
-                          .slice(0, 3)
-                          .map((loc, idx) => (
+                      <div 
+                        className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" 
+                        style={{ maxHeight: "400px" }}
+                      >
+                        {detailsModal.trial.locations.map((loc, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-white rounded-lg p-4 border border-indigo-100 shadow-sm"
+                          >
+                            {loc.facility && (
+                              <div
+                                className="font-bold mb-2 flex items-center gap-2"
+                                style={{ color: "#2F3C96" }}
+                              >
+                                <Hospital className="w-4 h-4 text-indigo-500" />
+                                {loc.facility}
+                              </div>
+                            )}
                             <div
-                              key={idx}
-                              className="text-sm"
+                              className="text-sm mb-3 leading-relaxed"
                               style={{ color: "#787878" }}
                             >
-                              {loc.facility && (
-                                <span
-                                  className="font-semibold"
-                                  style={{ color: "#2F3C96" }}
-                                >
-                                  {loc.facility}:{" "}
-                                </span>
-                              )}
-                              {loc.fullAddress || loc.address}
+                              {loc.fullAddress || loc.address || [loc.city, loc.state, loc.country].filter(Boolean).join(", ")}
                             </div>
-                          ))}
-                        {detailsModal.trial.locations.length > 3 && (
-                          <div
-                            className="text-xs italic"
-                            style={{ color: "#787878" }}
-                          >
-                            + {detailsModal.trial.locations.length - 3} more
-                            location(s)
+                            {(loc.contactName || loc.contactEmail || loc.contactPhone) && (
+                              <div className="pt-3 mt-3 border-t border-slate-100 space-y-2">
+                                {loc.contactName && (
+                                  <div className="text-xs font-semibold flex items-center gap-2" style={{ color: "#2F3C96" }}>
+                                    <User className="w-3.5 h-3.5 text-slate-400" />
+                                    {loc.contactName}
+                                  </div>
+                                )}
+                                {loc.contactEmail && (
+                                  <a
+                                    href={`mailto:${loc.contactEmail}`}
+                                    className="text-xs flex items-center gap-2 hover:underline transition-colors"
+                                    style={{ color: "#2F3C96" }}
+                                  >
+                                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                    {loc.contactEmail}
+                                  </a>
+                                )}
+                                {loc.contactPhone && (
+                                  <div className="text-xs flex items-center gap-2" style={{ color: "#787878" }}>
+                                    <span className="text-slate-400">📞</span>
+                                    {loc.contactPhone}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   ) : detailsModal.trial.location &&
