@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
+import Modal from "../../components/ui/Modal.jsx";
 import toast from "react-hot-toast";
 import {
   CheckCircle,
@@ -942,6 +943,7 @@ export default function AdminDashboard() {
     description: "",
   });
   const [editingInstitutionId, setEditingInstitutionId] = useState(null);
+  const [institutionToDelete, setInstitutionToDelete] = useState(null);
   // Profile reminder mailing
   const [profileReminderStats, setProfileReminderStats] = useState(null);
   const [profileReminderLogs, setProfileReminderLogs] = useState([]);
@@ -1290,7 +1292,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteInstitution = async (id) => {
-    if (!confirm("Are you sure you want to delete this institution? This might affect trials associated with its key.")) return;
+    if (!id) return;
     const { token, headers } = getAuth();
     if (!token) return;
     setDeletingInstitutionId(id);
@@ -10186,20 +10188,20 @@ export default function AdminDashboard() {
 
             {activeSection === "institutions" && (
               <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-4 md:p-6">
-                <p className="text-sm text-brand-gray mb-6">
+                <p className="text-sm text-brand-gray mb-4">
                   Manage whitelisted institutions for clinical trial curation.
                   Only active institutions will appear in curation dropdowns.
                 </p>
 
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-8">
-                  <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Add New Institution
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-4">
+                  <h3 className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <Plus className="w-3.5 h-3.5" /> Add New Institution
                   </h3>
-                  <form onSubmit={handleAddInstitution} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-brand-gray uppercase mb-1">
-                          Key (e.g. ucla)
+                  <form onSubmit={handleAddInstitution}>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+                      <div className="lg:col-span-2">
+                        <label className="block text-[10px] font-bold text-brand-gray uppercase mb-1">
+                          Key
                         </label>
                         <input
                           type="text"
@@ -10210,13 +10212,13 @@ export default function AdminDashboard() {
                               key: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
-                          placeholder="Short identifier..."
+                          className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
+                          placeholder="e.g. ucla"
                           required
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-brand-gray uppercase mb-1">
+                      <div className="lg:col-span-3">
+                        <label className="block text-[10px] font-bold text-brand-gray uppercase mb-1">
                           Display Name
                         </label>
                         <input
@@ -10228,40 +10230,42 @@ export default function AdminDashboard() {
                               displayName: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
+                          className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
                           placeholder="Human readable name..."
                           required
                         />
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-brand-gray uppercase mb-1">
-                        Description (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={institutionDraft.description}
-                        onChange={(e) =>
-                          setInstitutionDraft({
-                            ...institutionDraft,
-                            description: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
-                        placeholder="Context for curators..."
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={savingInstitution}
-                        className="px-6 py-2 bg-brand-royal-blue text-white rounded-lg hover:bg-brand-royal-blue/90 font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {savingInstitution && (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        )}
-                        Add Institution
-                      </button>
+                      <div className="lg:col-span-5">
+                        <label className="block text-[10px] font-bold text-brand-gray uppercase mb-1">
+                          Description (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={institutionDraft.description}
+                          onChange={(e) =>
+                            setInstitutionDraft({
+                              ...institutionDraft,
+                              description: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-royal-blue/20"
+                          placeholder="Context for curators..."
+                        />
+                      </div>
+                      <div className="lg:col-span-2">
+                        <button
+                          type="submit"
+                          disabled={savingInstitution}
+                          className="w-full py-1.5 bg-brand-royal-blue text-white rounded-lg hover:bg-brand-royal-blue/90 font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {savingInstitution ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Plus className="w-3.5 h-3.5" />
+                          )}
+                          Add
+                        </button>
+                      </div>
                     </div>
                   </form>
                 </div>
@@ -10293,20 +10297,20 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto max-h-[380px] overflow-y-auto border border-slate-100 rounded-lg custom-scrollbar">
                     <table className="w-full border-collapse">
-                      <thead>
+                      <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
                         <tr className="border-b border-slate-100">
-                          <th className="text-left py-4 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider">
+                          <th className="text-left py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Institution
                           </th>
-                          <th className="text-left py-4 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider">
+                          <th className="text-left py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Key
                           </th>
-                          <th className="text-left py-4 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider">
+                          <th className="text-left py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Status
                           </th>
-                          <th className="text-right py-4 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider">
+                          <th className="text-right py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Actions
                           </th>
                         </tr>
@@ -10396,7 +10400,7 @@ export default function AdminDashboard() {
                                 )}
                                 <button
                                   onClick={() =>
-                                    handleDeleteInstitution(inst._id)
+                                    setInstitutionToDelete(inst)
                                   }
                                   disabled={deletingInstitutionId === inst._id}
                                   className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -10420,6 +10424,53 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Institution Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!institutionToDelete}
+        onClose={() => setInstitutionToDelete(null)}
+        title="Confirm Deletion"
+        maxWidthClassName="max-w-md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setInstitutionToDelete(null)}
+              className="px-4 py-2 text-sm font-medium text-brand-gray hover:text-[#2F3C96] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                const id = institutionToDelete?._id;
+                setInstitutionToDelete(null);
+                handleDeleteInstitution(id);
+              }}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold text-sm transition-colors flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Institution
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-red-600">
+            <AlertTriangle className="w-6 h-6 shrink-0" />
+            <p className="font-bold text-lg">Irreversible Action</p>
+          </div>
+          <p className="text-brand-gray text-sm leading-relaxed">
+            Are you sure you want to delete{" "}
+            <span className="font-bold text-[#2F3C96]">
+              {institutionToDelete?.displayName}
+            </span>?
+          </p>
+          <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+            <p className="text-[13px] text-red-700 leading-relaxed">
+              <span className="font-bold">Warning:</span> This will permanently remove the institution from the system. This might affect clinical trials and curated data associated with the key <strong>{institutionToDelete?.key}</strong>.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </Layout>
   );
 }
