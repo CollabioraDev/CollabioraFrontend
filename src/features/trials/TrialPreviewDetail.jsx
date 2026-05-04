@@ -166,10 +166,28 @@ export function TrialPreviewDetail({
                 ))}
               </select>
             </div>
+            <div className="mt-1">
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                Target enrollment
+              </label>
+              <input
+                type="number"
+                className={editFieldClass}
+                placeholder="Total target number of participants"
+                value={t.targetEnrollment || ""}
+                onChange={(e) =>
+                  patch({
+                    targetEnrollment: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : null,
+                  })
+                }
+              />
+            </div>
           </div>
         </div>
       )}
-      {/* Card header â€” always visible */}
+      {/* Card header — always visible */}
       <div className="p-5 pb-4">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -222,7 +240,7 @@ export function TrialPreviewDetail({
 
         {t._warnings?.length > 0 && (
           <p className="text-xs text-amber-700 mt-2 bg-amber-50 rounded px-2 py-1 border border-amber-200">
-            {t._warnings.join(" Â· ")}
+            {t._warnings.join(" · ")}
           </p>
         )}
       </div>
@@ -317,7 +335,7 @@ export function TrialPreviewDetail({
             </Section>
           )}
 
-          {/* Who Can Join â€” eligibility overview + inc/exc */}
+          {/* Who Can Join — eligibility overview + inc/exc */}
           {(t.whoCanJoin || hasInclusion || hasExclusion || showAllSections) && (
             <Section
               icon={ListChecks}
@@ -462,7 +480,7 @@ export function TrialPreviewDetail({
                   </div>
                   <p className="text-sm font-bold" style={{ color: "#2F3C96" }}>
                     {t.eligibility?.minimumAge && t.eligibility?.maximumAge
-                      ? `${t.eligibility.minimumAge} â€“ ${t.eligibility.maximumAge}`
+                      ? `${t.eligibility.minimumAge} – ${t.eligibility.maximumAge}`
                       : t.eligibility?.minimumAge ||
                         t.eligibility?.maximumAge ||
                         "N/A"}
@@ -485,7 +503,13 @@ export function TrialPreviewDetail({
                     </span>
                   </div>
                   <p className="text-sm font-bold" style={{ color: "#2F3C96" }}>
-                    {enrollmentLabel(t.status)}
+                    {t.targetEnrollment != null ? (
+                      <>
+                        {t.targetEnrollment} Patients Needed
+                      </>
+                    ) : (
+                      enrollmentLabel(t.status)
+                    )}
                   </p>
                 </div>
               </div>

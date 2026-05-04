@@ -281,7 +281,7 @@ export default function TrialDetails() {
                   {t("trialDetails.eligibilityCriteria")}
                 </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <div
                     className="bg-gray-50 rounded-lg p-4 border"
                     style={{ borderColor: "rgba(232, 224, 239, 1)" }}
@@ -357,6 +357,38 @@ export default function TrialDetails() {
                     >
                       {trial.eligibility?.healthyVolunteers ||
                         t("trialDetails.unknownVolunteers")}
+                    </p>
+                  </div>
+
+                  <div
+                    className="bg-indigo-50/50 rounded-lg p-4 border border-indigo-100"
+                    style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-4 h-4" style={{ color: "#2F3C96" }} />
+                      <span
+                        className="text-xs font-semibold uppercase tracking-wide"
+                        style={{ color: "#787878" }}
+                      >
+                        {t("trialDetails.recruitmentTarget", {
+                          defaultValue: "Recruitment Target",
+                        })}
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm font-bold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {trial.targetEnrollment ? (
+                        <>
+                          {trial.targetEnrollment}{" "}
+                          {t("trialDetails.patients", {
+                            defaultValue: "Patients",
+                          })}
+                        </>
+                      ) : (
+                        trial.status?.replace(/_/g, " ") || "N/A"
+                      )}
                     </p>
                   </div>
                 </div>
@@ -765,6 +797,28 @@ export default function TrialDetails() {
                     </span>
                     <span className="text-sm font-semibold" style={{ color: "#2F3C96" }}>
                       {trial.phase}
+                    </span>
+                  </div>
+                )}
+                {trial.targetEnrollment && (
+                  <div
+                    className="flex justify-between items-center py-2 border-b"
+                    style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                  >
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "#787878" }}
+                    >
+                      {t("trialDetails.targetEnrollmentLabel", {
+                        defaultValue: "Target Enrollment",
+                      })}
+                    </span>
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      {trial.targetEnrollment}{" "}
+                      {t("trialDetails.patients", { defaultValue: "Patients" })}
                     </span>
                   </div>
                 )}

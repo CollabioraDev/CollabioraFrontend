@@ -3285,6 +3285,20 @@ export default function Trials() {
                                     </span>
                                   )}
                                 </div>
+
+                                {trial.targetEnrollment != null && (
+                                  <div className="mb-3 flex items-center justify-end gap-1.5">
+                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100/50">
+                                      <Users className="w-3 h-3 text-indigo-500" />
+                                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-tight">
+                                        {trial.targetEnrollment}{" "}
+                                        {t("trials.patientsNeeded", {
+                                          defaultValue: "Patients Needed",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                                 {/* Progress Bar */}
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
@@ -4196,7 +4210,7 @@ export default function Trials() {
                     )}
 
                     {/* Quick Eligibility Info Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                       {/* Gender */}
                       <div
                         className="bg-white rounded-lg p-3 border shadow-sm"
@@ -4284,11 +4298,38 @@ export default function Trials() {
                           style={{ color: "#2F3C96" }}
                         >
                           {detailsModal.trial.simplifiedDetails
-                            ?.eligibilityCriteria?.volunteers ||
+                            ?.volunteers ||
                             detailsModal.trial.eligibility?.healthyVolunteers ||
                             "Unknown"}
                         </p>
                       </div>
+
+                      {/* Patients Needed (Target Enrollment) */}
+                      {detailsModal.trial.targetEnrollment && (
+                        <div
+                          className="bg-white rounded-lg p-3 border shadow-sm"
+                          style={{ borderColor: "rgba(232, 224, 239, 1)" }}
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Users
+                              className="w-4 h-4"
+                              style={{ color: "#2F3C96" }}
+                            />
+                            <span
+                              className="text-xs font-semibold uppercase tracking-wide"
+                              style={{ color: "#787878" }}
+                            >
+                              Patients Needed
+                            </span>
+                          </div>
+                          <p
+                            className="text-sm font-bold"
+                            style={{ color: "#2F3C96" }}
+                          >
+                            {detailsModal.trial.targetEnrollment}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Detailed Eligibility Criteria - Show simplified if available */}
