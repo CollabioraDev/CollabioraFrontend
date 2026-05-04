@@ -32,6 +32,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  AlertCircle,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { buildChatExportHtml } from "../../components/ChatExportPdf.js";
@@ -2330,6 +2331,7 @@ export default function YoriAI() {
 
   const createNewChat = useCallback(async () => {
     if (!canCreateNewChat) {
+      setSidebarOpen(true); // Open history to show limit message
       setSessionLimitNotice(
         "You can keep up to 5 chats. Delete one to start a new chat.",
       );
@@ -2411,6 +2413,7 @@ export default function YoriAI() {
     fetchWithAuthRetry,
     isRemoteChatUser,
     handleAuthExpired,
+    setSidebarOpen,
   ]);
 
   const deleteChat = useCallback(
@@ -3080,7 +3083,7 @@ export default function YoriAI() {
               <button
                 type="button"
                 onClick={createNewChat}
-                disabled={!canCreateNewChat || isCreatingNewChat}
+                disabled={isCreatingNewChat}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 transition-opacity"
                 style={{
                   background: "linear-gradient(135deg, #2F3C96, #474F97)",
@@ -3107,13 +3110,21 @@ export default function YoriAI() {
               )}
             </div>
             {(sessionLimitNotice || deletingSessionId) && (
-              <p className="px-3 text-xs text-center min-h-[1.25rem]">
-                {deletingSessionId ? (
-                  <span className="text-slate-500">Deleting chat…</span>
-                ) : (
-                  <span className="text-amber-600">{sessionLimitNotice}</span>
-                )}
-              </p>
+              <div className="px-3 pb-2 ui-fade-in">
+                <div className="flex items-center gap-2 rounded-xl bg-amber-50/80 px-3 py-2 text-[11px] font-medium text-amber-700 border border-amber-100 shadow-sm">
+                  {deletingSessionId ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                      <span>Deleting chat…</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>{sessionLimitNotice}</span>
+                    </>
+                  )}
+                </div>
+              </div>
             )}
 
             <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1.5">
@@ -3142,9 +3153,11 @@ export default function YoriAI() {
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-[#D1D3E5] bg-white shadow-sm yori-main-enter">
           {/* Header - aligned with global layout */}
           <div className="relative flex h-14 items-center gap-2 sm:gap-3 border-b border-[#D1D3E5] bg-white/90 px-3 sm:px-4 overflow-visible">
-            <div className="relative flex items-center gap-3 min-w-0 flex-1">
+            <div className="relative flex items-center gap-2 min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-[#2F3C96] min-w-0">
-                {activeChat?.title || t("chat.newChat")}
+                {activeChat?.title && activeChat.title !== t("chat.newChat")
+                  ? activeChat.title
+                  : ""}
               </p>
             </div>
             {/* Placeholder notification icon to mirror navbar */}
@@ -3154,6 +3167,20 @@ export default function YoriAI() {
               aria-label={t("chat.notifications")}
             >
               <Loader2 className="h-4 w-4 animate-spin opacity-0" />
+            </button>
+            <button
+              type="button"
+              onClick={createNewChat}
+              disabled={isCreatingNewChat}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#D1D3E5] bg-white text-[#2F3C96] hover:bg-[#E8E9F2]/60 transition-colors disabled:opacity-50 shadow-sm"
+              aria-label={t("chat.newChat")}
+              title={t("chat.newChat")}
+            >
+              {isCreatingNewChat ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
             </button>
             <button
               type="button"
