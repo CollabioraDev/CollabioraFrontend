@@ -1254,6 +1254,53 @@ export default function Navbar() {
                           />
                         </svg>
                       </PrefetchLink>
+
+                      {isCollabioraPro && (
+                        <PrefetchLink
+                          to="/wellness"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200"
+                          style={{ color: "#2F3C96" }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#E8E0EF";
+                            e.currentTarget.style.color = "#474F97";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.color = "#2F3C96";
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M20.388 3.612a10 10 0 11-14.142 14.142M20.388 3.612A10 10 0 016.246 17.754M20.388 3.612c-4.97 4.97-10.74 8.24-14.142 14.142M20.388 3.612c-4.97-4.97-8.24-10.74-14.142-14.142"
+                            />
+                          </svg>
+                          <span>{t("userMenu.wellness")}</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4 ml-auto"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </PrefetchLink>
+                      )}
                       <hr className="my-2" style={{ borderColor: "#D0C4E2" }} />
                       <button
                         onClick={handleLogout}
@@ -1670,6 +1717,44 @@ export default function Navbar() {
                 </span>
                 {t("userMenu.favourites")}
               </PrefetchLink>
+
+              {isCollabioraPro && (
+                <PrefetchLink
+                  to="/wellness"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 w-full text-base font-medium rounded-xl py-2 px-3 transition-all duration-200 group"
+                  style={{ color: "#2F3C96" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E8E0EF";
+                    e.currentTarget.style.color = "#474F97";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#2F3C96";
+                  }}
+                >
+                  <span
+                    className="p-1.5 rounded-lg group-hover:scale-110 transition-all duration-200"
+                    style={{ backgroundColor: "#E8E0EF", color: "#2F3C96" }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M20.388 3.612a10 10 0 11-14.142 14.142M20.388 3.612A10 10 0 016.246 17.754M20.388 3.612c-4.97 4.97-10.74 8.24-14.142 14.142M20.388 3.612c-4.97-4.97-8.24-10.74-14.142-14.142"
+                      />
+                    </svg>
+                  </span>
+                  {t("userMenu.wellness")}
+                </PrefetchLink>
+              )}
             </div>
           ) : null}
 
