@@ -1922,7 +1922,7 @@ export default function EditProfile() {
                 />
               </div>
 
-              {/* Gender/Sex */}
+              {/* Sex */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   {t("editProfile.genderLabel")}

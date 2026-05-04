@@ -129,7 +129,15 @@
       "Lupus",
       "Rheumatoid Arthritis"
     ],
-    "weekdaysShort": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "weekdaysShort": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
     "weekdaysLong": [
       "Sunday",
       "Monday",
@@ -212,8 +220,8 @@
     "handleHint": "Your unique handle – choose from suggestions or type your own; your username will be used to keep you anonymous.",
     "ageLabel": "Age",
     "agePlaceholder": "Enter your age",
-    "genderLabel": "Gender / Sex",
-    "genderSelect": "Select gender",
+    "genderLabel": "Sex",
+    "genderSelect": "Select Sex",
     "genderMale": "Male",
     "genderFemale": "Female",
     "genderOther": "Other",

@@ -1028,32 +1028,32 @@ export default function OnboardPatient() {
     const onboardingData =
       isMedicalProfessional === true
         ? {
-            role: "researcher",
-            profession,
-            academicRank,
-            primarySpecialty,
-            subspecialties,
-            researchInterests,
-            certifications,
-            location: getLocationData(),
-            institutionAffiliation,
-            orcid,
-            skills,
-            educationEntries,
-            profession,
-            academicRank,
-            isAcademicResearcher,
-            interestedInMeetings,
-            interestedInForums,
-            meetingRate,
-            gender: gender.trim() || undefined,
-          }
+          role: "researcher",
+          profession,
+          academicRank,
+          primarySpecialty,
+          subspecialties,
+          researchInterests,
+          certifications,
+          location: getLocationData(),
+          institutionAffiliation,
+          orcid,
+          skills,
+          educationEntries,
+          profession,
+          academicRank,
+          isAcademicResearcher,
+          interestedInMeetings,
+          interestedInForums,
+          meetingRate,
+          gender: gender.trim() || undefined,
+        }
         : {
-            role: "patient",
-            conditions: getCombinedConditions(),
-            location: getLocationData(),
-            gender: gender.trim() || undefined,
-          };
+          role: "patient",
+          conditions: getCombinedConditions(),
+          location: getLocationData(),
+          gender: gender.trim() || undefined,
+        };
 
     try {
       if (provider === "google") {
@@ -1162,8 +1162,8 @@ export default function OnboardPatient() {
                 (e) => e.institution || e.degree || e.field || e.year,
               ).length > 0
                 ? educationEntries.filter(
-                    (e) => e.institution || e.degree || e.field || e.year,
-                  )
+                  (e) => e.institution || e.degree || e.field || e.year,
+                )
                 : undefined,
             available: interestedInMeetings,
             interestedInMeetings,
@@ -1435,8 +1435,8 @@ export default function OnboardPatient() {
                 (e) => e.institution || e.degree || e.field || e.year,
               ).length > 0
                 ? educationEntries.filter(
-                    (e) => e.institution || e.degree || e.field || e.year,
-                  )
+                  (e) => e.institution || e.degree || e.field || e.year,
+                )
                 : undefined,
             available: interestedInMeetings,
             interestedInMeetings,
@@ -1788,11 +1788,10 @@ export default function OnboardPatient() {
                       >
                         <div className="relative">
                           <motion.div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center relative z-10 ${
-                              isClickable
+                            className={`w-10 h-10 rounded-full flex items-center justify-center relative z-10 ${isClickable
                                 ? "cursor-pointer"
                                 : "cursor-not-allowed"
-                            }`}
+                              }`}
                             onClick={() => isClickable && handleStepClick(s.id)}
                             style={{
                               backgroundColor:
@@ -1816,10 +1815,10 @@ export default function OnboardPatient() {
                             whileHover={
                               isClickable
                                 ? {
-                                    scale: 1.1,
-                                    boxShadow:
-                                      "0 4px 12px rgba(47, 60, 150, 0.3)",
-                                  }
+                                  scale: 1.1,
+                                  boxShadow:
+                                    "0 4px 12px rgba(47, 60, 150, 0.3)",
+                                }
                                 : {}
                             }
                           >
@@ -1837,11 +1836,10 @@ export default function OnboardPatient() {
                           </motion.div>
                         </div>
                         <span
-                          className={`text-xs font-medium mt-1.5 ${
-                            isClickable
+                          className={`text-xs font-medium mt-1.5 ${isClickable
                               ? "cursor-pointer"
                               : "cursor-not-allowed"
-                          }`}
+                            }`}
                           onClick={() => isClickable && handleStepClick(s.id)}
                           style={{
                             color:
@@ -2132,60 +2130,60 @@ export default function OnboardPatient() {
                     {/* First option: Are you a medical or allied healthcare professional? (Yes/No) */}
                     {(isMedicalProfessional === null ||
                       isMedicalProfessional === false) && (
-                      <div className="space-y-3">
-                        <label
-                          className="block text-lg font-bold"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          Are you a medical or allied healthcare professional?
-                        </label>
-                        <div className="flex gap-3">
-                          <Button
-                            onClick={() => {
-                              setIsMedicalProfessional(false);
-                              setStep(3);
-                            }}
-                            className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all border-2"
-                            style={{
-                              backgroundColor: "#FFFFFF",
-                              color: "#787878",
-                              borderColor: "#E8E8E8",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#D0C4E2";
-                              e.currentTarget.style.backgroundColor =
-                                "rgba(208, 196, 226, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#E8E8E8";
-                              e.currentTarget.style.backgroundColor = "#FFFFFF";
-                            }}
+                        <div className="space-y-3">
+                          <label
+                            className="block text-lg font-bold"
+                            style={{ color: "#2F3C96" }}
                           >
-                            No
-                          </Button>
-                          <Button
-                            onClick={() => setIsMedicalProfessional(true)}
-                            className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all border-2"
-                            style={{
-                              backgroundColor: "#FFFFFF",
-                              color: "#787878",
-                              borderColor: "#E8E8E8",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "#D0C4E2";
-                              e.currentTarget.style.backgroundColor =
-                                "rgba(208, 196, 226, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#E8E8E8";
-                              e.currentTarget.style.backgroundColor = "#FFFFFF";
-                            }}
-                          >
-                            Yes
-                          </Button>
+                            Are you a medical or allied healthcare professional?
+                          </label>
+                          <div className="flex gap-3">
+                            <Button
+                              onClick={() => {
+                                setIsMedicalProfessional(false);
+                                setStep(3);
+                              }}
+                              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all border-2"
+                              style={{
+                                backgroundColor: "#FFFFFF",
+                                color: "#787878",
+                                borderColor: "#E8E8E8",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = "#D0C4E2";
+                                e.currentTarget.style.backgroundColor =
+                                  "rgba(208, 196, 226, 0.1)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = "#E8E8E8";
+                                e.currentTarget.style.backgroundColor = "#FFFFFF";
+                              }}
+                            >
+                              No
+                            </Button>
+                            <Button
+                              onClick={() => setIsMedicalProfessional(true)}
+                              className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all border-2"
+                              style={{
+                                backgroundColor: "#FFFFFF",
+                                color: "#787878",
+                                borderColor: "#E8E8E8",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = "#D0C4E2";
+                                e.currentTarget.style.backgroundColor =
+                                  "rgba(208, 196, 226, 0.1)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = "#E8E8E8";
+                                e.currentTarget.style.backgroundColor = "#FFFFFF";
+                              }}
+                            >
+                              Yes
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* If Yes - Show professional info fields */}
                     {isMedicalProfessional === true && (
@@ -2524,7 +2522,7 @@ export default function OnboardPatient() {
                                     activated.
                                   </p>
                                   {verificationDocumentUrl ||
-                                  verificationDocument ? (
+                                    verificationDocument ? (
                                     <div className="space-y-2">
                                       <div
                                         className="flex items-center gap-2 p-2 rounded border"
@@ -2578,13 +2576,12 @@ export default function OnboardPatient() {
                                         className="hidden"
                                       />
                                       <div
-                                        className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 border-2 border-dashed ${
-                                          uploadingVerification ||
-                                          verificationDocumentUrl ||
-                                          verificationDocument
+                                        className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 border-2 border-dashed ${uploadingVerification ||
+                                            verificationDocumentUrl ||
+                                            verificationDocument
                                             ? "cursor-not-allowed opacity-60"
                                             : "cursor-pointer hover:shadow-md"
-                                        }`}
+                                          }`}
                                         style={{
                                           borderColor: uploadingVerification
                                             ? "#E8E8E8"
@@ -3111,9 +3108,8 @@ export default function OnboardPatient() {
                                 >
                                   {showAllConditions
                                     ? "Show less"
-                                    : `Show ${
-                                        commonConditions.length - 8
-                                      } more`}
+                                    : `Show ${commonConditions.length - 8
+                                    } more`}
                                 </button>
                               )}
                             </div>
@@ -3600,7 +3596,7 @@ export default function OnboardPatient() {
                         className="block text-xs font-semibold mb-1"
                         style={{ color: "#2F3C96" }}
                       >
-                        Gender (Optional)
+                        Sex (Optional)
                       </label>
                       <div className="relative" data-gender-dropdown>
                         <button
@@ -3678,7 +3674,7 @@ export default function OnboardPatient() {
                               }}
                             >
                               {[
-                                { value: "", label: "Select gender" },
+                                { value: "", label: "Select Sex" },
                                 { value: "Male", label: "Male" },
                                 { value: "Female", label: "Female" },
                                 { value: "Non-binary", label: "Non-binary" },
