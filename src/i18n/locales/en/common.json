@@ -1313,7 +1313,15 @@
     "copyTrialFormatShort": "Copy the example trial text format to the clipboard",
     "pasteFieldLabel": "Raw trial text",
     "formatCopied": "Example format copied to clipboard",
-    "formatCopyFailed": "Could not copy. Allow clipboard access in your browser and try again."
+    "formatCopyFailed": "Could not copy. Allow clipboard access in your browser and try again.",
+    "tabUpload": "Upload File",
+    "uploadTitle": "Upload Trial Documents",
+    "uploadSubtitle": "Support for Word (.docx), PDF, and Excel files",
+    "selectFiles": "Select Files",
+    "uploading": "Uploading...",
+    "uploadFailed": "Upload failed",
+    "extractedTrials": "Extracted Trials",
+    "saveAllToDb": "Save All Extracted Trials ({{count}})"
   },
   "curatedTrialsManage": {
     "pageTitle": "Manage site-listed trials",

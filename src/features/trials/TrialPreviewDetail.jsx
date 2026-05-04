@@ -12,6 +12,7 @@ import {
   Beaker,
   Mail,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { Section } from "./CurateTrialsSection.jsx";
 import { editFieldClass } from "./curateTrialsConstants.js";
@@ -48,10 +49,10 @@ const STATUS_OPTIONS = [
   ["TERMINATED", "Terminated"],
   ["WITHDRAWN", "Withdrawn"],
 ];
-
 export function TrialPreviewDetail({
   t,
   onPatch,
+  onRemove,
   showAllSections = false,
   showMetadataFields = false,
 }) {
@@ -106,19 +107,30 @@ export function TrialPreviewDetail({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden group">
       {showMetadataFields && typeof onPatch === "function" && (
         <div className="px-5 pt-4 pb-3 space-y-3 border-b border-slate-100 bg-slate-50/60">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Trial title <span className="text-rose-600">*</span>
-            </label>
-            <input
-              className={editFieldClass}
-              placeholder="Full study title as it should appear on the listing"
-              value={t.title || ""}
-              onChange={(e) => patch({ title: e.target.value })}
-            />
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                Trial title <span className="text-rose-600">*</span>
+              </label>
+              <input
+                className={editFieldClass}
+                placeholder="Full study title as it should appear on the listing"
+                value={t.title || ""}
+                onChange={(e) => patch({ title: e.target.value })}
+              />
+            </div>
+            {onRemove && (
+              <button
+                onClick={onRemove}
+                className="shrink-0 p-2 rounded-lg border border-slate-200 bg-white shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all text-slate-400 mt-5"
+                title="Remove trial"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -223,6 +235,15 @@ export function TrialPreviewDetail({
               <ChevronDown className="w-4 h-4" />
             )}
           </button>
+          {!showMetadataFields && onRemove && (
+            <button
+              onClick={onRemove}
+              className="shrink-0 p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors text-slate-400"
+              title="Remove trial"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-start gap-2">

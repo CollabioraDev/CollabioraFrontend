@@ -13,6 +13,8 @@ import {
   Info,
   Copy,
   Building2,
+  Upload,
+  FileText,
 } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -32,25 +34,30 @@ import {
 import { TrialPreviewDetail } from "./TrialPreviewDetail.jsx";
 
 let nextId = 1;
-function makeSlot() {
-  return { id: nextId++, text: "", parsed: null, errors: [], loading: false };
+function makeSlot(source = "paste") {
+  return { id: nextId++, text: "", parsed: null, errors: [], loading: false, source };
 }
 
 export default function CurateTrials() {
   const { t } = useTranslation("common");
   const [searchParams, setSearchParams] = useSearchParams();
   const curateTab =
-    searchParams.get("tab") === "paste" ? "paste" : "template";
+    searchParams.get("tab") === "upload"
+      ? "upload"
+      : searchParams.get("tab") === "paste"
+        ? "paste"
+        : "template";
 
   function setCurateTab(next) {
-    if (next === "paste") setSearchParams({ tab: "paste" });
-    else setSearchParams({});
+    if (next === "template") setSearchParams({});
+    else setSearchParams({ tab: next });
   }
 
   const [templateHelpOpen, setTemplateHelpOpen] = useState(false);
 
   const [slots, setSlots] = useState(() => [makeSlot()]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [templateDraft, setTemplateDraft] = useState(createEmptyTemplateTrial);
@@ -129,6 +136,16 @@ export default function CurateTrials() {
     );
   }, []);
 
+  const removeParsedTrial = useCallback((slotId, trialIndex) => {
+    setSlots((prev) =>
+      prev.map((s) => {
+        if (s.id !== slotId) return s;
+        const parsed = (s.parsed || []).filter((_, i) => i !== trialIndex);
+        return { ...s, parsed };
+      }),
+    );
+  }, []);
+
   async function previewSlot(id) {
     const slot = slots.find((s) => s.id === id);
     if (!slot?.text.trim()) {
@@ -191,7 +208,8 @@ export default function CurateTrials() {
     return stripPreviewFields(merged);
   }
 
-  const allParsed = slots.flatMap((s) => s.parsed || []);
+  const activeSlots = slots.filter((s) => s.source === (curateTab === "upload" ? "file" : "paste"));
+  const allParsed = activeSlots.flatMap((s) => s.parsed || []);
 
   async function saveBulk() {
     if (!allParsed.length) {
@@ -253,7 +271,60 @@ export default function CurateTrials() {
     }
   }
 
-  const anyLoading = slots.some((s) => s.loading);
+  async function handleFileUpload(e) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f));
+
+    try {
+      const res = await fetch(`${base}/api/curated-trials/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t("curateTrials.uploadFailed"));
+
+      const newTrials = data.trials || [];
+      const errors = data.errors || [];
+
+      if (newTrials.length === 0 && errors.length > 0) {
+        toast.error(errors[0].message || t("curateTrials.uploadFailed"));
+      } else if (newTrials.length > 0) {
+        toast.success(t("curateTrials.parsedCount", { count: newTrials.length }));
+        
+        // Add each extracted trial as a new slot with parsed data
+        const newSlots = newTrials.map(trial => ({
+          ...makeSlot("file"),
+          text: `Extracted from ${trial._fileName || "file"}`,
+          parsed: [trial],
+          loading: false
+        }));
+
+        setSlots(prev => {
+          // Remove empty initial slot if it's the only one
+          const filtered = prev.filter(s => s.text.trim() || s.parsed);
+          return [...filtered, ...newSlots];
+        });
+      }
+
+      if (errors.length > 0) {
+        console.warn("Extraction warnings/errors:", errors);
+        errors.forEach(err => toast.error(`${err.fileName}: ${err.message}`, { duration: 5000 }));
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error(e.message || t("curateTrials.uploadFailed"));
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = "";
+    }
+  }
+
+  const anyLoading = slots.some((s) => s.loading) || uploading;
   const anyParsed = allParsed.length > 0;
 
   return (
@@ -303,6 +374,18 @@ export default function CurateTrials() {
           </button>
           <button
             type="button"
+            onClick={() => setCurateTab("upload")}
+            className={`flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+              curateTab === "upload"
+                ? "bg-white text-[#2F3C96] shadow-sm border border-indigo-100"
+                : "text-slate-600 hover:bg-white/60"
+            }`}
+          >
+            <Upload className="w-4 h-4 shrink-0" />
+            {t("curateTrials.tabUpload", "Upload File")}
+          </button>
+          <button
+            type="button"
             onClick={() => setCurateTab("template")}
             className={`flex-1 min-w-[160px] inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               curateTab === "template"
@@ -311,7 +394,7 @@ export default function CurateTrials() {
             }`}
           >
             <FileEdit className="w-4 h-4 shrink-0" />
-            {t("curateTrials.tabTemplate")}
+            {t("curateTrials.tabTemplate", "Template")}
           </button>
         </div>
 
@@ -332,7 +415,7 @@ export default function CurateTrials() {
                 id="curate-institution-label"
                 className="text-sm font-semibold text-slate-800 leading-snug"
               >
-                {t("curateTrials.institutionLabel")}
+                {t("curateTrials.institutionLabel", "Institution")}
               </label>
             </div>
             <div className="w-full min-w-0 sm:flex-1 sm:max-w-2xl">
@@ -342,17 +425,95 @@ export default function CurateTrials() {
                 options={CURATE_INSTITUTION_OPTIONS}
                 disabled={saving}
                 className="w-full [&>div]:min-h-11 [&>div]:rounded-xl [&>div]:px-3.5 [&>div]:py-2.5 [&>div]:text-sm [&>div]:font-medium [&>div]:text-[#2F3C96] [&>div]:shadow-sm"
-                placeholder={t("curateTrials.institutionPlaceholder")}
+                placeholder={t("curateTrials.institutionPlaceholder", "Select Institution")}
               />
             </div>
           </div>
         </div>
 
+        {curateTab === "upload" && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/20 p-8 text-center transition-all hover:bg-indigo-50/40">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                <Upload className="h-7 w-7" />
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-slate-800">
+                  {t("curateTrials.uploadTitle", "Upload Trial Documents")}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t("curateTrials.uploadSubtitle", "Support for Word (.docx), PDF, and Excel files")}
+                </p>
+              </div>
+              <div className="mt-6">
+                <input
+                  type="file"
+                  id="trial-upload"
+                  className="hidden"
+                  accept=".docx,.pdf,.xlsx,.xls,.csv"
+                  multiple
+                  disabled={uploading}
+                  onChange={handleFileUpload}
+                />
+                <label
+                  htmlFor="trial-upload"
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-md transition-all ${
+                    uploading ? "bg-slate-400 cursor-not-allowed" : "bg-[#2F3C96] hover:bg-[#253075]"
+                  }`}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  {uploading ? t("curateTrials.uploading", "Uploading...") : t("curateTrials.selectFiles", "Select Files")}
+                </label>
+              </div>
+            </div>
+
+            {/* Reusing the preview slots for uploaded content */}
+            {anyParsed && (
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+                  {t("curateTrials.extractedTrials", "Extracted Trials")}
+                </h2>
+                {activeSlots.map((slot) => (
+                  (slot.parsed || []).map((trial, trialIdx) => (
+                    <TrialPreviewDetail
+                      key={`${slot.id}-${trialIdx}`}
+                      t={trial}
+                      showAllSections={true}
+                      showMetadataFields={true}
+                      onPatch={(patch) =>
+                        updateParsedTrial(slot.id, trialIdx, patch)
+                      }
+                      onRemove={() => removeParsedTrial(slot.id, trialIdx)}
+                    />
+                  ))
+                ))}
+                
+                <div className="flex justify-end pt-4">
+                   <Button
+                    onClick={() => setConfirmOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all"
+                  >
+                    <Save className="w-4 h-4" />
+                    {t("curateTrials.saveAllToDb", {
+                      count: allParsed.length,
+                      defaultValue: `Save All Extracted Trials (${allParsed.length})`
+                    })}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {curateTab === "paste" && (
           <>
         {/* Per-trial slots */}
         <div className="space-y-4 mb-4">
-          {slots.map((slot, slotIdx) => (
+          {activeSlots.map((slot, slotIdx) => (
             <div
               key={slot.id}
               className="rounded-2xl border border-slate-200/90 bg-white shadow-sm shadow-slate-200/40 ring-1 ring-slate-100/80 overflow-hidden"
@@ -432,9 +593,12 @@ export default function CurateTrials() {
                     <TrialPreviewDetail
                       key={idx}
                       t={trialRow}
+                      showAllSections={true}
+                      showMetadataFields={true}
                       onPatch={(patch) =>
                         updateParsedTrial(slot.id, idx, patch)
                       }
+                      onRemove={() => removeParsedTrial(slot.id, idx)}
                     />
                   ))}
                 </div>
@@ -473,40 +637,43 @@ export default function CurateTrials() {
           )}
         </div>
 
-        {/* Confirm modal */}
+          </>
+        )}
+
+        {/* Confirm modal for Save All (both tabs) */}
         <Modal
           isOpen={confirmOpen}
           onClose={() => !saving && setConfirmOpen(false)}
           title={t("curateTrials.confirmSaveTitle")}
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setConfirmOpen(false)}
+                disabled={saving}
+                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
+              >
+                {t("ui.cancel")}
+              </Button>
+              <Button
+                onClick={saveBulk}
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-2 px-5 py-2 shadow-sm shadow-emerald-200/50 rounded-xl font-semibold"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ClipboardPaste className="w-4 h-4" />
+                )}
+                {t("curateTrials.confirmSave")}
+              </Button>
+            </div>
+          }
         >
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-600">
             {t("curateTrials.confirmSaveBody", { count: allParsed.length })}
           </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setConfirmOpen(false)}
-              disabled={saving}
-              className="border border-slate-200"
-            >
-              {t("ui.cancel")}
-            </Button>
-            <Button
-              onClick={saveBulk}
-              disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-2"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <ClipboardPaste className="w-4 h-4" />
-              )}
-              {t("curateTrials.confirmSave")}
-            </Button>
-          </div>
         </Modal>
-          </>
-        )}
 
         {curateTab === "template" && (
           <div className="space-y-4 pb-2">
@@ -516,7 +683,7 @@ export default function CurateTrials() {
                 variant="ghost"
                 onClick={() => setTemplateDraft(createEmptyTemplateTrial())}
                 disabled={saving}
-                className="border border-slate-200"
+                className="border border-slate-200 rounded-xl"
               >
                 {t("curateTrials.resetTemplate")}
               </Button>
@@ -524,7 +691,7 @@ export default function CurateTrials() {
                 type="button"
                 onClick={() => setTemplateModalOpen(true)}
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#2F3C96] hover:bg-indigo-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#2F3C96] hover:bg-indigo-50"
               >
                 <FileEdit className="w-4 h-4" />
                 {t("curateTrials.editTrial")}
@@ -533,7 +700,7 @@ export default function CurateTrials() {
                 type="button"
                 onClick={() => setTemplateConfirmOpen(true)}
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
               >
                 <Save className="w-4 h-4" />
                 {t("curateTrials.saveTrial")}
@@ -582,8 +749,31 @@ export default function CurateTrials() {
           onClose={() => !saving && setTemplateModalOpen(false)}
           maxWidthClassName="max-w-3xl"
           title={t("curateTrials.editModalTitle")}
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setTemplateModalOpen(false)}
+                disabled={saving}
+                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
+              >
+                {t("curateTrials.close")}
+              </Button>
+              <Button
+                onClick={() => {
+                  setTemplateModalOpen(false);
+                  setTemplateConfirmOpen(true);
+                }}
+                disabled={saving}
+                className="inline-flex items-center gap-2 bg-[#2F3C96] hover:bg-[#253075] text-white px-5 py-2 shadow-sm shadow-indigo-200/50 rounded-xl font-semibold"
+              >
+                <Save className="w-4 h-4" />
+                {t("curateTrials.saveTrialEllipsis")}
+              </Button>
+            </div>
+          }
         >
-          <div className="space-y-3 max-h-[min(78vh,720px)] overflow-y-auto pr-1">
+          <div className="space-y-4">
             <p className="text-xs text-slate-500">{t("curateTrials.editModalHint")}</p>
             <TrialPreviewDetail
               t={templateDraft}
@@ -592,59 +782,40 @@ export default function CurateTrials() {
               showMetadataFields
             />
           </div>
-          <div className="flex justify-end gap-2 pt-3 mt-2 border-t border-slate-100">
-            <Button
-              variant="ghost"
-              onClick={() => setTemplateModalOpen(false)}
-              disabled={saving}
-              className="border border-slate-200"
-            >
-              {t("curateTrials.close")}
-            </Button>
-            <Button
-              onClick={() => {
-                setTemplateModalOpen(false);
-                setTemplateConfirmOpen(true);
-              }}
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#2F3C96] hover:bg-[#253075] px-4 py-2.5 text-sm font-semibold text-white"
-            >
-              <Save className="w-4 h-4" />
-              {t("curateTrials.saveTrialEllipsis")}
-            </Button>
-          </div>
         </Modal>
 
         <Modal
           isOpen={templateConfirmOpen}
           onClose={() => !saving && setTemplateConfirmOpen(false)}
           title={t("curateTrials.confirmSingleTitle")}
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setTemplateConfirmOpen(false)}
+                disabled={saving}
+                className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
+              >
+                {t("ui.cancel")}
+              </Button>
+              <Button
+                onClick={saveTemplateTrial}
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-2 px-5 py-2 shadow-sm shadow-emerald-200/50 rounded-xl font-semibold"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ClipboardPaste className="w-4 h-4" />
+                )}
+                {t("curateTrials.confirmSave")}
+              </Button>
+            </div>
+          }
         >
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-600">
             {t("curateTrials.confirmSingleBody")}
           </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => setTemplateConfirmOpen(false)}
-              disabled={saving}
-              className="border border-slate-200"
-            >
-              {t("ui.cancel")}
-            </Button>
-            <Button
-              onClick={saveTemplateTrial}
-              disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white inline-flex items-center gap-2"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <ClipboardPaste className="w-4 h-4" />
-              )}
-              {t("curateTrials.confirmSave")}
-            </Button>
-          </div>
         </Modal>
         </div>
       </div>
