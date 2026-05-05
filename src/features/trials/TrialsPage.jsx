@@ -31,6 +31,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  ChevronUp,
   Building2,
   Hospital,
   X,
@@ -167,6 +168,7 @@ export default function Trials() {
     generatedMessage: "",
     generating: false,
     copied: false,
+    expandedLocations: [],
   });
   const [contactModal, setContactModal] = useState({
     open: false,
@@ -4855,45 +4857,81 @@ export default function Trials() {
                         {detailsModal.trial.locations.map((loc, idx) => (
                           <div
                             key={idx}
-                            className="bg-white rounded-lg p-4 border border-indigo-100 shadow-sm"
+                            className="bg-white rounded-lg border border-indigo-100 shadow-sm overflow-hidden transition-all duration-200"
                           >
-                            {loc.facility && (
-                              <div
-                                className="font-bold mb-2 flex items-center gap-2"
-                                style={{ color: "#2F3C96" }}
-                              >
-                                <Hospital className="w-4 h-4 text-indigo-500" />
-                                {loc.facility}
-                              </div>
-                            )}
-                            <div
-                              className="text-sm mb-3 leading-relaxed"
-                              style={{ color: "#787878" }}
+                            <button
+                              onClick={() => {
+                                const newExpanded = new Set(detailsModal.expandedLocations || []);
+                                if (newExpanded.has(idx)) newExpanded.delete(idx);
+                                else newExpanded.add(idx);
+                                setDetailsModal(prev => ({ ...prev, expandedLocations: Array.from(newExpanded) }));
+                              }}
+                              className="w-full text-left p-4 hover:bg-indigo-50/30 transition-colors flex items-center justify-between group"
                             >
-                              {loc.fullAddress || loc.address || [loc.city, loc.state, loc.country].filter(Boolean).join(", ")}
-                            </div>
-                            {(loc.contactName || loc.contactEmail || loc.contactPhone) && (
-                              <div className="pt-3 mt-3 border-t border-slate-100 space-y-2">
-                                {loc.contactName && (
-                                  <div className="text-xs font-semibold flex items-center gap-2" style={{ color: "#2F3C96" }}>
-                                    <User className="w-3.5 h-3.5 text-slate-400" />
-                                    {loc.contactName}
-                                  </div>
-                                )}
-                                {loc.contactEmail && (
-                                  <a
-                                    href={`mailto:${loc.contactEmail}`}
-                                    className="text-xs flex items-center gap-2 hover:underline transition-colors"
+                              <div className="flex-1">
+                                {loc.facility && (
+                                  <div
+                                    className="font-bold mb-1 flex items-center gap-2 group-hover:text-indigo-700 transition-colors"
                                     style={{ color: "#2F3C96" }}
                                   >
-                                    <Mail className="w-3.5 h-3.5 text-slate-400" />
-                                    {loc.contactEmail}
-                                  </a>
+                                    <Hospital className="w-4 h-4 text-indigo-500" />
+                                    {loc.facility}
+                                  </div>
                                 )}
-                                {loc.contactPhone && (
-                                  <div className="text-xs flex items-center gap-2" style={{ color: "#787878" }}>
-                                    <span className="text-slate-400">📞</span>
-                                    {loc.contactPhone}
+                                <div
+                                  className="text-xs leading-relaxed"
+                                  style={{ color: "#787878" }}
+                                >
+                                  {loc.fullAddress || loc.address || [loc.city, loc.state, loc.country].filter(Boolean).join(", ")}
+                                </div>
+                              </div>
+                              <div className="ml-4 text-indigo-400 group-hover:text-indigo-600 transition-colors">
+                                {(detailsModal.expandedLocations || []).includes(idx) ? (
+                                  <ChevronUp className="w-5 h-5" />
+                                ) : (
+                                  <ChevronDown className="w-5 h-5" />
+                                )}
+                              </div>
+                            </button>
+
+                            {(detailsModal.expandedLocations || []).includes(idx) && (
+                              <div className="px-4 pb-4 pt-2 border-t border-indigo-50 bg-indigo-50/20 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                                {loc.contactName || loc.contactEmail || loc.contactPhone ? (
+                                  <>
+                                    {loc.contactName && (
+                                      <div className="text-xs font-semibold flex items-center gap-2" style={{ color: "#2F3C96" }}>
+                                        <User className="w-3.5 h-3.5 text-slate-400" />
+                                        {loc.contactName}
+                                      </div>
+                                    )}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                      {loc.contactEmail && (
+                                        <a
+                                          href={`mailto:${loc.contactEmail}`}
+                                          className="text-xs flex items-center gap-2 hover:underline transition-colors py-1 px-2 bg-white rounded-md border border-indigo-100 shadow-sm"
+                                          style={{ color: "#2F3C96" }}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                          {loc.contactEmail}
+                                        </a>
+                                      )}
+                                      {loc.contactPhone && (
+                                        <a
+                                          href={`tel:${loc.contactPhone}`}
+                                          className="text-xs flex items-center gap-2 hover:underline transition-colors py-1 px-2 bg-white rounded-md border border-indigo-100 shadow-sm"
+                                          style={{ color: "#787878" }}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <span className="text-slate-400">📞</span>
+                                          {loc.contactPhone}
+                                        </a>
+                                      )}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="text-xs italic py-2" style={{ color: "#787878" }}>
+                                    {t("trials.noLocationContact", { defaultValue: "No specific contact info for this location. Please use the Central Contact info below." })}
                                   </div>
                                 )}
                               </div>

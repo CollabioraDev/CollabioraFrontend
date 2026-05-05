@@ -31,6 +31,7 @@ export default function TrialDetails() {
   const [trial, setTrial] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAllLocations, setShowAllLocations] = useState(false);
+  const [expandedLocations, setExpandedLocations] = useState([]);
 
   useEffect(() => {
     async function fetchTrialDetails() {
@@ -565,191 +566,150 @@ export default function TrialDetails() {
                   })}
                 </h2>
                 <div className="space-y-4">
-                  {/* Show first 5 locations in full detail */}
-                  {trial.locations.slice(0, 5).map((location, i) => (
+                  {trial.locations.slice(0, showAllLocations ? undefined : 5).map((location, i) => (
                     <div
                       key={i}
-                      className="bg-gray-50 rounded-lg p-4 border"
-                      style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                      className="bg-gray-50 rounded-lg border border-slate-200 overflow-hidden transition-all duration-200"
                     >
-                      {location.facility && (
-                        <div
-                          className="font-bold mb-2 flex items-center gap-2"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          <Building2 className="w-4 h-4" />
-                          {location.facility}
-                        </div>
-                      )}
-                      <div
-                        className="text-sm mb-2"
-                        style={{ color: "#787878" }}
+                      <button
+                        onClick={() => {
+                          const newExpanded = new Set(expandedLocations);
+                          if (newExpanded.has(i)) newExpanded.delete(i);
+                          else newExpanded.add(i);
+                          setExpandedLocations(Array.from(newExpanded));
+                        }}
+                        className="w-full text-left p-4 hover:bg-slate-100/50 transition-colors flex items-center justify-between group"
                       >
-                        {location.fullAddress || location.address}
-                      </div>
-                      {location.status && (
-                        <div
-                          className="text-xs font-medium mb-2"
-                          style={{ color: "#2F3C96" }}
-                        >
-                          {t("trialDetails.statusPrefix")} {location.status}
-                        </div>
-                      )}
-                      {location.contactName && (
-                        <div
-                          className="text-xs mb-1"
-                          style={{ color: "#787878" }}
-                        >
-                          <span className="font-medium">
-                            {t("trialDetails.contactLabel")}
-                          </span>{" "}
-                          {location.contactName}
-                        </div>
-                      )}
-                      {location.contactEmail && (
-                        <a
-                          href={`mailto:${location.contactEmail}`}
-                          className="text-xs block mb-1 transition-colors"
-                          style={{ color: "#2F3C96" }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.color = "#253075")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.color = "#2F3C96")
-                          }
-                        >
-                          {location.contactEmail}
-                        </a>
-                      )}
-                      {location.contactPhone && (
-                        <a
-                          href={`tel:${location.contactPhone}`}
-                          className="text-xs block mb-2 transition-colors"
-                          style={{ color: "#787878" }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.color = "#2F3C96")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.color = "#787878")
-                          }
-                        >
-                          {location.contactPhone}
-                        </a>
-                      )}
-                      {getGoogleMapsUrl(location) && (
-                        <a
-                          href={getGoogleMapsUrl(location)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-medium transition-colors"
-                          style={{ color: "#2F3C96" }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.color = "#253075")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.color = "#2F3C96")
-                          }
-                        >
-                          <MapPin className="w-3 h-3" />
-                          {t("trialDetails.viewOnMap")}
-                        </a>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Show remaining locations in compressed list */}
-                  {trial.locations.length > 5 && (
-                    <>
-                      {showAllLocations && (
-                        <div className="space-y-2">
-                          {trial.locations.slice(5).map((location, i) => (
+                        <div className="flex-1">
+                          {location.facility && (
                             <div
-                              key={i + 5}
-                              className="bg-gray-50 rounded-lg p-3 border"
-                              style={{ borderColor: "rgba(232, 232, 232, 1)" }}
+                              className="font-bold mb-1 flex items-center gap-2 group-hover:text-indigo-700 transition-colors"
+                              style={{ color: "#2F3C96" }}
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  {location.facility && (
-                                    <div
-                                      className="font-semibold mb-1 text-sm flex items-center gap-1.5"
-                                      style={{ color: "#2F3C96" }}
-                                    >
-                                      <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
-                                      <span className="truncate">{location.facility}</span>
-                                    </div>
-                                  )}
-                                  <div
-                                    className="text-xs mb-1 truncate"
-                                    style={{ color: "#787878" }}
-                                  >
-                                    {location.fullAddress || location.address}
-                                  </div>
-                                  {location.status && (
-                                    <div
-                                      className="text-xs font-medium"
-                                      style={{ color: "#2F3C96" }}
-                                    >
-                                      {location.status}
-                                    </div>
-                                  )}
+                              <Building2 className="w-4 h-4" />
+                              {location.facility}
+                            </div>
+                          )}
+                          <div
+                            className="text-xs leading-relaxed"
+                            style={{ color: "#787878" }}
+                          >
+                            {location.fullAddress || location.address}
+                          </div>
+                        </div>
+                        {(location.contactName || location.contactEmail || location.contactPhone) ? (
+                          <div className="ml-4 text-slate-400 group-hover:text-indigo-600 transition-colors">
+                            {expandedLocations.includes(i) ? (
+                              <ChevronUp className="w-5 h-5" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5" />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="ml-4 text-slate-300">
+                            {expandedLocations.includes(i) ? (
+                              <ChevronUp className="w-5 h-5" />
+                            ) : (
+                              <ChevronDown className="w-5 h-5" />
+                            )}
+                          </div>
+                        )}
+                      </button>
+
+                      {expandedLocations.includes(i) && (
+                        <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-white space-y-3">
+                          {location.contactName || location.contactEmail || location.contactPhone ? (
+                            <>
+                              {location.contactName && (
+                                <div className="text-xs font-semibold flex items-center gap-2" style={{ color: "#2F3C96" }}>
+                                  <User className="w-3.5 h-3.5 text-slate-400" />
+                                  {location.contactName}
                                 </div>
-                                {getGoogleMapsUrl(location) && (
+                              )}
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                {location.contactEmail && (
                                   <a
-                                    href={getGoogleMapsUrl(location)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-medium transition-colors ml-2"
+                                    href={`mailto:${location.contactEmail}`}
+                                    className="text-xs flex items-center gap-2 hover:underline transition-colors py-1 px-2 bg-slate-50 rounded-md border border-slate-200"
                                     style={{ color: "#2F3C96" }}
-                                    onMouseEnter={(e) =>
-                                      (e.currentTarget.style.color = "#253075")
-                                    }
-                                    onMouseLeave={(e) =>
-                                      (e.currentTarget.style.color = "#2F3C96")
-                                    }
+                                    onClick={(e) => e.stopPropagation()}
                                   >
-                                    <MapPin className="w-3 h-3" />
+                                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                    {location.contactEmail}
+                                  </a>
+                                )}
+                                {location.contactPhone && (
+                                  <a
+                                    href={`tel:${location.contactPhone}`}
+                                    className="text-xs flex items-center gap-2 hover:underline transition-colors py-1 px-2 bg-slate-50 rounded-md border border-slate-200"
+                                    style={{ color: "#787878" }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                    {location.contactPhone}
                                   </a>
                                 )}
                               </div>
+                            </>
+                          ) : (
+                            <div className="text-xs italic py-2" style={{ color: "#787878" }}>
+                              {t("trials.noLocationContact", { defaultValue: "No specific contact info for this location. Please use the Central Contact info below." })}
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
-                      <button
-                        onClick={() => setShowAllLocations(!showAllLocations)}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg transition-colors border"
-                        style={{
-                          color: "#2F3C96",
-                          backgroundColor: "rgba(208, 196, 226, 0.1)",
-                          borderColor: "rgba(208, 196, 226, 0.3)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgba(208, 196, 226, 0.2)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgba(208, 196, 226, 0.1)";
-                        }}
-                      >
-                        {showAllLocations ? (
-                          <>
-                            <ChevronUp className="w-4 h-4" />
-                            {t("trialDetails.showLessHidden", {
-                              count: trial.locations.length - 5,
-                            })}
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="w-4 h-4" />
-                            {t("trialDetails.showMoreLocations", {
-                              count: trial.locations.length - 5,
-                            })}
-                          </>
-                        )}
-                      </button>
-                    </>
+                      
+                      {getGoogleMapsUrl(location) && (
+                        <div className="px-4 pb-3 flex justify-end">
+                          <a
+                            href={getGoogleMapsUrl(location)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium transition-colors"
+                            style={{ color: "#2F3C96" }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {t("trialDetails.viewOnMap")}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {trial.locations.length > 5 && (
+                    <button
+                      onClick={() => setShowAllLocations(!showAllLocations)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg transition-colors border"
+                      style={{
+                        color: "#2F3C96",
+                        backgroundColor: "rgba(208, 196, 226, 0.1)",
+                        borderColor: "rgba(208, 196, 226, 0.3)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "rgba(208, 196, 226, 0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "rgba(208, 196, 226, 0.1)";
+                      }}
+                    >
+                      {showAllLocations ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          {t("trialDetails.showLessHidden", {
+                            count: trial.locations.length - 5,
+                          })}
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          {t("trialDetails.showMoreLocations", {
+                            count: trial.locations.length - 5,
+                          })}
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
               </div>
