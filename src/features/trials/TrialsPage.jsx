@@ -3319,6 +3319,17 @@ export default function Trials() {
                                     </div>
                                   </div>
                                 )}
+
+                                {trial.locations?.some(l => l.isNear) && (
+                                  <div className="mb-3 flex items-center justify-start gap-1.5">
+                                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 border border-emerald-100/50 shadow-sm">
+                                      <MapPin className="w-3 h-3 text-emerald-600" />
+                                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight">
+                                        {trial.locations.find(l => l.isNear).city || trial.locations.find(l => l.isNear).facility} — {t("trials.nearestToYou", { defaultValue: "Nearest to you" })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                                 {/* Progress Bar */}
                                 <div
                                   className="w-full h-2.5 rounded-full overflow-hidden"
@@ -4871,11 +4882,18 @@ export default function Trials() {
                               <div className="flex-1">
                                 {loc.facility && (
                                   <div
-                                    className="font-bold mb-1 flex items-center gap-2 group-hover:text-indigo-700 transition-colors"
+                                    className="font-bold mb-1 flex items-center justify-between group-hover:text-indigo-700 transition-colors"
                                     style={{ color: "#2F3C96" }}
                                   >
-                                    <Hospital className="w-4 h-4 text-indigo-500" />
-                                    {loc.facility}
+                                    <div className="flex items-center gap-2">
+                                      <Hospital className="w-4 h-4 text-indigo-500" />
+                                      {loc.facility}
+                                    </div>
+                                    {loc.isNear && (
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 uppercase tracking-tight animate-pulse shadow-sm border border-emerald-200">
+                                        Nearest to you
+                                      </span>
+                                    )}
                                   </div>
                                 )}
                                 <div

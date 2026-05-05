@@ -237,6 +237,12 @@ export default function TrialDetails() {
                       {t("trialDetails.phaseLabel", { phase: trial.phase })}
                     </span>
                   )}
+                  {trial.locations?.some(l => l.isNear) && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-sm animate-pulse">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {trial.locations.find(l => l.isNear).city || trial.locations.find(l => l.isNear).facility} — {t("trials.nearestToYou", { defaultValue: "Nearest to you" })}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -583,11 +589,18 @@ export default function TrialDetails() {
                         <div className="flex-1">
                           {location.facility && (
                             <div
-                              className="font-bold mb-1 flex items-center gap-2 group-hover:text-indigo-700 transition-colors"
+                              className="font-bold mb-1 flex items-center justify-between group-hover:text-indigo-700 transition-colors"
                               style={{ color: "#2F3C96" }}
                             >
-                              <Building2 className="w-4 h-4" />
-                              {location.facility}
+                              <div className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4" />
+                                {location.facility}
+                              </div>
+                              {location.isNear && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 uppercase tracking-tight animate-pulse shadow-sm border border-emerald-200">
+                                  Nearest to you
+                                </span>
+                              )}
                             </div>
                           )}
                           <div
