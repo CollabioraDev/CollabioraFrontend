@@ -68,12 +68,14 @@ export default function OnboardPatient() {
   const [identifiedConditions, setIdentifiedConditions] = useState([]); // Track auto-identified conditions
   const [lastExtractedText, setLastExtractedText] = useState(""); // Track what was extracted
   const [gender, setGender] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
+  const [isEthnicityDropdownOpen, setIsEthnicityDropdownOpen] = useState(false);
   const [isQuickSelectOpen, setIsQuickSelectOpen] = useState(true); // Expanded by default
   const [showAllConditions, setShowAllConditions] = useState(false);
   const [socialLoginLoading, setSocialLoginLoading] = useState(null); // Track which social login is loading
@@ -131,6 +133,7 @@ export default function OnboardPatient() {
       handle,
       selectedConditions,
       gender,
+      ethnicity,
       city,
       country,
       agreedToTerms,
@@ -180,6 +183,7 @@ export default function OnboardPatient() {
       if (draft.selectedConditions?.length)
         setSelectedConditions(draft.selectedConditions);
       if (draft.gender) setGender(draft.gender);
+      if (draft.ethnicity) setEthnicity(draft.ethnicity);
       if (draft.city) setCity(draft.city);
       if (draft.country) setCountry(draft.country);
       // Legacy support: restore from old single "location" field
@@ -370,6 +374,7 @@ export default function OnboardPatient() {
               setIsMedicalProfessional(false);
               if (p.conditions?.length) setSelectedConditions(p.conditions);
               if (p.gender) setGender(p.gender);
+              if (p.ethnicity) setEthnicity(p.ethnicity);
               if (p.location) {
                 const loc = p.location;
                 if (loc.city) setCity(loc.city);
@@ -1047,12 +1052,14 @@ export default function OnboardPatient() {
           interestedInForums,
           meetingRate,
           gender: gender.trim() || undefined,
+          ethnicity: ethnicity.trim() || undefined,
         }
         : {
           role: "patient",
           conditions: getCombinedConditions(),
           location: getLocationData(),
           gender: gender.trim() || undefined,
+          ethnicity: ethnicity.trim() || undefined,
         };
 
     try {
@@ -1170,6 +1177,7 @@ export default function OnboardPatient() {
             interestedInForums,
             meetingRate: meetingRate ? parseFloat(meetingRate) : undefined,
             gender: gender.trim() || undefined,
+            ethnicity: ethnicity.trim() || undefined,
           },
         };
 
@@ -1197,6 +1205,7 @@ export default function OnboardPatient() {
             conditions: conditionsArray,
             location: locationData,
             gender: gender.trim() || undefined,
+            ethnicity: ethnicity.trim() || undefined,
           },
         };
 
@@ -1443,6 +1452,7 @@ export default function OnboardPatient() {
             interestedInForums,
             meetingRate: meetingRate ? parseFloat(meetingRate) : undefined,
             gender: gender.trim() || undefined,
+            ethnicity: ethnicity.trim() || undefined,
           },
         };
       } else {
@@ -1453,6 +1463,7 @@ export default function OnboardPatient() {
             conditions: getCombinedConditions(),
             location: locationData,
             gender: gender.trim() || undefined,
+            ethnicity: ethnicity.trim() || undefined,
           },
         };
       }
@@ -1594,7 +1605,7 @@ export default function OnboardPatient() {
     exit: { opacity: 0, y: -20 },
   };
 
-  // Close gender dropdown when clicking outside
+  // Close gender and ethnicity dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -1602,6 +1613,12 @@ export default function OnboardPatient() {
         !event.target.closest("[data-gender-dropdown]")
       ) {
         setIsGenderDropdownOpen(false);
+      }
+      if (
+        showUsernameSuggestions &&
+        !event.target.closest("[data-ethnicity-dropdown]")
+      ) {
+        setIsEthnicityDropdownOpen(false);
       }
     };
 
@@ -1789,8 +1806,8 @@ export default function OnboardPatient() {
                         <div className="relative">
                           <motion.div
                             className={`w-10 h-10 rounded-full flex items-center justify-center relative z-10 ${isClickable
-                                ? "cursor-pointer"
-                                : "cursor-not-allowed"
+                              ? "cursor-pointer"
+                              : "cursor-not-allowed"
                               }`}
                             onClick={() => isClickable && handleStepClick(s.id)}
                             style={{
@@ -1837,8 +1854,8 @@ export default function OnboardPatient() {
                         </div>
                         <span
                           className={`text-xs font-medium mt-1.5 ${isClickable
-                              ? "cursor-pointer"
-                              : "cursor-not-allowed"
+                            ? "cursor-pointer"
+                            : "cursor-not-allowed"
                             }`}
                           onClick={() => isClickable && handleStepClick(s.id)}
                           style={{
@@ -2577,10 +2594,10 @@ export default function OnboardPatient() {
                                       />
                                       <div
                                         className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 border-2 border-dashed ${uploadingVerification ||
-                                            verificationDocumentUrl ||
-                                            verificationDocument
-                                            ? "cursor-not-allowed opacity-60"
-                                            : "cursor-pointer hover:shadow-md"
+                                          verificationDocumentUrl ||
+                                          verificationDocument
+                                          ? "cursor-not-allowed opacity-60"
+                                          : "cursor-pointer hover:shadow-md"
                                           }`}
                                         style={{
                                           borderColor: uploadingVerification
@@ -3691,6 +3708,150 @@ export default function OnboardPatient() {
                                     onClick={() => {
                                       setGender(option.value);
                                       setIsGenderDropdownOpen(false);
+                                    }}
+                                    className="w-full text-left px-3.5 py-2.5 text-sm transition-all duration-150 flex items-center justify-between"
+                                    style={{
+                                      backgroundColor: isSelected
+                                        ? "rgba(208, 196, 226, 0.15)"
+                                        : "transparent",
+                                      color: isSelected ? "#2F3C96" : "#787878",
+                                    }}
+                                    whileHover={{
+                                      backgroundColor: isSelected
+                                        ? "rgba(208, 196, 226, 0.2)"
+                                        : "rgba(208, 196, 226, 0.08)",
+                                    }}
+                                    whileTap={{ scale: 0.98 }}
+                                  >
+                                    <span className="font-medium">
+                                      {option.label}
+                                    </span>
+                                    {isSelected && (
+                                      <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{
+                                          type: "spring",
+                                          stiffness: 500,
+                                          damping: 30,
+                                        }}
+                                      >
+                                        <CheckCircle
+                                          size={16}
+                                          style={{ color: "#2F3C96" }}
+                                        />
+                                      </motion.div>
+                                    )}
+                                  </motion.button>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label
+                        className="block text-xs font-semibold mb-1"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        Ethnicity
+                      </label>
+                      <div className="relative" data-ethnicity-dropdown>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsEthnicityDropdownOpen(!isEthnicityDropdownOpen)
+                          }
+                          className="w-full py-1.5 px-2.5 text-sm border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 flex items-center justify-between cursor-pointer"
+                          style={{
+                            borderColor: isEthnicityDropdownOpen
+                              ? "#D0C4E2"
+                              : ethnicity
+                                ? "#2F3C96"
+                                : "#E8E8E8",
+                            color: ethnicity ? "#2F3C96" : "#787878",
+                            backgroundColor: isEthnicityDropdownOpen
+                              ? "rgba(208, 196, 226, 0.08)"
+                              : ethnicity
+                                ? "rgba(208, 196, 226, 0.05)"
+                                : "#FFFFFF",
+                            "--tw-ring-color": "#D0C4E2",
+                            boxShadow: isEthnicityDropdownOpen
+                              ? "0 2px 6px rgba(208, 196, 226, 0.25)"
+                              : ethnicity
+                                ? "0 1px 3px rgba(208, 196, 226, 0.2)"
+                                : "none",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isEthnicityDropdownOpen) {
+                              e.currentTarget.style.borderColor = "#D0C4E2";
+                              e.currentTarget.style.backgroundColor = ethnicity
+                                ? "rgba(208, 196, 226, 0.1)"
+                                : "rgba(208, 196, 226, 0.05)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isEthnicityDropdownOpen) {
+                              e.currentTarget.style.borderColor = ethnicity
+                                ? "#2F3C96"
+                                : "#E8E8E8";
+                              e.currentTarget.style.backgroundColor = ethnicity
+                                ? "rgba(208, 196, 226, 0.05)"
+                                : "#FFFFFF";
+                            }
+                          }}
+                        >
+                          <span>{ethnicity || "Select ethnicity"}</span>
+                          <motion.div
+                            animate={{
+                              rotate: isEthnicityDropdownOpen ? 180 : 0,
+                            }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown
+                              size={16}
+                              style={{
+                                color: ethnicity ? "#2F3C96" : "#787878",
+                              }}
+                            />
+                          </motion.div>
+                        </button>
+
+                        <AnimatePresence>
+                          {isEthnicityDropdownOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute z-50 w-full mt-1 bg-white rounded-xl border shadow-xl overflow-hidden"
+                              style={{
+                                borderColor: "#D0C4E2",
+                                boxShadow:
+                                  "0 8px 24px rgba(208, 196, 226, 0.2)",
+                              }}
+                            >
+                              {[
+                                { value: "", label: "Select Ethnicity" },
+                                { value: "American Indian or Alaska Native", label: "American Indian or Alaska Native" },
+                                { value: "Asian", label: "Asian" },
+                                { value: "Black or African American", label: "Black or African American" },
+                                { value: "Hispanic or Latino", label: "Hispanic or Latino" },
+                                { value: "Middle Eastern or North African", label: "Middle Eastern or North African" },
+                                { value: "Native Hawaiian or Other Pacific Islander", label: "Native Hawaiian or Other Pacific Islander" },
+                                { value: "White", label: "White" },
+                                { value: "Prefer not to say", label: "Prefer not to say" },
+                              ].map((option) => {
+                                const isSelected = ethnicity === option.value;
+                                return (
+                                  <motion.button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setEthnicity(option.value);
+                                      setIsEthnicityDropdownOpen(false);
                                     }}
                                     className="w-full text-left px-3.5 py-2.5 text-sm transition-all duration-150 flex items-center justify-between"
                                     style={{

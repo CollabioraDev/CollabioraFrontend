@@ -61,6 +61,181 @@ import {
 } from "@tabler/icons-react";
 import WellnessOnlySettingsModal from "../components/wellness/WellnessOnlySettingsModal.jsx";
 import { useCollabioraPro } from "../utils/collabioraPro.js";
+import CustomSelect from "../components/ui/CustomSelect.jsx";
+
+const flatEthnicityOptions = [
+  { value: "English", label: "English" },
+  { value: "Irish", label: "Irish" },
+  { value: "Scottish", label: "Scottish" },
+  { value: "Welsh", label: "Welsh" },
+  { value: "German", label: "German" },
+  { value: "French", label: "French" },
+  { value: "Italian", label: "Italian" },
+  { value: "Spanish", label: "Spanish" },
+  { value: "Portuguese", label: "Portuguese" },
+  { value: "Dutch", label: "Dutch" },
+  { value: "Belgian", label: "Belgian" },
+  { value: "Swiss", label: "Swiss" },
+  { value: "Austrian", label: "Austrian" },
+  { value: "Swedish", label: "Swedish" },
+  { value: "Norwegian", label: "Norwegian" },
+  { value: "Danish", label: "Danish" },
+  { value: "Finnish", label: "Finnish" },
+  { value: "Greek", label: "Greek" },
+  { value: "Polish", label: "Polish" },
+  { value: "Russian", label: "Russian" },
+  { value: "Ukrainian", label: "Ukrainian" },
+  { value: "Czech", label: "Czech" },
+  { value: "Slovak", label: "Slovak" },
+  { value: "Hungarian", label: "Hungarian" },
+  { value: "Romanian", label: "Romanian" },
+  { value: "Bulgarian", label: "Bulgarian" },
+  { value: "Serbian", label: "Serbian" },
+  { value: "Croatian", label: "Croatian" },
+  { value: "Bosnian", label: "Bosnian" },
+  { value: "Albanian", label: "Albanian" },
+  { value: "Lithuanian", label: "Lithuanian" },
+  { value: "Latvian", label: "Latvian" },
+  { value: "Estonian", label: "Estonian" },
+  { value: "Slovenian", label: "Slovenian" },
+  { value: "Macedonian", label: "Macedonian" },
+  { value: "Other European", label: "Other European" },
+  { value: "Mexican", label: "Mexican" },
+  { value: "Puerto Rican", label: "Puerto Rican" },
+  { value: "Cuban", label: "Cuban" },
+  { value: "Dominican", label: "Dominican" },
+  { value: "Guatemalan", label: "Guatemalan" },
+  { value: "Honduran", label: "Honduran" },
+  { value: "Salvadoran", label: "Salvadoran" },
+  { value: "Nicaraguan", label: "Nicaraguan" },
+  { value: "Costa Rican", label: "Costa Rican" },
+  { value: "Panamanian", label: "Panamanian" },
+  { value: "Colombian", label: "Colombian" },
+  { value: "Venezuelan", label: "Venezuelan" },
+  { value: "Ecuadorian", label: "Ecuadorian" },
+  { value: "Peruvian", label: "Peruvian" },
+  { value: "Bolivian", label: "Bolivian" },
+  { value: "Chilean", label: "Chilean" },
+  { value: "Argentinian", label: "Argentinian" },
+  { value: "Uruguayan", label: "Uruguayan" },
+  { value: "Paraguayan", label: "Paraguayan" },
+  { value: "Brazilian", label: "Brazilian" },
+  { value: "Other Hispanic or Latino", label: "Other Hispanic or Latino" },
+  { value: "African American", label: "African American" },
+  { value: "Nigerian", label: "Nigerian" },
+  { value: "Ghanaian", label: "Ghanaian" },
+  { value: "Kenyan", label: "Kenyan" },
+  { value: "Ethiopian", label: "Ethiopian" },
+  { value: "Somali", label: "Somali" },
+  { value: "Ugandan", label: "Ugandan" },
+  { value: "Tanzanian", label: "Tanzanian" },
+  { value: "Rwandan", label: "Rwandan" },
+  { value: "Congolese", label: "Congolese" },
+  { value: "Cameroonian", label: "Cameroonian" },
+  { value: "Senegalese", label: "Senegalese" },
+  { value: "Ivorian", label: "Ivorian" },
+  { value: "Malian", label: "Malian" },
+  { value: "Zimbabwean", label: "Zimbabwean" },
+  { value: "Zambian", label: "Zambian" },
+  { value: "Mozambican", label: "Mozambican" },
+  { value: "Angolan", label: "Angolan" },
+  { value: "South African", label: "South African" },
+  { value: "Caribbean Black", label: "Caribbean Black" },
+  { value: "Jamaican", label: "Jamaican" },
+  { value: "Haitian", label: "Haitian" },
+  { value: "Trinidadian", label: "Trinidadian" },
+  { value: "Barbadian", label: "Barbadian" },
+  { value: "Other Black or African", label: "Other Black or African" },
+  { value: "Chinese", label: "Chinese" },
+  { value: "Japanese", label: "Japanese" },
+  { value: "Korean", label: "Korean" },
+  { value: "Taiwanese", label: "Taiwanese" },
+  { value: "Mongolian", label: "Mongolian" },
+  { value: "Tibetan", label: "Tibetan" },
+  { value: "Other East Asian", label: "Other East Asian" },
+  { value: "Indian", label: "Indian" },
+  { value: "Pakistani", label: "Pakistani" },
+  { value: "Bangladeshi", label: "Bangladeshi" },
+  { value: "Sri Lankan", label: "Sri Lankan" },
+  { value: "Nepali", label: "Nepali" },
+  { value: "Bhutanese", label: "Bhutanese" },
+  { value: "Maldivian", label: "Maldivian" },
+  { value: "Afghan", label: "Afghan" },
+  { value: "Other South Asian", label: "Other South Asian" },
+  { value: "Filipino", label: "Filipino" },
+  { value: "Vietnamese", label: "Vietnamese" },
+  { value: "Thai", label: "Thai" },
+  { value: "Indonesian", label: "Indonesian" },
+  { value: "Malaysian", label: "Malaysian" },
+  { value: "Singaporean", label: "Singaporean" },
+  { value: "Burmese", label: "Burmese" },
+  { value: "Cambodian", label: "Cambodian" },
+  { value: "Laotian", label: "Laotian" },
+  { value: "Bruneian", label: "Bruneian" },
+  { value: "Timorese", label: "Timorese" },
+  { value: "Other Southeast Asian", label: "Other Southeast Asian" },
+  { value: "Kazakh", label: "Kazakh" },
+  { value: "Uzbek", label: "Uzbek" },
+  { value: "Turkmen", label: "Turkmen" },
+  { value: "Kyrgyz", label: "Kyrgyz" },
+  { value: "Tajik", label: "Tajik" },
+  { value: "Other Central Asian", label: "Other Central Asian" },
+  { value: "Arab", label: "Arab" },
+  { value: "Egyptian", label: "Egyptian" },
+  { value: "Moroccan", label: "Moroccan" },
+  { value: "Algerian", label: "Algerian" },
+  { value: "Tunisian", label: "Tunisian" },
+  { value: "Libyan", label: "Libyan" },
+  { value: "Lebanese", label: "Lebanese" },
+  { value: "Syrian", label: "Syrian" },
+  { value: "Iraqi", label: "Iraqi" },
+  { value: "Iranian / Persian", label: "Iranian / Persian" },
+  { value: "Saudi Arabian", label: "Saudi Arabian" },
+  { value: "Yemeni", label: "Yemeni" },
+  { value: "Jordanian", label: "Jordanian" },
+  { value: "Palestinian", label: "Palestinian" },
+  { value: "Emirati", label: "Emirati" },
+  { value: "Kuwaiti", label: "Kuwaiti" },
+  { value: "Qatari", label: "Qatari" },
+  { value: "Bahraini", label: "Bahraini" },
+  { value: "Omani", label: "Omani" },
+  { value: "Turkish", label: "Turkish" },
+  { value: "Kurdish", label: "Kurdish" },
+  { value: "Israeli", label: "Israeli" },
+  { value: "Other Middle Eastern or North African", label: "Other Middle Eastern or North African" },
+  { value: "Cherokee", label: "Cherokee" },
+  { value: "Navajo", label: "Navajo" },
+  { value: "Sioux", label: "Sioux" },
+  { value: "Chippewa", label: "Chippewa" },
+  { value: "Choctaw", label: "Choctaw" },
+  { value: "Apache", label: "Apache" },
+  { value: "Iroquois", label: "Iroquois" },
+  { value: "Creek", label: "Creek" },
+  { value: "Blackfoot", label: "Blackfoot" },
+  { value: "Seminole", label: "Seminole" },
+  { value: "Alaska Native", label: "Alaska Native" },
+  { value: "Other American Indian or Alaska Native", label: "Other American Indian or Alaska Native" },
+  { value: "Native Hawaiian", label: "Native Hawaiian" },
+  { value: "Samoan", label: "Samoan" },
+  { value: "Tongan", label: "Tongan" },
+  { value: "Fijian", label: "Fijian" },
+  { value: "Chamorro", label: "Chamorro" },
+  { value: "Marshallese", label: "Marshallese" },
+  { value: "Palauan", label: "Palauan" },
+  { value: "Other Pacific Islander", label: "Other Pacific Islander" },
+  { value: "Mixed White and Black", label: "Mixed White and Black" },
+  { value: "Mixed White and Asian", label: "Mixed White and Asian" },
+  { value: "Mixed White and Hispanic", label: "Mixed White and Hispanic" },
+  { value: "Mixed Black and Asian", label: "Mixed Black and Asian" },
+  { value: "Mixed Black and Hispanic", label: "Mixed Black and Hispanic" },
+  { value: "Mixed Asian and Hispanic", label: "Mixed Asian and Hispanic" },
+  { value: "Other Mixed or Multi-Ethnic", label: "Other Mixed or Multi-Ethnic" },
+  { value: "Jewish", label: "Jewish" },
+  { value: "Roma / Gypsy", label: "Roma / Gypsy" },
+  { value: "Sikh", label: "Sikh" },
+  { value: "Prefer not to say", label: "Prefer not to say" },
+  { value: "Not listed above", label: "Not listed above" }
+];
 
 /** Public-folder filenames for patient preset profile pictures (served from /). */
 const PRESET_PATIENT_AVATAR_FILENAMES = [
@@ -207,6 +382,7 @@ export default function EditProfile() {
     })),
   );
   const [gender, setGender] = useState(""); // Optional for both
+  const [ethnicity, setEthnicity] = useState(""); // For patients
   const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const [showUsernameSuggestions, setShowUsernameSuggestions] = useState(false);
   const [followedCommunities, setFollowedCommunities] = useState([]);
@@ -551,6 +727,7 @@ export default function EditProfile() {
           setCountry(profileObj.patient.location?.country || "");
           setSelectedConditions(profileObj.patient.conditions || []);
           setGender(profileObj.patient.gender || "");
+          setEthnicity(profileObj.patient.ethnicity || "");
           setAge(profileObj.patient.age?.toString() || "");
         } else if (profileObj.researcher) {
           // Researcher fields
@@ -955,11 +1132,13 @@ export default function EditProfile() {
         const originalCity = profileObj.patient?.location?.city || "";
         const originalCountry = profileObj.patient?.location?.country || "";
         const originalGender = profileObj.patient?.gender || "";
+        const originalEthnicity = profileObj.patient?.ethnicity || "";
         const originalAge = profileObj.patient?.age?.toString() || "";
 
         const newCity = city.trim();
         const newCountry = country.trim();
         const newGender = gender.trim();
+        const newEthnicity = ethnicity.trim();
         const newAge = age ? parseInt(age).toString() : "";
 
         // Check if conditions changed (compare arrays)
@@ -973,6 +1152,7 @@ export default function EditProfile() {
           newCity !== originalCity ||
           newCountry !== originalCountry ||
           newGender !== originalGender ||
+          newEthnicity !== originalEthnicity ||
           newAge !== originalAge
         ) {
           hasProfileChanges = true;
@@ -985,6 +1165,7 @@ export default function EditProfile() {
             country: newCountry || undefined,
           },
           gender: newGender || undefined,
+          ethnicity: newEthnicity || undefined,
           age: age ? parseInt(age) : undefined,
         };
       } else if (user.role === "researcher") {
@@ -1942,6 +2123,24 @@ export default function EditProfile() {
                     {t("editProfile.genderPreferNot")}
                   </option>
                 </select>
+              </div>
+
+              {/* Ethnicity */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Ethnicity
+                </label>
+                <CustomSelect
+                  value={ethnicity}
+                  onChange={setEthnicity}
+                  options={flatEthnicityOptions}
+                  placeholder="Select ethnicity"
+                  variant="default"
+                  searchable
+                  searchPlaceholder="Search ethnicity..."
+                  maxDropdownHeight={300}
+                  className="w-full"
+                />
               </div>
 
               {/* Location */}

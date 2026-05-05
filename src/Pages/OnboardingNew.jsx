@@ -101,7 +101,8 @@ const STEP_NAME = 3;
 const STEP_LANGUAGE = 4;
 /** Patient path */
 const STEP_PATIENT_CONDITIONS = 5;
-const STEP_PATIENT_LOCATION = 6;
+const STEP_PATIENT_ETHNICITY = 6;
+const STEP_PATIENT_LOCATION = 7;
 /** Researcher path */
 const STEP_RESEARCHER_PROFESSIONAL = 5;
 const STEP_RESEARCHER_ORCID = 6;
@@ -184,6 +185,244 @@ const professionOptions = [
     ],
   },
 ];
+const ethnicityOptions = [
+  {
+    group: "European",
+    options: [
+      "English",
+      "Irish",
+      "Scottish",
+      "Welsh",
+      "German",
+      "French",
+      "Italian",
+      "Spanish",
+      "Portuguese",
+      "Dutch",
+      "Belgian",
+      "Swiss",
+      "Austrian",
+      "Swedish",
+      "Norwegian",
+      "Danish",
+      "Finnish",
+      "Greek",
+      "Polish",
+      "Russian",
+      "Ukrainian",
+      "Czech",
+      "Slovak",
+      "Hungarian",
+      "Romanian",
+      "Bulgarian",
+      "Serbian",
+      "Croatian",
+      "Bosnian",
+      "Albanian",
+      "Lithuanian",
+      "Latvian",
+      "Estonian",
+      "Slovenian",
+      "Macedonian",
+      "Other European"
+    ]
+  },
+  {
+    group: "Hispanic or Latino",
+    options: [
+      "Mexican",
+      "Puerto Rican",
+      "Cuban",
+      "Dominican",
+      "Guatemalan",
+      "Honduran",
+      "Salvadoran",
+      "Nicaraguan",
+      "Costa Rican",
+      "Panamanian",
+      "Colombian",
+      "Venezuelan",
+      "Ecuadorian",
+      "Peruvian",
+      "Bolivian",
+      "Chilean",
+      "Argentinian",
+      "Uruguayan",
+      "Paraguayan",
+      "Brazilian",
+      "Other Hispanic or Latino"
+    ]
+  },
+  {
+    group: "Black or African",
+    options: [
+      "African American",
+      "Nigerian",
+      "Ghanaian",
+      "Kenyan",
+      "Ethiopian",
+      "Somali",
+      "Ugandan",
+      "Tanzanian",
+      "Rwandan",
+      "Congolese",
+      "Cameroonian",
+      "Senegalese",
+      "Ivorian",
+      "Malian",
+      "Zimbabwean",
+      "Zambian",
+      "Mozambican",
+      "Angolan",
+      "South African",
+      "Caribbean Black",
+      "Jamaican",
+      "Haitian",
+      "Trinidadian",
+      "Barbadian",
+      "Other Black or African"
+    ]
+  },
+  {
+    group: "East Asian",
+    options: [
+      "Chinese",
+      "Japanese",
+      "Korean",
+      "Taiwanese",
+      "Mongolian",
+      "Tibetan",
+      "Other East Asian"
+    ]
+  },
+  {
+    group: "South Asian",
+    options: [
+      "Indian",
+      "Pakistani",
+      "Bangladeshi",
+      "Sri Lankan",
+      "Nepali",
+      "Bhutanese",
+      "Maldivian",
+      "Afghan",
+      "Other South Asian"
+    ]
+  },
+  {
+    group: "Southeast Asian",
+    options: [
+      "Filipino",
+      "Vietnamese",
+      "Thai",
+      "Indonesian",
+      "Malaysian",
+      "Singaporean",
+      "Burmese",
+      "Cambodian",
+      "Laotian",
+      "Bruneian",
+      "Timorese",
+      "Other Southeast Asian"
+    ]
+  },
+  {
+    group: "Central Asian",
+    options: [
+      "Kazakh",
+      "Uzbek",
+      "Turkmen",
+      "Kyrgyz",
+      "Tajik",
+      "Other Central Asian"
+    ]
+  },
+  {
+    group: "Middle Eastern or North African",
+    options: [
+      "Arab",
+      "Egyptian",
+      "Moroccan",
+      "Algerian",
+      "Tunisian",
+      "Libyan",
+      "Lebanese",
+      "Syrian",
+      "Iraqi",
+      "Iranian / Persian",
+      "Saudi Arabian",
+      "Yemeni",
+      "Jordanian",
+      "Palestinian",
+      "Emirati",
+      "Kuwaiti",
+      "Qatari",
+      "Bahraini",
+      "Omani",
+      "Turkish",
+      "Kurdish",
+      "Israeli",
+      "Other Middle Eastern or North African"
+    ]
+  },
+  {
+    group: "American Indian or Alaska Native",
+    options: [
+      "Cherokee",
+      "Navajo",
+      "Sioux",
+      "Chippewa",
+      "Choctaw",
+      "Apache",
+      "Iroquois",
+      "Creek",
+      "Blackfoot",
+      "Seminole",
+      "Alaska Native",
+      "Other American Indian or Alaska Native"
+    ]
+  },
+  {
+    group: "Native Hawaiian or Pacific Islander",
+    options: [
+      "Native Hawaiian",
+      "Samoan",
+      "Tongan",
+      "Fijian",
+      "Chamorro",
+      "Marshallese",
+      "Palauan",
+      "Other Pacific Islander"
+    ]
+  },
+  {
+    group: "Mixed or Multi-Ethnic",
+    options: [
+      "Mixed White and Black",
+      "Mixed White and Asian",
+      "Mixed White and Hispanic",
+      "Mixed Black and Asian",
+      "Mixed Black and Hispanic",
+      "Mixed Asian and Hispanic",
+      "Other Mixed or Multi-Ethnic"
+    ]
+  },
+  {
+    group: "Other",
+    options: [
+      "Jewish",
+      "Roma / Gypsy",
+      "Sikh",
+      "Prefer not to say",
+      "Not listed above"
+    ]
+  }
+];
+
+const flatEthnicityOptions = ethnicityOptions.flatMap((g) =>
+  g.options.map((opt) => ({ value: opt, label: opt }))
+);
+
 const academicRankOptions = [
   { value: "Professor", label: "Professor" },
   { value: "Associate Professor", label: "Associate Professor" },
@@ -279,6 +518,7 @@ export default function OnboardingNew() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [symptomsText, setSymptomsText] = useState("");
   const [location, setLocation] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -333,7 +573,8 @@ export default function OnboardingNew() {
         { id: 3, label: "Your details" },
         { id: STEP_LANGUAGE, label: "Language" },
         { id: 5, label: "Profile" },
-        { id: 6, label: "Location" },
+        { id: 6, label: "Ethnicity" },
+        { id: 7, label: "Location" },
       ];
     }
     if (isMedicalProfessional === true) {
@@ -354,7 +595,8 @@ export default function OnboardingNew() {
       { id: 3, label: "Your details" },
       { id: STEP_LANGUAGE, label: "Language" },
       { id: 5, label: "Conditions" },
-      { id: 6, label: "Location" },
+      { id: 6, label: "Ethnicity" },
+      { id: 7, label: "Location" },
     ];
   };
   const steps = getSteps();
@@ -390,6 +632,7 @@ export default function OnboardingNew() {
     researchInterests,
     skills,
     location,
+    ethnicity,
     orcid,
     hasOrcid,
     verificationDocumentUrl,
@@ -447,6 +690,7 @@ export default function OnboardingNew() {
       setResearchInterests(draft.researchInterests);
     if (Array.isArray(draft.skills)) setSkills(draft.skills);
     if (typeof draft.location === "string") setLocation(draft.location);
+    if (typeof draft.ethnicity === "string") setEthnicity(draft.ethnicity);
     if (typeof draft.orcid === "string") setOrcid(draft.orcid);
     if (draft.hasOrcid !== undefined) setHasOrcid(draft.hasOrcid);
     if (typeof draft.verificationDocumentUrl === "string")
@@ -460,6 +704,7 @@ export default function OnboardingNew() {
     preferredLanguage: normalizeLocale(preferredLanguage),
     conditions: getCombinedConditions(conditions, symptomsText),
     location: location.trim() ? getLocationData() : undefined,
+    ethnicity: ethnicity.trim() || undefined,
     profession: profession || undefined,
     academicRank: academicRank || undefined,
     institutionAffiliation: institutionAffiliation || undefined,
@@ -1084,6 +1329,7 @@ export default function OnboardingNew() {
                 patient: {
                   conditions: getCombinedConditions(conditions, symptomsText),
                   location: locationData,
+                  ethnicity: ethnicity.trim() || undefined,
                 },
               }
             : {
@@ -1290,7 +1536,11 @@ export default function OnboardingNew() {
         role === "patient"
           ? {
               role: "patient",
-              patient: { conditions: combined, location: locationData },
+              patient: {
+                conditions: combined,
+                location: locationData,
+                ethnicity: ethnicity.trim() || undefined,
+              },
             }
           : {
               role: "researcher",
@@ -2353,7 +2603,7 @@ export default function OnboardingNew() {
                         Back
                       </Button>
                       <Button
-                        onClick={() => goToStep(STEP_PATIENT_LOCATION)}
+                        onClick={() => goToStep(STEP_PATIENT_ETHNICITY)}
                         className="flex-1 py-3 rounded-xl font-semibold"
                         style={{ backgroundColor: "#2F3C96", color: "#fff" }}
                       >
@@ -2913,11 +3163,73 @@ export default function OnboardingNew() {
                   </motion.div>
                 )}
 
-                {/* Step 6 Patient: Location */}
+                {/* Step 6 Patient: Ethnicity */}
+                {step === STEP_PATIENT_ETHNICITY &&
+                  isMedicalProfessional === false && (
+                  <motion.div
+                    key="step6PatientEthnicity"
+                    variants={stepVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    transition={{ duration: 0.25 }}
+                    className="space-y-4"
+                  >
+                    <h1
+                      className="text-xl sm:text-2xl font-bold text-center"
+                      style={{ color: "#2F3C96" }}
+                    >
+                      Ethnicity
+                    </h1>
+                    <div>
+                      <label
+                        className="block text-sm font-semibold mb-2"
+                        style={{ color: "#2F3C96" }}
+                      >
+                        Ethnicity
+                      </label>
+                      <CustomSelect
+                        value={ethnicity}
+                        onChange={setEthnicity}
+                        options={flatEthnicityOptions}
+                        placeholder="Select ethnicity"
+                        variant="onboarding"
+                        searchable
+                        searchPlaceholder="Search ethnicity..."
+                        maxDropdownHeight={300}
+                        className="w-full"
+                      />
+                    </div>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={() => goToStep(STEP_PATIENT_CONDITIONS)}
+                        className="py-3 px-5 rounded-xl font-semibold border"
+                        style={{
+                          borderColor: "#2F3C96",
+                          color: "#2F3C96",
+                          backgroundColor: "transparent",
+                        }}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        onClick={() => goToStep(STEP_PATIENT_LOCATION)}
+                        className="flex-1 py-3 rounded-xl font-semibold"
+                        style={{ backgroundColor: "#2F3C96", color: "#fff" }}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step 7 Patient: Location */}
                 {step === STEP_PATIENT_LOCATION &&
                   isMedicalProfessional === false && (
                   <motion.div
-                    key="step5Patient"
+                    key="step7Patient"
                     variants={stepVariants}
                     initial="hidden"
                     animate="visible"
@@ -2961,7 +3273,7 @@ export default function OnboardingNew() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         type="button"
-                        onClick={() => goToStep(STEP_PATIENT_CONDITIONS)}
+                        onClick={() => goToStep(STEP_PATIENT_ETHNICITY)}
                         className="py-3 px-5 rounded-xl font-semibold border"
                         style={{
                           borderColor: "#2F3C96",
