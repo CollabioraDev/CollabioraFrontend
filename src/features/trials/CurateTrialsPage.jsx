@@ -494,10 +494,18 @@ export default function CurateTrials() {
 
             {/* Reusing the preview slots for uploaded content */}
             {anyParsed && (
-              <div className="space-y-4">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  {t("curateTrials.extractedTrials", "Extracted Trials")}
-                </h2>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+                    {t("curateTrials.extractedTrials", "Extracted Trials")}
+                  </h2>
+                  {allParsed.length > 0 && (
+                    <span className="text-xs font-medium text-slate-400">
+                      {allParsed.length} trial{allParsed.length !== 1 ? "s" : ""} detected
+                    </span>
+                  )}
+                </div>
+
                 {activeSlots.map((slot) => (
                   (slot.parsed || []).map((trial, trialIdx) => (
                     <TrialPreviewDetail
@@ -532,6 +540,7 @@ export default function CurateTrials() {
 
         {curateTab === "paste" && (
           <>
+
         {/* Per-trial slots */}
         <div className="space-y-4 mb-4">
           {activeSlots.map((slot, slotIdx) => (

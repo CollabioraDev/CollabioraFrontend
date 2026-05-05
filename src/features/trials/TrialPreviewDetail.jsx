@@ -106,8 +106,53 @@ export function TrialPreviewDetail({
     );
   }
 
+  const isMissing = (val) => {
+    if (val == null) return true;
+    const s = String(val).trim().toUpperCase();
+    return s === "" || s === "N/A" || s === "NA" || s === "NOT SPECIFIED";
+  };
+
+  const missingFields = [];
+  if (isMissing(t.title)) missingFields.push("Title");
+  if (isMissing(t.studyPurpose) && isMissing(t.description)) missingFields.push("Study Purpose");
+  if (isMissing(t.whatHappens)) missingFields.push("What Happens");
+  if (isMissing(t.risksAndBenefits)) missingFields.push("Risks & Benefits");
+  if (isMissing(t.phase)) missingFields.push("Phase");
+  if (isMissing(t.status)) missingFields.push("Status");
+  if (isMissing(t.externalStudyCode)) missingFields.push("External Study Code");
+  if (isMissing(t.eligibility?.minimumAge) || isMissing(t.eligibility?.maximumAge)) missingFields.push("Age Range");
+  if (!t.conditions?.length) missingFields.push("Conditions");
+  if (!t.contacts?.length && isMissing(t.contactBlock)) missingFields.push("Contacts");
+  if (t.targetEnrollment == null) missingFields.push("Target Enrollment");
+  if (isMissing(t.inclusionCriteria) && isMissing(t.exclusionCriteria) && isMissing(t.eligibility?.criteria)) missingFields.push("Eligibility Criteria");
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden group">
+      {/* Missing Information Alert - Very Top */}
+      {missingFields.length > 0 && (
+        <div className="bg-amber-50 border-b border-amber-100 px-5 py-4 flex items-start gap-3">
+          <div className="shrink-0 mt-1">
+            <Info className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-2">
+              Incomplete Extraction — Missing Details
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+              {missingFields.map((field) => (
+                <li key={field} className="flex items-center gap-1.5 text-xs text-amber-700">
+                  <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                  <span className="font-semibold">{field}</span> is missing
+                </li>
+              ))}
+            </ul>
+            <p className="text-[10px] text-amber-600/80 mt-3 italic">
+              Please complete these fields manually before saving to the database.
+            </p>
+          </div>
+        </div>
+      )}
+
       {showMetadataFields && typeof onPatch === "function" && (
         <div className="px-5 pt-4 pb-3 space-y-3 border-b border-slate-100 bg-slate-50/60">
           <div className="flex justify-between items-start gap-4">
@@ -259,11 +304,6 @@ export function TrialPreviewDetail({
           </h3>
         </div>
 
-        {t._warnings?.length > 0 && (
-          <p className="text-xs text-amber-700 mt-2 bg-amber-50 rounded px-2 py-1 border border-amber-200">
-            {t._warnings.join(" · ")}
-          </p>
-        )}
       </div>
 
       {/* Expandable detail body */}
