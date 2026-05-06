@@ -51,8 +51,11 @@ export default function CurateTrials() {
         : "template";
 
   function setCurateTab(next) {
-    if (next === "template") setSearchParams({});
-    else setSearchParams({ tab: next });
+    const token = searchParams.get("token");
+    const newParams = {};
+    if (token) newParams.token = token;
+    if (next !== "template") newParams.tab = next;
+    setSearchParams(newParams);
   }
 
   const [templateHelpOpen, setTemplateHelpOpen] = useState(false);
