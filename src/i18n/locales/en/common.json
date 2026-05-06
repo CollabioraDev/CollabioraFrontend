@@ -87,7 +87,12 @@
     "proModalCloseLabel": "Close",
     "proSkipHint": "You can unlock Premium anytime from the Plans page.",
     "proUnlockSuccess": "Welcome to Collabiora Premium!",
-    "proUnlockInvalid": "That code doesn’t match. Try again or contact support."
+    "proUnlockInvalid": "That code doesn’t match. Try again or contact support.",
+    "nudge": {
+      "title": "Experience Your Health, Personalized",
+      "body": "Unlock tailored wellness plans, medication interaction insights, and priority expert access to take control of your health journey.",
+      "cta": "Upgrade to Premium"
+    }
   },
   "onboarding": {
     "languageTitle": "Choose your language",

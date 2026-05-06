@@ -14,7 +14,12 @@ import {
 } from "./utils/api.js";
 import { AppRoutes } from "./app/AppRoutes.jsx";
 import { RouteFallback } from "./app/routeFallback.jsx";
-import { FloatingChatbot, LandingNavbar, Navbar } from "./app/lazyPages.js";
+import {
+  FloatingChatbot,
+  LandingNavbar,
+  Navbar,
+  PremiumNudgeBar,
+} from "./app/lazyPages.js";
 import LanguageShell from "./i18n/LanguageShell.jsx";
 import { syncI18nFromUser } from "./i18n/syncUserLanguage.js";
 import { migrateGuestChatToIoraStorage } from "./utils/yoriGuestChatStorage.js";
@@ -56,14 +61,14 @@ const AppContent = () => {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
   );
-  const [isSignedIn, setIsSignedIn] = useState(() => {
+  const [user, setUser] = useState(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem("user") || "null");
-      return Boolean(stored?._id || stored?.id);
+      return JSON.parse(localStorage.getItem("user") || "null");
     } catch {
-      return false;
+      return null;
     }
   });
+  const [isSignedIn, setIsSignedIn] = useState(Boolean(user?._id || user?.id));
   const [userRole, setUserRole] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("user") || "null");
@@ -90,6 +95,7 @@ const AppContent = () => {
     const syncUserState = () => {
       try {
         const stored = JSON.parse(localStorage.getItem("user") || "null");
+        setUser(stored);
         setIsSignedIn(Boolean(stored?._id || stored?.id));
         setUserRole(stored?.role || "patient");
         syncI18nFromUser(stored || {});

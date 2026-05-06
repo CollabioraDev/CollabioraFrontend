@@ -15,6 +15,7 @@ import {
   clearCollabioraProLegacyStorage,
   useCollabioraPro,
 } from "../utils/collabioraPro.js";
+import PremiumNudgeBar from "./PremiumNudgeBar.jsx";
 
 export default function Navbar() {
   const { t } = useTranslation("common");
@@ -530,7 +531,7 @@ export default function Navbar() {
         {/* Logo */}
         <PrefetchLink
           to={user ? "/yori" : "/"}
-          className="group relative flex items-center"
+          className="group relative flex items-center gap-4"
         >
           {/* Logo Image */}
           <img
@@ -545,6 +546,11 @@ export default function Navbar() {
                 : "drop-shadow(0 2px 4px rgba(47, 60, 150, 0.15))",
             }}
           />
+          
+          {/* Pro Nudge - Visible next to logo on all screens */}
+          <div>
+            <PremiumNudgeBar user={user} variant="navbar" />
+          </div>
         </PrefetchLink>
 
         {isLogoOnlyNav && isPlansPage && !isLoggedInUser && (

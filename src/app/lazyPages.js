@@ -123,3 +123,6 @@ export const EmailPreferences = React.lazy(() =>
 export const WellnessProPage = React.lazy(() =>
   import("../Pages/WellnessProPage.jsx"),
 );
+export const PremiumNudgeBar = React.lazy(() =>
+  import("../components/PremiumNudgeBar.jsx"),
+);
