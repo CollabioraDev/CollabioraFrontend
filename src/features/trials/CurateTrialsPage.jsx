@@ -15,6 +15,9 @@ import {
   Building2,
   Upload,
   FileText,
+  ShieldAlert,
+  Lock,
+  ArrowLeft,
 } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -64,6 +67,46 @@ export default function CurateTrials() {
   const [templateConfirmOpen, setTemplateConfirmOpen] = useState(false);
   const [curateInstitutionKey, setCurateInstitutionKey] = useState("ucla");
   const [dynamicInstitutions, setDynamicInstitutions] = useState([]);
+  const [tokenInstitution, setTokenInstitution] = useState(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+
+    if (!token) {
+      setIsAccessDenied(true);
+      return;
+    }
+
+    if (token) {
+      async function validateToken() {
+        setTokenLoading(true);
+        try {
+          const res = await fetch(`${base}/api/curated-trials/institution-by-token/${token}`);
+          const data = await res.json();
+          if (res.ok && data.institution) {
+            setTokenInstitution(data.institution);
+            setCurateInstitutionKey(data.institution.key);
+            setIsAccessDenied(false);
+          } else {
+            // If a token is present but invalid, block access entirely (even for admins)
+            // to prevent accidental uploads with a broken link
+            setIsAccessDenied(true);
+          }
+        } catch (e) {
+          console.error(e);
+          setIsAccessDenied(true);
+        } finally {
+          setTokenLoading(false);
+        }
+      }
+      validateToken();
+    } else {
+      // If no token but is admin, ensure access is NOT denied
+      setIsAccessDenied(false);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     async function fetchList() {
@@ -348,6 +391,37 @@ export default function CurateTrials() {
   const anyLoading = slots.some((s) => s.loading) || uploading;
   const anyParsed = allParsed.length > 0;
 
+  if (isAccessDenied) {
+    return (
+      <Layout>
+        <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 py-12 text-center">
+          <div className="mb-6 rounded-full bg-rose-50 p-6 ring-8 ring-rose-50/50">
+            <ShieldAlert className="h-12 w-12 text-rose-600" />
+          </div>
+          <h1 className="mb-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            {t("curateTrials.accessRestrictedTitle", "Secure Upload Required")}
+          </h1>
+          <p className="mb-8 max-w-md text-base leading-relaxed text-slate-600">
+            {t("curateTrials.accessRestrictedBody", "Direct access to this page is restricted. Please use the unique secure link provided to your institution to upload clinical trials.")}
+          </p>
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t("ui.backToHome", "Back to Home")}
+            </Link>
+          </div>
+          <div className="mt-12 flex items-center gap-2 text-xs font-medium text-slate-400">
+            <Lock className="h-3 w-3" />
+            <span>Collabiora Secure Protocol Active</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="w-full min-h-full bg-gradient-to-b from-slate-100/40 via-indigo-50/25 to-slate-100/30">
@@ -440,14 +514,29 @@ export default function CurateTrials() {
               </label>
             </div>
             <div className="w-full min-w-0 sm:flex-1 sm:max-w-2xl">
-              <CustomSelect
-                value={curateInstitutionKey}
-                onChange={setCurateInstitutionKey}
-                options={institutionOptions}
-                disabled={saving}
-                className="w-full [&>div]:min-h-11 [&>div]:rounded-xl [&>div]:px-3.5 [&>div]:py-2.5 [&>div]:text-sm [&>div]:font-medium [&>div]:text-[#2F3C96] [&>div]:shadow-sm"
-                placeholder={t("curateTrials.institutionPlaceholder", "Select Institution")}
-              />
+              {tokenLoading ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Validating link...
+                </div>
+              ) : tokenInstitution ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-sm font-semibold text-[#2F3C96] shadow-sm">
+                  <Building2 className="w-4 h-4" />
+                  {tokenInstitution.displayName}
+                  <span className="ml-auto text-[10px] bg-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-block">
+                    Locked via Secure Link
+                  </span>
+                </div>
+              ) : (
+                <CustomSelect
+                  value={curateInstitutionKey}
+                  onChange={setCurateInstitutionKey}
+                  options={institutionOptions}
+                  disabled={saving}
+                  className="w-full [&>div]:min-h-11 [&>div]:rounded-xl [&>div]:px-3.5 [&>div]:py-2.5 [&>div]:text-sm [&>div]:font-medium [&>div]:text-[#2F3C96] [&>div]:shadow-sm"
+                  placeholder={t("curateTrials.institutionPlaceholder", "Select Institution")}
+                />
+              )}
             </div>
           </div>
         </div>

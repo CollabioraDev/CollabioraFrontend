@@ -57,6 +57,8 @@ import {
   History,
   Sparkles,
   Pencil,
+  Copy,
+  Link2,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import {
@@ -1331,6 +1333,27 @@ export default function AdminDashboard() {
       toast.success("Institution updated");
       setEditingInstitutionId(null);
     } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleGenerateInstitutionToken = async (id) => {
+    const { headers } = getAuth();
+    try {
+      const res = await fetch(`${base}/api/admin/institutions/${id}/token`, {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate token");
+      setInstitutionsList((prev) =>
+        prev.map((inst) =>
+          inst._id === id ? { ...inst, uploadToken: data.uploadToken } : inst,
+        ),
+      );
+      toast.success("New upload token generated");
+    } catch (e) {
+      console.error(e);
       toast.error(e.message);
     }
   };
@@ -10310,6 +10333,9 @@ export default function AdminDashboard() {
                           <th className="text-left py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Status
                           </th>
+                          <th className="text-left py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
+                            Upload Link
+                          </th>
                           <th className="text-right py-3 px-4 text-xs font-bold text-brand-gray uppercase tracking-wider bg-white">
                             Actions
                           </th>
@@ -10373,6 +10399,28 @@ export default function AdminDashboard() {
                               >
                                 {inst.isActive ? "Active" : "Inactive"}
                               </button>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    const link = `${window.location.origin}/add-trials?token=${inst.uploadToken}`;
+                                    navigator.clipboard.writeText(link);
+                                    toast.success("Upload link copied to clipboard");
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 rounded border border-indigo-100 text-[10px] font-bold hover:bg-indigo-100 transition-colors"
+                                  title="Copy secure link to clipboard"
+                                >
+                                  <Link2 className="w-3 h-3" /> Copy Upload Link
+                                </button>
+                                <button
+                                  onClick={() => handleGenerateInstitutionToken(inst._id)}
+                                  className="p-1 text-slate-300 hover:text-brand-royal-blue transition-colors"
+                                  title="Refresh/Rotate Link"
+                                >
+                                  <RefreshCw className="w-3 h-3" />
+                                </button>
+                              </div>
                             </td>
                             <td className="py-4 px-4 text-right">
                               <div className="flex justify-end gap-2">
