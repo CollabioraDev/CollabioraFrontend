@@ -31,6 +31,7 @@ import {
 } from "@tabler/icons-react";
 import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
+import KeyContacts from "../components/KeyContacts.jsx";
 
 const getCommunityIcon = (slug, name) => {
   const iconMap = {
@@ -296,6 +297,8 @@ export default function ForumCommunityPage() {
               </div>
             </div>
           </div>
+
+          <KeyContacts contacts={community.keyContacts} />
 
           {/* Discussions */}
           <div className="bg-white rounded-xl border border-[#E8E8E8] p-6 shadow-sm">

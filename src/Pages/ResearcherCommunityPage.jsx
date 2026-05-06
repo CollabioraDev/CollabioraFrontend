@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import AnimatedBackground from "../components/ui/AnimatedBackground.jsx";
+import KeyContacts from "../components/KeyContacts.jsx";
 
 // Avatar: first letter of community name (used when no image)
 const CommunityAvatar = ({ community }) => {
@@ -259,6 +260,8 @@ export default function ResearcherCommunityPage() {
               </div>
             </div>
           </div>
+
+          <KeyContacts contacts={community.keyContacts} />
 
           {/* Discussions */}
           <div className="bg-white rounded-xl border border-[#E8E8E8] p-6 shadow-sm">

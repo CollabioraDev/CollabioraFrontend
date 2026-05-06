@@ -398,6 +398,200 @@ function MiniLineChart({
   );
 }
 
+function CommunityKeyContactsInput({
+  contacts = [],
+  onChange,
+  institutions = [],
+  base,
+  getAuth,
+}) {
+  const [userSuggestions, setUserSuggestions] = useState([]);
+  const [activeSearchIdx, setActiveSearchIdx] = useState(null);
+  const [activeField, setActiveField] = useState(null); // 'name' or 'email'
+
+  const addContact = () => {
+    onChange([...contacts, { institution: "", name: "", email: "" }]);
+  };
+
+  const removeContact = (index) => {
+    onChange(contacts.filter((_, i) => i !== index));
+  };
+
+  const updateContact = (index, field, value) => {
+    const updated = contacts.map((c, i) =>
+      i === index ? { ...c, [field]: value } : c
+    );
+    onChange(updated);
+
+    if ((field === "name" || field === "email") && value.length >= 2) {
+      searchUsers(value, index, field);
+    } else {
+      setUserSuggestions([]);
+      setActiveSearchIdx(null);
+    }
+  };
+
+  const searchUsers = async (q, index, field) => {
+    try {
+      const { token } = getAuth();
+      const res = await fetch(
+        `${base}/api/admin/users/search?q=${encodeURIComponent(q)}&token=${token}`,
+      );
+      const data = await res.json();
+      setUserSuggestions(data.users || []);
+      setActiveSearchIdx(index);
+      setActiveField(field);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const selectUser = (index, user) => {
+    const updated = contacts.map((c, i) =>
+      i === index ? { ...c, name: user.username, email: user.email } : c
+    );
+    onChange(updated);
+    setUserSuggestions([]);
+    setActiveSearchIdx(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-bold text-brand-royal-blue uppercase tracking-wider">
+          Key Contacts (Who&apos;s Who)
+        </label>
+        <button
+          type="button"
+          onClick={addContact}
+          className="px-3 py-1.5 bg-brand-royal-blue text-white rounded-lg text-xs font-bold hover:bg-brand-royal-blue/90 transition-all shadow-sm flex items-center gap-1.5"
+        >
+          <PlusCircle className="w-4 h-4" /> Add New Contact
+        </button>
+      </div>
+
+      {contacts.length === 0 && (
+        <div className="text-center py-6 border-2 border-dashed border-brand-purple-100 rounded-xl">
+          <p className="text-sm text-brand-gray italic">
+            No key contacts added yet. Click &quot;Add New Contact&quot; to
+            highlight institutional leads.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {contacts.map((contact, idx) => (
+          <div
+            key={idx}
+            className="p-4 bg-white border-2 border-brand-purple-50 rounded-2xl shadow-sm hover:border-brand-purple-100 transition-all relative group"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-brand-gray uppercase tracking-widest ml-1">
+                  Institution
+                </label>
+                <input
+                  list={`inst-list-${idx}`}
+                  type="text"
+                  placeholder="e.g. UCLA"
+                  value={contact.institution}
+                  onChange={(e) =>
+                    updateContact(idx, "institution", e.target.value)
+                  }
+                  className="w-full px-4 py-2.5 text-sm border-2 border-brand-purple-50 rounded-xl outline-none focus:border-brand-royal-blue/30 focus:ring-4 focus:ring-brand-royal-blue/5 bg-brand-purple-50/20 transition-all font-medium"
+                />
+                <datalist id={`inst-list-${idx}`}>
+                  {institutions.map((inst) => (
+                    <option key={inst._id} value={inst.displayName} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="space-y-1.5 relative">
+                <label className="text-[10px] font-bold text-brand-gray uppercase tracking-widest ml-1">
+                  Contact Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Debbie Lynn"
+                  value={contact.name}
+                  onChange={(e) => updateContact(idx, "name", e.target.value)}
+                  className="w-full px-4 py-2.5 text-sm border-2 border-brand-purple-50 rounded-xl outline-none focus:border-brand-royal-blue/30 focus:ring-4 focus:ring-brand-royal-blue/5 bg-brand-purple-50/20 transition-all font-medium"
+                />
+                {activeSearchIdx === idx &&
+                  activeField === "name" &&
+                  userSuggestions.length > 0 && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-brand-purple-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1">
+                      {userSuggestions.map((u) => (
+                        <button
+                          key={u.email}
+                          type="button"
+                          onClick={() => selectUser(idx, u)}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-brand-purple-50 transition-colors flex flex-col"
+                        >
+                          <span className="font-bold text-brand-royal-blue">
+                            {u.username}
+                          </span>
+                          <span className="text-xs text-brand-gray">
+                            {u.email}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+              </div>
+
+              <div className="space-y-1.5 relative">
+                <label className="text-[10px] font-bold text-brand-gray uppercase tracking-widest ml-1">
+                  Email Address
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="email@institution.edu"
+                    value={contact.email}
+                    onChange={(e) => updateContact(idx, "email", e.target.value)}
+                    className="flex-1 px-4 py-2.5 text-sm border-2 border-brand-purple-50 rounded-xl outline-none focus:border-brand-royal-blue/30 focus:ring-4 focus:ring-brand-royal-blue/5 bg-brand-purple-50/20 transition-all font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeContact(idx)}
+                    className="w-10 h-10 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all shrink-0"
+                    title="Remove Contact"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+                {activeSearchIdx === idx &&
+                  activeField === "email" &&
+                  userSuggestions.length > 0 && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-brand-purple-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1">
+                      {userSuggestions.map((u) => (
+                        <button
+                          key={u.email}
+                          type="button"
+                          onClick={() => selectUser(idx, u)}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-brand-purple-50 transition-colors flex flex-col"
+                        >
+                          <span className="font-bold text-brand-royal-blue">
+                            {u.username}
+                          </span>
+                          <span className="text-xs text-brand-gray">
+                            {u.email}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // --- Page Feedback: auto-categorize by keywords ---
 const FEEDBACK_TYPE_KEYWORDS = {
   bug: [
@@ -765,6 +959,7 @@ export default function AdminDashboard() {
     categoryId: "",
     iconSvg: "",
     color: "#2F3C96",
+    keyContacts: [],
   });
   const [newCommunityThumbnailUploading, setNewCommunityThumbnailUploading] =
     useState(false);
@@ -786,6 +981,7 @@ export default function AdminDashboard() {
     categoryId: "",
     iconSvg: "",
     color: "#2F3C96",
+    keyContacts: [],
   });
   const [updatingCommunity, setUpdatingCommunity] = useState(false);
   const [editingIconCommunityId, setEditingIconCommunityId] = useState(null);
@@ -809,6 +1005,7 @@ export default function AdminDashboard() {
     name: "",
     description: "",
     thumbnailUrl: "",
+    keyContacts: [],
   });
   const [
     newResearcherCommunityThumbnailUploading,
@@ -1144,6 +1341,7 @@ export default function AdminDashboard() {
       fetchCommunityCategories();
       fetchCommunityProposals();
       fetchCommunityMembershipRequests();
+      fetchInstitutions();
     }
   }, [activeSection]);
 
@@ -3326,6 +3524,7 @@ export default function AdminDashboard() {
             categoryId: editCommunity.categoryId || null,
             iconSvg: editCommunity.iconSvg,
             color: editCommunity.color || "#2F3C96",
+            keyContacts: editCommunity.keyContacts || [],
           }),
         },
       );
@@ -3346,6 +3545,7 @@ export default function AdminDashboard() {
         categoryId: "",
         iconSvg: "",
         color: "#2F3C96",
+        keyContacts: [],
       });
       fetchAdminCommunities();
     } catch (e) {
@@ -3537,6 +3737,7 @@ export default function AdminDashboard() {
           coverImage: newResearcherCommunity.thumbnailUrl || undefined,
           isOfficial: false,
           communityType: "researcher",
+          keyContacts: newResearcherCommunity.keyContacts || [],
         }),
       });
       if (res.status === 401) {
@@ -3553,6 +3754,7 @@ export default function AdminDashboard() {
         name: "",
         description: "",
         thumbnailUrl: "",
+        keyContacts: [],
       });
       fetchAdminCommunities();
     } catch (e) {
@@ -3586,6 +3788,7 @@ export default function AdminDashboard() {
           categoryId: newCommunity.categoryId || null,
           iconSvg: newCommunity.iconSvg || "",
           color: newCommunity.color || "#2F3C96",
+          keyContacts: newCommunity.keyContacts || [],
         }),
       });
       if (res.status === 401) {
@@ -3605,6 +3808,7 @@ export default function AdminDashboard() {
         categoryId: "",
         iconSvg: "",
         color: "#2F3C96",
+        keyContacts: [],
       });
       fetchAdminCommunities();
     } catch (e) {
@@ -7209,6 +7413,21 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
+                        <div className="border-t border-brand-purple-100 pt-6">
+                          <CommunityKeyContactsInput
+                            contacts={newCommunity.keyContacts}
+                            institutions={institutionsList}
+                            base={base}
+                            getAuth={getAuth}
+                            onChange={(contacts) =>
+                              setNewCommunity((p) => ({
+                                ...p,
+                                keyContacts: contacts,
+                              }))
+                            }
+                          />
+                        </div>
+
                         <div className="flex justify-end pt-2">
                           <button
                             type="submit"
@@ -7335,6 +7554,20 @@ export default function AdminDashboard() {
                                           className="w-28 px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
                                         />
                                       </div>
+                                      <div className="py-2">
+                                        <CommunityKeyContactsInput
+                                          contacts={editCommunity.keyContacts}
+                                          institutions={institutionsList}
+                                          base={base}
+                                          getAuth={getAuth}
+                                          onChange={(contacts) =>
+                                            setEditCommunity((p) => ({
+                                              ...p,
+                                              keyContacts: contacts,
+                                            }))
+                                          }
+                                        />
+                                      </div>
                                       <div className="flex gap-2">
                                         <Button
                                           type="submit"
@@ -7342,9 +7575,10 @@ export default function AdminDashboard() {
                                           className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
                                         >
                                           {updatingCommunity ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                          ) : null}{" "}
-                                          Save
+                                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                          ) : (
+                                            "Save"
+                                          )}
                                         </Button>
                                         <Button
                                           type="button"
@@ -7411,6 +7645,7 @@ export default function AdminDashboard() {
                                                 "",
                                               iconSvg: c.iconSvg || "",
                                               color: c.color || "#2F3C96",
+                                              keyContacts: c.keyContacts || [],
                                             });
                                           }}
                                           className="px-2 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue hover:bg-brand-royal-blue/20 rounded-lg"
@@ -7584,6 +7819,20 @@ export default function AdminDashboard() {
                             </p>
                           </div>
                         </div>
+                        <div className="border-t border-brand-purple-100 pt-6">
+                          <CommunityKeyContactsInput
+                            contacts={newResearcherCommunity.keyContacts}
+                            institutions={institutionsList}
+                            base={base}
+                            getAuth={getAuth}
+                            onChange={(contacts) =>
+                              setNewResearcherCommunity((p) => ({
+                                ...p,
+                                keyContacts: contacts,
+                              }))
+                            }
+                          />
+                        </div>
                         <button
                           type="submit"
                           disabled={creatingResearcherCommunity}
@@ -7618,67 +7867,166 @@ export default function AdminDashboard() {
                               .map((c) => (
                                 <li
                                   key={c._id}
-                                  className="flex items-center justify-between gap-2 bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
+                                  className="bg-white/50 rounded-lg p-3 border border-[rgba(208,196,226,0.4)]"
                                 >
-                                  <div className="flex items-center gap-3 min-w-0">
-                                    {c.coverImage || c.image ? (
-                                      <img
-                                        src={c.coverImage || c.image}
-                                        alt=""
-                                        className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
+                                  {editingCommunityId === c._id ? (
+                                    <form
+                                      onSubmit={handleUpdateCommunity}
+                                      className="space-y-3"
+                                    >
+                                      <input
+                                        type="text"
+                                        placeholder="Name"
+                                        value={editCommunity.name}
+                                        onChange={(e) =>
+                                          setEditCommunity((p) => ({
+                                            ...p,
+                                            name: e.target.value,
+                                          }))
+                                        }
+                                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg"
                                       />
-                                    ) : (
-                                      <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
-                                        <FlaskConical className="w-5 h-5 text-brand-royal-blue/60" />
+                                      <textarea
+                                        placeholder="Description"
+                                        value={editCommunity.description}
+                                        onChange={(e) =>
+                                          setEditCommunity((p) => ({
+                                            ...p,
+                                            description: e.target.value,
+                                          }))
+                                        }
+                                        className="w-full px-3 py-2 border border-[rgba(208,196,226,0.5)] rounded-lg min-h-[60px]"
+                                      />
+                                      <div className="py-2">
+                                        <CommunityKeyContactsInput
+                                          contacts={editCommunity.keyContacts}
+                                          institutions={institutionsList}
+                                          base={base}
+                                          getAuth={getAuth}
+                                          onChange={(contacts) =>
+                                            setEditCommunity((p) => ({
+                                              ...p,
+                                              keyContacts: contacts,
+                                            }))
+                                          }
+                                        />
                                       </div>
-                                    )}
-                                    <span className="font-medium text-brand-royal-blue truncate">
-                                      {c.name}
-                                    </span>
-                                    <span className="text-xs text-brand-gray shrink-0">
-                                      ({c.memberCount ?? 0} members,{" "}
-                                      {c.threadCount ?? 0} threads)
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() =>
-                                        handleToggleCommunityPrivacy(c._id)
-                                      }
-                                      className={`px-2 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${c.isPrivate
-                                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                                          : "bg-green-100 text-green-700 hover:bg-green-200"
-                                        }`}
-                                      title={
-                                        c.isPrivate
-                                          ? "Private (Admin approval required to join)"
-                                          : "Public (Anyone can join)"
-                                      }
-                                    >
-                                      {c.isPrivate ? (
-                                        <>
-                                          <Lock className="w-3.5 h-3.5" />
-                                          Private
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Unlock className="w-3.5 h-3.5" />
-                                          Public
-                                        </>
-                                      )}
-                                    </button>
-                                    <Button
-                                      onClick={() => handleDeleteCommunity(c._id)}
-                                      disabled={deletingCommunityId === c._id}
-                                      className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
-                                    >
-                                      {deletingCommunityId === c._id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                  </div>
+                                      <div className="flex gap-2">
+                                        <Button
+                                          type="submit"
+                                          disabled={updatingCommunity}
+                                          className="px-3 py-1.5 text-sm bg-green-100 text-green-800 rounded-lg"
+                                        >
+                                          {updatingCommunity ? (
+                                            <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                                          ) : (
+                                            "Save"
+                                          )}
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingCommunityId(null);
+                                            setEditCommunity({
+                                              name: "",
+                                              description: "",
+                                              categoryId: "",
+                                              iconSvg: "",
+                                              color: "#2F3C96",
+                                              keyContacts: [],
+                                            });
+                                          }}
+                                          className="px-3 py-1.5 text-sm bg-brand-gray-100 text-brand-gray rounded-lg"
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </form>
+                                  ) : (
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        {c.coverImage || c.image ? (
+                                          <img
+                                            src={c.coverImage || c.image}
+                                            alt=""
+                                            className="w-10 h-10 rounded-lg object-cover border border-[rgba(208,196,226,0.4)] shrink-0"
+                                          />
+                                        ) : (
+                                          <div className="w-10 h-10 rounded-lg border border-[rgba(208,196,226,0.4)] bg-brand-purple-50 flex items-center justify-center shrink-0">
+                                            <FlaskConical className="w-5 h-5 text-brand-royal-blue/60" />
+                                          </div>
+                                        )}
+                                        <span className="font-medium text-brand-royal-blue truncate">
+                                          {c.name}
+                                        </span>
+                                        <span className="text-xs text-brand-gray shrink-0">
+                                          ({c.memberCount ?? 0} members,{" "}
+                                          {c.threadCount ?? 0} threads)
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() =>
+                                            handleToggleCommunityPrivacy(c._id)
+                                          }
+                                          className={`px-2 py-1.5 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all ${c.isPrivate
+                                              ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                              : "bg-green-100 text-green-700 hover:bg-green-200"
+                                            }`}
+                                          title={
+                                            c.isPrivate
+                                              ? "Private (Admin approval required to join)"
+                                              : "Public (Anyone can join)"
+                                          }
+                                        >
+                                          {c.isPrivate ? (
+                                            <>
+                                              <Lock className="w-3.5 h-3.5" />
+                                              Private
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Unlock className="w-3.5 h-3.5" />
+                                              Public
+                                            </>
+                                          )}
+                                        </button>
+                                        <Button
+                                          onClick={() => {
+                                            setEditingCommunityId(c._id);
+                                            setEditCommunity({
+                                              name: c.name || "",
+                                              description: c.description || "",
+                                              categoryId:
+                                                c.categoryId?.toString?.() ||
+                                                "",
+                                              iconSvg: c.iconSvg || "",
+                                              color: c.color || "#2F3C96",
+                                              keyContacts: c.keyContacts || [],
+                                            });
+                                          }}
+                                          className="px-2 py-1.5 text-sm bg-brand-royal-blue/10 text-brand-royal-blue hover:bg-brand-royal-blue/20 rounded-lg"
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          onClick={() =>
+                                            handleDeleteCommunity(c._id)
+                                          }
+                                          disabled={
+                                            deletingCommunityId === c._id
+                                          }
+                                          className="px-2 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 shrink-0 rounded-lg"
+                                        >
+                                          {deletingCommunityId === c._id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </li>
                               ))}
                           </ul>
