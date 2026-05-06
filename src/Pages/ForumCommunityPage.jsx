@@ -14,6 +14,7 @@ import {
   X,
   ChevronLeft,
   Clock,
+  Lock,
 } from "lucide-react";
 import {
   IconHospital,
@@ -75,16 +76,20 @@ export default function ForumCommunityPage() {
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [threadsLoading, setThreadsLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== "undefined") {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    }
+    return {};
+  });
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
 
   const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  useEffect(() => {
-    setUser(JSON.parse(localStorage.getItem("user") || "{}"));
-  }, []);
+
 
   useEffect(() => {
     if (!id) return;
@@ -95,6 +100,7 @@ export default function ForumCommunityPage() {
       .then((data) => {
         setCommunity(data.community);
         setIsFollowing(!!data.community?.isFollowing);
+        setIsPending(data.community?.membership?.status === "pending");
       })
       .catch(() => toast.error(t("community.notFound")))
       .finally(() => setLoading(false));
@@ -103,12 +109,13 @@ export default function ForumCommunityPage() {
   useEffect(() => {
     if (!id) return;
     setThreadsLoading(true);
-    fetch(`${base}/api/communities/${id}/threads?limit=20&sort=recent`)
+    const userId = user?._id || user?.id || "";
+    fetch(`${base}/api/communities/${id}/threads?limit=20&sort=recent${userId ? `&userId=${userId}` : ""}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => setThreads(data.threads || []))
       .catch(() => setThreads([]))
       .finally(() => setThreadsLoading(false));
-  }, [id, base]);
+  }, [id, base, user?._id, user?.id]);
 
   async function handleJoin() {
     if (!user?._id && !user?.id) {
@@ -124,14 +131,21 @@ export default function ForumCommunityPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user._id || user.id }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || t("community.joinFailed"));
       }
-      setIsFollowing(true);
-      setShowJoinModal(false);
-      toast.success(t("community.joined"));
-      navigate("/forums", { state: { redirectCommunityId: community._id } });
+      if (data.status === "pending") {
+        setIsPending(true);
+        setIsFollowing(true);
+        setShowJoinModal(false);
+        toast.success(data.message || "Request to join sent");
+      } else {
+        setIsFollowing(true);
+        setShowJoinModal(false);
+        toast.success(t("community.joined"));
+        navigate("/forums", { state: { redirectCommunityId: community._id } });
+      }
     } catch (e) {
       toast.error(e.message || t("community.joinFailed"));
     } finally {
@@ -232,21 +246,40 @@ export default function ForumCommunityPage() {
                 </div>
                 {user?._id || user?.id ? (
                   isFollowing ? (
-                    <button
-                      onClick={handleLeave}
-                      disabled={followLoading}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#2F3C96]/10 text-[#2F3C96] hover:bg-[#2F3C96]/20 transition-all flex items-center gap-2"
-                    >
-                      {followLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
-                      {t("community.joinedButton")}
-                    </button>
+                    isPending ? (
+                      <button
+                        disabled
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-amber-100 text-amber-700 transition-all flex items-center gap-2 cursor-default"
+                      >
+                        <Clock className="w-4 h-4" />
+                        {t("community.pendingApproval", { defaultValue: "Pending Approval" })}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleLeave}
+                        disabled={followLoading}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#2F3C96]/10 text-[#2F3C96] hover:bg-[#2F3C96]/20 transition-all flex items-center gap-2"
+                      >
+                        {followLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCheck className="w-4 h-4" />}
+                        {t("community.joinedButton")}
+                      </button>
+                    )
                   ) : (
                     <button
                       onClick={() => setShowJoinModal(true)}
                       className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#2F3C96] text-white hover:bg-[#253075] transition-all flex items-center gap-2"
                     >
-                      <Plus className="w-4 h-4" />
-                      {t("community.joinCommunity")}
+                      {community.isPrivate ? (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          {t("community.requestToJoin", { defaultValue: "Request to Join" })}
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4" />
+                          {t("community.joinCommunity")}
+                        </>
+                      )}
                     </button>
                   )
                 ) : (
@@ -254,8 +287,10 @@ export default function ForumCommunityPage() {
                     onClick={() => toast.error(t("community.signInToJoin"))}
                     className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#2F3C96] text-white hover:bg-[#253075] transition-all flex items-center gap-2"
                   >
-                    <Plus className="w-4 h-4" />
-                    {t("community.joinCommunity")}
+                    {community.isPrivate ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                    {community.isPrivate
+                      ? t("community.requestToJoin", { defaultValue: "Request to Join" })
+                      : t("community.joinCommunity")}
                   </button>
                 )}
               </div>
@@ -267,7 +302,34 @@ export default function ForumCommunityPage() {
             <h2 className="text-lg font-bold text-[#2F3C96] mb-4">
               {t("community.discussionsTitle")}
             </h2>
-            {threadsLoading ? (
+            {community.isPrivate && (!isFollowing || isPending) ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-100">
+                  {isPending ? (
+                    <Clock className="w-8 h-8 text-amber-600" />
+                  ) : (
+                    <Lock className="w-8 h-8 text-amber-600" />
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-[#2F3C96] mb-2">
+                  {isPending ? "Request Pending" : "Private Community"}
+                </h3>
+                <p className="text-[#787878] text-sm max-w-sm mx-auto leading-relaxed">
+                  {isPending
+                    ? "Your request to join is currently being reviewed by an administrator. You'll gain access to the discussions once approved."
+                    : "This community is gated. You must request access and be approved by an administrator to view discussions and participate."}
+                </p>
+                {!isFollowing && (
+                  <button
+                    onClick={() => setShowJoinModal(true)}
+                    className="mt-6 px-6 py-2.5 bg-[#2F3C96] text-white rounded-xl font-semibold text-sm hover:bg-[#253075] transition-all shadow-md inline-flex items-center gap-2"
+                  >
+                    <Lock className="w-4 h-4" />
+                    Request Access
+                  </button>
+                )}
+              </div>
+            ) : threadsLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 text-[#2F3C96] animate-spin" />
               </div>
@@ -323,12 +385,18 @@ export default function ForumCommunityPage() {
                 ))}
               </ul>
             )}
-            <button
-              onClick={() => navigate("/forums", { state: { redirectCommunityId: community._id } })}
-              className="mt-4 w-full py-2.5 rounded-lg border border-[#2F3C96] text-[#2F3C96] text-sm font-semibold hover:bg-[#2F3C96]/10 transition-all"
-            >
-              {t("community.viewAllOnForums")}
-            </button>
+            {(!community.isPrivate || (isFollowing && !isPending)) && (
+              <button
+                onClick={() =>
+                  navigate("/forums", {
+                    state: { redirectCommunityId: community._id },
+                  })
+                }
+                className="mt-4 w-full py-2.5 rounded-lg border border-[#2F3C96] text-[#2F3C96] text-sm font-semibold hover:bg-[#2F3C96]/10 transition-all"
+              >
+                {t("community.viewAllOnForums")}
+              </button>
+            )}
           </div>
         </div>
       </div>

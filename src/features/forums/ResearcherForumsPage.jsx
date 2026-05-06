@@ -317,9 +317,10 @@ export default function ResearcherForums() {
   const [favorites, setFavorites] = useState([]);
   const [favoritingItems, setFavoritingItems] = useState(new Set());
   const [followingIds, setFollowingIds] = useState(new Set());
+  const [pendingIds, setPendingIds] = useState(new Set());
   const [followingLoading, setFollowingLoading] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState("posts"); // "posts", "patient-questions", or "communities"
+  const [viewMode, setViewMode] = useState("communities"); // "posts", "patient-questions", or "communities"
   const [activeTab, setActiveTab] = useState("all"); // all, following, forYou, involving
   const [patientThreads, setPatientThreads] = useState([]);
   const [sortBy, setSortBy] = useState("popular"); // recent, popular — default: most members first
@@ -350,11 +351,26 @@ export default function ResearcherForums() {
     const normalizeTitle = (t) => (t || "").trim().replace(/\s+/g, " ");
     const apiTitles = new Set(list.map((t) => normalizeTitle(t.title)).filter(Boolean));
 
-    // Filter out: (1) promoted dummies, (2) dummies that already have a real thread with same title (avoid duplicate cards)
+    // Filter out: (1) private community dummies if not member, (2) promoted dummies, (3) dummies with real thread match
     const promotedSet = new Set(promotedDummyKeys);
-    const activeDummies = dummies.filter(
-      (d) => !promotedSet.has(d._id) && !apiTitles.has(normalizeTitle(d.title))
-    );
+    const activeDummies = dummies.filter((d) => {
+      // Find the community this dummy belongs to
+      const targetCommId = d.communityId?._id || d.communityId;
+      const community = communities.find((c) => (c._id === targetCommId || c.id === targetCommId || c.slug === d.communityId?.slug));
+      
+      // Strict privacy check: hide if private and membership not approved
+      if (community?.isPrivate) {
+        const isApproved = community.membership?.status === "approved" || followingIds.has(community._id);
+        if (!isApproved) return false;
+      }
+      
+      // Also check if it belongs to a dummy community that might be considered private by name (extra safety)
+      if (!community && d.communityId?.slug?.includes("private") && !followingIds.has(d.communityId?._id)) {
+        return false;
+      }
+
+      return !promotedSet.has(d._id) && !apiTitles.has(normalizeTitle(d.title));
+    });
 
     return [...list, ...activeDummies];
   }
@@ -489,6 +505,8 @@ export default function ResearcherForums() {
     searchQuery,
     selectedConditionTag,
     i18n.language,
+    communities,
+    followingIds,
   ]);
 
   async function loadFavorites() {
@@ -532,12 +550,18 @@ export default function ResearcherForums() {
       const uniqueCommunities = dedupeCommunities(data.communities || []);
       setCommunities(uniqueCommunities);
 
-      // Update following IDs
+      // Update following IDs (only approved) and pending IDs
       const followingSet = new Set();
+      const pendingSet = new Set();
       uniqueCommunities.forEach((c) => {
-        if (c.isFollowing) followingSet.add(c._id);
+        if (c.membership?.status === "approved") {
+          followingSet.add(c._id);
+        } else if (c.membership?.status === "pending") {
+          pendingSet.add(c._id);
+        }
       });
       setFollowingIds(followingSet);
+      setPendingIds(pendingSet);
     } catch (error) {
       console.error("Error loading communities:", error);
       toast.error(t("discovery.loadCommunitiesFailed"));
@@ -572,7 +596,14 @@ export default function ResearcherForums() {
       const patientQuestions = (data.threads || []).filter(
         (thread) => thread.authorRole === "patient"
       );
-      const unansweredDummies = buildUnansweredPatientDummyThreadsForResearcher(communities);
+      const unansweredDummies = buildUnansweredPatientDummyThreadsForResearcher(communities).filter(d => {
+        const targetCommId = d.communityId;
+        const community = communities.find((c) => (c._id === targetCommId || c.id === targetCommId));
+        if (community?.isPrivate && !followingIds.has(community._id)) {
+          return false;
+        }
+        return true;
+      });
       const combined = sortPatientThreads([...unansweredDummies, ...patientQuestions]);
       setPatientThreads(combined);
     } catch (error) {
@@ -588,6 +619,9 @@ export default function ResearcherForums() {
     try {
       const params = new URLSearchParams();
       if (skipCache) params.set("skipCache", "true");
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       appendLocaleToSearchParams(params);
       const url = `${base}/api/researcher-forums/threads?${params.toString()}`;
       const response = await fetch(url);
@@ -646,6 +680,9 @@ export default function ResearcherForums() {
     try {
       const params = new URLSearchParams();
       params.set("sort", sortBy);
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       // Tag filtering is done client-side now
       appendLocaleToSearchParams(params);
 
@@ -683,6 +720,9 @@ export default function ResearcherForums() {
       const params = new URLSearchParams();
       params.set("sort", sortBy);
       params.set("subcategoryId", selectedSubcategory._id);
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       // Tag filtering is done client-side now
       appendLocaleToSearchParams(params);
 
@@ -886,13 +926,20 @@ export default function ResearcherForums() {
         });
         toast.success(t("forums.leftCommunity"));
       } else {
-        await fetch(`${base}/api/communities/${communityId}/follow`, {
+        const response = await fetch(`${base}/api/communities/${communityId}/follow`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user._id || user.id }),
         });
-        setFollowingIds((prev) => new Set(prev).add(communityId));
-        toast.success(t("forums.joinedCommunity"));
+        const data = await response.json();
+
+        if (data.status === "pending") {
+          setPendingIds((prev) => new Set(prev).add(communityId));
+          toast.success("Request sent. Waiting for admin approval.");
+        } else {
+          setFollowingIds((prev) => new Set(prev).add(communityId));
+          toast.success(t("forums.joinedCommunity"));
+        }
       }
 
       // Update community member counts
@@ -2158,6 +2205,16 @@ export default function ResearcherForums() {
             <div className="max-w-7xl mx-auto mb-6">
               <div className="flex items-center gap-0 border-b border-[#E8E8E8]">
                 <button
+                  onClick={() => setViewMode("communities")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    viewMode === "communities"
+                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
+                      : "text-[#787878] hover:text-[#484848]"
+                  }`}
+                >
+                  Communities
+                </button>
+                <button
                   onClick={() => setViewMode("posts")}
                   className={`px-6 py-3 font-semibold text-sm transition-all relative ${
                     viewMode === "posts"
@@ -2176,16 +2233,6 @@ export default function ResearcherForums() {
                   }`}
                 >
                   Patient Questions
-                </button>
-                <button
-                  onClick={() => setViewMode("communities")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                    viewMode === "communities"
-                      ? "text-[#2F3C96] border-b-2 border-[#2F3C96]"
-                      : "text-[#787878] hover:text-[#484848]"
-                  }`}
-                >
-                  Communities
                 </button>
               </div>
             </div>
@@ -2913,6 +2960,11 @@ export default function ResearcherForums() {
                                 <UserCheck className="w-4 h-4" />
                                 Joined
                               </span>
+                            ) : pendingIds.has(community._id) ? (
+                              <span className="px-4 py-1.5 rounded-md text-sm font-semibold bg-amber-50 text-amber-600 flex items-center gap-1.5 border border-amber-200">
+                                <Clock className="w-4 h-4" />
+                                Pending
+                              </span>
                             ) : (
                               <button
                                 onClick={(e) => {
@@ -2921,7 +2973,7 @@ export default function ResearcherForums() {
                                 }}
                                 className="px-4 py-1.5 rounded-md text-sm font-semibold bg-[#2F3C96] text-white hover:bg-[#253075] transition-all"
                               >
-                                Join
+                                {community.isPrivate ? "Request to Join" : "Join"}
                               </button>
                             )}
                           </div>
@@ -2993,10 +3045,15 @@ export default function ResearcherForums() {
                               <UserCheck className="w-4 h-4" />
                               Joined
                             </>
+                          ) : pendingIds.has(selectedCommunity._id) ? (
+                            <>
+                              <Clock className="w-4 h-4" />
+                              Pending
+                            </>
                           ) : (
                             <>
                               <Plus className="w-4 h-4" />
-                              Join
+                              {selectedCommunity.isPrivate ? "Request to Join" : "Join"}
                             </>
                           )}
                         </button>
@@ -4302,7 +4359,7 @@ export default function ResearcherForums() {
                         {followingLoading.has(joinGuidelinesModalCommunity._id) ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : null}
-                        I agree & Join
+                        {joinGuidelinesModalCommunity.isPrivate ? "I agree & Request to Join" : "I agree & Join"}
                       </button>
                       <button
                         type="button"

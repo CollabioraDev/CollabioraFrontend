@@ -327,6 +327,7 @@ export default function Forums() {
   const [favorites, setFavorites] = useState([]);
   const [favoritingItems, setFavoritingItems] = useState(new Set());
   const [followingIds, setFollowingIds] = useState(new Set());
+  const [pendingIds, setPendingIds] = useState(new Set());
   const [followingLoading, setFollowingLoading] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("communities"); // "posts" or "communities" — Communities open by default
@@ -379,11 +380,18 @@ export default function Forums() {
       list.map((t) => normalizeTitle(t.title)).filter(Boolean),
     );
 
-    // Filter out: (1) promoted dummies, (2) dummies that already have a real thread with same title (avoid duplicate cards)
+    // Filter out: (1) private community dummies if not member, (2) promoted dummies, (3) dummies with real thread match
     const promotedSet = new Set(promotedDummyKeys);
-    const activeDummies = dummies.filter(
-      (d) => !promotedSet.has(d._id) && !apiTitles.has(normalizeTitle(d.title)),
-    );
+    const activeDummies = dummies.filter((d) => {
+      // Find the community this dummy belongs to (it might have communityId or we can check d.communityId)
+      const targetCommId = d.communityId || (selectedCommunity?._id);
+      const community = communities.find((c) => (c._id === targetCommId || c.id === targetCommId));
+      
+      if (community?.isPrivate && !followingIds.has(community._id)) {
+        return false;
+      }
+      return !promotedSet.has(d._id) && !apiTitles.has(normalizeTitle(d.title));
+    });
 
     return [...list, ...activeDummies];
   }
@@ -597,6 +605,8 @@ export default function Forums() {
     searchQuery,
     selectedConditionTag,
     i18n.language,
+    communities,
+    followingIds,
   ]);
 
   async function loadFavorites() {
@@ -642,12 +652,18 @@ export default function Forums() {
       const uniqueCommunities = dedupeCommunities(data.communities || []);
       setCommunities(uniqueCommunities);
 
-      // Update following IDs
+      // Update following IDs (only approved) and pending IDs
       const followingSet = new Set();
+      const pendingSet = new Set();
       uniqueCommunities.forEach((c) => {
-        if (c.isFollowing) followingSet.add(c._id);
+        if (c.membership?.status === "approved") {
+          followingSet.add(c._id);
+        } else if (c.membership?.status === "pending") {
+          pendingSet.add(c._id);
+        }
       });
       setFollowingIds(followingSet);
+      setPendingIds(pendingSet);
     } catch (error) {
       console.error("Error loading communities:", error);
       toast.error(t("discovery.loadCommunitiesFailed"));
@@ -660,6 +676,9 @@ export default function Forums() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       appendLocaleToSearchParams(params);
       const response = await fetch(
         `${base}/api/forums/threads?${params.toString()}`,
@@ -719,6 +738,9 @@ export default function Forums() {
     try {
       const params = new URLSearchParams();
       params.set("sort", sortBy);
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       // For researcher communities, show all posts including researcher-only; for patient communities, exclude them
       params.set(
         "excludeResearcherForum",
@@ -757,6 +779,9 @@ export default function Forums() {
       const params = new URLSearchParams();
       params.set("sort", sortBy);
       params.set("subcategoryId", selectedSubcategory._id);
+      if (user?._id || user?.id) {
+        params.set("userId", user._id || user.id);
+      }
       const isResearcherCommunity =
         selectedCommunity?.communityType === "researcher";
       params.set(
@@ -1069,13 +1094,20 @@ export default function Forums() {
         });
         toast.success(t("forums.leftCommunity"));
       } else {
-        await fetch(`${base}/api/communities/${communityId}/follow`, {
+        const response = await fetch(`${base}/api/communities/${communityId}/follow`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user._id || user.id }),
         });
-        setFollowingIds((prev) => new Set(prev).add(communityId));
-        toast.success(t("forums.joinedCommunity"));
+        const data = await response.json();
+
+        if (data.status === "pending") {
+          setPendingIds((prev) => new Set(prev).add(communityId));
+          toast.success("Request sent. Waiting for admin approval.");
+        } else {
+          setFollowingIds((prev) => new Set(prev).add(communityId));
+          toast.success(t("forums.joinedCommunity"));
+        }
       }
 
       // Update community member counts
@@ -2987,13 +3019,19 @@ export default function Forums() {
                                                 0}{" "}
                                               members
                                             </span>
-                                            {followingIds.has(community._id) ||
-                                            community.isFollowing ? (
+                                            {followingIds.has(community._id) ? (
                                               <span
                                                 className={`px-2 py-1 rounded-lg text-xs font-medium shrink-0 flex items-center gap-1 self-start sm:self-auto ${colorClasses.badge}`}
                                               >
                                                 <UserCheck className="w-3.5 h-3.5" />
                                                 Joined
+                                              </span>
+                                            ) : pendingIds.has(community._id) ? (
+                                              <span
+                                                className="px-2 py-1 rounded-lg text-xs font-medium shrink-0 flex items-center gap-1 self-start sm:self-auto bg-amber-50 text-amber-600 border border-amber-200"
+                                              >
+                                                <Clock className="w-3.5 h-3.5" />
+                                                Pending
                                               </span>
                                             ) : (
                                               <button
@@ -3005,7 +3043,7 @@ export default function Forums() {
                                                 }}
                                                 className={`rounded-lg px-4 py-2 sm:py-1.5 text-sm font-medium border shrink-0 transition-all duration-200 w-full sm:w-auto ${colorClasses.join}`}
                                               >
-                                                Join
+                                                {community.isPrivate ? "Request to Join" : "Join"}
                                               </button>
                                             )}
                                           </div>
@@ -3101,10 +3139,15 @@ export default function Forums() {
                               <UserCheck className="w-4 h-4" />
                               Joined
                             </>
+                          ) : pendingIds.has(selectedCommunity._id) ? (
+                            <>
+                              <Clock className="w-4 h-4" />
+                              Pending
+                            </>
                           ) : (
                             <>
                               <Plus className="w-4 h-4" />
-                              Join
+                              {selectedCommunity.isPrivate ? "Request to Join" : "Join"}
                             </>
                           )}
                         </button>
@@ -4771,7 +4814,7 @@ export default function Forums() {
                         ) ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : null}
-                        I agree & Join
+                        {joinGuidelinesModalCommunity.isPrivate ? "I agree & Request to Join" : "I agree & Join"}
                       </button>
                       <button
                         type="button"
