@@ -68,7 +68,7 @@ export default function CurateTrials() {
   const [templateDraft, setTemplateDraft] = useState(createEmptyTemplateTrial);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [templateConfirmOpen, setTemplateConfirmOpen] = useState(false);
-  const [curateInstitutionKey, setCurateInstitutionKey] = useState("ucla");
+  const [curateInstitutionKey, setCurateInstitutionKey] = useState("");
   const [dynamicInstitutions, setDynamicInstitutions] = useState([]);
   const [tokenInstitution, setTokenInstitution] = useState(null);
   const [tokenLoading, setTokenLoading] = useState(false);
@@ -131,6 +131,12 @@ export default function CurateTrials() {
       label: inst.displayName,
     }));
   }, [dynamicInstitutions]);
+
+  const currentInstitutionName = useMemo(() => {
+    if (tokenInstitution) return tokenInstitution.displayName;
+    const found = dynamicInstitutions.find((i) => i.key === curateInstitutionKey);
+    return found ? found.displayName : "selected institution";
+  }, [tokenInstitution, dynamicInstitutions, curateInstitutionKey]);
 
   const copyTrialFormatSample = useCallback(async () => {
     try {
@@ -442,7 +448,7 @@ export default function CurateTrials() {
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               <Link
-                to="/add-trials/manage"
+                to={searchParams.get("token") ? `/add-trials/manage?token=${searchParams.get("token")}` : "/add-trials/manage"}
                 className="inline-flex items-center rounded-lg border border-indigo-200 bg-white/90 px-3 py-2 text-sm font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors shadow-sm"
               >
                 {t("curateTrials.viewSaved")}
@@ -793,7 +799,10 @@ export default function CurateTrials() {
           }
         >
           <p className="text-sm text-slate-600">
-            {t("curateTrials.confirmSaveBody", { count: allParsed.length })}
+            {t("curateTrials.confirmSaveBody", { 
+              count: allParsed.length,
+              institution: currentInstitutionName 
+            })}
           </p>
         </Modal>
 
@@ -936,7 +945,9 @@ export default function CurateTrials() {
           }
         >
           <p className="text-sm text-slate-600">
-            {t("curateTrials.confirmSingleBody")}
+            {t("curateTrials.confirmSingleBody", {
+              institution: currentInstitutionName
+            })}
           </p>
         </Modal>
         </div>

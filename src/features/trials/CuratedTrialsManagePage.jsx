@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useTranslation, Trans } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { Loader2, Pencil, Beaker, RefreshCw } from "lucide-react";
 import Layout from "../../components/Layout.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -65,16 +66,20 @@ function patchDraft(prev, patch) {
 
 export default function CuratedTrialsManage() {
   const { t } = useTranslation("common");
+  const [searchParams] = useSearchParams();
   const [trials, setTrials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [tokenInstitution, setTokenInstitution] = useState(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (instKey = "") => {
     setLoading(true);
     try {
-      const res = await fetch(`${base}/api/curated-trials`);
+      const query = instKey ? `?institutionKey=${instKey}` : "";
+      const res = await fetch(`${base}/api/curated-trials${query}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t("curatedTrialsManage.loadFailed"));
       setTrials(data.trials || []);
@@ -88,8 +93,31 @@ export default function CuratedTrialsManage() {
   }, [t]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    const token = searchParams.get("token");
+    if (token) {
+      async function validateAndLoad() {
+        setTokenLoading(true);
+        try {
+          const res = await fetch(`${base}/api/curated-trials/institution-by-token/${token}`);
+          const data = await res.json();
+          if (res.ok && data.institution) {
+            setTokenInstitution(data.institution);
+            load(data.institution.key);
+          } else {
+            load(); // Fallback to default
+          }
+        } catch (e) {
+          console.error(e);
+          load();
+        } finally {
+          setTokenLoading(false);
+        }
+      }
+      validateAndLoad();
+    } else {
+      load();
+    }
+  }, [searchParams, load]);
 
   function openEdit(t) {
     setDraft({ ...t });
@@ -144,10 +172,11 @@ export default function CuratedTrialsManage() {
             <p className="text-sm text-slate-600 mt-1">
               <Trans
                 i18nKey="curatedTrialsManage.pageIntro"
+                values={{ institution: tokenInstitution?.displayName || "UCLA" }}
                 components={{
                   addLink: (
                     <Link
-                      to="/add-trials"
+                      to={searchParams.get("token") ? `/add-trials?token=${searchParams.get("token")}` : "/add-trials"}
                       className="text-indigo-600 font-medium underline"
                     />
                   ),
