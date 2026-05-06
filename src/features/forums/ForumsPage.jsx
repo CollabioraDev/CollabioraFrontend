@@ -3063,7 +3063,7 @@ export default function Forums() {
                             <CheckCircle2 className="w-4 h-4 text-[#2F3C96]" />
                           )}
                         </div>
-                        <p className="text-sm text-[#787878] line-clamp-2 leading-relaxed">
+                        <p className="text-sm text-[#787878] leading-relaxed">
                           {selectedCommunity.description}
                         </p>
                       </div>
@@ -4349,68 +4349,72 @@ export default function Forums() {
                         </span>
                       </p>
                       <div>
-                        <label className="block text-sm font-medium text-[#383838] mb-1.5">
-                          Subcategories/Tags
-                        </label>
-                        <div
-                          onBlur={() => setTagsFieldTouched(true)}
-                          className="mb-3"
-                        >
-                          <CustomSelect
-                            value=""
-                            onChange={(value) => {
-                              if (value && !newThreadTags.includes(value)) {
-                                setNewThreadTags([...newThreadTags, value]);
-                              }
-                            }}
-                            options={FORUM_SUBCATEGORY_TAGS.filter(
-                              (tag) => !newThreadTags.includes(tag),
-                            ).map((tag) => ({
-                              value: tag,
-                              label: tag,
-                            }))}
-                            placeholder={
-                              newThreadTags.length === 0
-                                ? "Search or add a tag (optional)..."
-                                : "Add another tag..."
-                            }
-                            searchable={true}
-                            searchPlaceholder="Search tags..."
-                            maxDropdownHeight={240}
-                            className="w-full mb-2"
-                            disabled={
-                              FORUM_SUBCATEGORY_TAGS.filter(
-                                (tag) => !newThreadTags.includes(tag),
-                              ).length === 0
-                            }
-                          />
-                          {newThreadTags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {newThreadTags.map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#2F3C96]/10 text-[#2F3C96] rounded-lg text-xs font-medium"
-                                >
-                                  {tag}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setNewThreadTags(
-                                        newThreadTags.filter(
-                                          (_, i) => i !== idx,
-                                        ),
-                                      )
-                                    }
-                                    className="hover:text-red-500 rounded p-0.5"
-                                    aria-label="Remove tag"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </span>
-                              ))}
+                        {(modalSelectedCommunity || selectedCommunity)?.communityType === "researcher" && (
+                          <>
+                            <label className="block text-sm font-medium text-[#383838] mb-1.5">
+                              Subcategories/Tags
+                            </label>
+                            <div
+                              onBlur={() => setTagsFieldTouched(true)}
+                              className="mb-3"
+                            >
+                              <CustomSelect
+                                value=""
+                                onChange={(value) => {
+                                  if (value && !newThreadTags.includes(value)) {
+                                    setNewThreadTags([...newThreadTags, value]);
+                                  }
+                                }}
+                                options={FORUM_SUBCATEGORY_TAGS.filter(
+                                  (tag) => !newThreadTags.includes(tag),
+                                ).map((tag) => ({
+                                  value: tag,
+                                  label: tag,
+                                }))}
+                                placeholder={
+                                  newThreadTags.length === 0
+                                    ? "Search or add a tag (optional)..."
+                                    : "Add another tag..."
+                                }
+                                searchable={true}
+                                searchPlaceholder="Search tags..."
+                                maxDropdownHeight={240}
+                                className="w-full mb-2"
+                                disabled={
+                                  FORUM_SUBCATEGORY_TAGS.filter(
+                                    (tag) => !newThreadTags.includes(tag),
+                                  ).length === 0
+                                }
+                              />
+                              {newThreadTags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {newThreadTags.map((tag, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#2F3C96]/10 text-[#2F3C96] rounded-lg text-xs font-medium"
+                                    >
+                                      {tag}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setNewThreadTags(
+                                            newThreadTags.filter(
+                                              (_, i) => i !== idx,
+                                            ),
+                                          )
+                                        }
+                                        className="hover:text-red-500 rounded p-0.5"
+                                        aria-label="Remove tag"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
+                          </>
+                        )}
                         <label className="block text-sm font-medium text-[#383838] mb-1.5">
                           Content{" "}
                           <span className="font-normal text-[#787878]">

@@ -188,11 +188,11 @@ export default function ForumCommunityPage() {
         <AnimatedBackground />
         <div className="relative pt-24 px-4 md:px-8 mx-auto max-w-4xl pb-12">
           <button
-            onClick={() => navigate("/forums")}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-sm text-[#787878] hover:text-[#2F3C96] mb-6 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            {t("community.backToForums")}
+            {t("ui.back")}
           </button>
 
           {/* Hero */}

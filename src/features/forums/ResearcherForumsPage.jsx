@@ -2900,7 +2900,7 @@ export default function ResearcherForums() {
                           <h3 className="text-lg font-bold text-[#2F3C96] mb-2 line-clamp-1 group-hover:text-[#253075] transition-colors">
                             {community.name}
                           </h3>
-                          <p className="text-sm text-[#787878] mb-4 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-[#787878] mb-4 leading-relaxed">
                             {community.description || "Join this community to connect with others"}
                           </p>
                           <div className="flex items-center justify-between pt-3 border-t border-[#F5F5F5]">
@@ -2957,7 +2957,7 @@ export default function ResearcherForums() {
                             <CheckCircle2 className="w-4 h-4 text-[#2F3C96]" />
                           )}
                         </div>
-                        <p className="text-sm text-[#787878] line-clamp-1">
+                        <p className="text-sm text-[#787878]">
                           {selectedCommunity.description}
                         </p>
                       </div>
